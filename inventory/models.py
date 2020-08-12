@@ -35,11 +35,10 @@ class Material(models.Model):
                                       on_delete=models.RESTRICT, null=True, blank=True, related_name='alternate_uom')
 
     @property
-    def total_in_stock(self):
-        with_in_stocks = Stock.objects.get_available_stocks(material_id=self.id)
+    def quantity_onhand(self):
         total = 0
-        for stock in with_in_stocks:
-            total += stock.in_stock_quantity
+        for stock in self.onhand_stocks:
+            total += stock.onhand_quantity
         return total
 
     @property
@@ -49,8 +48,13 @@ class Material(models.Model):
             return latest_stock.price_per_quantity
 
     @property
-    def available_stocks(self):
-        return Stock.objects.get_available_stocks(self.id)
+    def onhand_stocks(self):
+        available_stocks = []
+        related_stocks = Stock.objects.filter(material__pk=self.id)
+        for stock in related_stocks:
+            if stock.onhand_quantity > 0:
+                available_stocks.append(stock)
+        return available_stocks
 
     def deposit_stock(self, brand_name, base_quantity, price, alt_quantity=1):
         deposited = []
@@ -60,21 +64,16 @@ class Material(models.Model):
             deposited.append(stock)
         return deposited
 
+    def withdraw_stock(self, stock_id, quantity):
+        stock = Stock.objects.get(pk=stock_id)
+        stock.withdraw(quantity)
+
 
 class StockManager(models.Manager):
     def create_stock(self, **data):
         stock = self.create(**data)
         stock.deposit(data['base_quantity'])
         return stock
-
-    def get_available_stocks(self, material_id):
-        available_stocks = []
-        related_stocks = Stock.objects.filter(material__pk=material_id)
-        for stock in related_stocks:
-            print(stock.in_stock_quantity)
-            if stock.in_stock_quantity > 0:
-                available_stocks.append(stock)
-        return available_stocks
 
 
 class Stock(models.Model):
@@ -86,43 +85,47 @@ class Stock(models.Model):
     objects = StockManager()
 
     @property
-    def is_in_stock_full(self):
-        return self.in_stock_quantity == self.base_quantity
+    def is_quantity_full(self):
+        return self.onhand_quantity == self.base_quantity
 
     @property
     def price_per_quantity(self):
         return self.price / self.base_quantity
 
     @property
-    def in_stock_quantity(self):
-        added_stocks = StockMovement.objects.filter(
-            Q(action=StockMovement.DEPOSIT) | Q(action=StockMovement.RETURN))
+    def onhand_quantity(self):
+        added_stocks = StockMovement.objects.filter(Q(stock=self) &
+                                                    (Q(action=StockMovement.DEPOSIT) |
+                                                     Q(action=StockMovement.RETURN)))
+        removed_stocks = StockMovement.objects.filter(Q(stock=self) &
+                                                      (Q(action=StockMovement.WITHDRAW) |
+                                                       Q(action=StockMovement.EXPIRED)))
+
         aggr_added = added_stocks.aggregate(sum_added=Sum('stock_unit__quantity'))
-        removed_stocks = StockMovement.objects.filter(
-            Q(action=StockMovement.WITHDRAW) | Q(action=StockMovement.EXPIRED))
         aggr_removed = removed_stocks.aggregate(sum_removed=Sum('stock_unit__quantity'))
+
         added = aggr_added['sum_added'] if aggr_added['sum_added'] is not None else 0
         removed = aggr_removed['sum_removed'] if aggr_removed['sum_removed'] is not None else 0
         return added - removed
 
     def deposit(self, quantity):
-        if quantity + self.in_stock_quantity <= self.base_quantity:
+        if quantity + self.onhand_quantity <= self.base_quantity:
             self._create_movement(quantity, StockMovement.DEPOSIT)
         else:
-            raise DepositTooBig(quantity, self.in_stock_quantity, self.base_quantity)
-
+            raise DepositTooBig(quantity, self.onhand_quantity, self.base_quantity)
 
     def withdraw(self, quantity):
-        if quantity <= self.in_stock_quantity:
+        if quantity <= self.onhand_quantity:
             self._create_movement(quantity, StockMovement.WITHDRAW)
         else:
-            raise InsufficientStock(quantity, self.in_stock_quantity, self.base_quantity)
+            raise InsufficientStock(quantity, self.onhand_quantity, self.base_quantity)
 
     def _create_movement(self, quantity, action):
         stock_unit = StockUnit.objects.create(quantity=quantity)
         stock_movement = StockMovement.objects.create(action=action,
                                                       stock=self, stock_unit=stock_unit)
         return stock_movement
+
 
 class StockUnit(models.Model):
     quantity = models.IntegerField(null=False, blank=False)

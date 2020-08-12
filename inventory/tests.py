@@ -3,6 +3,7 @@ from django.test import TestCase
 from .models import BaseStockUnit, AlternateStockUnit, Material, Stock, StockUnit, StockMovement
 from .exceptions import DepositTooBig, InsufficientStock
 
+
 @pytest.fixture
 def base_unit__sheet(db):
     return BaseStockUnit.objects.create(name='sheet', abbrev='sht')
@@ -30,6 +31,11 @@ def deposited_stock(db, material: Material):
     return material.deposit_stock('Generic', 500, 1000)[0]
 
 
+@pytest.fixture
+def deposited_stocks(db, material: Material):
+    return material.deposit_stock('Generic', 500, 1000, 2)
+
+
 def test_unit__sheet_plural_fullname(db, base_unit__sheet: BaseStockUnit):
     assert base_unit__sheet.plural_name == 'sheets'
 
@@ -46,8 +52,8 @@ def test_unit__box_plural_abbrev(db, alt_unit__ream: AlternateStockUnit):
     assert alt_unit__ream.plural_abbrev == 'rms'
 
 
-def test_material__available_stocks(db, material: Material, deposited_stock: Stock):
-    assert len(material.available_stocks) == 1
+def test_material__onhand_stocks(db, material: Material, deposited_stock: Stock):
+    assert len(material.onhand_stocks) == 1
 
 
 def test_material__get_latest_price(db, material: Material, stock: Stock):
@@ -58,9 +64,12 @@ def test_material__deposit_stock_has_price(db, material: Material, deposited_sto
     stock = deposited_stock
     assert stock is not None
     assert stock.price_per_quantity.amount == 2
-    assert stock.in_stock_quantity == 500
-    assert stock.is_in_stock_full == True
-    assert material.total_in_stock == 500
+    assert stock.onhand_quantity == 500
+    assert stock.is_quantity_full == True
+
+
+def test_material__deposit_multiple_stocks(db, material: Material, deposited_stocks: Stock):
+    assert material.quantity_onhand == 1000
 
 
 def test_material__deposit_stock_has_stock_movement(db, deposited_stock: Stock):
@@ -79,6 +88,11 @@ def test_stock__price_per_quantity(db, stock: Stock):
 def test_stock__deposit_too_big(db, stock: Stock):
     with pytest.raises(DepositTooBig):
         stock.deposit(501)
+
+
+def test_stock__withdraw(db, deposited_stock: Stock):
+    deposited_stock.withdraw(499)
+    assert deposited_stock.onhand_quantity == 1
 
 
 def test_stock__withdraw_insufficient_stock(db, deposited_stock: Stock):

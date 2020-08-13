@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import Q, Sum
 from djmoney.models.fields import MoneyField
-from .exceptions import DepositTooBig, InsufficientStock
+from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
 import inflect
 
 _inflect = inflect.engine()
@@ -35,17 +35,24 @@ class Material(models.Model):
                                       on_delete=models.RESTRICT, null=True, blank=True, related_name='alternate_uom')
 
     @property
-    def quantity_onhand(self):
-        total = 0
-        for stock in self.onhand_stocks:
-            total += stock.onhand_quantity
-        return total
-
-    @property
     def latest_price_per_quantity(self):
         latest_stock = Stock.objects.filter(material__pk=self.id).latest('created_at')
         if latest_stock is not None:
             return latest_stock.price_per_quantity
+
+    @property
+    def available_quantity(self):
+        total = 0
+        for stock in self.onhand_stocks:
+            total += stock.available_quantity
+        return total
+
+    @property
+    def onhand_quantity(self):
+        total = 0
+        for stock in self.onhand_stocks:
+            total += stock.onhand_quantity
+        return total
 
     @property
     def onhand_stocks(self):
@@ -64,9 +71,40 @@ class Material(models.Model):
             deposited.append(stock)
         return deposited
 
-    def withdraw_stock(self, stock_id, quantity):
-        stock = Stock.objects.get(pk=stock_id)
+    def withdraw_stock(self, stock_request_id):
+        stock_request = StockRequest.objects.get(pk=stock_request_id)
+        stock = stock_request.stock
+        quantity = stock_request.stock_unit.quantity
         stock.withdraw(quantity)
+        stock_request.status = StockRequest.FULFILLED
+        stock_request.save()
+
+    def request_stock(self, quantity):
+        stock_requests = []
+
+        if self.available_quantity >= quantity:
+            stocks = Stock.objects.filter(material=self)
+            stocks_iter = stocks.iterator()
+            qty_counter = 0
+
+            while qty_counter < quantity:
+                stock = next(stocks_iter)
+                stock_qty = stock.available_quantity
+                qty_remaining = quantity - qty_counter
+                qty = qty_remaining % stock_qty if qty_remaining > stock_qty else qty_remaining
+                stock_request = stock.request(qty)
+                stock_requests.append(stock_request)
+                qty_counter += qty
+
+        return stock_requests
+
+    def return_stock(self, stock_id, quantity):
+        stock = Stock.objects.get(pk=stock_id)
+        stock.returned(quantity)
+
+    def expire_stock(self, stock_id, quantity):
+        stock = Stock.objects.get(pk=stock_id)
+        stock.expired(quantity)
 
 
 class StockManager(models.Manager):
@@ -93,7 +131,24 @@ class Stock(models.Model):
         return self.price / self.base_quantity
 
     @property
+    def available_quantity(self):
+        def __get_sum(query_set):
+            aggregate = query_set.aggregate(sum_stock=Sum('stock_unit__quantity'))
+            aggr_sum = aggregate['sum_stock'] if aggregate['sum_stock'] is not None else 0
+            return aggr_sum
+
+        new_requests = StockRequest.objects.filter(stock=self, status=StockRequest.NEW)
+        new = __get_sum(new_requests)
+        requested = new
+        return self.onhand_quantity - requested
+
+    @property
     def onhand_quantity(self):
+        def __get_sum(query_set):
+            aggregate = query_set.aggregate(sum_stock=Sum('stock_unit__quantity'))
+            aggr_sum = aggregate['sum_stock'] if aggregate['sum_stock'] is not None else 0
+            return aggr_sum
+
         added_stocks = StockMovement.objects.filter(Q(stock=self) &
                                                     (Q(action=StockMovement.DEPOSIT) |
                                                      Q(action=StockMovement.RETURN)))
@@ -101,11 +156,8 @@ class Stock(models.Model):
                                                       (Q(action=StockMovement.WITHDRAW) |
                                                        Q(action=StockMovement.EXPIRED)))
 
-        aggr_added = added_stocks.aggregate(sum_added=Sum('stock_unit__quantity'))
-        aggr_removed = removed_stocks.aggregate(sum_removed=Sum('stock_unit__quantity'))
-
-        added = aggr_added['sum_added'] if aggr_added['sum_added'] is not None else 0
-        removed = aggr_removed['sum_removed'] if aggr_removed['sum_removed'] is not None else 0
+        added = __get_sum(added_stocks)
+        removed = __get_sum(removed_stocks)
         return added - removed
 
     def deposit(self, quantity):
@@ -120,18 +172,61 @@ class Stock(models.Model):
         else:
             raise InsufficientStock(quantity, self.onhand_quantity, self.base_quantity)
 
+    def request(self, quantity):
+        if quantity <= self.available_quantity:
+            return self._create_request(quantity)
+        else:
+            raise InsufficientStock(quantity, self.available_quantity, self.base_quantity)
+
+    def returned(self, quantity):
+        if quantity + self.onhand_quantity <= self.base_quantity:
+            self._create_movement(quantity, StockMovement.RETURN)
+        else:
+            raise DepositTooBig(quantity, self.onhand_quantity, self.base_quantity)
+
+    def expired(self, quantity):
+        if quantity <= self.onhand_quantity:
+            self._create_movement(quantity, StockMovement.EXPIRED)
+        else:
+            raise InvalidExpireQuantity(quantity, self.onhand_quantity)
+
     def _create_movement(self, quantity, action):
         stock_unit = StockUnit.objects.create(quantity=quantity)
         stock_movement = StockMovement.objects.create(action=action,
                                                       stock=self, stock_unit=stock_unit)
         return stock_movement
 
+    def _create_request(self, quantity):
+        stock_unit = StockUnit.objects.create(quantity=quantity)
+        stock_request = StockRequest.objects.create(status=StockRequest.NEW,
+                                                    stock=self, stock_unit=stock_unit)
+        return stock_request
+
 
 class StockUnit(models.Model):
     quantity = models.IntegerField(null=False, blank=False)
 
 
-class StockMovement(models.Model):
+class StockLog(models.Model):
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
+    stock_unit = models.OneToOneField(StockUnit, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+
+
+class StockRequest(StockLog):
+    NEW = 'NEW'
+    FULFILLED = 'FUL'
+    CANCELLED = 'CNL'
+    STATUS = [
+        (NEW, 'New'),
+        (FULFILLED, 'Fulfilled'),
+        (CANCELLED, 'Cancelled'),
+    ]
+    status = models.CharField(max_length=3, choices=STATUS)
+    last_modified = models.DateTimeField(auto_now=True)
+
+
+class StockMovement(StockLog):
     DEPOSIT = 'DEP'
     WITHDRAW = 'WTH'
     RETURN = 'RET'
@@ -140,9 +235,6 @@ class StockMovement(models.Model):
         (DEPOSIT, 'Deposit'),
         (WITHDRAW, 'Withdraw'),
         (RETURN, 'Return'),
-        (EXPIRED, 'Expired')
+        (EXPIRED, 'Expired'),
     ]
     action = models.CharField(max_length=3, choices=ACTIONS)
-    stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
-    stock_unit = models.OneToOneField(StockUnit, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)

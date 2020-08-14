@@ -1,5 +1,6 @@
 import pytest
-from .models import BaseStockUnit, AlternateStockUnit, Material, Stock, StockRequest, StockMovement
+from .models import BaseStockUnit, AlternateStockUnit, Material, MaterialType, Stock, StockRequest, StockMovement
+from .materials.models import MaterialProperties, Paper
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
 
 
@@ -9,14 +10,20 @@ def base_unit__sheet(db):
 
 
 @pytest.fixture
-def alt_unit__ream(db):
-    return AlternateStockUnit.objects.create(name='ream', abbrev='rm')
+def alt_unit__ream(db, base_unit__sheet):
+    alt_stock_unit = AlternateStockUnit.objects.create(name='ream', abbrev='rm')
+    alt_stock_unit.base_stock_units.add(base_unit__sheet)
+    return alt_stock_unit
 
 
 @pytest.fixture
 def material(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateStockUnit):
-    return Material.objects.create(name='Bond Paper 8.5 x 11',
-                                   base_uom=base_unit__sheet, alternate_uom=alt_unit__ream)
+    return Material.objects.create_material(name='Bond Paper 8.5 x 11',
+                                   type=MaterialType.PAPER_SHEET,
+                                   base_uom=base_unit__sheet,
+                                   alternate_uom=alt_unit__ream,
+                                   properties=MaterialProperties.objects.create())
+                                   #supplying properties with a dummy value to test a scenario. see code
 
 
 @pytest.fixture
@@ -38,6 +45,11 @@ def test_unit__sheet_plural(db, base_unit__sheet: BaseStockUnit):
 def test_unit__box_plural(db, alt_unit__ream: AlternateStockUnit):
     assert alt_unit__ream.plural_name == 'reams'
     assert alt_unit__ream.plural_abbrev == 'rms'
+
+
+def test_material__create(db, material: Material):
+    assert material.properties is not None
+    assert isinstance(material.properties, Paper)
 
 
 def test_material__onhand_stocks(db, material: Material, deposited_stock: Stock):

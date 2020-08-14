@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import Q, Sum
 from djmoney.models.fields import MoneyField
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
-from .materials.models import MaterialProperties
+from .materials.models import MaterialProperties, Tape, Wire, Paper, Panel, Liquid
 import inflect
 
 _inflect = inflect.engine()
@@ -16,14 +16,25 @@ class MaterialType:
     PAPER_ROLL = 'paperroll'
     PANEL = 'panel'
     LIQUID = 'liquid'
+    OTHER = 'other'
     TYPES = [
         (TAPE, 'Tape'),
         (WIRE, 'Wire'),
         (PAPER_SHEET, 'Paper - Sheet'),
         (PAPER_ROLL, 'Paper - Roll'),
         (PANEL, 'Panel'),
-        (LIQUID, 'Liquid')
+        (LIQUID, 'Liquid'),
+        (OTHER, 'Other')
     ]
+    MAPPING = {
+        TAPE: Tape,
+        WIRE: Wire,
+        PAPER_SHEET: Paper,
+        PAPER_ROLL: Paper,
+        PANEL: Panel,
+        LIQUID: Liquid,
+        OTHER: None
+    }
 
 
 class BaseStockUnit(models.Model):
@@ -46,7 +57,26 @@ class AlternateStockUnit(BaseStockUnit):
     type = models.CharField(max_length=15, choices=MaterialType.TYPES, null=False, blank=False)
 
 
+class MaterialManager(models.Manager):
+
+    def create_material(self, **data):
+        # remove properties if supplied. to be overridden
+        if data.get('properties') is not None:
+            data.pop('properties')
+
+        material = self.create(**data)
+        type_key = data.get('type')
+
+        if type_key is not None and MaterialType.MAPPING.get(type_key) is not None:
+            properties = MaterialType.MAPPING[type_key].objects.create()
+            material.properties = properties
+            material.save()
+
+        return material
+
+
 class Material(models.Model):
+    objects = MaterialManager()
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=15, choices=MaterialType.TYPES, null=False, blank=False)
     properties = models.OneToOneField(MaterialProperties, on_delete=models.RESTRICT, null=True)
@@ -137,12 +167,12 @@ class StockManager(models.Manager):
 
 
 class Stock(models.Model):
+    objects = StockManager()
     material = models.ForeignKey(Material, on_delete=models.RESTRICT, null=False)
     brand_name = models.CharField(max_length=100, null=True, blank=True)
     price = MoneyField(default=0, max_digits=14, decimal_places=2, default_currency='PHP')
     base_quantity = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
-    objects = StockManager()
 
     @property
     def is_quantity_full(self):

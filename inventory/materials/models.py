@@ -8,29 +8,24 @@ class MaterialProperties(models.Model):
 
 
 class Tape(MaterialProperties):
-    length = MeasurementField(measurement=Distance, null=True, blank=True)
+    length = MeasurementField(measurement=Distance)
 
 
 class Wire(MaterialProperties):
-    length = MeasurementField(measurement=Distance, null=True, blank=True)
+    length = MeasurementField(measurement=Distance)
 
 
 class Rectangle(MaterialProperties):
-    length = MeasurementField(measurement=Distance, null=True, blank=True)
-    width = MeasurementField(measurement=Distance, null=True, blank=True)
+    length = MeasurementField(measurement=Distance)
+    width = MeasurementField(measurement=Distance)
 
     @property
     def area(self):
-        if self._is_not_none():
-            return self.length * self.width
+        return self.length * self.width
 
     @property
     def perimeter(self):
-        if self._is_not_none():
-            return (self.length * 2) + (self.width * 2)
-
-    def _is_not_none(self):
-        return self.length is not None & self.width is not None
+        return (self.length * 2) + (self.width * 2)
 
 
 class Paper(Rectangle):
@@ -46,12 +41,12 @@ class Paper(Rectangle):
             (SATIN, 'Satin')
         ]
     gsm = models.IntegerField(null=True, blank=False)
-    finish = models.CharField(max_length=15, choices=Finish.TYPES, null=True, blank=False)
+    finish = models.CharField(max_length=15, null=True, blank=False)
 
 
 class Panel(Rectangle):
-    thickness = MeasurementField(measurement=Distance, null=True, blank=True)
+    thickness = MeasurementField(measurement=Distance)
 
 
 class Liquid(MaterialProperties):
-    volume = MeasurementField(measurement=Volume, null=True, blank=True)
+    volume = MeasurementField(measurement=Volume)

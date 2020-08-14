@@ -1,6 +1,6 @@
 import pytest
 from .models import BaseStockUnit, AlternateStockUnit, Material, MaterialType, Stock, StockRequest, StockMovement
-from .materials.models import MaterialProperties, Paper
+from .material.models import MaterialProperties, Paper
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
 
 

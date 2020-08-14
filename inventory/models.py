@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import Q, Sum
 from djmoney.models.fields import MoneyField
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
-from .materials.models import MaterialProperties, Tape, Wire, Paper, Panel, Liquid
+from .material.models import MaterialProperties, Tape, Wire, Paper, Panel, Liquid
 import inflect
 
 _inflect = inflect.engine()

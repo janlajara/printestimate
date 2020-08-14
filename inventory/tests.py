@@ -23,7 +23,7 @@ def material(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateStock
                                    base_uom=base_unit__sheet,
                                    alternate_uom=alt_unit__ream,
                                    properties=MaterialProperties.objects.create())
-                                   #supplying properties with a dummy value to test a scenario. see code
+                                   #supplying properties with a dummy value to test a branch. see code
 
 
 @pytest.fixture

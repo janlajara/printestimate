@@ -1,5 +1,4 @@
 import pytest
-from django.test import TestCase
 from .models import BaseStockUnit, AlternateStockUnit, Material, Stock, StockRequest, StockMovement
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
 
@@ -88,6 +87,22 @@ def test_material_request_and_withdraw(db, material: Material):
     assert material.available_quantity == 250
 
 
+def test_material_return_stock(db, material: Material):
+    stock = material.deposit_stock('Generic', 500, 1000)[0]
+    stock_request = material.request_stock(250)[0]
+    material.withdraw_stock(stock_request.id)
+    material.return_stock(stock.id, 125)
+    assert material.available_quantity == 375
+    assert material.onhand_quantity == 375
+
+
+def test_material_expire_stock(db, material: Material):
+    stock = material.deposit_stock('Generic', 500, 1000)[0]
+    material.expire_stock(stock.id, 250)
+    assert material.available_quantity == 250
+    assert material.onhand_quantity == 250
+
+
 def test_stock__has_stock_movement(db, deposited_stock: Stock):
     stock = deposited_stock
     stock_movement = StockMovement.objects.filter(stock__pk=stock.id)[0]
@@ -132,6 +147,12 @@ def test_stock__request_insufficient_stock(db, deposited_stock: Stock):
     deposited_stock.request(100)
     with pytest.raises(InsufficientStock):
         deposited_stock.request(500)
+
+
+def test_stock__return_too_big(db, deposited_stock: Stock):
+    deposited_stock.withdraw(100)
+    with pytest.raises(DepositTooBig):
+        deposited_stock.returned(101)
 
 
 def test_stock__expired(db, deposited_stock: Stock):

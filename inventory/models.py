@@ -2,12 +2,30 @@ from django.db import models
 from django.db.models import Q, Sum
 from djmoney.models.fields import MoneyField
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
+from .materials.models import MaterialProperties
 import inflect
 
 _inflect = inflect.engine()
 
 
 # Create your models here.
+class MaterialType:
+    TAPE = 'tape'
+    WIRE = 'wire'
+    PAPER_SHEET = 'papersheet'
+    PAPER_ROLL = 'paperroll'
+    PANEL = 'panel'
+    LIQUID = 'liquid'
+    TYPES = [
+        (TAPE, 'Tape'),
+        (WIRE, 'Wire'),
+        (PAPER_SHEET, 'Paper - Sheet'),
+        (PAPER_ROLL, 'Paper - Roll'),
+        (PANEL, 'Panel'),
+        (LIQUID, 'Liquid')
+    ]
+
+
 class BaseStockUnit(models.Model):
     name = models.CharField(max_length=10)
     abbrev = models.CharField(max_length=10)
@@ -25,14 +43,18 @@ class BaseStockUnit(models.Model):
 
 class AlternateStockUnit(BaseStockUnit):
     base_stock_units = models.ManyToManyField(BaseStockUnit, related_name='base_stock_units')
+    type = models.CharField(max_length=15, choices=MaterialType.TYPES, null=False, blank=False)
 
 
 class Material(models.Model):
     name = models.CharField(max_length=100)
-    base_uom = models.ForeignKey(BaseStockUnit,
-                                 on_delete=models.RESTRICT, related_name='base_uom')
+    type = models.CharField(max_length=15, choices=MaterialType.TYPES, null=False, blank=False)
+    properties = models.OneToOneField(MaterialProperties, on_delete=models.RESTRICT, null=True)
+    base_uom = models.ForeignKey(BaseStockUnit, on_delete=models.RESTRICT,
+                                 related_name='base_uom')
     alternate_uom = models.ForeignKey(AlternateStockUnit,
-                                      on_delete=models.RESTRICT, null=True, blank=True, related_name='alternate_uom')
+                                      on_delete=models.RESTRICT, null=True,
+                                      blank=True, related_name='alternate_uom')
 
     @property
     def latest_price_per_quantity(self):

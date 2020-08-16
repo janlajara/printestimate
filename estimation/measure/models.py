@@ -5,44 +5,67 @@ from measurement.measures import Area, Time, Volume
 
 # Create your models here.
 class Measure:
-    LENGTH = 'lnth'
-    PERIMETER = 'pmtr'
+    DISTANCE = 'dstn'
     AREA = 'area'
     VOLUME = 'vlme'
     QUANTITY = 'qtty'
-    TYPES = [
-        (LENGTH, 'Length'),
-        (PERIMETER, 'Perimeter'),
-        (AREA, 'Area'),
-        (VOLUME, 'Volume'),
-        (QUANTITY, 'Quantity'),
-    ]
+    TIME = 'time'
+    UNITS = {
+        DISTANCE: [('mm', 'Millimeter'),
+                   ('cm', 'Centimeter'),
+                   ('m', 'Meter'),
+                   ('inch', 'Inch'),
+                   ('ft', 'Feet')],
+        AREA: [('sq_mm', 'Square millimeter'),
+               ('sq_m', 'Square meter'),
+               ('sq_inch', 'Square inch'),
+               ('sq_ft', 'Square feet')],
+        VOLUME: [('ml', 'Milliliter'),
+                 ('cl', 'Centiliter'),
+                 ('l', 'Liter'),
+                 ('imperial_oz', 'Ounce')],
+        QUANTITY: [('pc', 'Piece')],
+        TIME: [('sec', 'Second'),
+               ('min', 'Minute'),
+               ('hr', 'Hour'),
+               ('day', 'Day')]
+    }
 
+    PRIMARY_UNITS = UNITS[DISTANCE] + UNITS[AREA] + \
+        UNITS[VOLUME] + UNITS[QUANTITY]
 
-class StandardUnits:
-    class Speed:
-        UOMS = {
-            Measure.LENGTH: 'm_hr',
-            Measure.PERIMETER: 'm_hr',
-            Measure.AREA: 'sqm_hr',
-            Measure.VOLUME: 'liter_hr',
-            Measure.QUANTITY: 'unit_hr',
-        }
+    TIME_UNITS = UNITS[TIME]
 
-    class Measure:
-        UOMS = {
-            Measure.LENGTH: 'm',
-            Measure.PERIMETER: 'm',
-            Measure.AREA: 'sqm',
-            Measure.VOLUME: 'liter',
-            Measure.QUANTITY: 'unit',
-        }
+    STANDARD_UNITS = {
+        DISTANCE: 'm',
+        AREA: 'sqm',
+        VOLUME: 'l',
+        QUANTITY: 'pc',
+    }
+
+    STANDARD_SPEED_UNITS = {
+        DISTANCE: 'm__hr',
+        AREA: 'sqm__hr',
+        VOLUME: 'l__hr',
+        QUANTITY: 'pc__hr',
+    }
+
+    @classmethod
+    def get_measure(cls, unit):
+        measure = None
+        for key in cls.UNITS.keys():
+            for uom in cls.UNITS[key]:
+                is_match = uom[0] == unit
+                if is_match:
+                    measure = key
+                    break
+        return measure
 
 
 class Quantity(MeasureBase):
-    STANDARD_UNIT = 'unit'
+    STANDARD_UNIT = 'pc'
     UNITS = {
-        'unit': 1.0
+        'pc': 1.0
     }
 
 
@@ -55,6 +78,7 @@ class AreaSpeed(BidimensionalMeasure):
     PRIMARY_DIMENSION = Area
     REFERENCE_DIMENSION = Time
     ALIAS = {
+        'sqm_min': 'sq_m__min',
         'sqm_hr': 'sq_m__hr',
         'sqft_hr': 'sq_ft__hr',
     }

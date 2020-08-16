@@ -1,4 +1,5 @@
 import math
+from decimal import Decimal
 from django.db import models
 from djmoney.models.fields import MoneyField
 from django_measurement.models import MeasurementField
@@ -82,15 +83,22 @@ class Process(models.Model):
     def get_cost(self, measurement):
         cost = 0
         duration = self.get_duration(measurement)
-        time_cost = self.hourly_rate * duration.hr
+        time_cost = self.hourly_rate * Decimal(duration.hr)
         measure_cost = 0
         measure_uom = Measure.STANDARD_UNITS[self.speed.measure]
         if measure_uom is not None and measurement is not None:
             mval = getattr(measurement, measure_uom)
             if mval is not None:
-                measure_cost = mval * self.measure_rate
+                measure_cost = Decimal(mval) * self.measure_rate
         cost = self.flat_rate + time_cost + measure_cost
-        return cost
+        return round(cost, 2)
+
+    def add_expense(self, name, expense_type, rate):
+        expense = ProcessExpense.objects.create(process=self,
+                                                name=name,
+                                                type=expense_type,
+                                                rate=rate)
+        return expense
 
     def _get_total_expenses(self, expense_type):
         total_rate = 0

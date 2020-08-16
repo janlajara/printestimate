@@ -1,7 +1,8 @@
 import pytest
+from decimal import Decimal
 from measurement.measures import Time, Distance
 from .measure.models import Measure
-from .process.models import Process, ProcessSpeed
+from .process.models import Process, ProcessSpeed, ProcessExpense
 
 
 @pytest.fixture
@@ -13,7 +14,7 @@ def process_speed(db):
 
 @pytest.fixture
 def process(db, process_speed: ProcessSpeed):
-    process = Process.objects.create(name='GTO Printing',
+    process = Process.objects.create(name='HP Latex Cutter',
                                      speed=process_speed,
                                      set_up=Time(hr=1),
                                      tear_down=Time(hr=1))
@@ -93,3 +94,29 @@ def test_process__no_expense(db, process: Process):
     cost = process.get_cost(Distance(m=1))
     assert cost == 0
 
+
+def test_process__get_cost_hourly(db, process: Process):
+    process.add_expense('Labor', ProcessExpense.HOUR_BASED, 75)
+    cost = process.get_cost(Distance(m=10))
+    assert cost.amount == 174.75
+
+
+def test_process__get_cost_measure(db, process: Process):
+    process.add_expense('Blade', ProcessExpense.MEASURE_BASED, 90)
+    cost = process.get_cost(Distance(m=10))
+    assert cost.amount == 900
+
+
+def test_process__get_cost_flat(db, process: Process):
+    process.add_expense('Some fee', ProcessExpense.FLAT, 100)
+    cost = process.get_cost(Distance(m=10))
+    assert cost.amount == 100
+
+
+def test_process_get_cost_multiple(db, process: Process):
+    process.add_expense('Labor', ProcessExpense.HOUR_BASED, 75)
+    process.add_expense('Electricity', ProcessExpense.HOUR_BASED, 110)
+    process.add_expense('Blade', ProcessExpense.MEASURE_BASED, 90)
+    process.add_expense('Some fee', ProcessExpense.FLAT, 100)
+    cost = process.get_cost(Distance(m=10))
+    assert float(cost.amount) == 1431.05

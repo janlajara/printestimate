@@ -56,8 +56,15 @@ def test_material__onhand_stocks(db, material: Material, deposited_stock: Stock)
     assert len(material.onhand_stocks) == 1
 
 
-def test_material__get_latest_price(db, material: Material, stock: Stock):
+def test_material__get_latest_price(db, material: Material):
+    material.deposit_stock('Generic', 500, 500)
     assert material.latest_price_per_quantity.amount == 1
+
+
+def test_material__get_average_price(db, material: Material):
+    material.deposit_stock('Generic', 500, 1000)
+    material.deposit_stock('Generic', 500, 1500)
+    assert material.average_price_per_quantity.amount == 2.5
 
 
 def test_material__deposit_stock_has_price(db, deposited_stock: Stock):

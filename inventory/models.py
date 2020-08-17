@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Avg
 from djmoney.models.fields import MoneyField
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
 from .material.models import MaterialProperties, Tape, Wire, Paper, Panel, Liquid
@@ -91,6 +91,15 @@ class Material(models.Model):
         latest_stock = Stock.objects.filter(material__pk=self.id).latest('created_at')
         if latest_stock is not None:
             return latest_stock.price_per_quantity
+
+    @property
+    def average_price_per_quantity(self):
+        stocks = Stock.objects.filter(material__pk=self.id)
+        stocks_len = len(stocks)
+        total = 0
+        for stock in stocks:
+            total += stock.price_per_quantity
+        return total / stocks_len
 
     @property
     def available_quantity(self):
@@ -190,8 +199,7 @@ class Stock(models.Model):
             return aggr_sum
 
         new_requests = StockRequest.objects.filter(stock=self, status=StockRequest.NEW)
-        new = __get_sum(new_requests)
-        requested = new
+        requested = __get_sum(new_requests)
         return self.onhand_quantity - requested
 
     @property

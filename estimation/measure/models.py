@@ -5,11 +5,11 @@ from measurement.measures import Area, Time, Volume
 
 # Create your models here.
 class Measure:
-    DISTANCE = 'dstn'
-    AREA = 'area'
-    VOLUME = 'vlme'
-    QUANTITY = 'qtty'
-    TIME = 'time'
+    DISTANCE = 'Distance'
+    AREA = 'Area'
+    VOLUME = 'Volume'
+    QUANTITY = 'Quantity'
+    TIME = 'Time'
     UNITS = {
         DISTANCE: [('mm', 'Millimeter'),
                    ('cm', 'Centimeter'),

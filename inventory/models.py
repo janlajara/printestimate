@@ -2,41 +2,13 @@ from django.db import models
 from django.db.models import Q, Sum, Avg
 from djmoney.models.fields import MoneyField
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
-from .material.models import MaterialProperties, Tape, Wire, Paper, Panel, Liquid
+from .item.models import ItemProperties, Tape, Wire, Paper, Panel, Liquid
 import inflect
 
 _inflect = inflect.engine()
 
 
 # Create your models here.
-class MaterialType:
-    TAPE = 'tape'
-    WIRE = 'wire'
-    PAPER_SHEET = 'papersheet'
-    PAPER_ROLL = 'paperroll'
-    PANEL = 'panel'
-    LIQUID = 'liquid'
-    OTHER = 'other'
-    TYPES = [
-        (TAPE, 'Tape'),
-        (WIRE, 'Wire'),
-        (PAPER_SHEET, 'Paper - Sheet'),
-        (PAPER_ROLL, 'Paper - Roll'),
-        (PANEL, 'Panel'),
-        (LIQUID, 'Liquid'),
-        (OTHER, 'Other')
-    ]
-    MAPPING = {
-        TAPE: Tape,
-        WIRE: Wire,
-        PAPER_SHEET: Paper,
-        PAPER_ROLL: Paper,
-        PANEL: Panel,
-        LIQUID: Liquid,
-        OTHER: None
-    }
-
-
 class BaseStockUnit(models.Model):
     name = models.CharField(max_length=10)
     abbrev = models.CharField(max_length=10)
@@ -54,32 +26,65 @@ class BaseStockUnit(models.Model):
 
 class AlternateStockUnit(BaseStockUnit):
     base_stock_units = models.ManyToManyField(BaseStockUnit, related_name='base_stock_units')
-    type = models.CharField(max_length=15, choices=MaterialType.TYPES, null=False, blank=False)
+    # type = models.CharField(max_length=15, choices=Item.TYPES, null=False, blank=False)
 
 
-class MaterialManager(models.Manager):
+class ItemManager(models.Manager):
 
-    def create_material(self, **data):
+    def create_item(self, **data):
         # remove properties if supplied. to be overridden
         if data.get('properties') is not None:
             data.pop('properties')
 
-        material = self.create(**data)
+        item = self.create(**data)
         type_key = data.get('type')
 
-        if type_key is not None and MaterialType.MAPPING.get(type_key) is not None:
-            properties = MaterialType.MAPPING[type_key].objects.create()
-            material.properties = properties
-            material.save()
+        if type_key is not None:
+            clazz = ItemManager._get_properties_class(type_key)
+            if clazz is not None:
+                properties = clazz.objects.create()
+                item.properties = properties
+                item.save()
 
-        return material
+        return item
+
+    @staticmethod
+    def _get_properties_class(item_type):
+        mapping = {
+            Item.TAPE: Tape,
+            Item.WIRE: Wire,
+            Item.PAPER_SHEET: Paper,
+            Item.PAPER_ROLL: Paper,
+            Item.PANEL: Panel,
+            Item.LIQUID: Liquid,
+            Item.OTHER: None
+        }
+        if mapping.get(item_type) is not None:
+            return mapping[item_type]
 
 
-class Material(models.Model):
-    objects = MaterialManager()
+class Item(models.Model):
+    TAPE = 'tape'
+    WIRE = 'wire'
+    PAPER_SHEET = 'papersheet'
+    PAPER_ROLL = 'paperroll'
+    PANEL = 'panel'
+    LIQUID = 'liquid'
+    OTHER = 'other'
+    TYPES = [
+        (TAPE, 'Tape'),
+        (WIRE, 'Wire'),
+        (PAPER_SHEET, 'Paper - Sheet'),
+        (PAPER_ROLL, 'Paper - Roll'),
+        (PANEL, 'Panel'),
+        (LIQUID, 'Liquid'),
+        (OTHER, 'Other')
+    ]
+
+    objects = ItemManager()
     name = models.CharField(max_length=100)
-    type = models.CharField(max_length=15, choices=MaterialType.TYPES, null=False, blank=False)
-    properties = models.OneToOneField(MaterialProperties, on_delete=models.RESTRICT, null=True)
+    type = models.CharField(max_length=15, choices=TYPES, null=False, blank=False)
+    properties = models.OneToOneField(ItemProperties, on_delete=models.RESTRICT, null=True)
     base_uom = models.ForeignKey(BaseStockUnit, on_delete=models.RESTRICT,
                                  related_name='base_uom')
     alternate_uom = models.ForeignKey(AlternateStockUnit,
@@ -88,13 +93,13 @@ class Material(models.Model):
 
     @property
     def latest_price_per_quantity(self):
-        latest_stock = Stock.objects.filter(material__pk=self.id).latest('created_at')
+        latest_stock = Stock.objects.filter(item__pk=self.id).latest('created_at')
         if latest_stock is not None:
             return latest_stock.price_per_quantity
 
     @property
     def average_price_per_quantity(self):
-        stocks = Stock.objects.filter(material__pk=self.id)
+        stocks = Stock.objects.filter(item__pk=self.id)
         stocks_len = len(stocks)
         total = 0
         for stock in stocks:
@@ -118,7 +123,7 @@ class Material(models.Model):
     @property
     def onhand_stocks(self):
         available_stocks = []
-        related_stocks = Stock.objects.filter(material__pk=self.id)
+        related_stocks = Stock.objects.filter(item__pk=self.id)
         for stock in related_stocks:
             if stock.onhand_quantity > 0:
                 available_stocks.append(stock)
@@ -127,7 +132,7 @@ class Material(models.Model):
     def deposit_stock(self, brand_name, base_quantity, price, alt_quantity=1):
         deposited = []
         for x in range(alt_quantity):
-            stock = Stock.objects.create_stock(material=self, brand_name=brand_name,
+            stock = Stock.objects.create_stock(item=self, brand_name=brand_name,
                                                base_quantity=base_quantity, price=price)
             deposited.append(stock)
         return deposited
@@ -144,7 +149,7 @@ class Material(models.Model):
         stock_requests = []
 
         if self.available_quantity >= quantity:
-            stocks = Stock.objects.filter(material=self)
+            stocks = Stock.objects.filter(item=self)
             stocks_iter = stocks.iterator()
             qty_counter = 0
 
@@ -177,7 +182,7 @@ class StockManager(models.Manager):
 
 class Stock(models.Model):
     objects = StockManager()
-    material = models.ForeignKey(Material, on_delete=models.RESTRICT, null=False)
+    item = models.ForeignKey(Item, on_delete=models.RESTRICT, null=False)
     brand_name = models.CharField(max_length=100, null=True, blank=True)
     price = MoneyField(default=0, max_digits=14, decimal_places=2, default_currency='PHP')
     base_quantity = models.IntegerField(default=1)

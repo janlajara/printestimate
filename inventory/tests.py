@@ -1,6 +1,6 @@
 import pytest
-from .models import BaseStockUnit, AlternateStockUnit, Material, MaterialType, Stock, StockRequest, StockMovement
-from .material.models import MaterialProperties, Paper
+from .models import BaseStockUnit, AlternateStockUnit, Item, Stock, StockRequest, StockMovement
+from .item.models import ItemProperties, Paper
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
 
 
@@ -17,24 +17,24 @@ def alt_unit__ream(db, base_unit__sheet):
 
 
 @pytest.fixture
-def material(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateStockUnit):
-    return Material.objects.create_material(name='Bond Paper 8.5 x 11',
-                                   type=MaterialType.PAPER_SHEET,
+def item(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateStockUnit):
+    return Item.objects.create_item(name='Bond Paper 8.5 x 11',
+                                   type=Item.PAPER_SHEET,
                                    base_uom=base_unit__sheet,
                                    alternate_uom=alt_unit__ream,
-                                   properties=MaterialProperties.objects.create())
+                                   properties=ItemProperties.objects.create())
                                    #supplying properties with a dummy value to test a branch. see code
 
 
 @pytest.fixture
-def stock(db, material: Material):
+def stock(db, item: Item):
     return Stock.objects.create(brand_name='Cactus',
-                                material=material, price=500, base_quantity=500)
+                                item=item, price=500, base_quantity=500)
 
 
 @pytest.fixture
-def deposited_stock(db, material: Material):
-    return material.deposit_stock('Generic', 500, 1000)[0]
+def deposited_stock(db, item: Item):
+    return item.deposit_stock('Generic', 500, 1000)[0]
 
 
 def test_unit__sheet_plural(db, base_unit__sheet: BaseStockUnit):
@@ -47,27 +47,27 @@ def test_unit__box_plural(db, alt_unit__ream: AlternateStockUnit):
     assert alt_unit__ream.plural_abbrev == 'rms'
 
 
-def test_material__create(db, material: Material):
-    assert material.properties is not None
-    assert isinstance(material.properties, Paper)
+def test_item__create(db, item: Item):
+    assert item.properties is not None
+    assert isinstance(item.properties, Paper)
 
 
-def test_material__onhand_stocks(db, material: Material, deposited_stock: Stock):
-    assert len(material.onhand_stocks) == 1
+def test_item__onhand_stocks(db, item: Item, deposited_stock: Stock):
+    assert len(item.onhand_stocks) == 1
 
 
-def test_material__get_latest_price(db, material: Material):
-    material.deposit_stock('Generic', 500, 500)
-    assert material.latest_price_per_quantity.amount == 1
+def test_item__get_latest_price(db, item: Item):
+    item.deposit_stock('Generic', 500, 500)
+    assert item.latest_price_per_quantity.amount == 1
 
 
-def test_material__get_average_price(db, material: Material):
-    material.deposit_stock('Generic', 500, 1000)
-    material.deposit_stock('Generic', 500, 1500)
-    assert material.average_price_per_quantity.amount == 2.5
+def test_item__get_average_price(db, item: Item):
+    item.deposit_stock('Generic', 500, 1000)
+    item.deposit_stock('Generic', 500, 1500)
+    assert item.average_price_per_quantity.amount == 2.5
 
 
-def test_material__deposit_stock_has_price(db, deposited_stock: Stock):
+def test_item__deposit_stock_has_price(db, deposited_stock: Stock):
     stock = deposited_stock
     assert stock is not None
     assert stock.price_per_quantity.amount == 2
@@ -75,51 +75,51 @@ def test_material__deposit_stock_has_price(db, deposited_stock: Stock):
     assert stock.is_quantity_full is True
 
 
-def test_material__deposit_multiple_stocks(db, material: Material):
-    material.deposit_stock('Generic', 500, 1000, 2)
-    assert material.onhand_quantity == 1000
+def test_item__deposit_multiple_stocks(db, item: Item):
+    item.deposit_stock('Generic', 500, 1000, 2)
+    assert item.onhand_quantity == 1000
 
 
-def test_material__request_stock_greater_quantity(db, material: Material):
-    material.deposit_stock('Generic', 500, 1000, 2)
-    stock_requests = material.request_stock(600)
-    assert material.available_quantity == 400
-    assert material.onhand_quantity == 1000
+def test_item__request_stock_greater_quantity(db, item: Item):
+    item.deposit_stock('Generic', 500, 1000, 2)
+    stock_requests = item.request_stock(600)
+    assert item.available_quantity == 400
+    assert item.onhand_quantity == 1000
     assert len(stock_requests) == 2
 
 
-def test_material__request_stock_lesser_quantity(db, material: Material):
-    material.deposit_stock('Generic', 500, 1000, 2)
-    stock_requests = material.request_stock(400)
-    assert material.available_quantity == 600
-    assert material.onhand_quantity == 1000
+def test_item__request_stock_lesser_quantity(db, item: Item):
+    item.deposit_stock('Generic', 500, 1000, 2)
+    stock_requests = item.request_stock(400)
+    assert item.available_quantity == 600
+    assert item.onhand_quantity == 1000
     assert len(stock_requests) == 1
 
 
-def test_material_request_and_withdraw(db, material: Material):
-    stock = material.deposit_stock('Generic', 500, 1000)[0]
-    stock_request = material.request_stock(250)[0]
-    material.withdraw_stock(stock_request.id)
+def test_item__request_and_withdraw(db, item: Item):
+    stock = item.deposit_stock('Generic', 500, 1000)[0]
+    stock_request = item.request_stock(250)[0]
+    item.withdraw_stock(stock_request.id)
     stock_request.refresh_from_db()
     assert stock_request.status == StockRequest.FULFILLED
-    assert material.onhand_quantity == 250
-    assert material.available_quantity == 250
+    assert item.onhand_quantity == 250
+    assert item.available_quantity == 250
 
 
-def test_material_return_stock(db, material: Material):
-    stock = material.deposit_stock('Generic', 500, 1000)[0]
-    stock_request = material.request_stock(250)[0]
-    material.withdraw_stock(stock_request.id)
-    material.return_stock(stock.id, 125)
-    assert material.available_quantity == 375
-    assert material.onhand_quantity == 375
+def test_item_return_stock(db, item: Item):
+    stock = item.deposit_stock('Generic', 500, 1000)[0]
+    stock_request = item.request_stock(250)[0]
+    item.withdraw_stock(stock_request.id)
+    item.return_stock(stock.id, 125)
+    assert item.available_quantity == 375
+    assert item.onhand_quantity == 375
 
 
-def test_material_expire_stock(db, material: Material):
-    stock = material.deposit_stock('Generic', 500, 1000)[0]
-    material.expire_stock(stock.id, 250)
-    assert material.available_quantity == 250
-    assert material.onhand_quantity == 250
+def test_item_expire_stock(db, item: Item):
+    stock = item.deposit_stock('Generic', 500, 1000)[0]
+    item.expire_stock(stock.id, 250)
+    assert item.available_quantity == 250
+    assert item.onhand_quantity == 250
 
 
 def test_stock__has_stock_movement(db, deposited_stock: Stock):

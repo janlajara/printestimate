@@ -5,6 +5,7 @@ from .measure.models import Measure
 from .process.models import Process, ProcessSpeed, ProcessExpense
 from .exceptions import  MeasurementMismatch
 
+
 @pytest.fixture
 def process_speed(db):
     speed = ProcessSpeed.objects.create(measure_value=0.5,
@@ -92,7 +93,12 @@ def test_process__get_duration_long(db, process: Process):
 
 def test_process__get_duration_mismatch_measure(db, process: Process):
     with pytest.raises(MeasurementMismatch):
-        cost = process.get_duration(Time(sec=10))
+        duration = process.get_duration(Time(sec=10))
+
+
+def test_process__get_duration_null_param(db, process: Process):
+    with pytest.raises(Exception):
+        duration = process.get_duration(None)
 
 
 def test_process__no_expense(db, process: Process):

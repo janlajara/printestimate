@@ -109,11 +109,13 @@ class Process(models.Model):
 
     def _validate_measurement(self, measurement):
         try:
-            if measurement is not None and self.speed is not None:
+            if measurement is not None:
                 uom = self.speed.measure_unit
                 converted = getattr(measurement, uom)
                 # if still successful at this point, then validation is done
                 return
+            else:
+                raise Exception("Expected parameter 'measurement' is null")
         except AttributeError as e:
             uom = self.speed.measure_unit
             measure = Measure.get_measure(uom)

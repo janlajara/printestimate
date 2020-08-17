@@ -56,7 +56,7 @@ class Process(models.Model):
         hourly_rate = self._get_total_expenses(ProcessExpense.HOUR_BASED)
         return hourly_rate
 
-    def get_duration(self, measurement, hours_per_day=10):
+    def get_duration(self, measurement, contingency=0, hours_per_day=10):
         self._validate_measurement(measurement)
 
         # factor hours for setup and teardown, multiplied by estimate num of days
@@ -79,15 +79,17 @@ class Process(models.Model):
             sval = getattr(self.speed.rate, speed_uom)
 
             if mval is not None and sval is not None:
-                duration = __compute_overall(mval / sval)
+                base = mval / sval
+                multiplier = (contingency / 100) + 1
+                duration = __compute_overall(base * multiplier)
 
         return Time(hr=duration)
 
-    def get_cost(self, measurement):
+    def get_cost(self, measurement, contingency=0):
         self._validate_measurement(measurement)
 
         cost = 0
-        duration = self.get_duration(measurement)
+        duration = self.get_duration(measurement, contingency)
         time_cost = self.hourly_rate * Decimal(duration.hr)
         measure_cost = 0
         measure_uom = Measure.STANDARD_UNITS[self.speed.measure]

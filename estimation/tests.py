@@ -91,6 +91,11 @@ def test_process__get_duration_long(db, process: Process):
     assert duration.hr == 43.33
 
 
+def test_process__get_duration_with_contingency(db, process: Process):
+    duration = process.get_duration(Distance(m=1000), contingency=50)
+    assert duration.hr == 64
+
+
 def test_process__get_duration_mismatch_measure(db, process: Process):
     with pytest.raises(MeasurementMismatch):
         duration = process.get_duration(Time(sec=10))
@@ -122,6 +127,12 @@ def test_process__get_cost_flat(db, process: Process):
     process.add_expense('Some fee', ProcessExpense.FLAT, 100)
     cost = process.get_cost(Distance(m=10))
     assert cost.amount == 100
+
+
+def test_process__get_cost_with_contingency(db, process: Process):
+    process.add_expense('Labor', ProcessExpense.HOUR_BASED, 90)
+    cost = process.get_cost(Distance(m=1000), 50)
+    assert cost.amount == 5760
 
 
 def test_process__get_cost_multiple(db, process: Process):

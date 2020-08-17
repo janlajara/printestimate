@@ -1,7 +1,7 @@
 import pytest
 from decimal import Decimal
 from measurement.measures import Time, Distance
-from .measure.models import Measure
+from .measure.models import Measure, Quantity
 from .process.models import Process, ProcessSpeed, ProcessExpense
 from .exceptions import  MeasurementMismatch
 
@@ -14,6 +14,16 @@ def process_speed(db):
 
 
 @pytest.fixture
+def process_speed_factory(db):
+    def create_process_speed(measure_value: float, measure_unit: str, speed_unit=str):
+        process_speed = ProcessSpeed.objects.create(measure_value=measure_value,
+                                                    measure_unit=measure_unit,
+                                                    speed_unit=speed_unit)
+        return process_speed
+    return create_process_speed
+
+
+@pytest.fixture
 def process(db, process_speed: ProcessSpeed):
     process = Process.objects.create(name='HP Latex Cutter',
                                      speed=process_speed,
@@ -23,13 +33,16 @@ def process(db, process_speed: ProcessSpeed):
 
 
 @pytest.fixture
-def process_speed_factory(db):
-    def create_process_speed(measure_value: float, measure_unit: str, speed_unit=str):
-        process_speed = ProcessSpeed.objects.create(measure_value=measure_value,
-                                                    measure_unit=measure_unit,
-                                                    speed_unit=speed_unit)
-        return process_speed
-    return create_process_speed
+def process_offset_printing(db, process_speed_factory):
+    speed = process_speed_factory(120, 'pc', 'min')
+    process = Process.objects.create(name='GTO Offset Printing',
+                                     speed=speed,
+                                     set_up=Time(hr=1),
+                                     tear_down=Time(hr=1))
+    process.add_expense('Labor', ProcessExpense.HOUR_BASED, 75)
+    process.add_expense('Electricity', ProcessExpense.HOUR_BASED, 150)
+    process.add_expense('Ink', ProcessExpense.MEASURE_BASED, 0.5)
+    return process
 
 
 # Create your tests here.
@@ -96,6 +109,11 @@ def test_process__get_duration_with_contingency(db, process: Process):
     assert duration.hr == 64
 
 
+def test_process__get_duration_quantity_based(db, process_offset_printing: Process):
+    duration = process_offset_printing.get_duration(Quantity(sheet=2000))
+    assert duration.hr == 2.28
+
+
 def test_process__get_duration_mismatch_measure(db, process: Process):
     with pytest.raises(MeasurementMismatch):
         duration = process.get_duration(Time(sec=10))
@@ -142,6 +160,11 @@ def test_process__get_cost_multiple(db, process: Process):
     process.add_expense('Some fee', ProcessExpense.FLAT, 100)
     cost = process.get_cost(Distance(m=10))
     assert float(cost.amount) == 1431.05
+
+
+def test_process__get_cost_quantity_based(db, process_offset_printing: Process):
+    cost = process_offset_printing.get_cost(Quantity(sheet=2000))
+    assert cost.amount == 1513
 
 
 def test_process__get_cost_mismatch_measure(db, process: Process):

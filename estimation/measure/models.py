@@ -24,7 +24,11 @@ class Measure:
                  ('cl', 'Centiliter'),
                  ('l', 'Liter'),
                  ('imperial_oz', 'Ounce')],
-        QUANTITY: [('pc', 'Piece')],
+        QUANTITY: [('pc', 'Piece'),
+                   ('sheet', 'Sheet'),
+                   ('set', 'Set'),
+                   ('layout', 'Lay-out'),
+                   ],
         TIME: [('sec', 'Second'),
                ('min', 'Minute'),
                ('hr', 'Hour'),
@@ -65,7 +69,10 @@ class Measure:
 class Quantity(MeasureBase):
     STANDARD_UNIT = 'pc'
     UNITS = {
-        'pc': 1.0
+        'pc': 1.0,
+        'sheet': 1.0,
+        'set': 1.0,
+        'layout': 1.0
     }
 
 

@@ -1,9 +1,8 @@
 import pytest
-from decimal import Decimal
 from measurement.measures import Time, Distance
 from .measure.models import Measure, Quantity
 from .process.models import Process, ProcessSpeed, ProcessExpense
-from .exceptions import  MeasurementMismatch
+from .exceptions import MeasurementMismatch
 
 
 @pytest.fixture

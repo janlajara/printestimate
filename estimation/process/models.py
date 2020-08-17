@@ -5,6 +5,7 @@ from djmoney.models.fields import MoneyField
 from django_measurement.models import MeasurementField
 from measurement.measures import Time, Speed
 from ..measure.models import Measure, AreaSpeed, VolumeSpeed, QuantitySpeed
+from ..exceptions import MeasurementMismatch
 
 
 # Create your models here.
@@ -56,6 +57,8 @@ class Process(models.Model):
         return hourly_rate
 
     def get_duration(self, measurement, hours_per_day=10):
+        self._validate_measurement(measurement)
+
         # factor hours for setup and teardown, multiplied by estimate num of days
         def __compute_overall(base_duration):
             overall = base_duration
@@ -81,15 +84,19 @@ class Process(models.Model):
         return Time(hr=duration)
 
     def get_cost(self, measurement):
+        self._validate_measurement(measurement)
+
         cost = 0
         duration = self.get_duration(measurement)
         time_cost = self.hourly_rate * Decimal(duration.hr)
         measure_cost = 0
         measure_uom = Measure.STANDARD_UNITS[self.speed.measure]
+
         if measure_uom is not None and measurement is not None:
             mval = getattr(measurement, measure_uom)
             if mval is not None:
                 measure_cost = Decimal(mval) * self.measure_rate
+
         cost = self.flat_rate + time_cost + measure_cost
         return round(cost, 2)
 
@@ -99,6 +106,18 @@ class Process(models.Model):
                                                 type=expense_type,
                                                 rate=rate)
         return expense
+
+    def _validate_measurement(self, measurement):
+        try:
+            if measurement is not None and self.speed is not None:
+                uom = self.speed.measure_unit
+                converted = getattr(measurement, uom)
+                # if still successful at this point, then validation is done
+                return
+        except AttributeError as e:
+            uom = self.speed.measure_unit
+            measure = Measure.get_measure(uom)
+            raise MeasurementMismatch(measurement, measure)
 
     def _get_total_expenses(self, expense_type):
         total_rate = 0

@@ -3,7 +3,7 @@ from decimal import Decimal
 from measurement.measures import Time, Distance
 from .measure.models import Measure
 from .process.models import Process, ProcessSpeed, ProcessExpense
-
+from .exceptions import  MeasurementMismatch
 
 @pytest.fixture
 def process_speed(db):
@@ -90,6 +90,11 @@ def test_process__get_duration_long(db, process: Process):
     assert duration.hr == 43.33
 
 
+def test_process__get_duration_mismatch_measure(db, process: Process):
+    with pytest.raises(MeasurementMismatch):
+        cost = process.get_duration(Time(sec=10))
+
+
 def test_process__no_expense(db, process: Process):
     cost = process.get_cost(Distance(m=1))
     assert cost == 0
@@ -113,10 +118,16 @@ def test_process__get_cost_flat(db, process: Process):
     assert cost.amount == 100
 
 
-def test_process_get_cost_multiple(db, process: Process):
+def test_process__get_cost_multiple(db, process: Process):
     process.add_expense('Labor', ProcessExpense.HOUR_BASED, 75)
     process.add_expense('Electricity', ProcessExpense.HOUR_BASED, 110)
     process.add_expense('Blade', ProcessExpense.MEASURE_BASED, 90)
     process.add_expense('Some fee', ProcessExpense.FLAT, 100)
     cost = process.get_cost(Distance(m=10))
     assert float(cost.amount) == 1431.05
+
+
+def test_process__get_cost_mismatch_measure(db, process: Process):
+    process.add_expense('Labor', ProcessExpense.HOUR_BASED, 75)
+    with pytest.raises(MeasurementMismatch):
+        cost = process.get_cost(Time(sec=10))

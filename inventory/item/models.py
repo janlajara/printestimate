@@ -3,19 +3,19 @@ from django_measurement.models import MeasurementField
 from measurement.measures import Distance, Volume
 
 
-class MaterialProperties(models.Model):
+class ItemProperties(models.Model):
     pass
 
 
-class Tape(MaterialProperties):
+class Tape(ItemProperties):
     length = MeasurementField(measurement=Distance, null=True, blank=True)
 
 
-class Wire(MaterialProperties):
+class Wire(ItemProperties):
     length = MeasurementField(measurement=Distance, null=True, blank=True)
 
 
-class Rectangle(MaterialProperties):
+class Rectangle(ItemProperties):
     length = MeasurementField(measurement=Distance, null=True, blank=True)
     width = MeasurementField(measurement=Distance, null=True, blank=True)
 
@@ -53,5 +53,5 @@ class Panel(Rectangle):
     thickness = MeasurementField(measurement=Distance, null=True, blank=True)
 
 
-class Liquid(MaterialProperties):
+class Liquid(ItemProperties):
     volume = MeasurementField(measurement=Volume, null=True, blank=True)

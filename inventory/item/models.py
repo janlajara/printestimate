@@ -6,6 +6,20 @@ from polymorphic.models import PolymorphicModel
 
 class ItemProperties(PolymorphicModel):
 
+    @classmethod
+    def join(cls, arr):
+        return " ".join([prop for prop in arr if prop is not None and prop != ''])
+
+    @classmethod
+    def format(cls, value):
+        if value is None:
+            return ''
+        split = str(value).split()
+        num = float(split[0])
+        uom = split[1] if len(split) == 2 else ''
+        num_fmt = int(num) if num.is_integer() else num
+        return '%s%s' % (num_fmt, uom)
+
     def __str__(self):
         return ''
 
@@ -14,14 +28,14 @@ class Tape(ItemProperties):
     length = MeasurementField(measurement=Distance, null=True, blank=True)
 
     def __str__(self):
-        return str(self.length) if self.length is not None else ''
+        return super().format(self.length)
 
 
 class Wire(ItemProperties):
     length = MeasurementField(measurement=Distance, null=True, blank=True)
 
     def __str__(self):
-        return str(self.length) if self.length is not None else ''
+        return super().format(self.length)
 
 
 class Rectangle(ItemProperties):
@@ -44,7 +58,8 @@ class Rectangle(ItemProperties):
     def __str__(self):
         str_name = ''
         if self._is_not_none():
-            str_name = '%s x %s' % (self.width.value, self.length)
+            str_name = '%sx%s' % (super().format(self.width.value),
+                                  super().format(self.length))
         return str_name
 
 
@@ -64,23 +79,21 @@ class Paper(Rectangle):
     finish = models.CharField(max_length=15, choices=Finish.TYPES, null=True, blank=False)
 
     def __str__(self):
-        s = '%s %s %s' % (super().__str__(),
-                          self.finish if self.finish is not None else '',
-                          (self.gsm + 'gsm') if self.gsm is not None else '')
-        return s.strip()
+        gsm = str(self.gsm) + ' gsm' if self.gsm is not None else self.gsm
+        arr = [super().__str__(), self.finish, super().format(gsm)]
+        return super().join(arr)
 
 
 class Panel(Rectangle):
     thickness = MeasurementField(measurement=Distance, null=True, blank=True)
 
     def __str__(self):
-        s = '%s %s' % (super().__str__(),
-                       self.thickness if self.thickness is not None else '')
-        return s
+        arr = [super().__str__(), super().format(self.thickness)]
+        return super().join(arr)
 
 
 class Liquid(ItemProperties):
     volume = MeasurementField(measurement=Volume, null=True, blank=True)
 
     def __str__(self):
-        return '%s' % self.volume if self.volume is not None else ''
+        return super().format(self.volume)

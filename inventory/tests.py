@@ -199,20 +199,22 @@ def test_stock__expired_invalid_quantity(db, deposited_stock: Stock):
 def test_item__tape(db, item_factory):
     item = item_factory(name='Adhesive Tape', type=Item.TAPE)
     item.properties.length = Distance(cm=50)
-    assert str(item) == 'Adhesive Tape 50.0 cm'
+    assert str(item) == 'Adhesive Tape 50cm'
 
 
 def test_item__wire(db, item_factory):
     item = item_factory(name='Copper Wire', type=Item.WIRE)
     item.properties.length = Distance(m=1)
-    assert str(item) == 'Copper Wire 1.0 m'
+    assert str(item) == 'Copper Wire 1m'
 
 
 def test_item__paper(db, item_factory):
     item = item_factory(name='Carbonless', type=Item.PAPER_SHEET)
     item.properties.length = Distance(inch=34)
     item.properties.width = Distance(inch=22)
-    assert str(item) == 'Carbonless 22.0 x 34.0 inch'
+    item.properties.gsm = 120
+    item.properties.finish = Paper.Finish.MATTE
+    assert str(item) == 'Carbonless 22x34inch matte 120gsm'
 
 
 def test_item__panel(db, item_factory):
@@ -220,6 +222,12 @@ def test_item__panel(db, item_factory):
     item.properties.width = Distance(ft=4)
     item.properties.length = Distance(ft=8)
     item.properties.thickness = Distance(mm=3.0)
-    assert str(item) == 'Sintra Board 4.0 x 8.0 ft 3.0 mm'
+    assert str(item) == 'Sintra Board 4x8ft 3mm'
+
+
+def test_item__liquid(db, item_factory):
+    item = item_factory(name='Red Padding Cement', type=Item.LIQUID)
+    item.properties.volume = Volume(l=1)
+    assert str(item) == 'Red Padding Cement 1l'
 
 

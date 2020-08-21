@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+# Hack to make django polymorphic work with django 3.1
+from django.core.exceptions import FieldDoesNotExist
+from django.db import models
+models.FieldDoesNotExist = FieldDoesNotExist
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
@@ -37,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'polymorphic',
     'djmoney',
     'inventory',
     'estimation',

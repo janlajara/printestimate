@@ -38,7 +38,6 @@ class ItemManager(models.Manager):
 
         item = self.create(**data)
         type_key = data.get('type')
-
         if type_key is not None:
             clazz = ItemManager._get_properties_class(type_key)
             if clazz is not None:
@@ -90,6 +89,10 @@ class Item(models.Model):
     alternate_uom = models.ForeignKey(AlternateStockUnit,
                                       on_delete=models.RESTRICT, null=True,
                                       blank=True, related_name='alternate_uom')
+
+    @property
+    def full_name(self):
+        return ('%s %s' % (self.name, self.properties)).strip()
 
     @property
     def latest_price_per_quantity(self):
@@ -171,6 +174,9 @@ class Item(models.Model):
     def expire_stock(self, stock_id, quantity):
         stock = Stock.objects.get(pk=stock_id)
         stock.expired(quantity)
+
+    def __str__(self):
+        return self.full_name
 
 
 class StockManager(models.Manager):

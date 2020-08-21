@@ -1,6 +1,7 @@
 import pytest
+from measurement.measures import Distance, Volume
 from .models import BaseStockUnit, AlternateStockUnit, Item, Stock, StockRequest, StockMovement
-from .item.models import ItemProperties, Paper
+from .item.models import ItemProperties, Paper, Wire
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
 
 
@@ -18,12 +19,22 @@ def alt_unit__ream(db, base_unit__sheet):
 
 @pytest.fixture
 def item(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateStockUnit):
-    return Item.objects.create_item(name='Bond Paper 8.5 x 11',
+    return Item.objects.create_item(name='Bond Paper',
                                    type=Item.PAPER_SHEET,
                                    base_uom=base_unit__sheet,
                                    alternate_uom=alt_unit__ream,
                                    properties=ItemProperties.objects.create())
                                    #supplying properties with a dummy value to test a branch. see code
+
+
+@pytest.fixture
+def item_factory(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateStockUnit):
+    def create_item(**data):
+        item = Item.objects.create_item(base_uom=base_unit__sheet,
+                                        alternate_uom=alt_unit__ream,
+                                        **data)
+        return item
+    return create_item
 
 
 @pytest.fixture
@@ -183,3 +194,32 @@ def test_stock__expired(db, deposited_stock: Stock):
 def test_stock__expired_invalid_quantity(db, deposited_stock: Stock):
     with pytest.raises(InvalidExpireQuantity):
         deposited_stock.expired(501)
+
+
+def test_item__tape(db, item_factory):
+    item = item_factory(name='Adhesive Tape', type=Item.TAPE)
+    item.properties.length = Distance(cm=50)
+    assert str(item) == 'Adhesive Tape 50.0 cm'
+
+
+def test_item__wire(db, item_factory):
+    item = item_factory(name='Copper Wire', type=Item.WIRE)
+    item.properties.length = Distance(m=1)
+    assert str(item) == 'Copper Wire 1.0 m'
+
+
+def test_item__paper(db, item_factory):
+    item = item_factory(name='Carbonless', type=Item.PAPER_SHEET)
+    item.properties.length = Distance(inch=34)
+    item.properties.width = Distance(inch=22)
+    assert str(item) == 'Carbonless 22.0 x 34.0 inch'
+
+
+def test_item__panel(db, item_factory):
+    item = item_factory(name='Sintra Board', type=Item.PANEL)
+    item.properties.width = Distance(ft=4)
+    item.properties.length = Distance(ft=8)
+    item.properties.thickness = Distance(mm=3.0)
+    assert str(item) == 'Sintra Board 4.0 x 8.0 ft 3.0 mm'
+
+

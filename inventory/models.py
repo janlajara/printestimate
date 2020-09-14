@@ -85,7 +85,7 @@ class Item(models.Model):
     type = models.CharField(max_length=15, choices=TYPES, null=False, blank=False)
     properties = models.OneToOneField(ItemProperties, on_delete=models.RESTRICT, null=True)
     override_price = MoneyField(null=True, blank=False, max_digits=14, decimal_places=2, default_currency='PHP')
-    is_override_price = models.BooleanField(defult=False)
+    is_override_price = models.BooleanField(default=False)
     is_raw_material = models.BooleanField(default=False)
     base_uom = models.ForeignKey(BaseStockUnit, on_delete=models.RESTRICT,
                                  related_name='base_uom')

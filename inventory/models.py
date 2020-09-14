@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import Q, Sum, Avg
 from djmoney.models.fields import MoneyField
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
-from .item.models import ItemProperties, Tape, Wire, Paper, Panel, Liquid
+from .properties.models import ItemProperties, Tape, Wire, Paper, Panel, Liquid
 import inflect
 
 _inflect = inflect.engine()
@@ -84,6 +84,9 @@ class Item(models.Model):
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=15, choices=TYPES, null=False, blank=False)
     properties = models.OneToOneField(ItemProperties, on_delete=models.RESTRICT, null=True)
+    override_price = MoneyField(null=True, blank=False, max_digits=14, decimal_places=2, default_currency='PHP')
+    is_override_price = models.BooleanField(defult=False)
+    is_raw_material = models.BooleanField(default=False)
     base_uom = models.ForeignKey(BaseStockUnit, on_delete=models.RESTRICT,
                                  related_name='base_uom')
     alternate_uom = models.ForeignKey(AlternateStockUnit,
@@ -93,6 +96,13 @@ class Item(models.Model):
     @property
     def full_name(self):
         return ('%s %s' % (self.name, self.properties)).strip()
+
+    @property
+    def price(self):
+        if self.is_override_price and self.is_override_price is not None:
+            return self.is_override_price
+        else:
+            return self.latest_price_per_quantity
 
     @property
     def latest_price_per_quantity(self):

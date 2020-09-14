@@ -1,6 +1,7 @@
 from django.db import models
 from measurement.base import MeasureBase, BidimensionalMeasure
-from measurement.measures import Area, Time, Volume
+from measurement.measures import Area, Time, Volume, Distance
+from django_measurement.models import MeasurementField
 
 
 # Create your models here.
@@ -94,3 +95,9 @@ class AreaSpeed(BidimensionalMeasure):
 class VolumeSpeed(BidimensionalMeasure):
     PRIMARY_DIMENSION = Volume
     REFERENCE_DIMENSION = Time
+
+
+class PaperSize(models.Model):
+    name = models.CharField(max_length=40)
+    width = MeasurementField(measurement=Distance)
+    length = MeasurementField(measurement=Distance)

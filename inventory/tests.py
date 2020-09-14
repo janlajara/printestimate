@@ -1,7 +1,7 @@
 import pytest
 from measurement.measures import Distance, Volume
 from .models import BaseStockUnit, AlternateStockUnit, Item, Stock, StockRequest, StockMovement
-from .item.models import ItemProperties, Paper, Wire
+from .properties.models import ItemProperties, Paper, Wire
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
 
 

@@ -1,2 +1,5 @@
 from django.db import models
-from .process.models import *
+from measurement.utils import guess
+from .process.models import Process
+from .measure.models import Measure
+

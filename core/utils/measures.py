@@ -56,6 +56,10 @@ class Measure:
     }
 
     @classmethod
+    def get_units(cls, measure):
+        return cls.UNITS.get(measure)
+
+    @classmethod
     def get_measure(cls, unit):
         measure = None
         for key in cls.UNITS.keys():

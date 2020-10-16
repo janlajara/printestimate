@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'polymorphic',
     'djmoney',
+    'core',
     'inventory',
     'estimation',
 ]

@@ -4,7 +4,7 @@ from django.db import models
 from djmoney.models.fields import MoneyField
 from django_measurement.models import MeasurementField
 from measurement.measures import Time, Speed
-from ..measure.models import Measure, AreaSpeed, VolumeSpeed, QuantitySpeed
+from core.utils.measures import Measure, AreaSpeed, VolumeSpeed, QuantitySpeed
 from ..exceptions import MeasurementMismatch
 
 

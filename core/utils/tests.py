@@ -1,4 +1,4 @@
-from .models import Measure
+from .measures import Measure
 
 
 # Create your tests here.

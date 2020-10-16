@@ -1,7 +1,7 @@
 import pytest
 from measurement.measures import Time, Distance
 from .models import Process, ProcessSpeed, ProcessExpense
-from ..measure.models import Quantity
+from core.utils.measures import Quantity
 from ..exceptions import MeasurementMismatch
 
 

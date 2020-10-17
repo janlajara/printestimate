@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import Q, Sum, Avg
 from djmoney.models.fields import MoneyField
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
-from .properties.models import ItemProperties, Tape, Wire, Paper, Panel, Liquid
+from .properties.models import ItemProperties, Tape, Line, Paper, Panel, Liquid
 import inflect
 
 _inflect = inflect.engine()
@@ -51,7 +51,7 @@ class ItemManager(models.Manager):
     def _get_properties_class(item_type):
         mapping = {
             Item.TAPE: Tape,
-            Item.WIRE: Wire,
+            Item.LINE: Line,
             Item.PAPER_SHEET: Paper,
             Item.PAPER_ROLL: Paper,
             Item.PANEL: Panel,
@@ -64,7 +64,7 @@ class ItemManager(models.Manager):
 
 class Item(models.Model):
     TAPE = 'tape'
-    WIRE = 'wire'
+    LINE = 'line'
     PAPER_SHEET = 'papersheet'
     PAPER_ROLL = 'paperroll'
     PANEL = 'panel'
@@ -72,7 +72,7 @@ class Item(models.Model):
     OTHER = 'other'
     TYPES = [
         (TAPE, 'Tape'),
-        (WIRE, 'Wire'),
+        (LINE, 'Line'),
         (PAPER_SHEET, 'Paper - Sheet'),
         (PAPER_ROLL, 'Paper - Roll'),
         (PANEL, 'Panel'),
@@ -100,7 +100,7 @@ class Item(models.Model):
     @property
     def price(self):
         if self.is_override_price and self.is_override_price is not None:
-            return self.is_override_price
+            return self.override_price
         else:
             return self.latest_price_per_quantity
 

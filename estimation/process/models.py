@@ -42,6 +42,10 @@ class Process(models.Model):
     tear_down = MeasurementField(measurement=Time, null=True, blank=False)
 
     @property
+    def measure(self):
+        return self.speed.measure
+
+    @property
     def flat_rate(self):
         flat_rate = self._get_total_expenses(ProcessExpense.FLAT)
         return flat_rate

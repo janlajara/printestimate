@@ -29,7 +29,7 @@ class Measure:
                    ('sheet', 'Sheet'),
                    ('set', 'Set'),
                    ('layout', 'Lay-out'),
-                   ],
+                   ('pad', 'Pad')],
         TIME: [('sec', 'Second'),
                ('min', 'Minute'),
                ('hr', 'Hour'),
@@ -54,6 +54,12 @@ class Measure:
         VOLUME: 'l__hr',
         QUANTITY: 'pc__hr',
     }
+
+    @classmethod
+    def create_measurement(cls, value, unit):
+        if cls.get_measure(unit) == cls.DISTANCE:
+            measurement = Distance(unit=value)
+        return measurement
 
     @classmethod
     def get_units(cls, measure):

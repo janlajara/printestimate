@@ -46,6 +46,10 @@ class Process(models.Model):
         return self.speed.measure
 
     @property
+    def measure_unit(self):
+        return self.speed.measure_unit
+
+    @property
     def flat_rate(self):
         flat_rate = self._get_total_expenses(ProcessExpense.FLAT)
         return flat_rate
@@ -98,6 +102,8 @@ class Process(models.Model):
         measure_cost = 0
         measure_uom = Measure.STANDARD_UNITS[self.speed.measure]
 
+        # convert input measurement to standard measurement
+        # and multiply it by the measure rate
         if measure_uom is not None and measurement is not None:
             mval = getattr(measurement, measure_uom)
             if mval is not None:

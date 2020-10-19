@@ -23,12 +23,18 @@ def process_speed_factory(db):
 
 
 @pytest.fixture
-def process(db, process_speed: ProcessSpeed):
-    process = Process.objects.create(name='HP Latex Cutter',
-                                     speed=process_speed,
-                                     set_up=Time(hr=1),
-                                     tear_down=Time(hr=1))
-    return process
+def process_factory(db):
+    def create_process(**kwargs):
+        return Process.objects.create(**kwargs)
+    return create_process
+
+
+@pytest.fixture
+def process(db, process_factory:Process, process_speed: ProcessSpeed):
+    return process_factory(name='HP Latex Cutter',
+                           speed=process_speed,
+                           set_up=Time(hr=1),
+                           tear_down=Time(hr=1))
 
 
 @pytest.fixture

@@ -29,7 +29,9 @@ class Measure:
                    ('sheet', 'Sheet'),
                    ('set', 'Set'),
                    ('layout', 'Lay-out'),
-                   ('pad', 'Pad')],
+                   ('pad', 'Pad'),
+                   ('box', 'Box'),
+                   ('booklet', 'Booklet')],
         TIME: [('sec', 'Second'),
                ('min', 'Minute'),
                ('hr', 'Hour'),
@@ -38,7 +40,7 @@ class Measure:
 
     PRIMARY_UNITS = UNITS[DISTANCE] + UNITS[AREA] + \
         UNITS[VOLUME] + UNITS[QUANTITY]
-
+    QUANTITY_UNITS = UNITS[QUANTITY]
     TIME_UNITS = UNITS[TIME]
 
     STANDARD_UNITS = {
@@ -83,7 +85,10 @@ class Quantity(MeasureBase):
         'pc': 1.0,
         'sheet': 1.0,
         'set': 1.0,
-        'layout': 1.0
+        'layout': 1.0,
+        'pad': 1.0,
+        'box': 1.0,
+        'booklet': 1.0
     }
 
 

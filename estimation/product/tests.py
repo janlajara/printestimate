@@ -1,7 +1,8 @@
 import pytest
 from measurement.measures import Distance
 from inventory.models import BaseStockUnit, AlternateStockUnit, Item
-from .models import Form
+from .models import Form, ProductProcessMapping
+from ..process.tests import process_factory, process_speed_factory
 
 
 @pytest.fixture
@@ -69,8 +70,17 @@ def carbonless_roll(db, item_factory):
 def form(db):
     return Form.objects.create(name='Carbonless Form',
                                type=Form.PADDED,
+                               base_quantity=50,
                                width=Distance(inch=8.5),
                                length=Distance(inch=11))
+
+
+@pytest.fixture
+def form_with_ply(db, form, carbonless_white, carbonless_red, carbonless_blue):
+    form.add_ply(item=carbonless_white, order=1)
+    form.add_ply(item=carbonless_red, order=2)
+    form.add_ply(item=carbonless_blue, order=3)
+    return form
 
 
 @pytest.fixture
@@ -80,11 +90,18 @@ def continuous_form(db):
                                width=Distance(inch=8.5), length=Distance(inch=11))
 
 
-def test_form__ply_count(db, form, carbonless_white, carbonless_red, carbonless_blue):
-    form.add_ply(item=carbonless_white, order=1)
-    form.add_ply(item=carbonless_red, order=2)
-    form.add_ply(item=carbonless_blue, order=3)
-    assert form.ply_count == 3
+@pytest.fixture
+def gathering_process(db, form, process_factory, process_speed_factory):
+    return process_factory(name='Gathering', speed=process_speed_factory(20, 'set', 'min'))
+
+
+@pytest.fixture
+def binding_process(db, form, process_factory, process_speed_factory):
+    return process_factory(name='Binding', speed=process_speed_factory(0.5, 'pad', 'min'))
+
+
+def test_form__ply_count(db, form_with_ply):
+    assert form_with_ply.ply_count == 3
 
 
 def test_form__get_substrate_options_sheet(db, form, carbonless_white, carbonless_red):
@@ -103,3 +120,29 @@ def test_form__finished_size(db, form):
 def test_form__flat_size(db, form):
     assert form.flat_size['width'].value == 8.5
     assert form.flat_size['length'].value == 11
+
+
+def test_form__process_options(db, form, gathering_process, binding_process):
+    form.link_process(gathering_process)
+    form.link_process(binding_process)
+    assert len(form.process_options) == 2
+
+    form.unlink_process(binding_process)
+    assert len(form.process_options) == 1
+
+
+def test_product__measure_options(db, form):
+    assert len(form.measure_options) == 6
+
+
+def test_mapping__value_dynamic(db, form_with_ply, gathering_process):
+    form_with_ply.link_process(gathering_process)
+    mapping_value = form_with_ply.set_process_measure(gathering_process,
+                                                      'total_ply_count',
+                                                      ProductProcessMapping.DYNAMIC)
+    assert mapping_value == 150
+
+
+def test_mapping__value_static(db, form, gathering_process):
+    form.link_process(gathering_process)
+    mapping_value = form.set_process_measure(gathering_process, '')

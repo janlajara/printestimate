@@ -31,7 +31,8 @@ class Measure:
                    ('layout', 'Lay-out'),
                    ('pad', 'Pad'),
                    ('box', 'Box'),
-                   ('booklet', 'Booklet')],
+                   ('booklet', 'Booklet'),
+                   ('ream', 'Ream')],
         TIME: [('sec', 'Second'),
                ('min', 'Minute'),
                ('hr', 'Hour'),
@@ -88,7 +89,8 @@ class Quantity(MeasureBase):
         'layout': 1.0,
         'pad': 1.0,
         'box': 1.0,
-        'booklet': 1.0
+        'booklet': 1.0,
+        'ream': 1.0
     }
 
 

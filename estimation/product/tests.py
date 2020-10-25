@@ -144,6 +144,14 @@ def test_mapping__value_dynamic(db, form_with_ply, gathering_process):
     assert mapping_value == 150
 
 
+def test_mapping__value_alternative_quantity(db, form_with_ply, gathering_process):
+    form_with_ply.link_process(gathering_process)
+    mapping_value = form_with_ply.set_process_measure(gathering_process,
+                                                      'alternative_quantity',
+                                                      ProductProcessMapping.DYNAMIC)
+    assert mapping_value == 1
+
+
 def test_mapping__value_static(db, form, gathering_process):
     form.link_process(gathering_process)
     mapping_value = form.set_process_measure(gathering_process, '100')

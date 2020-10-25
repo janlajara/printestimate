@@ -64,11 +64,14 @@ class Product(PolymorphicModel):
         if mapping is not None:
             mapping.measure = measure if measure is not None else mapping.measure
             mapping.measure_type = measure_type if measure_type is not None else mapping.measure_type
-            return mapping.value
-            # mapping.save()
+            if mapping.value is not None:
+                mapping.save()
+                return mapping.value
 
     def get_cost(self, alternative_quantity):
-        pass
+        if alternative_quantity is not None:
+            for process in self.processes:
+                mapping = ProductProcessMapping.objects.get(process=process, product=self)
 
 
 class ProductProcessMapping(models.Model):
@@ -86,6 +89,8 @@ class ProductProcessMapping(models.Model):
     @property
     def value(self):
         if self.product is not None and self.process is not None and self.measure != '':
+            if self.measure_type == ProductProcessMapping.DYNAMIC and self.measure == 'alternative_quantity':
+                return 1
             if self.measure_type == ProductProcessMapping.DYNAMIC and hasattr(self.product, self.measure):
                 self._validate()
                 return getattr(self.product, self.measure)

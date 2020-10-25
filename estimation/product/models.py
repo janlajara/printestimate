@@ -108,7 +108,7 @@ class ProductProcessMapping(models.Model):
                 else:
                     raise MismatchProductMeasure(match, self.process.measure)
             else:
-                raise UnrecognizedProductMeasure(self.measure, self.__name__)
+                raise UnrecognizedProductMeasure(self.measure, self.__class__)
 
 
 class Paper(Product):

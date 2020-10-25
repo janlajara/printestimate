@@ -3,6 +3,7 @@ from measurement.measures import Distance
 from inventory.models import BaseStockUnit, AlternateStockUnit, Item
 from .models import Form, ProductProcessMapping
 from ..process.tests import process_factory, process_speed_factory
+from ..exceptions import InvalidProductMeasure, MismatchProductMeasure, UnrecognizedProductMeasure
 
 
 @pytest.fixture
@@ -145,4 +146,34 @@ def test_mapping__value_dynamic(db, form_with_ply, gathering_process):
 
 def test_mapping__value_static(db, form, gathering_process):
     form.link_process(gathering_process)
+    mapping_value = form.set_process_measure(gathering_process, '100')
+    assert mapping_value == 100
+
+
+def test_mapping__value_static_zero_default(db, form, gathering_process):
+    form.link_process(gathering_process)
     mapping_value = form.set_process_measure(gathering_process, '')
+    assert mapping_value == 0
+
+
+def test_mapping__value_invalid_product_measure(db, form, gathering_process):
+    form.link_process(gathering_process)
+    with pytest.raises(InvalidProductMeasure):
+        mapping_value = form.set_process_measure(gathering_process,
+                                                 'invalid_measure',
+                                                 ProductProcessMapping.DYNAMIC)
+
+
+def test_mapping__value_mismatch_product_measure(db, form, gathering_process):
+    form.link_process(gathering_process)
+    with pytest.raises(MismatchProductMeasure):
+        mapping_value = form.set_process_measure(gathering_process,
+                                                 'base_length',
+                                                 ProductProcessMapping.DYNAMIC)
+
+
+def test_mapping__value_unrecognized_product_measure(db, form, gathering_process):
+    form.link_process(gathering_process)
+    with pytest.raises(UnrecognizedProductMeasure):
+        mapping_value = form.set_process_measure(gathering_process,
+                                                 'width', ProductProcessMapping.DYNAMIC)

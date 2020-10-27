@@ -1,7 +1,7 @@
 import pytest
 from measurement.measures import Distance
 from inventory.models import BaseStockUnit, AlternateStockUnit, Item
-from .models import Form, ProductProcessMapping
+from .models import Form, Paper, ProductProcessMapping
 from ..process.tests import process_factory, process_speed_factory
 from ..exceptions import InvalidProductMeasure, MismatchProductMeasure, UnrecognizedProductMeasure
 
@@ -101,8 +101,16 @@ def binding_process(db, form, process_factory, process_speed_factory):
     return process_factory(name='Binding', speed=process_speed_factory(0.5, 'pad', 'min'))
 
 
+def test_paper__substrate_options(db, carbonless_white):
+    paper = Paper.objects.create(name='Carbonless Paper',
+                                 item=carbonless_white,
+                                 width=Distance(inch=8.5),
+                                 length=Distance(inch=11))
+    assert len(paper.substrate_options) == 1
+
+
 def test_form__ply_count(db, form_with_ply):
-    assert form_with_ply.ply_count == 3
+    assert form_with_ply.ply_count.sheet == 3
 
 
 def test_form__get_substrate_options_sheet(db, form, carbonless_white, carbonless_red):
@@ -141,7 +149,7 @@ def test_mapping__value_dynamic(db, form_with_ply, gathering_process):
     mapping_value = form_with_ply.set_process_measure(gathering_process,
                                                       'total_ply_count',
                                                       ProductProcessMapping.DYNAMIC)
-    assert mapping_value == 150
+    assert mapping_value.value == 150
 
 
 def test_mapping__value_alternative_quantity(db, form_with_ply, gathering_process):
@@ -176,7 +184,7 @@ def test_mapping__value_mismatch_product_measure(db, form, gathering_process):
     form.link_process(gathering_process)
     with pytest.raises(MismatchProductMeasure):
         mapping_value = form.set_process_measure(gathering_process,
-                                                 'base_length',
+                                                 'length',
                                                  ProductProcessMapping.DYNAMIC)
 
 
@@ -184,4 +192,4 @@ def test_mapping__value_unrecognized_product_measure(db, form, gathering_process
     form.link_process(gathering_process)
     with pytest.raises(UnrecognizedProductMeasure):
         mapping_value = form.set_process_measure(gathering_process,
-                                                 'width', ProductProcessMapping.DYNAMIC)
+                                                 'flat_size', ProductProcessMapping.DYNAMIC)

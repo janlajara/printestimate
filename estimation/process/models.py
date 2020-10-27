@@ -96,7 +96,6 @@ class Process(models.Model):
     def get_cost(self, measurement, contingency=0):
         self._validate_measurement(measurement)
 
-        cost = 0
         duration = self.get_duration(measurement, contingency)
         time_cost = self.hourly_rate * Decimal(duration.hr)
         measure_cost = 0

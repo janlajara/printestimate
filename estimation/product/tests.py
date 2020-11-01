@@ -2,6 +2,7 @@ import pytest
 from measurement.measures import Distance
 from inventory.models import BaseStockUnit, AlternateStockUnit, Item
 from .models import Form, Paper, ProductProcessMapping
+from ..process.models import ProcessExpense
 from ..process.tests import process_factory, process_speed_factory
 from ..exceptions import InvalidProductMeasure, MismatchProductMeasure, UnrecognizedProductMeasure
 
@@ -93,12 +94,16 @@ def continuous_form(db):
 
 @pytest.fixture
 def gathering_process(db, form, process_factory, process_speed_factory):
-    return process_factory(name='Gathering', speed=process_speed_factory(20, 'set', 'min'))
+    process = process_factory(name='Gathering', speed=process_speed_factory(20, 'set', 'min'))
+    process.add_expense('Labor', ProcessExpense.HOUR_BASED, 100)
+    return process
 
 
 @pytest.fixture
 def binding_process(db, form, process_factory, process_speed_factory):
-    return process_factory(name='Binding', speed=process_speed_factory(0.5, 'pad', 'min'))
+    process = process_factory(name='Binding', speed=process_speed_factory(0.5, 'pad', 'min'))
+    process.add_expense('Labor', ProcessExpense.FLAT, 100)
+    return process
 
 
 def test_paper__substrate_options(db, carbonless_white):
@@ -140,6 +145,15 @@ def test_form__process_options(db, form, gathering_process, binding_process):
     assert len(form.process_options) == 1
 
 
+def test_form__get_cost(db, form, gathering_process, binding_process):
+    form.link_process(gathering_process)
+    form.set_process_measure(gathering_process, 'base_quantity', ProductProcessMapping.DYNAMIC)
+    form.link_process(binding_process)
+    form.set_process_measure(binding_process, 'alternative_quantity', ProductProcessMapping.DYNAMIC)
+
+    assert form.get_cost(100).amount == 517
+
+
 def test_product__measure_options(db, form):
     assert len(form.measure_options) == 6
 
@@ -157,39 +171,39 @@ def test_mapping__value_alternative_quantity(db, form_with_ply, gathering_proces
     mapping_value = form_with_ply.set_process_measure(gathering_process,
                                                       'alternative_quantity',
                                                       ProductProcessMapping.DYNAMIC)
-    assert mapping_value == 1
+    assert mapping_value.pc == 1
 
 
 def test_mapping__value_static(db, form, gathering_process):
     form.link_process(gathering_process)
     mapping_value = form.set_process_measure(gathering_process, '100')
-    assert mapping_value == 100
+    assert mapping_value.value == 100
 
 
 def test_mapping__value_static_zero_default(db, form, gathering_process):
     form.link_process(gathering_process)
     mapping_value = form.set_process_measure(gathering_process, '')
-    assert mapping_value == 0
+    assert mapping_value is None
 
 
 def test_mapping__value_invalid_product_measure(db, form, gathering_process):
     form.link_process(gathering_process)
     with pytest.raises(InvalidProductMeasure):
-        mapping_value = form.set_process_measure(gathering_process,
-                                                 'invalid_measure',
-                                                 ProductProcessMapping.DYNAMIC)
+        form.set_process_measure(gathering_process,
+                                 'invalid_measure',
+                                 ProductProcessMapping.DYNAMIC)
 
 
 def test_mapping__value_mismatch_product_measure(db, form, gathering_process):
     form.link_process(gathering_process)
     with pytest.raises(MismatchProductMeasure):
-        mapping_value = form.set_process_measure(gathering_process,
-                                                 'length',
-                                                 ProductProcessMapping.DYNAMIC)
+        form.set_process_measure(gathering_process,
+                                 'length',
+                                 ProductProcessMapping.DYNAMIC)
 
 
 def test_mapping__value_unrecognized_product_measure(db, form, gathering_process):
     form.link_process(gathering_process)
     with pytest.raises(UnrecognizedProductMeasure):
-        mapping_value = form.set_process_measure(gathering_process,
-                                                 'flat_size', ProductProcessMapping.DYNAMIC)
+        form.set_process_measure(gathering_process,
+                                 'flat_size', ProductProcessMapping.DYNAMIC)

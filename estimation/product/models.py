@@ -2,7 +2,8 @@ from django.db import models
 from django_measurement.models import MeasurementField
 from polymorphic.models import PolymorphicModel
 from core.utils.measures import Measure, Quantity
-from measurement.measures import Distance
+from measurement.measures import Distance, Area, Volume
+from measurement.utils import guess
 from inventory.models import Item
 from ..process.models import Process
 from ..exceptions import InvalidProductMeasure, MismatchProductMeasure, UnrecognizedProductMeasure
@@ -15,7 +16,7 @@ class Product(PolymorphicModel):
     name = models.CharField(max_length=40)
     length = MeasurementField(measurement=Distance)
     width = MeasurementField(measurement=Distance)
-    base_quantity = MeasurementField(measurement=Quantity, default=Quantity(pc=1))
+    base_quantity = MeasurementField(measurement=Quantity, default=1)
     base_uom = models.CharField(max_length=15, choices=Measure.QUANTITY_UNITS)
     alternative_uom = models.CharField(max_length=15, choices=Measure.QUANTITY_UNITS)
     processes = models.ManyToManyField(Process, related_name='products')
@@ -62,9 +63,13 @@ class Product(PolymorphicModel):
             return total_cost
 
     def _get_processes_cost(self, alternative_quantity):
-        for process in self.processes:
+        cost = 0
+        for process in self.processes.all():
             mapping = ProductProcessMapping.objects.get(process=process, product=self)
-            total_measure_value = mapping.value * alternative_quantity
+            if mapping is not None:
+                total_measure = mapping.value * alternative_quantity
+                cost += process.get_cost(total_measure)
+        return cost
 
 
 class ProductProcessMapping(models.Model):
@@ -83,17 +88,16 @@ class ProductProcessMapping(models.Model):
     def value(self):
         if self.product is not None and self.process is not None and self.measure != '':
             if self.measure_type == ProductProcessMapping.DYNAMIC and self.measure == 'alternative_quantity':
-                return 1
+                return Quantity(pc=1)
             if self.measure_type == ProductProcessMapping.DYNAMIC and hasattr(self.product, self.measure):
                 self._validate()
                 return getattr(self.product, self.measure)
             elif self.measure_type == ProductProcessMapping.STATIC and self.measure.isnumeric():
-                return float(self.measure)
+                return guess(float(self.measure), self.process.measure_unit,
+                             measures=[Distance, Area, Volume, Quantity])
             else:
                 measure_options = list(map((lambda m: m[0]), self.product.measures))
                 raise InvalidProductMeasure(self.measure, self.measure_type, measure_options)
-        else:
-            return 0
 
     def _validate(self):
         if self.measure_type == ProductProcessMapping.DYNAMIC:
@@ -107,6 +111,11 @@ class ProductProcessMapping(models.Model):
                     raise MismatchProductMeasure(measure, self.process.measure)
             else:
                 raise UnrecognizedProductMeasure(self.measure, self.product.__class__)
+
+
+class PrintComponent(models.Model):
+    runsheet_length = MeasurementField(measurement=Distance, null=True)
+    runsheet_width = MeasurementField(measurement=Distance, null=True)
 
 
 class Paper(Product):
@@ -159,7 +168,12 @@ class Form(Product):
         return ply
 
 
-class FormPly(models.Model):
+class FormPly(PrintComponent):
     form = models.ForeignKey(Form, on_delete=models.CASCADE)
     order = models.IntegerField(default=1)
     item = models.OneToOneField(Item, on_delete=models.SET_NULL, null=True)
+
+    @property
+    def runsheet_per_stock(self):
+        pass
+        #to do: create models for machines, compute for runsheet count

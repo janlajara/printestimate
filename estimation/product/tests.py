@@ -151,7 +151,7 @@ def test_form__get_cost(db, form, gathering_process, binding_process):
     form.link_process(binding_process)
     form.set_process_measure(binding_process, 'alternative_quantity', ProductProcessMapping.DYNAMIC)
 
-    assert form.get_cost(100).amount == 517
+    assert form.get_cost(100, [gathering_process, binding_process]).amount == 517
 
 
 def test_product__measure_options(db, form):

@@ -56,15 +56,16 @@ class Product(PolymorphicModel):
                 mapping.save()
                 return mapping.value
 
-    def get_cost(self, alternative_quantity):
+    # to do: add cost of materials to total
+    def get_cost(self, alternative_quantity, processes):
         if alternative_quantity is not None:
             total_cost = 0
-            total_cost += self._get_processes_cost(alternative_quantity)
+            total_cost += self._get_processes_cost(alternative_quantity, processes)
             return total_cost
 
-    def _get_processes_cost(self, alternative_quantity):
+    def _get_processes_cost(self, alternative_quantity, processes):
         cost = 0
-        for process in self.processes.all():
+        for process in processes:
             mapping = ProductProcessMapping.objects.get(process=process, product=self)
             if mapping is not None:
                 total_measure = mapping.value * alternative_quantity
@@ -113,11 +114,6 @@ class ProductProcessMapping(models.Model):
                 raise UnrecognizedProductMeasure(self.measure, self.product.__class__)
 
 
-class PrintComponent(models.Model):
-    runsheet_length = MeasurementField(measurement=Distance, null=True)
-    runsheet_width = MeasurementField(measurement=Distance, null=True)
-
-
 class Paper(Product):
     item = models.OneToOneField(Item, on_delete=models.SET_NULL, null=True)
 
@@ -138,10 +134,12 @@ class Form(Product):
     ]
     type = models.CharField(max_length=15, choices=TYPES)
     measures = Product.measures + ['ply_count', 'total_ply_count']
-
     with_numbering = models.BooleanField(default=False)
     with_bir = models.BooleanField(default=False)
     with_amienda = models.BooleanField(default=False)
+
+    runsheet_length = MeasurementField(measurement=Distance, null=True)
+    runsheet_width = MeasurementField(measurement=Distance, null=True)
 
     @property
     def substrate_options(self):
@@ -152,6 +150,14 @@ class Form(Product):
         else:
             substrate = __get_materials(Item.PAPER_ROLL)
         return substrate
+
+    @property
+    def total_runsheet_count(self):
+        return None
+
+    @property
+    def plys(self):
+        return FormPly.filter(form=self)
 
     @property
     def total_ply_count(self):
@@ -168,12 +174,8 @@ class Form(Product):
         return ply
 
 
-class FormPly(PrintComponent):
+class FormPly(models.Model):
     form = models.ForeignKey(Form, on_delete=models.CASCADE)
     order = models.IntegerField(default=1)
     item = models.OneToOneField(Item, on_delete=models.SET_NULL, null=True)
 
-    @property
-    def runsheet_per_stock(self):
-        pass
-        #to do: create models for machines, compute for runsheet count

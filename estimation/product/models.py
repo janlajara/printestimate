@@ -137,9 +137,15 @@ class PackSheet(models.Model):
         rect_count = BinPacker.estimate_rectangles(*params)
         rectangles = [child_dimensions] * rect_count
         bins = [parent_dimensions]
-        packer = BinPacker.pack_rectangles(rectangles, bins, self.rotate)
 
-        return packer[0]
+        if self.rotate:
+            packer1 = BinPacker.pack_rectangles(rectangles, bins, True)[0]
+            packer2 = BinPacker.pack_rectangles(rectangles, bins, False)[0]
+            return packer1 if len(packer1) > len(packer2) else packer2
+        else:
+            packer = BinPacker.pack_rectangles(rectangles, bins)[0]
+
+        return packer
 
 
 class PackPrintSheet(PackSheet):

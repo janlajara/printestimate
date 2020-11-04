@@ -199,24 +199,22 @@ def test_mapping__value_static_zero_default(db, form, gathering_process):
 def test_mapping__value_invalid_product_measure(db, form, gathering_process):
     form.link_process(gathering_process)
     with pytest.raises(InvalidProductMeasure):
-        form.set_process_measure(gathering_process,
-                                 'invalid_measure',
+        form.set_process_measure(gathering_process, 'invalid_measure',
                                  ProductProcessMapping.DYNAMIC)
 
 
 def test_mapping__value_mismatch_product_measure(db, form, gathering_process):
     form.link_process(gathering_process)
     with pytest.raises(MismatchProductMeasure):
-        form.set_process_measure(gathering_process,
-                                 'length',
+        form.set_process_measure(gathering_process, 'length',
                                  ProductProcessMapping.DYNAMIC)
 
 
 def test_mapping__value_unrecognized_product_measure(db, form, gathering_process):
     form.link_process(gathering_process)
     with pytest.raises(UnrecognizedProductMeasure):
-        form.set_process_measure(gathering_process,
-                                 'flat_size', ProductProcessMapping.DYNAMIC)
+        form.set_process_measure(gathering_process, 'flat_size',
+                                 ProductProcessMapping.DYNAMIC)
 
 
 def test_formply__sheet_count(db, form_with_ply):

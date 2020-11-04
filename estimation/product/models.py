@@ -163,11 +163,11 @@ class PackPrintSheet(PackSheet):
 
     @property
     def runsheet_per_parentsheet(self):
-        return len(self.runsheet_packer) if self.runsheet_packer is not None else 0
+        return len(self.runsheet_packer) if self.runsheet_packer is not None else 1
 
     @property
     def trimsheet_per_runsheet(self):
-        return len(self.trimsheet_packer) if self.trimsheet_packer is not None else 0
+        return len(self.trimsheet_packer) if self.trimsheet_packer is not None else 1
 
 
 class Form(Product):
@@ -196,8 +196,10 @@ class Form(Product):
         return substrate
 
     @property
-    def runsheet_count(self):
-        return None
+    def runsheet_trimsheet_ratio(self):
+        if self.plys is not None:
+            ratios = [1/p.trimsheet_per_runsheet for p in self.plys]
+            return max(ratios)
 
     @property
     def plys(self):

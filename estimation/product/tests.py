@@ -1,7 +1,7 @@
 import pytest
 from measurement.measures import Distance
 from inventory.models import BaseStockUnit, AlternateStockUnit, Item
-from .models import Form, Paper, ProductProcessMapping
+from .models import Form, ProductProcessMapping
 from ..process.models import ProcessExpense
 from ..process.tests import process_factory, process_speed_factory
 from ..exceptions import InvalidProductMeasure, MismatchProductMeasure, UnrecognizedProductMeasure
@@ -32,8 +32,8 @@ def item_factory(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateS
 @pytest.fixture
 def carbonless_white(db, item_factory):
     item = item_factory(name='Carbonless White', type=Item.PAPER_SHEET)
-    item.properties.length = Distance(inch=34)
-    item.properties.width = Distance(inch=22)
+    item.properties.length = Distance(inch=22)
+    item.properties.width = Distance(inch=34)
     item.properties.size_uom = 'inch'
     item.properties.save()
     return item
@@ -42,8 +42,8 @@ def carbonless_white(db, item_factory):
 @pytest.fixture
 def carbonless_red(db, item_factory):
     item = item_factory(name='Carbonless Red', type=Item.PAPER_SHEET)
-    item.properties.length = Distance(inch=34)
-    item.properties.width = Distance(inch=22)
+    item.properties.length = Distance(inch=22)
+    item.properties.width = Distance(inch=34)
     item.properties.size_uom = 'inch'
     item.properties.save()
     return item
@@ -52,8 +52,8 @@ def carbonless_red(db, item_factory):
 @pytest.fixture
 def carbonless_blue(db, item_factory):
     item = item_factory(name='Carbonless Blue', type=Item.PAPER_SHEET)
-    item.properties.length = Distance(inch=34)
-    item.properties.width = Distance(inch=22)
+    item.properties.length = Distance(inch=22)
+    item.properties.width = Distance(inch=34)
     item.properties.size_uom = 'inch'
     item.properties.save()
     return item
@@ -79,9 +79,12 @@ def form(db):
 
 @pytest.fixture
 def form_with_ply(db, form, carbonless_white, carbonless_red, carbonless_blue):
-    form.add_ply(item=carbonless_white, order=1)
-    form.add_ply(item=carbonless_red, order=2)
-    form.add_ply(item=carbonless_blue, order=3)
+    form.add_ply(item=carbonless_white, order=1,
+                 runsheet_length=Distance(inch=22), runsheet_width=Distance(inch=17))
+    form.add_ply(item=carbonless_red, order=2,
+                 runsheet_length=Distance(inch=22), runsheet_width=Distance(inch=17))
+    form.add_ply(item=carbonless_blue, order=3,
+                 runsheet_length=Distance(inch=22), runsheet_width=Distance(inch=17))
     return form
 
 
@@ -104,14 +107,6 @@ def binding_process(db, form, process_factory, process_speed_factory):
     process = process_factory(name='Binding', speed=process_speed_factory(0.5, 'pad', 'min'))
     process.add_expense('Labor', ProcessExpense.FLAT, 100)
     return process
-
-
-def test_paper__substrate_options(db, carbonless_white):
-    paper = Paper.objects.create(name='Carbonless Paper',
-                                 item=carbonless_white,
-                                 width=Distance(inch=8.5),
-                                 length=Distance(inch=11))
-    assert len(paper.substrate_options) == 1
 
 
 def test_form__ply_count(db, form_with_ply):
@@ -152,6 +147,10 @@ def test_form__get_cost(db, form, gathering_process, binding_process):
     form.set_process_measure(binding_process, 'alternative_quantity', ProductProcessMapping.DYNAMIC)
 
     assert form.get_cost(100, [gathering_process, binding_process]).amount == 517
+
+
+def test_form__runsheet_trimsheet_ratio(db, form_with_ply):
+    assert form_with_ply.runsheet_trimsheet_ratio == 0.25
 
 
 def test_product__measure_options(db, form):
@@ -207,3 +206,10 @@ def test_mapping__value_unrecognized_product_measure(db, form, gathering_process
     with pytest.raises(UnrecognizedProductMeasure):
         form.set_process_measure(gathering_process,
                                  'flat_size', ProductProcessMapping.DYNAMIC)
+
+
+def test_formply__sheet_count(db, form_with_ply):
+    ply = form_with_ply.plys[0]
+    assert ply.runsheet_per_parentsheet == 2
+    assert ply.trimsheet_per_runsheet == 4
+    assert ply.trimsheet_per_parentsheet == 4

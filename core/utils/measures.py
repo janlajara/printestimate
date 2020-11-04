@@ -59,12 +59,6 @@ class Measure:
     }
 
     @classmethod
-    def create_measurement(cls, value, unit):
-        if cls.get_measure(unit) == cls.DISTANCE:
-            measurement = Distance(unit=value)
-        return measurement
-
-    @classmethod
     def get_units(cls, measure):
         return cls.UNITS.get(measure)
 

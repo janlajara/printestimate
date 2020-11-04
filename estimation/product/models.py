@@ -2,6 +2,7 @@ from django.db import models
 from django_measurement.models import MeasurementField
 from polymorphic.models import PolymorphicModel
 from core.utils.measures import Measure, Quantity
+from core.utils.binpacker import BinPacker
 from measurement.measures import Distance, Area, Volume
 from measurement.utils import guess
 from inventory.models import Item
@@ -114,13 +115,59 @@ class ProductProcessMapping(models.Model):
                 raise UnrecognizedProductMeasure(self.measure, self.product.__class__)
 
 
-class Paper(Product):
+class PackSheet(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     item = models.OneToOneField(Item, on_delete=models.SET_NULL, null=True)
+    rotate = models.BooleanField(default=False)
 
     @property
-    def substrate_options(self):
-        return Item.objects.filter(models.Q(type=Item.PAPER_ROLL) |
-                                   models.Q(type=Item.PAPER_SHEET))
+    def trimsheet_packer(self):
+        if self.item is not None:
+            parent = self.item.properties
+            parentsheet_dimensions = (parent.width.value, parent.length.value)
+            trimsheet_dimensions = (self.product.width.value, self.product.length.value)
+            return self._pack(parentsheet_dimensions, trimsheet_dimensions)
+
+    @property
+    def trimsheet_per_parentsheet(self):
+        return len(self.trimsheet_packer) if self.trimsheet_packer is not None else 0
+
+    def _pack(self, parent_dimensions, child_dimensions):
+        params = parent_dimensions + child_dimensions
+        rect_count = BinPacker.estimate_rectangles(*params)
+        rectangles = [child_dimensions] * rect_count
+        bins = [parent_dimensions]
+        packer = BinPacker.pack_rectangles(rectangles, bins, self.rotate)
+
+        return packer[0]
+
+
+class PackPrintSheet(PackSheet):
+    runsheet_width = MeasurementField(measurement=Distance, null=True)
+    runsheet_length = MeasurementField(measurement=Distance, null=True)
+
+    @property
+    def runsheet_packer(self):
+        if self.item is not None and self.product is not None:
+            parent = self.item.properties
+            parent_dimensions = (parent.width.value, parent.length.value)
+            runsheet_dimensions = (self.runsheet_width.value, self.runsheet_length.value)
+            return self._pack(parent_dimensions, runsheet_dimensions)
+
+    @property
+    def trimsheet_packer(self):
+        if self.runsheet_width is not None and self.runsheet_length is not None:
+            runsheet_dimensions = (self.runsheet_width.value, self.runsheet_length.value)
+            trimsheet_dimensions = (self.product.width.value, self.product.length.value)
+            return self._pack(runsheet_dimensions, trimsheet_dimensions)
+
+    @property
+    def runsheet_per_parentsheet(self):
+        return len(self.runsheet_packer) if self.runsheet_packer is not None else 0
+
+    @property
+    def trimsheet_per_runsheet(self):
+        return len(self.trimsheet_packer) if self.trimsheet_packer is not None else 0
 
 
 class Form(Product):
@@ -134,12 +181,9 @@ class Form(Product):
     ]
     type = models.CharField(max_length=15, choices=TYPES)
     measures = Product.measures + ['ply_count', 'total_ply_count']
-    with_numbering = models.BooleanField(default=False)
-    with_bir = models.BooleanField(default=False)
-    with_amienda = models.BooleanField(default=False)
-
-    runsheet_length = MeasurementField(measurement=Distance, null=True)
-    runsheet_width = MeasurementField(measurement=Distance, null=True)
+    #with_numbering = models.BooleanField(default=False)
+    #with_bir = models.BooleanField(default=False)
+    #with_amienda = models.BooleanField(default=False)
 
     @property
     def substrate_options(self):
@@ -152,12 +196,12 @@ class Form(Product):
         return substrate
 
     @property
-    def total_runsheet_count(self):
+    def runsheet_count(self):
         return None
 
     @property
     def plys(self):
-        return FormPly.filter(form=self)
+        return FormPly.objects.filter(product=self)
 
     @property
     def total_ply_count(self):
@@ -166,16 +210,17 @@ class Form(Product):
 
     @property
     def ply_count(self):
-        ply_count = len(FormPly.objects.filter(form__pk=self.pk))
+        ply_count = len(FormPly.objects.filter(product__pk=self.pk))
         return Quantity(sheet=ply_count)
 
-    def add_ply(self, item, order):
-        ply = FormPly.objects.create(form=self, item=item, order=order)
+    def add_ply(self, item, order, runsheet_length, runsheet_width, rotate=False):
+        ply = FormPly.objects.create(product=self, item=item, order=order,
+                                     runsheet_length=runsheet_length,
+                                     runsheet_width=runsheet_width,
+                                     rotate=rotate)
         return ply
 
 
-class FormPly(models.Model):
-    form = models.ForeignKey(Form, on_delete=models.CASCADE)
+class FormPly(PackPrintSheet):
     order = models.IntegerField(default=1)
-    item = models.OneToOneField(Item, on_delete=models.SET_NULL, null=True)
 

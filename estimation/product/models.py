@@ -116,9 +116,12 @@ class ProductProcessMapping(models.Model):
                 raise UnrecognizedProductMeasure(self.measure, self.product.__class__)
 
 
-class PackSheet(models.Model):
+class ProductComponent(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     item = models.OneToOneField(Item, on_delete=models.SET_NULL, null=True)
+
+
+class PackSheet(ProductComponent):
     rotate = models.BooleanField(default=False)
 
     @property
@@ -237,4 +240,3 @@ class Form(Product):
 
 class FormPly(PackPrintSheet):
     order = models.IntegerField(default=1)
-

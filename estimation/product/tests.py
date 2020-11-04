@@ -1,6 +1,7 @@
 import pytest
 from measurement.measures import Distance
 from inventory.models import BaseStockUnit, AlternateStockUnit, Item
+from core.utils.measures import Quantity
 from .models import Form, ProductProcessMapping
 from ..process.models import ProcessExpense
 from ..process.tests import process_factory, process_speed_factory
@@ -72,7 +73,7 @@ def carbonless_roll(db, item_factory):
 def form(db):
     return Form.objects.create(name='Carbonless Form',
                                type=Form.PADDED,
-                               base_quantity=50,
+                               base_quantity=Quantity(sheet=50),
                                width=Distance(inch=8.5),
                                length=Distance(inch=11))
 
@@ -96,14 +97,21 @@ def continuous_form(db):
 
 
 @pytest.fixture
-def gathering_process(db, form, process_factory, process_speed_factory):
+def printing_process(db, process_factory, process_speed_factory):
+    process = process_factory(name='GTO Printing', speed=process_speed_factory(2000, 'sheet', 'hr'))
+    process.add_expense('Ink', ProcessExpense.MEASURE_BASED, 0.10)
+    return process
+
+
+@pytest.fixture
+def gathering_process(db, process_factory, process_speed_factory):
     process = process_factory(name='Gathering', speed=process_speed_factory(20, 'set', 'min'))
     process.add_expense('Labor', ProcessExpense.HOUR_BASED, 100)
     return process
 
 
 @pytest.fixture
-def binding_process(db, form, process_factory, process_speed_factory):
+def binding_process(db, process_factory, process_speed_factory):
     process = process_factory(name='Binding', speed=process_speed_factory(0.5, 'pad', 'min'))
     process.add_expense('Labor', ProcessExpense.FLAT, 100)
     return process
@@ -140,21 +148,24 @@ def test_form__process_options(db, form, gathering_process, binding_process):
     assert len(form.process_options) == 1
 
 
-def test_form__get_cost(db, form, gathering_process, binding_process):
-    form.link_process(gathering_process)
-    form.set_process_measure(gathering_process, 'base_quantity', ProductProcessMapping.DYNAMIC)
-    form.link_process(binding_process)
-    form.set_process_measure(binding_process, 'alternative_quantity', ProductProcessMapping.DYNAMIC)
+def test_form__get_cost(db, form_with_ply, gathering_process, binding_process, printing_process):
+    form_with_ply.link_process(gathering_process)
+    form_with_ply.set_process_measure(gathering_process, 'base_quantity', ProductProcessMapping.DYNAMIC)
+    form_with_ply.link_process(binding_process)
+    form_with_ply.set_process_measure(binding_process, 'alternative_quantity', ProductProcessMapping.DYNAMIC)
+    form_with_ply.link_process(printing_process)
+    form_with_ply.set_process_measure(printing_process, 'runsheet_count', ProductProcessMapping.DYNAMIC)
 
-    assert form.get_cost(100, [gathering_process, binding_process]).amount == 517
+    assert form_with_ply.get_cost(100, [gathering_process, binding_process, printing_process]).amount == 897
 
 
 def test_form__runsheet_trimsheet_ratio(db, form_with_ply):
     assert form_with_ply.runsheet_trimsheet_ratio == 0.25
+    assert form_with_ply.runsheet_count.value == 38
 
 
 def test_product__measure_options(db, form):
-    assert len(form.measure_options) == 6
+    assert len(form.measure_options) == 7
 
 
 def test_mapping__value_dynamic(db, form_with_ply, gathering_process):

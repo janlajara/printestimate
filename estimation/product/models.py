@@ -1,3 +1,4 @@
+import math
 from django.db import models
 from django_measurement.models import MeasurementField
 from polymorphic.models import PolymorphicModel
@@ -186,7 +187,7 @@ class Form(Product):
         (CONTINUOUS, 'Continuous')
     ]
     type = models.CharField(max_length=15, choices=TYPES)
-    measures = Product.measures + ['ply_count', 'total_ply_count']
+    measures = Product.measures + ['runsheet_count', 'ply_count', 'total_ply_count']
     #with_numbering = models.BooleanField(default=False)
     #with_bir = models.BooleanField(default=False)
     #with_amienda = models.BooleanField(default=False)
@@ -206,6 +207,11 @@ class Form(Product):
         if self.plys is not None:
             ratios = [1/p.trimsheet_per_runsheet for p in self.plys]
             return max(ratios)
+
+    @property
+    def runsheet_count(self):
+        count = math.ceil(self.runsheet_trimsheet_ratio * self.total_ply_count.value)
+        return Quantity(sheet=count)
 
     @property
     def plys(self):

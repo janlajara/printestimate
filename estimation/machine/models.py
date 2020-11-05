@@ -8,13 +8,13 @@ class Machine(models.Model):
 
 
 class SheetfedPress(Machine):
-    min_runsheet_length = MeasurementField(measurement=Distance)
-    max_runsheet_length = MeasurementField(measurement=Distance)
-    min_runsheet_width = MeasurementField(measurement=Distance)
-    max_runsheet_width = MeasurementField(measurement=Distance)
+    min_sheet_length = MeasurementField(measurement=Distance)
+    max_sheet_length = MeasurementField(measurement=Distance)
+    min_sheet_width = MeasurementField(measurement=Distance)
+    max_sheet_width = MeasurementField(measurement=Distance)
 
 
 class RollfedPress(Machine):
-    min_runsheet_width = MeasurementField(measurement=Distance)
-    max_runsheet_width = MeasurementField(measurement=Distance)
+    min_sheet_width = MeasurementField(measurement=Distance)
+    max_sheet_width = MeasurementField(measurement=Distance)
 

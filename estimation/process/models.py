@@ -5,6 +5,7 @@ from djmoney.models.fields import MoneyField
 from django_measurement.models import MeasurementField
 from measurement.measures import Time, Speed
 from core.utils.measures import Measure, AreaSpeed, VolumeSpeed, QuantitySpeed
+from ..machine.models import Machine
 from ..exceptions import MeasurementMismatch
 
 
@@ -40,6 +41,7 @@ class Process(models.Model):
     speed = models.OneToOneField(ProcessSpeed, on_delete=models.RESTRICT)
     set_up = MeasurementField(measurement=Time, null=True, blank=False)
     tear_down = MeasurementField(measurement=Time, null=True, blank=False)
+    machine = models.ForeignKey(Machine, null=True, blank=False, on_delete=models.SET_NULL)
 
     @property
     def measure(self):

@@ -28,6 +28,6 @@ class UnrecognizedProductMeasure(Exception):
 
 class SheetSizeInvalid(Exception):
     def __init__(self, min_expected_size, max_expected_size, actual_size):
-        self.message = "Sheet size must be less than %s and greater than %. Actual size provided is '%s'." % \
+        self.message = "Sheet size must be less than %s and greater than %. Actual size configured is '%s'." % \
                        (min_expected_size, max_expected_size, actual_size)
         super().__init__(self.message)

@@ -7,6 +7,7 @@ from core.utils.binpacker import BinPacker
 from measurement.measures import Distance, Area, Volume
 from measurement.utils import guess
 from inventory.models import Item
+from ..machine.models import SheetfedPress
 from ..process.models import Process
 from ..exceptions import InvalidProductMeasure, MismatchProductMeasure, UnrecognizedProductMeasure
 
@@ -90,10 +91,11 @@ class ProductProcessMapping(models.Model):
     @property
     def value(self):
         if self.product is not None and self.process is not None and self.measure != '':
+            self._validate_process()
             if self.measure_type == ProductProcessMapping.DYNAMIC and self.measure == 'alternative_quantity':
                 return Quantity(pc=1)
             if self.measure_type == ProductProcessMapping.DYNAMIC and hasattr(self.product, self.measure):
-                self._validate()
+                self._validate_measure()
                 return getattr(self.product, self.measure)
             elif self.measure_type == ProductProcessMapping.STATIC and self.measure.isnumeric():
                 return guess(float(self.measure), self.process.measure_unit,
@@ -102,7 +104,12 @@ class ProductProcessMapping(models.Model):
                 measure_options = list(map((lambda m: m[0]), self.product.measures))
                 raise InvalidProductMeasure(self.measure, self.measure_type, measure_options)
 
-    def _validate(self):
+    def _validate_process(self):
+        components = ProductComponent.objects.filter(product=self.product)
+        for component in components:
+            component.validate_process(self.process)
+
+    def _validate_measure(self):
         if self.measure_type == ProductProcessMapping.DYNAMIC:
             # Get the measurement type associated with the product measure
             # and compare with the correct process measure
@@ -116,9 +123,12 @@ class ProductProcessMapping(models.Model):
                 raise UnrecognizedProductMeasure(self.measure, self.product.__class__)
 
 
-class ProductComponent(models.Model):
+class ProductComponent(PolymorphicModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     item = models.OneToOneField(Item, on_delete=models.SET_NULL, null=True)
+
+    def validate_process(self, process):
+        pass
 
 
 class PackSheet(ProductComponent):
@@ -136,6 +146,12 @@ class PackSheet(ProductComponent):
     def trimsheet_per_parentsheet(self):
         return len(self.trimsheet_packer) if self.trimsheet_packer is not None else 0
 
+    def validate_process(self, process):
+        machine = process.machine
+        if machine is not None:
+            machine.validate_input(runsheet_length=self.item.length,
+                                   runsheet_width=self.item.width)
+
     def _pack(self, parent_dimensions, child_dimensions):
         params = parent_dimensions + child_dimensions
         rect_count = BinPacker.estimate_rectangles(*params)
@@ -147,9 +163,7 @@ class PackSheet(ProductComponent):
             packer2 = BinPacker.pack_rectangles(rectangles, bins, False)[0]
             return packer1 if len(packer1) > len(packer2) else packer2
         else:
-            packer = BinPacker.pack_rectangles(rectangles, bins)[0]
-
-        return packer
+            return BinPacker.pack_rectangles(rectangles, bins)[0]
 
 
 class PackPrintSheet(PackSheet):
@@ -178,6 +192,12 @@ class PackPrintSheet(PackSheet):
     @property
     def trimsheet_per_runsheet(self):
         return len(self.trimsheet_packer) if self.trimsheet_packer is not None else 1
+
+    def validate_process(self, process):
+        machine = process.machine
+        if machine is not None:
+            machine.validate_input(runsheet_length=self.runsheet_length,
+                                   runsheet_width=self.runsheet_width)
 
 
 class Form(Product):

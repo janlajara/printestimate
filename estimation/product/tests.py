@@ -3,6 +3,7 @@ from measurement.measures import Distance
 from inventory.models import BaseStockUnit, AlternateStockUnit, Item
 from core.utils.measures import Quantity
 from .models import Form, ProductProcessMapping
+from ..machine.models import SheetfedPress
 from ..process.models import ProcessExpense
 from ..process.tests import process_factory, process_speed_factory
 from ..exceptions import InvalidProductMeasure, MismatchProductMeasure, UnrecognizedProductMeasure
@@ -98,7 +99,11 @@ def continuous_form(db):
 
 @pytest.fixture
 def printing_process(db, process_factory, process_speed_factory):
-    process = process_factory(name='GTO Printing', speed=process_speed_factory(2000, 'sheet', 'hr'))
+    machine = SheetfedPress.objects.create(name='GTO Press',
+                                           min_sheet_length=Distance(inch=15), max_sheet_length=Distance(inch=22),
+                                           min_sheet_width=Distance(inch=15), max_sheet_width=Distance(inch=22))
+    process = process_factory(name='GTO Printing', speed=process_speed_factory(2000, 'sheet', 'hr'),
+                              machine=machine)
     process.add_expense('Ink', ProcessExpense.MEASURE_BASED, 0.10)
     return process
 

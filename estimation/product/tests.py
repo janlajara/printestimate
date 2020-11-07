@@ -81,11 +81,11 @@ def form(db):
 
 @pytest.fixture
 def form_with_ply(db, form, carbonless_white, carbonless_red, carbonless_blue):
-    form.add_ply(item=carbonless_white, order=1,
+    form.add_ply(material=carbonless_white, order=1,
                  runsheet_length=Distance(inch=22), runsheet_width=Distance(inch=17))
-    form.add_ply(item=carbonless_red, order=2,
+    form.add_ply(material=carbonless_red, order=2,
                  runsheet_length=Distance(inch=22), runsheet_width=Distance(inch=17))
-    form.add_ply(item=carbonless_blue, order=3,
+    form.add_ply(material=carbonless_blue, order=3,
                  runsheet_length=Distance(inch=22), runsheet_width=Distance(inch=17))
     return form
 

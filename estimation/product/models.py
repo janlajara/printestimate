@@ -66,6 +66,9 @@ class Product(PolymorphicModel):
             total_cost += self._get_processes_cost(alternative_quantity, processes)
             return total_cost
 
+    def _get_materials_cost(self, alternative_quantity):
+        pass
+
     def _get_processes_cost(self, alternative_quantity, processes):
         cost = 0
         for process in processes:
@@ -125,7 +128,10 @@ class ProductProcessMapping(models.Model):
 
 class ProductComponent(PolymorphicModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    item = models.OneToOneField(Item, on_delete=models.SET_NULL, null=True)
+    material = models.OneToOneField(Item, on_delete=models.SET_NULL, null=True)
+
+    def material_count_ratio(self):
+        pass
 
     def validate_process(self, process):
         pass
@@ -136,8 +142,8 @@ class PackSheet(ProductComponent):
 
     @property
     def trimsheet_packer(self):
-        if self.item is not None:
-            parent = self.item.properties
+        if self.material is not None:
+            parent = self.material.properties
             parentsheet_dimensions = (parent.width.value, parent.length.value)
             trimsheet_dimensions = (self.product.width.value, self.product.length.value)
             return self._pack(parentsheet_dimensions, trimsheet_dimensions)
@@ -146,11 +152,16 @@ class PackSheet(ProductComponent):
     def trimsheet_per_parentsheet(self):
         return len(self.trimsheet_packer) if self.trimsheet_packer is not None else 0
 
+    @property
+    def material_count_ratio(self):
+        product_base_quantity = self.product.base_quantity.value
+        return product_base_quantity / self.trimsheet_per_parentsheet
+
     def validate_process(self, process):
         machine = process.machine
         if machine is not None:
-            machine.validate_input(runsheet_length=self.item.length,
-                                   runsheet_width=self.item.width)
+            machine.validate_input(runsheet_length=self.material.length,
+                                   runsheet_width=self.material.width)
 
     def _pack(self, parent_dimensions, child_dimensions):
         params = parent_dimensions + child_dimensions
@@ -172,8 +183,8 @@ class PackPrintSheet(PackSheet):
 
     @property
     def runsheet_packer(self):
-        if self.item is not None and self.product is not None:
-            parent = self.item.properties
+        if self.material is not None and self.product is not None:
+            parent = self.material.properties
             parent_dimensions = (parent.width.value, parent.length.value)
             runsheet_dimensions = (self.runsheet_width.value, self.runsheet_length.value)
             return self._pack(parent_dimensions, runsheet_dimensions)
@@ -250,8 +261,8 @@ class Form(Product):
         ply_count = len(FormPly.objects.filter(product__pk=self.pk))
         return Quantity(sheet=ply_count)
 
-    def add_ply(self, item, order, runsheet_length, runsheet_width, rotate=False):
-        ply = FormPly.objects.create(product=self, item=item, order=order,
+    def add_ply(self, material, order, runsheet_length, runsheet_width, rotate=False):
+        ply = FormPly.objects.create(product=self, material=material, order=order,
                                      runsheet_length=runsheet_length,
                                      runsheet_width=runsheet_width,
                                      rotate=rotate)

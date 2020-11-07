@@ -101,14 +101,16 @@ class Item(models.Model):
     def price(self):
         if self.is_override_price and self.is_override_price is not None:
             return self.override_price
-        else:
+        elif self.latest_price_per_quantity is not None:
             return self.latest_price_per_quantity
 
     @property
     def latest_price_per_quantity(self):
-        latest_stock = Stock.objects.filter(item__pk=self.id).latest('created_at')
-        if latest_stock is not None:
-            return latest_stock.price_per_quantity
+        stocks = Stock.objects.filter(item__pk=self.id)
+        if len(stocks) > 0:
+            latest_stock = stocks.latest('created_at')
+            if latest_stock is not None:
+                return latest_stock.price_per_quantity
 
     @property
     def average_price_per_quantity(self):

@@ -33,6 +33,10 @@ class Product(PolymorphicModel):
         return {'length': self.length, 'width': self.width}
 
     @property
+    def components(self):
+        return ProductComponent.objects.filter(product=self)
+
+    @property
     def measure_options(self):
         return self.measures
 
@@ -59,15 +63,26 @@ class Product(PolymorphicModel):
                 mapping.save()
                 return mapping.value
 
-    # to do: add cost of materials to total
+    def get_materials(self, alternative_quantity):
+        materials = []
+        for component in self.components:
+            count = component.material_count_ratio * alternative_quantity
+            pair = (component.material, count)
+            materials.append(pair)
+        return materials
+
     def get_cost(self, alternative_quantity, processes):
         if alternative_quantity is not None:
             total_cost = 0
             total_cost += self._get_processes_cost(alternative_quantity, processes)
+            total_cost += self._get_materials_cost(alternative_quantity)
             return total_cost
 
     def _get_materials_cost(self, alternative_quantity):
-        pass
+        cost = 0
+        for component in self.components:
+            cost += component.get_cost(alternative_quantity)
+        return cost
 
     def _get_processes_cost(self, alternative_quantity, processes):
         cost = 0
@@ -130,8 +145,13 @@ class ProductComponent(PolymorphicModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     material = models.OneToOneField(Item, on_delete=models.SET_NULL, null=True)
 
+    @property
     def material_count_ratio(self):
-        pass
+        return 1
+
+    def get_cost(self, alternate_quantity):
+        material_count = self.material_count_ratio * alternate_quantity
+        return math.ceil(material_count) * self.material.price
 
     def validate_process(self, process):
         pass
@@ -203,6 +223,11 @@ class PackPrintSheet(PackSheet):
     @property
     def trimsheet_per_runsheet(self):
         return len(self.trimsheet_packer) if self.trimsheet_packer is not None else 1
+
+    @property
+    def material_count_ratio(self):
+        product_base_quantity = self.product.base_quantity.value
+        return product_base_quantity / (self.trimsheet_per_runsheet * self.runsheet_per_parentsheet)
 
     def validate_process(self, process):
         machine = process.machine

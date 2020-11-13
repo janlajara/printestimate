@@ -33,7 +33,8 @@ def item_factory(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateS
 
 @pytest.fixture
 def carbonless_white(db, item_factory):
-    item = item_factory(name='Carbonless White', type=Item.PAPER_SHEET)
+    item = item_factory(name='Carbonless White', type=Item.PAPER_SHEET,
+                        override_price=2, is_override_price=True)
     item.properties.length = Distance(inch=22)
     item.properties.width = Distance(inch=34)
     item.properties.size_uom = 'inch'
@@ -43,7 +44,8 @@ def carbonless_white(db, item_factory):
 
 @pytest.fixture
 def carbonless_red(db, item_factory):
-    item = item_factory(name='Carbonless Red', type=Item.PAPER_SHEET)
+    item = item_factory(name='Carbonless Red', type=Item.PAPER_SHEET,
+                        override_price=2, is_override_price=True)
     item.properties.length = Distance(inch=22)
     item.properties.width = Distance(inch=34)
     item.properties.size_uom = 'inch'
@@ -53,7 +55,8 @@ def carbonless_red(db, item_factory):
 
 @pytest.fixture
 def carbonless_blue(db, item_factory):
-    item = item_factory(name='Carbonless Blue', type=Item.PAPER_SHEET)
+    item = item_factory(name='Carbonless Blue', type=Item.PAPER_SHEET,
+                        override_price=2, is_override_price=True)
     item.properties.length = Distance(inch=22)
     item.properties.width = Distance(inch=34)
     item.properties.size_uom = 'inch'
@@ -153,6 +156,12 @@ def test_form__process_options(db, form, gathering_process, binding_process):
     assert len(form.process_options) == 1
 
 
+def test_form__get_materials(db, form_with_ply):
+    materials = form_with_ply.get_materials(100)
+    for pair in materials:
+        assert pair[1] == 625
+
+
 def test_form__get_cost(db, form_with_ply, gathering_process, binding_process, printing_process):
     form_with_ply.link_process(gathering_process)
     form_with_ply.set_process_measure(gathering_process, 'base_quantity', ProductProcessMapping.DYNAMIC)
@@ -161,7 +170,7 @@ def test_form__get_cost(db, form_with_ply, gathering_process, binding_process, p
     form_with_ply.link_process(printing_process)
     form_with_ply.set_process_measure(printing_process, 'runsheet_count', ProductProcessMapping.DYNAMIC)
 
-    assert form_with_ply.get_cost(100, [gathering_process, binding_process, printing_process]).amount == 897
+    assert form_with_ply.get_cost(100, [gathering_process, binding_process, printing_process]).amount == 4647
 
 
 def test_form__runsheet_trimsheet_ratio(db, form_with_ply):

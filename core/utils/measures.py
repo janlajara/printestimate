@@ -6,6 +6,16 @@ from django_measurement.models import MeasurementField
 
 # Create your models here.
 class Measure:
+    ALTERNATIVE_QUANTITY_UNITS = [
+        ('set', 'Set'),
+        ('pad', 'Pad'),
+        ('box', 'Box'),
+        ('booklet', 'Booklet'),
+        ('ream', 'Ream')]
+    BASE_QUANTITY_UNITS = [('pc', 'Piece'),
+                           ('sheet', 'Sheet')] + ALTERNATIVE_QUANTITY_UNITS
+    QUANTITY_UNITS = ALTERNATIVE_QUANTITY_UNITS + BASE_QUANTITY_UNITS
+
     DISTANCE = 'Distance'
     AREA = 'Area'
     VOLUME = 'Volume'
@@ -25,14 +35,7 @@ class Measure:
                  ('cl', 'Centiliter'),
                  ('l', 'Liter'),
                  ('imperial_oz', 'Ounce')],
-        QUANTITY: [('pc', 'Piece'),
-                   ('sheet', 'Sheet'),
-                   ('set', 'Set'),
-                   ('layout', 'Lay-out'),
-                   ('pad', 'Pad'),
-                   ('box', 'Box'),
-                   ('booklet', 'Booklet'),
-                   ('ream', 'Ream')],
+        QUANTITY: [('layout', 'Lay-out')] + QUANTITY_UNITS,
         TIME: [('sec', 'Second'),
                ('min', 'Minute'),
                ('hr', 'Hour'),
@@ -41,7 +44,6 @@ class Measure:
 
     PRIMARY_UNITS = UNITS[DISTANCE] + UNITS[AREA] + \
         UNITS[VOLUME] + UNITS[QUANTITY]
-    QUANTITY_UNITS = UNITS[QUANTITY]
     TIME_UNITS = UNITS[TIME]
 
     STANDARD_UNITS = {

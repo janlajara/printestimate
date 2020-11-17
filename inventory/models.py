@@ -23,6 +23,9 @@ class BaseStockUnit(models.Model):
         if self.abbrev is not None:
             return _inflect.plural(self.abbrev)
 
+    def __str__(self):
+        return self.name
+
 
 class AlternateStockUnit(BaseStockUnit):
     base_stock_units = models.ManyToManyField(BaseStockUnit, related_name='base_stock_units')

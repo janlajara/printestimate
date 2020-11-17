@@ -6,15 +6,15 @@ from django_measurement.models import MeasurementField
 
 # Create your models here.
 class Measure:
-    ALTERNATIVE_QUANTITY_UNITS = [
+    QUANTITY_UNITS = [
         ('set', 'Set'),
         ('pad', 'Pad'),
         ('box', 'Box'),
         ('booklet', 'Booklet'),
-        ('ream', 'Ream')]
-    BASE_QUANTITY_UNITS = [('pc', 'Piece'),
-                           ('sheet', 'Sheet')] + ALTERNATIVE_QUANTITY_UNITS
-    QUANTITY_UNITS = ALTERNATIVE_QUANTITY_UNITS + BASE_QUANTITY_UNITS
+        ('ream', 'Ream'),
+        ('pc', 'Piece'),
+        ('sheet', 'Sheet')
+    ]
 
     DISTANCE = 'Distance'
     AREA = 'Area'

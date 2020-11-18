@@ -12,6 +12,7 @@ _inflect = inflect.engine()
 class BaseStockUnit(models.Model):
     name = models.CharField(max_length=10)
     abbrev = models.CharField(max_length=10)
+    is_editable = models.BooleanField(default=True)
 
     @property
     def plural_name(self):
@@ -98,7 +99,8 @@ class Item(models.Model):
 
     @property
     def full_name(self):
-        return ('%s %s' % (self.name, self.properties)).strip()
+        properties = self.properties if self.properties is not None else ''
+        return ('%s %s' % (self.name, properties)).strip()
 
     @property
     def price(self):
@@ -119,10 +121,11 @@ class Item(models.Model):
     def average_price_per_quantity(self):
         stocks = Stock.objects.filter(item__pk=self.id)
         stocks_len = len(stocks)
-        total = 0
-        for stock in stocks:
-            total += stock.price_per_quantity
-        return total / stocks_len
+        if stocks_len > 0:
+            total = 0
+            for stock in stocks:
+                total += stock.price_per_quantity
+            return total / stocks_len
 
     @property
     def available_quantity(self):

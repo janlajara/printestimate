@@ -1,7 +1,5 @@
-from inventory.models import Item
-from django.shortcuts import get_object_or_404
+from inventory.models import Item, BaseStockUnit, AlternateStockUnit
 from rest_framework import viewsets
-from rest_framework.response import Response
 from inventory import serializers
 
 
@@ -10,8 +8,28 @@ class ItemViewSet(viewsets.ModelViewSet):
     queryset = Item.objects.all()
 
     def get_serializer_class(self):
-        if self.action == 'retrieve' or self.action == 'create':
+        if self.action in ['retrieve', 'create', 'update']:
             return serializers.ItemDetailSerializer
         else:
             return serializers.ItemListSerializer
 
+    def create(self, request):
+        Item.objects.create_item(**request.data)
+
+
+class BaseStockUnitViewSet(viewsets.ModelViewSet):
+    queryset = BaseStockUnit.objects.all()
+    serializer_class = serializers.BaseStockUnitSerializer
+
+
+class AlternateStockUnitViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.AlternateStockUnitSerializer
+
+    def get_queryset(self):
+        queryset = AlternateStockUnit.objects.all()
+        base_stock_unit_pk = self.request.GET.get('basestockunit', None)
+
+        if base_stock_unit_pk is not None:
+            queryset = AlternateStockUnit.objects.filter(base_stock_units__pk=base_stock_unit_pk)
+
+        return queryset

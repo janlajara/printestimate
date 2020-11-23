@@ -83,8 +83,8 @@ class StockSerializer(serializers.ModelSerializer):
 
 class ItemListSerializer(serializers.ModelSerializer):
     price = MoneyField(max_digits=14, decimal_places=2, read_only=True)
-    #base_uom = BaseStockUnitSerializer()
-    #alternate_uom = AlternateStockUnitSerializer()
+    base_uom = BaseStockUnitSerializer()
+    alternate_uom = AlternateStockUnitSerializer()
 
     class Meta:
         model = Item
@@ -92,7 +92,16 @@ class ItemListSerializer(serializers.ModelSerializer):
                   'onhand_quantity', 'base_uom', 'alternate_uom']
 
 
-class ItemDetailSerializer(ItemListSerializer):
+class ItemCreateSerializer(serializers.ModelSerializer):
+    price = MoneyField(max_digits=14, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = Item
+        fields = ['id', 'name', 'full_name', 'type', 'price', 'available_quantity',
+                  'onhand_quantity', 'base_uom', 'alternate_uom']
+
+
+class ItemDetailSerializer(ItemCreateSerializer):
     override_price = MoneyField(max_digits=14, decimal_places=2)
     latest_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
     average_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)

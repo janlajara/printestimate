@@ -9,8 +9,10 @@ class ItemViewSet(viewsets.ModelViewSet):
     queryset = Item.objects.all()
 
     def get_serializer_class(self):
-        if self.action in ['retrieve', 'create', 'update']:
+        if self.action in ['retrieve']:
             return serializers.ItemDetailSerializer
+        elif self.action in ['create', 'update']:
+            return serializers.ItemCreateSerializer
         else:
             return serializers.ItemListSerializer
 

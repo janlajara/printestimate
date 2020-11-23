@@ -34,11 +34,15 @@ class Line(ItemProperties):
     length = MeasurementField(measurement=Distance, null=True, blank=True)
     length_uom = models.CharField(max_length=30, choices=Measure.UNITS[Measure.DISTANCE])
 
+    @property
+    def length_value(self):
+        return self._eval_attr(self.length, self.length_uom)
+
     def __str__(self):
         name = ''
         if self.length is not None:
             try:
-                length = self._eval_attr(self.length, self.length_uom)
+                length = self.length_value
                 name = '%s%s' % (ItemProperties.format(length),
                                  self.length_uom)
             except AttributeError:
@@ -50,11 +54,15 @@ class Tape(Line):
     width = MeasurementField(measurement=Distance, null=True, blank=True)
     width_uom = models.CharField(max_length=30, choices=Measure.UNITS[Measure.DISTANCE])
 
+    @property
+    def width_value(self):
+        return self._eval_attr(self.width, self.width_uom)
+
     def __str__(self):
         width_str = ''
         if self.width is not None:
             try:
-                width = self._eval_attr(self.width, self.width_uom)
+                width = self.width_value
                 width_str = '%s%s' % (ItemProperties.format(width),
                                           self.width_uom)
             except AttributeError:
@@ -68,6 +76,14 @@ class Rectangle(ItemProperties):
     length = MeasurementField(measurement=Distance, null=True, blank=True)
     width = MeasurementField(measurement=Distance, null=True, blank=True)
     size_uom = models.CharField(max_length=30, choices=Measure.UNITS[Measure.DISTANCE])
+
+    @property
+    def length_value(self):
+        return self._eval_attr(self.length, self.size_uom)
+
+    @property
+    def width_value(self):
+        return self._eval_attr(self.width, self.size_uom)
 
     @property
     def area(self):
@@ -86,8 +102,8 @@ class Rectangle(ItemProperties):
         str_name = ''
         if self._is_not_none():
             try:
-                width = self._eval_attr(self.width, self.size_uom)
-                length = self._eval_attr(self.length, self.size_uom)
+                width = self.width_value
+                length = self.length_value
                 str_name = '%sx%s%s' % (ItemProperties.format(width),
                                         ItemProperties.format(length),
                                         self.size_uom)
@@ -122,11 +138,15 @@ class Panel(Rectangle):
     thickness = MeasurementField(measurement=Distance, null=True, blank=True)
     thickness_uom = models.CharField(max_length=30, choices=Measure.UNITS[Measure.DISTANCE])
 
+    @property
+    def thickness_value(self):
+        return self._eval_attr(self.thickness, self.thickness_uom)
+
     def __str__(self):
         thickness_str = ''
         if self.thickness is not None:
             try:
-                thickness = self._eval_attr(self.thickness, self.thickness_uom)
+                thickness = self.thickness_value
                 thickness_str = '%s%s' % (ItemProperties.format(thickness),
                                           self.thickness_uom)
             except AttributeError:
@@ -140,11 +160,15 @@ class Liquid(ItemProperties):
     volume = MeasurementField(measurement=Volume, null=True, blank=True)
     volume_uom = models.CharField(max_length=30, choices=Measure.UNITS[Measure.VOLUME])
 
+    @property
+    def volume_value(self):
+        return self._eval_attr(self.volume, self.volume_uom)
+
     def __str__(self):
         name = ''
         if self.volume is not None:
             try:
-                volume = self._eval_attr(self.volume, self.volume_uom)
+                volume = self.volume_value
                 name = '%s%s' % (ItemProperties.format(volume),
                                  self.volume_uom)
             except AttributeError:

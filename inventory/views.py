@@ -1,4 +1,5 @@
 from inventory.models import Item, BaseStockUnit, AlternateStockUnit
+from inventory.properties.models import ItemProperties
 from rest_framework import viewsets
 from inventory import serializers
 
@@ -12,9 +13,6 @@ class ItemViewSet(viewsets.ModelViewSet):
             return serializers.ItemDetailSerializer
         else:
             return serializers.ItemListSerializer
-
-    def create(self, request):
-        Item.objects.create_item(**request.data)
 
 
 class BaseStockUnitViewSet(viewsets.ModelViewSet):
@@ -33,3 +31,8 @@ class AlternateStockUnitViewSet(viewsets.ModelViewSet):
             queryset = AlternateStockUnit.objects.filter(base_stock_units__pk=base_stock_unit_pk)
 
         return queryset
+
+
+class ItemPropertiesViewSet(viewsets.ModelViewSet):
+    queryset = ItemProperties.objects.all()
+    serializer_class = serializers.ItemPropertiesPolymorphicSerializer

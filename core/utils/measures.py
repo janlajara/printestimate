@@ -1,4 +1,6 @@
 from django.db import models
+from rest_framework import serializers
+from measurement.utils import guess
 from measurement.base import MeasureBase, BidimensionalMeasure
 from measurement.measures import Area, Time, Volume, Distance
 from django_measurement.models import MeasurementField
@@ -114,3 +116,18 @@ class PaperSize(models.Model):
     name = models.CharField(max_length=40)
     width = MeasurementField(measurement=Distance)
     length = MeasurementField(measurement=Distance)
+
+
+class MeasurementSerializerField(serializers.Field):
+
+    def to_representation(self, value):
+        return '%s %s' % (value.value, value.unit)
+
+    def to_internal_value(self, data):
+        split = data.split(' ')
+        if len(split) == 2:
+            value = split[0]
+            unit = split[1]
+            return guess(value, unit)
+        else:
+            raise ValueError('Incorrect format for MeasurementSerializerField: %s' % data)

@@ -9,12 +9,12 @@ class ItemViewSet(viewsets.ModelViewSet):
     queryset = Item.objects.all()
 
     def get_serializer_class(self):
-        if self.action in ['retrieve']:
-            return serializers.ItemDetailSerializer
-        elif self.action in ['create', 'update']:
-            return serializers.ItemCreateSerializer
+        if self.action in ['create', 'update']:
+            return serializers.ItemCreateUpdateSerializer
+        elif self.action in ['retrieve']:
+            return serializers.ItemRetrieveSerializer
         else:
-            return serializers.ItemListSerializer
+            return serializers.ItemSerializer
 
 
 class BaseStockUnitViewSet(viewsets.ModelViewSet):

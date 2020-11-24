@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 from djmoney.contrib.django_rest_framework import MoneyField
-from core.utils.measures import MeasurementSerializerField
 from .models import Item, Stock, BaseStockUnit, AlternateStockUnit
 from .properties.models import ItemProperties, Line, Tape, Paper, Panel, Liquid
 
@@ -21,47 +20,39 @@ class AlternateStockUnitSerializer(serializers.ModelSerializer):
 class ItemPropertiesSerializer(serializers.ModelSerializer):
     class Meta:
         model = ItemProperties
-        fields = '__all__'
+        fields = []
 
 
-class LineSerializer(serializers.ModelSerializer):
+class LineSerializer(ItemPropertiesSerializer):
     class Meta:
         model = Line
-        fields = ['length', 'length_value', 'length_uom']
+        fields = ['id', 'length_value', 'length_uom']
 
 
-class TapeSerializer(serializers.ModelSerializer):
+class TapeSerializer(ItemPropertiesSerializer):
     class Meta:
         model = Tape
-        fields = ['length', 'length_value', 'length_uom',
-                  'width', 'width_value', 'width_uom']
+        fields = ['id', 'length_value', 'length_uom', 'width_value', 'width_uom']
 
 
-class PaperSerializer(serializers.ModelSerializer):
-    length = MeasurementSerializerField()
-    width = MeasurementSerializerField()
+class PaperSerializer(ItemPropertiesSerializer):
 
     class Meta:
         model = Paper
-        fields = ['length', 'width', 'length_value', 'width_value',
-                  'size_uom', 'gsm', 'finish']
+        fields = ['id', 'length_value', 'width_value', 'size_uom', 'gsm', 'finish']
 
 
-class PanelSerializer(serializers.ModelSerializer):
-    thickness = MeasurementSerializerField()
-    length = MeasurementSerializerField()
-    width = MeasurementSerializerField()
+class PanelSerializer(ItemPropertiesSerializer):
 
     class Meta:
         model = Panel
-        fields = ['length', 'width', 'length_value', 'width_value',
-                  'size_uom', 'thickness', 'thickness_value', 'thickness_uom']
+        fields = ['id', 'length_value', 'width_value', 'size_uom', 'thickness_value', 'thickness_uom']
 
 
-class LiquidSerializer(serializers.ModelSerializer):
+class LiquidSerializer(ItemPropertiesSerializer):
     class Meta:
         model = Liquid
-        fields = ['volume', 'volume_value', 'volume_uom']
+        fields = ['id', 'volume_value', 'volume_uom']
 
 
 class ItemPropertiesPolymorphicSerializer(PolymorphicSerializer):
@@ -81,10 +72,10 @@ class StockSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ItemListSerializer(serializers.ModelSerializer):
+class ItemSerializer(serializers.ModelSerializer):
     price = MoneyField(max_digits=14, decimal_places=2, read_only=True)
-    base_uom = BaseStockUnitSerializer()
-    alternate_uom = AlternateStockUnitSerializer()
+    base_uom = serializers.SlugRelatedField(slug_field='abbrev', read_only=True)
+    alternate_uom = serializers.SlugRelatedField(slug_field='abbrev', read_only=True)
 
     class Meta:
         model = Item
@@ -92,16 +83,7 @@ class ItemListSerializer(serializers.ModelSerializer):
                   'onhand_quantity', 'base_uom', 'alternate_uom']
 
 
-class ItemCreateSerializer(serializers.ModelSerializer):
-    price = MoneyField(max_digits=14, decimal_places=2, read_only=True)
-
-    class Meta:
-        model = Item
-        fields = ['id', 'name', 'full_name', 'type', 'price', 'available_quantity',
-                  'onhand_quantity', 'base_uom', 'alternate_uom']
-
-
-class ItemDetailSerializer(ItemCreateSerializer):
+class ItemCreateUpdateSerializer(ItemSerializer):
     override_price = MoneyField(max_digits=14, decimal_places=2)
     latest_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
     average_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
@@ -116,3 +98,8 @@ class ItemDetailSerializer(ItemCreateSerializer):
 
     def create(self, validated_data):
         return Item.objects.create_item(**validated_data)
+
+
+class ItemRetrieveSerializer(ItemCreateUpdateSerializer):
+    base_uom = BaseStockUnitSerializer()
+    alternate_uom = AlternateStockUnitSerializer()

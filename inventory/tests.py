@@ -207,60 +207,45 @@ def test_stock__expired_invalid_quantity(db, deposited_stock: Stock):
 
 def test_item__tape(db, item_factory):
     item = item_factory(name='Adhesive Tape', type=Item.TAPE)
-    item.properties.length = Distance(cm=50)
+    item.properties.length_value = 50
     item.properties.length_uom = 'cm'
-    item.properties.width = Distance(cm=3)
+    item.properties.width_value = 3
     item.properties.width_uom = 'cm'
-    assert str(item) == 'Adhesive Tape 50cm 3cm'
-
-    item.properties.width_uom = 'error'
     assert str(item) == 'Adhesive Tape 50cm 3cm'
 
 
 def test_item__wire(db, item_factory):
     item = item_factory(name='Copper Wire', type=Item.LINE)
-    item.properties.length = Distance(m=1)
+    item.properties.length_value = 1
     item.properties.length_uom = 'm'
-    assert str(item) == 'Copper Wire 1m'
-
-    item.properties.length_uom = 'error'
     assert str(item) == 'Copper Wire 1m'
 
 
 def test_item__paper(db, item_factory):
     item = item_factory(name='Carbonless', type=Item.PAPER_SHEET)
-    item.properties.length = Distance(inch=34)
-    item.properties.width = Distance(inch=22)
+    item.properties.size_uom = 'inch'
+    item.properties.length_value = 34
+    item.properties.width_value = 22
     item.properties.gsm = 120
     item.properties.finish = Paper.Finish.MATTE
-    item.properties.size_uom = 'inch'
 
     assert str(item) == 'Carbonless 22x34inch matte 120gsm'
     assert round(item.properties.area.value) == 748
     assert round(item.properties.perimeter.value) == 112
 
-    item.properties.size_uom = 'error'
-    assert str(item) == 'Carbonless 22x34inch matte 120gsm'
-
 
 def test_item__panel(db, item_factory):
     item = item_factory(name='Sintra Board', type=Item.PANEL)
-    item.properties.width = Distance(ft=4)
-    item.properties.length = Distance(ft=8)
     item.properties.size_uom = 'ft'
-    item.properties.thickness = Distance(mm=3.0)
+    item.properties.width_value = 4
+    item.properties.length_value = 8
+    item.properties.thickness_value = 3
     item.properties.thickness_uom = 'mm'
-    assert str(item) == 'Sintra Board 4x8ft 3mm'
-
-    item.properties.thickness_uom = 'error'
     assert str(item) == 'Sintra Board 4x8ft 3mm'
 
 
 def test_item__liquid(db, item_factory):
     item = item_factory(name='Red Padding Cement', type=Item.LIQUID)
-    item.properties.volume = Volume(l=1)
+    item.properties.volume_value = 1
     item.properties.volume_uom = 'l'
-    assert str(item) == 'Red Padding Cement 1l'
-
-    item.properties.volume_uom = 'error'
     assert str(item) == 'Red Padding Cement 1l'

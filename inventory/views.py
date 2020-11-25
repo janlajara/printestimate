@@ -37,4 +37,12 @@ class AlternateStockUnitViewSet(viewsets.ModelViewSet):
 
 class ItemPropertiesViewSet(viewsets.ModelViewSet):
     queryset = ItemProperties.objects.all()
-    serializer_class = serializers.ItemPropertiesPolymorphicSerializer
+
+    def get_serializer_class(self):
+        prop = self.get_object()
+        mapping = serializers.ItemPropertiesPolymorphicSerializer.model_serializer_mapping
+        serializer = mapping[prop.__class__]
+        if self.action in ['metadata', 'update'] and serializer is not None:
+            return serializer
+        else:
+            return serializers.ItemPropertiesPolymorphicSerializer

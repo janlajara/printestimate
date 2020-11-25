@@ -36,14 +36,12 @@ class TapeSerializer(ItemPropertiesSerializer):
 
 
 class PaperSerializer(ItemPropertiesSerializer):
-
     class Meta:
         model = Paper
         fields = ['id', 'length_value', 'width_value', 'size_uom', 'gsm', 'finish']
 
 
 class PanelSerializer(ItemPropertiesSerializer):
-
     class Meta:
         model = Panel
         fields = ['id', 'length_value', 'width_value', 'size_uom', 'thickness_value', 'thickness_uom']

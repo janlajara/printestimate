@@ -161,6 +161,11 @@ def test_form__runsheet_per_parentsheet(db, form_with_ply):
         assert component.runsheet_per_parentsheet == 2
 
 
+def test_form__trimsheet_per_runsheet(db, form_with_ply):
+    for component in form_with_ply.components:
+        assert component.trimsheet_per_runsheet == 4
+
+
 def test_form__get_materials(db, form_with_ply):
     materials = form_with_ply.get_materials(100)
     for component in form_with_ply.components:

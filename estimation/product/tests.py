@@ -35,8 +35,8 @@ def item_factory(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateS
 def carbonless_white(db, item_factory):
     item = item_factory(name='Carbonless White', type=Item.PAPER_SHEET,
                         override_price=2, is_override_price=True)
-    item.properties.length = Distance(inch=22)
-    item.properties.width = Distance(inch=34)
+    item.properties.length_value = 22
+    item.properties.width_value = 34
     item.properties.size_uom = 'inch'
     item.properties.save()
     return item
@@ -46,8 +46,8 @@ def carbonless_white(db, item_factory):
 def carbonless_red(db, item_factory):
     item = item_factory(name='Carbonless Red', type=Item.PAPER_SHEET,
                         override_price=2, is_override_price=True)
-    item.properties.length = Distance(inch=22)
-    item.properties.width = Distance(inch=34)
+    item.properties.length_value = 22
+    item.properties.width_value = 34
     item.properties.size_uom = 'inch'
     item.properties.save()
     return item
@@ -57,8 +57,8 @@ def carbonless_red(db, item_factory):
 def carbonless_blue(db, item_factory):
     item = item_factory(name='Carbonless Blue', type=Item.PAPER_SHEET,
                         override_price=2, is_override_price=True)
-    item.properties.length = Distance(inch=22)
-    item.properties.width = Distance(inch=34)
+    item.properties.length_value = 22
+    item.properties.width_value = 34
     item.properties.size_uom = 'inch'
     item.properties.save()
     return item
@@ -67,8 +67,8 @@ def carbonless_blue(db, item_factory):
 @pytest.fixture
 def carbonless_roll(db, item_factory):
     item = item_factory(name='Carbonless Roll', type=Item.PAPER_ROLL)
-    item.properties.length = Distance(meter=50)
-    item.properties.width = Distance(ft=4)
+    item.properties.length_value = 50
+    item.properties.width_value = 1.219
     item.properties.size_uom = 'meter'
     item.properties.save()
 
@@ -156,8 +156,19 @@ def test_form__process_options(db, form, gathering_process, binding_process):
     assert len(form.process_options) == 1
 
 
+def test_form__runsheet_per_parentsheet(db, form_with_ply):
+    for component in form_with_ply.components:
+        assert component.runsheet_per_parentsheet == 2
+
+
 def test_form__get_materials(db, form_with_ply):
     materials = form_with_ply.get_materials(100)
+    for component in form_with_ply.components:
+        print(component.product.base_quantity.value)
+        print(component.trimsheet_per_parentsheet)
+        print(component.runsheet_per_parentsheet)
+        print(component.material_count_ratio)
+
     for pair in materials:
         assert pair[1] == 625
 

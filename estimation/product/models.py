@@ -164,8 +164,8 @@ class PackSheet(ProductComponent):
     def trimsheet_packer(self):
         if self.material is not None:
             parent = self.material.properties
-            parentsheet_dimensions = (parent.width.value, parent.length.value)
-            trimsheet_dimensions = (self.product.width.value, self.product.length.value)
+            parentsheet_dimensions = (parent.width.m, parent.length.m)
+            trimsheet_dimensions = (self.product.width.m, self.product.length.m)
             return self._pack(parentsheet_dimensions, trimsheet_dimensions)
 
     @property
@@ -205,15 +205,18 @@ class PackPrintSheet(PackSheet):
     def runsheet_packer(self):
         if self.material is not None and self.product is not None:
             parent = self.material.properties
-            parent_dimensions = (parent.width.value, parent.length.value)
-            runsheet_dimensions = (self.runsheet_width.value, self.runsheet_length.value)
+            parent_dimensions = (parent.width.m, parent.length.m)
+            runsheet_dimensions = (self.runsheet_width.m, self.runsheet_length.m)
+            print(self.runsheet_width)
+            print(self.runsheet_length)
+            print(runsheet_dimensions)
             return self._pack(parent_dimensions, runsheet_dimensions)
 
     @property
     def trimsheet_packer(self):
         if self.runsheet_width is not None and self.runsheet_length is not None:
-            runsheet_dimensions = (self.runsheet_width.value, self.runsheet_length.value)
-            trimsheet_dimensions = (self.product.width.value, self.product.length.value)
+            runsheet_dimensions = (self.runsheet_width.m, self.runsheet_length.m)
+            trimsheet_dimensions = (self.product.width.m, self.product.length.m)
             return self._pack(runsheet_dimensions, trimsheet_dimensions)
 
     @property

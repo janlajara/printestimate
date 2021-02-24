@@ -1,0 +1,15 @@
+@layer components {
+    .Vue-Toastification__toast {
+        @apply shadow-none rounded;
+        @apply py-2;
+        @apply text-black;
+    }
+
+    .Vue-Toastification__toast-body {
+        @apply m-auto;
+    }
+
+    .Vue-Toastification__toast--default {
+        @apply bg-gray-200;
+    }
+}

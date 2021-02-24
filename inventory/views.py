@@ -23,16 +23,16 @@ class BaseStockUnitViewSet(viewsets.ModelViewSet):
 
 
 class AlternateStockUnitViewSet(viewsets.ModelViewSet):
-    serializer_class = serializers.AlternateStockUnitSerializer
+    queryset = AlternateStockUnit.objects.all()
 
-    def get_queryset(self):
-        queryset = AlternateStockUnit.objects.all()
-        base_stock_unit_pk = self.request.GET.get('basestockunit', None)
-
-        if base_stock_unit_pk is not None:
-            queryset = AlternateStockUnit.objects.filter(base_stock_units__pk=base_stock_unit_pk)
-
-        return queryset
+    def get_serializer_class(self):
+        print(self.action)
+        if self.action in ['create', 'update']:
+            return serializers.AlternateStockUnitSerializer
+        elif self.action in ['retrieve']:
+            return serializers.AlternateStockUnitSerializer
+        else:
+            return serializers.AlternateStockUnitSerializer
 
 
 class ItemPropertiesViewSet(viewsets.ModelViewSet):

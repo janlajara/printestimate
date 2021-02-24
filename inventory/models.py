@@ -24,6 +24,10 @@ class BaseStockUnit(models.Model):
         if self.abbrev is not None:
             return _inflect.plural(self.abbrev)
 
+    @property
+    def alternate_stock_units(self):
+        return AlternateStockUnit.objects.filter(base_stock_units__pk=self.pk)
+
     def __str__(self):
         return self.name
 
@@ -32,6 +36,8 @@ class AlternateStockUnit(BaseStockUnit):
     base_stock_units = models.ManyToManyField(BaseStockUnit, related_name='base_stock_units')
     # type = models.CharField(max_length=15, choices=Item.TYPES, null=False, blank=False)
 
+    def add(self, stock_unit):
+        self.base_stock_units.add(stock_unit)
 
 class ItemManager(models.Manager):
 

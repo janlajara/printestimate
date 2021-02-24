@@ -6,15 +6,23 @@ from .properties.models import ItemProperties, Line, Tape, Paper, Panel, Liquid
 
 
 class BaseStockUnitSerializer(serializers.ModelSerializer):
+    alternate_stock_units = serializers.SlugRelatedField(many=True, 
+        read_only=True, slug_field='name')
+
     class Meta:
         model = BaseStockUnit
-        fields = ['id', 'name', 'abbrev', 'is_editable', 'plural_name', 'plural_abbrev']
+        fields = ['id', 'name', 'abbrev', 'is_editable', 'plural_name', 
+            'plural_abbrev', 'alternate_stock_units']
 
 
 class AlternateStockUnitSerializer(serializers.ModelSerializer):
+    base_stock_units = serializers.SlugRelatedField(many=True, 
+        read_only=True, slug_field='name')
+
     class Meta:
         model = AlternateStockUnit
-        fields = ['id', 'name', 'abbrev', 'is_editable', 'plural_name', 'plural_abbrev']
+        fields = ['id', 'name', 'abbrev', 'is_editable', 'plural_name', 
+            'plural_abbrev', 'base_stock_units']
 
 
 class ItemPropertiesSerializer(serializers.ModelSerializer):

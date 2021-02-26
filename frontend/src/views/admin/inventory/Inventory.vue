@@ -2,9 +2,6 @@
     <Page title="Admin : Inventory">
         <Tabs>
             <Tab title="Item">
-                <Section heading="General Content" description="General tab content goes here.">
-                    
-                </Section>
             </Tab>
             <Tab title="Unit of Measure">
                 <UnitOfMeasure/>

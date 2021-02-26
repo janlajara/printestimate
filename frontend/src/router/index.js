@@ -33,7 +33,7 @@ const routes = [
       {
         path: 'admin/inventory',
         name: 'admin-inventory',
-        component: ()=>import('../views/admin/Inventory.vue')
+        component: ()=>import('../views/admin/inventory/Inventory.vue')
       },
       {
         path: 'admin/estimation',

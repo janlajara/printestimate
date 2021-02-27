@@ -40,6 +40,11 @@ export class BaseStockUnitApi {
         const response = await AXIOS_GET(BaseStockUnitApi.uri);
         return response.data;
     }
+
+    static async retrieveBaseStockUnit(id) {
+        const response = await AXIOS_GET(BaseStockUnitApi.uri + `/${id}`)
+        return response.data
+    }
 }
 
 export class AlternateStockUnitApi {

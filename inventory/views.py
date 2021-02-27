@@ -21,12 +21,19 @@ class BaseStockUnitViewSet(viewsets.ModelViewSet):
     queryset = BaseStockUnit.objects.all()
     serializer_class = serializers.BaseStockUnitSerializer
 
+    def get_serializer_class(self):
+        if self.action in ['create', 'update']:
+            return serializers.BaseStockUnitSerializer
+        elif self.action in ['retrieve']:
+            return serializers.BaseStockUnitDetailedSerializer
+        else:
+            return serializers.BaseStockUnitSerializer
+
 
 class AlternateStockUnitViewSet(viewsets.ModelViewSet):
     queryset = AlternateStockUnit.objects.all()
 
     def get_serializer_class(self):
-        print(self.action)
         if self.action in ['create', 'update']:
             return serializers.AlternateStockUnitSerializer
         elif self.action in ['retrieve']:

@@ -25,6 +25,10 @@ class AlternateStockUnitSerializer(serializers.ModelSerializer):
             'plural_abbrev', 'base_stock_units']
 
 
+class BaseStockUnitDetailedSerializer(BaseStockUnitSerializer):
+     alternate_stock_units = AlternateStockUnitSerializer(many=True)
+
+
 class ItemPropertiesSerializer(serializers.ModelSerializer):
     class Meta:
         model = ItemProperties

@@ -10,8 +10,8 @@
                             <Icon id="close" @click="close"/>
                         </button>
                     </header>
-                    <div class="modal-body pb-6 pb-12 overflow-y-auto" 
-                        :style="{height: height + 'px'}">
+                    <div class="modal-body pb-6 pb-12 overflow-y-auto h-full" 
+                        :style="styleHeight" ref="ref">
                         <slot/>
                     </div>
                     <footer class="modal-footer border-gray-300 border-t justify-end flex-wrap">
@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import {reactive, onMounted, onUnmounted, toRefs, watch} from 'vue' 
+import {reactive, onMounted, onUnmounted, toRefs, watch, nextTick} from 'vue' 
 import Icon from '@/components/Icon.vue'
 import Button from '@/components/Button.vue'
 
@@ -57,32 +57,36 @@ export default {
         }
     }, 
     setup(props, {emit}) {
-        const modalSize = reactive({
-            height: 0, width: 0
-        })
+        const modal = reactive({
+            ref: null, styleHeight: null
+        });
         const resize = () => {
-            modalSize.height = window.innerHeight * 0.6
-            modalSize.width = window.innerWidth * 0.9
+            let h = window.innerHeight * 0.6;
+            if (modal.ref && modal.ref.clientHeight > h) {
+                modal.styleHeight = {height: h + 'px'};
+            } else {
+                modal.styleHeight = null;
+            }
         }
         onMounted(()=> {
-            resize()
-            window.addEventListener('resize', resize)
-        })
+            window.addEventListener('resize', resize);
+        });
         onUnmounted(()=> {
-            window.removeEventListener('resize', resize)
-        })
-        watch(()=> props.isOpen, ()=> {
-            const bodyClassList = document.querySelector('body').classList 
-            if (props.isOpen)
-                bodyClassList.add('overflow-hidden')
-            else
-                bodyClassList.remove('overflow-hidden')
-        })
-
+            window.removeEventListener('resize', resize);
+        });
+        watch(()=> props.isOpen, ()=> { 
+            const bodyClassList = document.querySelector('body').classList;
+            if (props.isOpen) {
+                bodyClassList.add('overflow-hidden');
+                nextTick(()=> resize());
+            } else {
+                bodyClassList.remove('overflow-hidden');
+            }
+        });
         return {
-            ...toRefs(modalSize),
+            ...toRefs(modal),
             close: ()=> emit('toggle', false)
-        }
+        };
     }
 }
 </script>

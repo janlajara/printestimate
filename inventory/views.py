@@ -23,9 +23,9 @@ class BaseStockUnitViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action in ['create', 'update']:
-            return serializers.BaseStockUnitSerializer
+            return serializers.BaseStockUnitCreateUpdateSerializer
         elif self.action in ['retrieve']:
-            return serializers.BaseStockUnitDetailedSerializer
+            return serializers.BaseStockUnitRetrieveSerializer
         else:
             return serializers.BaseStockUnitSerializer
 

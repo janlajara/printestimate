@@ -58,6 +58,67 @@ def test_unit__box_plural(db, alt_unit__ream: AlternateStockUnit):
     assert alt_unit__ream.plural_abbrev == 'rms'
 
 
+def test_base_unit__add_unit(db, base_unit__sheet:BaseStockUnit):
+    alt_stock_unit = AlternateStockUnit.objects.create(name='box', abbrev='bx')
+    obj = base_unit__sheet.add_alt_stock_unit(alt_stock_unit.pk)
+    assert alt_stock_unit.pk == obj.pk
+    assert alt_stock_unit.name == obj.name
+
+
+def test_alt_unit__add_unit(db, alt_unit__ream:AlternateStockUnit):
+    base_stock_unit = BaseStockUnit.objects.create(name='Leaf', abbrev='lf')
+    obj = alt_unit__ream.add_base_stock_unit(base_stock_unit.pk)
+    assert base_stock_unit.pk == obj.pk
+    assert base_stock_unit.name == obj.name
+
+
+def test_base_unit__remove(db, base_unit__sheet:BaseStockUnit, alt_unit__ream:AlternateStockUnit):
+    base_unit__sheet.remove_alt_stock_unit(alt_unit__ream.pk)
+    assert len(base_unit__sheet.alternate_stock_units) == 0
+
+
+def test_alt_unit__remove(db, base_unit__sheet:BaseStockUnit, alt_unit__ream:AlternateStockUnit):
+    alt_unit__ream.remove_base_stock_unit(base_unit__sheet.pk)
+    assert len(alt_unit__ream.base_stock_units.all()) == 0
+
+
+def est_base_unit__update(db):
+    base_stock_unit = BaseStockUnit.objects.create(name='Piece', abbrev='pc')
+    box_stock_unit = AlternateStockUnit.objects.create(name='Box', abbrev='bx')
+    pack_stock_unit = AlternateStockUnit.objects.create(name='Pack', abbrev='pk')
+    base_stock_unit.add_alt_stock_unit(box_stock_unit.pk)
+    base_stock_unit.add_alt_stock_unit(pack_stock_unit.pk)
+
+    base_stock_unit.update_alt_stock_units([box_stock_unit_ids.pk])
+    assert len(base_stock_unit.alternate_stock_units) == 1
+    assert base_stock_unit.alternate_stock_units.first().pk == box_stock_unit.pk
+
+
+def test_base_unit__clear(db):
+    base_stock_unit = BaseStockUnit.objects.create(name='Piece', abbrev='pc')
+    box_stock_unit = AlternateStockUnit.objects.create(name='Box', abbrev='bx')
+    pack_stock_unit = AlternateStockUnit.objects.create(name='Pack', abbrev='pk')
+    base_stock_unit.add_alt_stock_unit(box_stock_unit.pk)
+    base_stock_unit.add_alt_stock_unit(pack_stock_unit.pk)
+    assert len(base_stock_unit.alternate_stock_units) == 2
+
+    base_stock_unit.clear_alt_stock_units()
+    assert len(base_stock_unit.alternate_stock_units) == 0
+
+
+def test_alt_unit__clear(db):
+    pc_stock_unit = BaseStockUnit.objects.create(name='Piece', abbrev='pc')
+    pack_stock_unit = BaseStockUnit.objects.create(name='Pack', abbrev='pk')
+    box_stock_unit = AlternateStockUnit.objects.create(name='Box', abbrev='bx')
+
+    box_stock_unit.add_base_stock_unit(pc_stock_unit.pk)
+    box_stock_unit.add_base_stock_unit(pack_stock_unit.pk)
+    assert len(box_stock_unit.base_stock_units.all()) == 2
+
+    box_stock_unit.clear_base_stock_units()
+    assert len(box_stock_unit.base_stock_units.all()) == 0
+
+
 def test_item__create(db, item: Item):
     assert item.properties is not None
     assert isinstance(item.properties, Paper)

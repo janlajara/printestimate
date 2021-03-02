@@ -28,6 +28,32 @@ class BaseStockUnit(models.Model):
     def alternate_stock_units(self):
         return AlternateStockUnit.objects.filter(base_stock_units__pk=self.pk)
 
+    def add_alt_stock_unit(self, stock_unit_id):
+        stock_unit = AlternateStockUnit.objects.get(pk=stock_unit_id)
+        if (stock_unit is not None):
+            stock_unit.add_base_stock_unit(self.pk)
+            return stock_unit
+
+    def remove_alt_stock_unit(self, stock_unit_id):
+        stock_unit = AlternateStockUnit.objects.get(pk=stock_unit_id)
+        if (stock_unit is not None):
+            stock_unit.base_stock_units.remove(self)
+
+    def update_alt_stock_units(self, stock_unit_ids):
+        as_is_stock_unit_ids = list(
+            map((lambda x: x.id, self.alternate_stock_units)))
+        to_remove = {*as_is_stock_unit_ids} - {*stock_unit_ids}
+        to_add = {*stock_unit_ids} - {*as_is_stock_unit_ids}
+        for rm_unit_id in to_delete:
+            self.remove_alt_stock_unit(rm_unit_id)
+        for add_unit_id in to_add:
+            self.add_alt_stock_unit(add_unit_id)
+
+    def clear_alt_stock_units(self):
+        alt_stock_units = AlternateStockUnit.objects.filter(base_stock_units__pk=self.pk)
+        for alt_stock_unit in alt_stock_units:
+            alt_stock_unit.base_stock_units.remove(self)
+
     def __str__(self):
         return self.name
 
@@ -36,8 +62,19 @@ class AlternateStockUnit(BaseStockUnit):
     base_stock_units = models.ManyToManyField(BaseStockUnit, related_name='base_stock_units')
     # type = models.CharField(max_length=15, choices=Item.TYPES, null=False, blank=False)
 
-    def add(self, stock_unit):
-        self.base_stock_units.add(stock_unit)
+    def add_base_stock_unit(self, stock_unit_id):
+        stock_unit = BaseStockUnit.objects.get(pk=stock_unit_id)
+        if (stock_unit is not None):
+            self.base_stock_units.add(stock_unit)
+            return stock_unit
+
+    def remove_base_stock_unit(self, stock_unit_id):
+        stock_unit = BaseStockUnit.objects.get(pk=stock_unit_id)
+        if (stock_unit is not None):
+            self.base_stock_units.remove(stock_unit)
+
+    def clear_base_stock_units(self):
+        self.base_stock_units.clear()
 
 class ItemManager(models.Manager):
 

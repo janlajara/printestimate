@@ -82,14 +82,14 @@ def test_alt_unit__remove(db, base_unit__sheet:BaseStockUnit, alt_unit__ream:Alt
     assert len(alt_unit__ream.base_stock_units.all()) == 0
 
 
-def est_base_unit__update(db):
+def test_base_unit__update(db):
     base_stock_unit = BaseStockUnit.objects.create(name='Piece', abbrev='pc')
     box_stock_unit = AlternateStockUnit.objects.create(name='Box', abbrev='bx')
     pack_stock_unit = AlternateStockUnit.objects.create(name='Pack', abbrev='pk')
     base_stock_unit.add_alt_stock_unit(box_stock_unit.pk)
     base_stock_unit.add_alt_stock_unit(pack_stock_unit.pk)
 
-    base_stock_unit.update_alt_stock_units([box_stock_unit_ids.pk])
+    base_stock_unit.update_alt_stock_units([box_stock_unit.pk])
     assert len(base_stock_unit.alternate_stock_units) == 1
     assert base_stock_unit.alternate_stock_units.first().pk == box_stock_unit.pk
 

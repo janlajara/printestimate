@@ -15,30 +15,6 @@ class BaseStockUnitSerializer(serializers.ModelSerializer):
             'plural_abbrev', 'alternate_stock_units']
 
 
-class BaseStockUnitCreateUpdateSerializer(serializers.ModelSerializer):
-    alternate_stock_units = serializers.SlugRelatedField(many=True, 
-        read_only=True, slug_field='pk')
-        
-    class Meta:
-        model = BaseStockUnit
-        fields = ['id', 'name', 'abbrev', 'is_editable', 'plural_name', 
-            'plural_abbrev', 'alternate_stock_units']
-
-    def create(self, validated_data):
-        alt_stock_unit_ids = validated_data.pop('alternate_stock_units')
-        base_stock_unit = BaseStockUnit.objects.create(**validated_data)
-        for alt_stock_unit_id in alt_stock_unit_ids:
-            base_stock_unit.add_alt_stock_unit(alt_stock_unit_id)
-        return base_stock_unit
-    
-    def update(self, validated_data):
-        base_stock_unit_id = validated_data.pop('id')
-        to_be_alts = validated_data.pop('alternate_stock_units')
-        base_stock_unit = BaseStockUnit.objects.get(pk=base_stock_unit_id)
-        if (base_stock_unit):
-            base_stock_unit = BaseStockUnit.objects.update(**validated_data)
-
-
 class AlternateStockUnitSerializer(serializers.ModelSerializer):
     base_stock_units = serializers.SlugRelatedField(many=True, 
         read_only=True, slug_field='name')
@@ -51,6 +27,26 @@ class AlternateStockUnitSerializer(serializers.ModelSerializer):
 
 class BaseStockUnitRetrieveSerializer(BaseStockUnitSerializer):
     alternate_stock_units = AlternateStockUnitSerializer(many=True)
+
+
+class BaseStockUnitCreateUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BaseStockUnit
+        fields = ['id', 'name', 'abbrev', 'is_editable', 'plural_name', 
+            'plural_abbrev', 'alternate_stock_units']
+
+    def create(self, validated_data):
+        alt_stock_unit_ids = validated_data.pop('alternate_stock_units')
+        base_stock_unit = BaseStockUnit.objects.create(**validated_data)
+        for alt_stock_unit_id in alt_stock_unit_ids:
+            base_stock_unit.add_alt_stock_unit(alt_stock_unit_id)
+        return base_stock_unit
+    
+    def update(self, instance, validated_data):
+        to_be_alts = validated_data.pop('alternate_stock_units')
+        BaseStockUnit.objects.filter(pk=instance.pk).update(**validated_data)
+        instance.update_alt_stock_units(to_be_alts)
+        return instance
 
 
 class ItemPropertiesSerializer(serializers.ModelSerializer):

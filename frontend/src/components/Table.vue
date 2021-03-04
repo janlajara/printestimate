@@ -17,11 +17,12 @@
                 <slot/>
             </tbody>
         </table>
+
     </div>
 </template>
 
 <script>
-import {computed, ref} from 'vue'
+import {computed} from 'vue'
 import Row from '@/components/Row.vue'
 import Cell from '@/components/Cell.vue'
 
@@ -37,12 +38,9 @@ export default {
         rows: Array
     },
     setup(props){
-        const columnCount = computed(()=> props.headers.length)
-        const tableRows = ref([])
-
+        const columnCount = computed(()=> (props.headers? props.headers.length: 0));
         return {
-            columnCount,
-            tableRows
+            columnCount
         }
     }
 }

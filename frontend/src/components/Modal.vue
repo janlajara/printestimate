@@ -17,7 +17,7 @@
                     <footer class="modal-footer border-gray-300 border-t justify-end flex-wrap">
                         <Button v-for="(button, index) in $props.buttons" 
                             :key="index" :type="button.type" 
-                            :color="button.color"
+                            :color="button.color" :disabled="button.disabled"
                             :icon="button.icon" :action="button.action" 
                             class="modal-button">
                             {{button.text}}

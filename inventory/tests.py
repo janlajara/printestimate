@@ -74,7 +74,7 @@ def test_alt_unit__add_unit(db, alt_unit__ream:AlternateStockUnit):
 
 def test_base_unit__remove(db, base_unit__sheet:BaseStockUnit, alt_unit__ream:AlternateStockUnit):
     base_unit__sheet.remove_alt_stock_unit(alt_unit__ream.pk)
-    assert len(base_unit__sheet.alternate_stock_units) == 0
+    assert len(base_unit__sheet.alternate_stock_units.all()) == 0
 
 
 def test_alt_unit__remove(db, base_unit__sheet:BaseStockUnit, alt_unit__ream:AlternateStockUnit):
@@ -89,8 +89,8 @@ def test_base_unit__update(db):
     base_stock_unit.add_alt_stock_unit(box_stock_unit.pk)
     base_stock_unit.add_alt_stock_unit(pack_stock_unit.pk)
 
-    base_stock_unit.update_alt_stock_units([box_stock_unit.pk])
-    assert len(base_stock_unit.alternate_stock_units) == 1
+    base_stock_unit.update_alt_stock_units([box_stock_unit])
+    assert len(base_stock_unit.alternate_stock_units.all()) == 1
     assert base_stock_unit.alternate_stock_units.first().pk == box_stock_unit.pk
 
 
@@ -100,10 +100,10 @@ def test_base_unit__clear(db):
     pack_stock_unit = AlternateStockUnit.objects.create(name='Pack', abbrev='pk')
     base_stock_unit.add_alt_stock_unit(box_stock_unit.pk)
     base_stock_unit.add_alt_stock_unit(pack_stock_unit.pk)
-    assert len(base_stock_unit.alternate_stock_units) == 2
+    assert len(base_stock_unit.alternate_stock_units.all()) == 2
 
     base_stock_unit.clear_alt_stock_units()
-    assert len(base_stock_unit.alternate_stock_units) == 0
+    assert len(base_stock_unit.alternate_stock_units.all()) == 0
 
 
 def test_alt_unit__clear(db):

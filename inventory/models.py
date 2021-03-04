@@ -24,9 +24,9 @@ class BaseStockUnit(models.Model):
         if self.abbrev is not None:
             return _inflect.plural(self.abbrev)
 
-    @property
-    def alternate_stock_units(self):
-        return self.alt_stock_units.all()
+    #@property
+    #def alternate_stock_units(self):
+    #    return self.alt_stock_units.all()
 
     def add_alt_stock_unit(self, stock_unit_id):
         stock_unit = AlternateStockUnit.objects.get(pk=stock_unit_id)
@@ -39,18 +39,20 @@ class BaseStockUnit(models.Model):
         if (stock_unit is not None):
             stock_unit.base_stock_units.remove(self)
 
-    def update_alt_stock_units(self, stock_unit_ids):
+    def update_alt_stock_units(self, stock_units):
         as_is_stock_unit_ids = list(
-            map(lambda x: x.id, self.alternate_stock_units))
-        to_remove = {*as_is_stock_unit_ids} - {*stock_unit_ids}
-        to_add = {*stock_unit_ids} - {*as_is_stock_unit_ids}
+            map(lambda x: x.id, self.alternate_stock_units.all()))
+        to_be_stock_unit_ids = list(
+            map(lambda x: x.id, stock_units))
+        to_remove = {*as_is_stock_unit_ids} - {*to_be_stock_unit_ids}
+        to_add = {*to_be_stock_unit_ids} - {*as_is_stock_unit_ids}
         for rm_unit_id in to_remove:
             self.remove_alt_stock_unit(rm_unit_id)
         for add_unit_id in to_add:
             self.add_alt_stock_unit(add_unit_id)
 
     def clear_alt_stock_units(self):
-        alt_stock_units = self.alternate_stock_units
+        alt_stock_units = self.alternate_stock_units.all()
         for alt_stock_unit in alt_stock_units:
             alt_stock_unit.base_stock_units.remove(self)
 
@@ -59,7 +61,7 @@ class BaseStockUnit(models.Model):
 
 
 class AlternateStockUnit(BaseStockUnit):
-    base_stock_units = models.ManyToManyField(BaseStockUnit, related_name='alt_stock_units')
+    base_stock_units = models.ManyToManyField(BaseStockUnit, related_name='alternate_stock_units')
     # type = models.CharField(max_length=15, choices=Item.TYPES, null=False, blank=False)
 
     def add_base_stock_unit(self, stock_unit_id):

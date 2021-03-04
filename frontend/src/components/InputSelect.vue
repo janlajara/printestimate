@@ -14,8 +14,8 @@
                   class="p-2 hover:bg-secondary-light hover:bg-opacity-20 text-sm cursor-pointer"
                   @click="select(option)">
                   <input v-if="$props.multiple" type="checkbox" 
-                    class="input-checkbox mr-4" 
-                    :name="name" :checked="option.isSelected"/>
+                    class="input-checkbox mr-4" disabled 
+                    :name="name" :checked="option.isSelected"/> 
                   {{option.label}}
                 </div>
               </div>

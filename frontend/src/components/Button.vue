@@ -1,5 +1,5 @@
 <template>
-    <button @click="$props.action"  :type="$props.type"
+    <button @click="$props.action"  :type="$props.type" :disabled="$props.disabled"
         :title="$refs.buttonText? $refs.buttonText.innerHTML : ''"
         class="flex px-3 py-1 font-bold" 
         :class="[buttonClass, $props.icon? 'rounded-full sm:rounded' : 'rounded']">
@@ -11,11 +11,17 @@
 </template>
 
 <script>
+import {computed} from 'vue'
 import Icon from '@/components/Icon.vue'
 
-const button_styles = {
+const button_styles_active = {
     'primary': 'bg-primary hover:bg-primary-light active:bg-primary-dark',
     'secondary': 'bg-tertiary hover:bg-tertiary-light active:bg-tertiary-dark'
+}
+
+const button_styles_disabled = {
+    'primary': 'bg-primary text-black text-opacity-30',
+    'secondary': 'bg-tertiary text-black text-opacity-30'
 }
 
 export default {
@@ -24,6 +30,7 @@ export default {
     },
     props: {
         icon: String,
+        disabled: Boolean,
         type: {
             type: String,
             validator: (value) =>
@@ -40,8 +47,13 @@ export default {
         }
     },
     setup(props) { 
+        const buttonClass = computed(()=> (
+            (props.disabled)? 
+                button_styles_disabled[props.color]:
+                button_styles_active[props.color]
+        ));
         return { 
-            buttonClass: button_styles[props.color]
+            buttonClass
         }
     }
 }

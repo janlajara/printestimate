@@ -15,7 +15,11 @@
                     </Cell>
                 </Row>
             </Table>
-            <Modal heading="Base Stock Unit" :is-open="bsu.modalIsOpen" @toggle="bsu.toggle">
+            <Modal heading="Base Stock Unit" :is-open="bsu.modalIsOpen" @toggle="bsu.toggle"
+                :buttons="[{color: 'primary', icon: 'save', text: 'Save', 
+                    action: ()=>{bsu.update()}, disabled: bsu.updateIsProcessing},
+                    {color: 'secondary', icon: 'save', text: 'Save and Close', 
+                    action: ()=>{bsu.update(true)}, disabled: bsu.updateIsProcessing}]">
                 <Section :heading="bsu.selected.name">
                     <div class="md:grid md:grid-cols-4 md:gap-4">
                         <InputText name="Name" type="text" :value="bsu.selected.name"
@@ -26,9 +30,9 @@
                             @input="(e)=>bsu.selected.pluralName = e.target.value" disabled/>
                         <InputText name="Abbreviation (Plural)" type="text" :value="bsu.selected.pluralAbbrev"
                             @input="(e)=>bsu.selected.pluralAbbrev = e.target.value" disabled/>
-                        <InputSelect name="Parent Alternate Stock Unit" 
+                        <InputSelect name="Parent Alternate Stock Unit" multiple
                             class="col-span-2" 
-                            @input="(value)=>bsu.selected.altStockUnitIds = value"
+                            @input="bsu.input"
                             :options="asu.units.map(unit=> ({
                                 label: unit.name, value: unit.id, 
                                 isSelected: bsu.selected.altStockUnitIds.indexOf(unit.id) != -1
@@ -74,15 +78,22 @@ export default {
         const bsu = reactive({
             modalIsOpen: false,
             selected: {},
+            units: [{}],
+            updateIsProcessing: false,
             toggle: async (value, id=null)=> {
-                if (id) {
-                    bsu.selected = await retrieveBaseUnit(id);
-                } else {
-                    bsu.selected = {};
-                }
+                bsu.selected = (id)? await retrieveBaseUnit(id) : {};
                 bsu.modalIsOpen = value;
             },
-            units: [{}]
+            input: (value)=> {
+                bsu.selected.altStockUnitIds = value;
+            },
+            update: async (closeModalAfter)=> {
+                bsu.updateIsProcessing = true; 
+                const resp = await updateBaseUnit(bsu.selected.id, bsu.selected);
+                if (resp) loadTableData();
+                if (closeModalAfter) bsu.modalIsOpen = false;
+                bsu.updateIsProcessing = false; 
+            }
         })
         const asu = reactive({
             modalIsOpen: false,
@@ -111,10 +122,11 @@ export default {
                 baseStockUnits: alternateUnit.base_stock_units.join(', ')
             }));
         }
-        onBeforeMount(()=> {
+        const loadTableData = ()=> {
             populateBaseUnits();
             populateAlternateUnits();
-        })
+        }
+        onBeforeMount(()=> loadTableData());
 
         const retrieveBaseUnit = async (id)=> {
             const data = await BaseStockUnitApi.retrieveBaseStockUnit(id);
@@ -131,8 +143,19 @@ export default {
             return baseUnit;
         }
 
+        const updateBaseUnit = async(id, baseStockUnit)=> {
+            const request = {
+                name: baseStockUnit.name,
+                abbrev: baseStockUnit.abbrev,
+                plural_name: baseStockUnit.pluralName,
+                alternate_stock_units: Array.from(baseStockUnit.altStockUnitIds)
+            };
+            const response = await BaseStockUnitApi.updateBaseStockUnit(id, request);
+            return response;
+        }
+
         return {
-            bsu, asu 
+            bsu, asu
         }
     }
 }

@@ -94,6 +94,18 @@ def test_base_unit__update(db):
     assert base_stock_unit.alternate_stock_units.first().pk == box_stock_unit.pk
 
 
+def test_alt_unit__update(db):
+    piece_stock_unit = BaseStockUnit.objects.create(name='Piece', abbrev='pc')
+    pack_stock_unit = BaseStockUnit.objects.create(name='Pack', abbrev='pk')
+    box_stock_unit = AlternateStockUnit.objects.create(name='Box', abbrev='bx')
+    box_stock_unit.add_base_stock_unit(piece_stock_unit.pk)
+    box_stock_unit.add_base_stock_unit(pack_stock_unit.pk)
+
+    box_stock_unit.update_base_stock_units([piece_stock_unit])
+    assert len(box_stock_unit.base_stock_units.all()) == 1
+    assert box_stock_unit.base_stock_units.first().pk == piece_stock_unit.pk
+
+
 def test_base_unit__clear(db):
     base_stock_unit = BaseStockUnit.objects.create(name='Piece', abbrev='pc')
     box_stock_unit = AlternateStockUnit.objects.create(name='Box', abbrev='bx')

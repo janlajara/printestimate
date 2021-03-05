@@ -59,7 +59,7 @@ class BaseStockUnit(StokUnit):
 
 
 class AlternateStockUnit(StokUnit):
-    base_stock_units = models.ManyToManyField(BaseStockUnit, related_name='alternate_stock_units')
+    base_stock_units = models.ManyToManyField(BaseStockUnit, blank=True, related_name='alternate_stock_units')
     # type = models.CharField(max_length=15, choices=Item.TYPES, null=False, blank=False)
 
     def add_base_stock_unit(self, stock_unit_id):

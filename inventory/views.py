@@ -19,7 +19,6 @@ class ItemViewSet(viewsets.ModelViewSet):
 
 class BaseStockUnitViewSet(viewsets.ModelViewSet):
     queryset = BaseStockUnit.objects.all()
-    serializer_class = serializers.BaseStockUnitSerializer
 
     def get_serializer_class(self):
         if self.action in ['create', 'update']:
@@ -35,9 +34,9 @@ class AlternateStockUnitViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action in ['create', 'update']:
-            return serializers.AlternateStockUnitSerializer
+            return serializers.AlternateStockUnitCreateUpdateSerializer
         elif self.action in ['retrieve']:
-            return serializers.AlternateStockUnitSerializer
+            return serializers.AlternateStockUnitRetrieveSerializer
         else:
             return serializers.AlternateStockUnitSerializer
 

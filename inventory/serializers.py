@@ -29,6 +29,10 @@ class BaseStockUnitRetrieveSerializer(BaseStockUnitSerializer):
     alternate_stock_units = AlternateStockUnitSerializer(many=True)
 
 
+class AlternateStockUnitRetrieveSerializer(AlternateStockUnitSerializer):
+    base_stock_units = BaseStockUnitSerializer(many=True)
+
+
 class BaseStockUnitCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = BaseStockUnit
@@ -36,16 +40,36 @@ class BaseStockUnitCreateUpdateSerializer(serializers.ModelSerializer):
             'plural_abbrev', 'alternate_stock_units']
 
     def create(self, validated_data):
-        alt_stock_unit_ids = validated_data.pop('alternate_stock_units')
+        alt_stock_units = validated_data.pop('alternate_stock_units')
         base_stock_unit = BaseStockUnit.objects.create(**validated_data)
-        for alt_stock_unit_id in alt_stock_unit_ids:
-            base_stock_unit.add_alt_stock_unit(alt_stock_unit_id)
+        for alt_stock_unit in alt_stock_units:
+            base_stock_unit.add_alt_stock_unit(alt_stock_unit.pk)
         return base_stock_unit
     
     def update(self, instance, validated_data):
         to_be_alts = validated_data.pop('alternate_stock_units')
         BaseStockUnit.objects.filter(pk=instance.pk).update(**validated_data)
         instance.update_alt_stock_units(to_be_alts)
+        return instance
+
+
+class AlternateStockUnitCreateUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlternateStockUnit
+        fields = ['id', 'name', 'abbrev', 'is_editable', 'plural_name', 
+            'plural_abbrev', 'base_stock_units']
+
+    def create(self, validated_data):
+        base_stock_units = validated_data.pop('base_stock_units')
+        alternate_stock_unit = AlternateStockUnit.objects.create(**validated_data)
+        for base_stock_unit in base_stock_units:
+            alternate_stock_unit.add_base_stock_unit(base_stock_unit.pk)
+        return alternate_stock_unit
+    
+    def update(self, instance, validated_data):
+        to_be_bases = validated_data.pop('base_stock_units')
+        AlternateStockUnit.objects.filter(pk=instance.pk).update(**validated_data)
+        instance.update_base_stock_units(to_be_bases)
         return instance
 
 

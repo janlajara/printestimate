@@ -1,13 +1,16 @@
 <template>
     <div class="input">
         <label class="input-label">{{$props.name}}
+            <span v-if="$props.required" 
+                class="text-secondary-light">*</span>
             <span v-if="$props.disabled" 
                 class="material-icons text-sm text-secondary-light">lock</span>
         </label>
         <div class="flex rounded-md shadow-sm">
             <span v-if="$props.prefix"
                 class="input-field-part rounded-l-md">
-                {{$props.prefix}}</span>
+                {{$props.prefix}}
+            </span>
             <input :type="$props.type" :placeholder="$props.placeholder"
                 class="input-field w-full" :value="$props.value"
                 :class="inputStyle" :disabled="$props.disabled"

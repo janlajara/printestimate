@@ -1,6 +1,6 @@
 <template>
     <div class="my-4 rounded-md overflow-hidden">
-        <table class="table-auto">
+        <table class="table-auto w-full">
             <thead class="hidden lg:table-header-group">
                 <tr class="flex flex-wrap lg:table-row row bg-primary-light bg-opacity-50">
                     <th v-for="(header, key) in $props.headers" :key="key" 
@@ -17,7 +17,6 @@
                 <slot/>
             </tbody>
         </table>
-
     </div>
 </template>
 

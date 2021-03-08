@@ -11,7 +11,10 @@
 <script>
 export default {
     props: {
-        heading: String,
+        heading: {
+            type: String,
+            required: false
+        },
         description: String
     }
 }

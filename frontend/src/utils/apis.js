@@ -18,7 +18,7 @@ const _axios = require('axios')
 const API_HOSTNAME = 'http://localhost:8000'
 const AXIOS =  {
     execute: async (method, uri, success, error, data)=> {
-        const methods = ["post", "put", "get", "delete"];
+        const methods = ["post", "put", "get", "delete", "options"];
         const url = API_HOSTNAME + uri;
         const config = {
             url: url,
@@ -41,19 +41,27 @@ const AXIOS =  {
     PUT: 1,
     GET: 2,
     DELETE: 3,
+    OPTIONS: 4,
 }
 
 
-export class InventoryApi {
+export class ItemApi {
     static uri = '/inventory/api/item'
 
+    static async getItemTypes() {
+        const response = await AXIOS.execute(AXIOS.OPTIONS, ItemApi.uri);
+        if (response.data && response.data.actions.POST) {
+            return response.data.actions.POST.type.choices
+        }
+    }
+
     static async createItem(item) {
-        const response = await AXIOS.execute(AXIOS.POST, InventoryApi.uri, item);
+        const response = await AXIOS.execute(AXIOS.POST, ItemApi.uri, item);
         return response
     }
 
     static async listItems() {
-        const response = await AXIOS.execute(AXIOS.GET, InventoryApi.item_uri);
+        const response = await AXIOS.execute(AXIOS.GET, ItemApi.item_uri);
         return response.data;
     }
 }

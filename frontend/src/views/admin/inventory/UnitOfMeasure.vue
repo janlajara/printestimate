@@ -6,7 +6,8 @@
             <Table :headers="['Unit name', 'Abbreviation', 'Plural', 
                 'Abbreviation (Pl.)', 'Parent Alternate Stock Units']">
                 <Row v-for="(unit, key) in bsu.units" :key="key"
-                    :select="()=>{bsu.toggle(true, unit.id)}">
+                    :class="unit.isEditable? []: 'row-disabled'"
+                    :select="unit.isEditable? ()=>{bsu.toggle(true, unit.id)} : null">
                     <Cell label="Name">{{unit.name}}</Cell>
                     <Cell label="Abbrev.">{{unit.abbrev}}</Cell>
                     <Cell label="Plural Name">{{unit.pluralName}}</Cell>
@@ -55,7 +56,8 @@
             <Table :headers="['Unit name', 'Abbreviation', 'Plural', 
                 'Abbreviation (Pl.)', 'Child Base Stock Units']">
                 <Row v-for="(unit, key) in asu.units" :key="key"
-                    :select="()=>{asu.toggle(true, unit.id)}">
+                    :class="unit.isEditable? []: 'row-disabled'"
+                    :select="unit.isEditable? ()=>{asu.toggle(true, unit.id)}: null">
                     <Cell label="Name">{{unit.name}}</Cell>
                     <Cell label="Abbrev.">{{unit.abbrev}}</Cell>
                     <Cell label="Plural Name">{{unit.pluralName}}</Cell>
@@ -226,6 +228,7 @@ export default {
                 id: baseUnit.id,
                 name: baseUnit.name, 
                 abbrev: baseUnit.abbrev, 
+                isEditable: baseUnit.is_editable,
                 pluralName: baseUnit.plural_name, 
                 pluralAbbrev: baseUnit.plural_abbrev, 
                 altStockUnits: baseUnit.alternate_stock_units.join(', ')
@@ -237,6 +240,7 @@ export default {
                 id: alternateUnit.id,
                 name: alternateUnit.name, 
                 abbrev: alternateUnit.abbrev,
+                isEditable: alternateUnit.is_editable,
                 pluralName: alternateUnit.plural_name, 
                 pluralAbbrev: alternateUnit.plural_abbrev, 
                 baseStockUnits: alternateUnit.base_stock_units.join(', ')
@@ -337,3 +341,11 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+@layer components {
+    .row-disabled {
+        @apply text-black text-opacity-50 cursor-not-allowed;
+    }
+}
+</style>

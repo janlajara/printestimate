@@ -1,15 +1,16 @@
 <template>
     <div class="input">
         <label class="input-label">{{$props.name}}</label>
-        <div class="rounded-md shadow-sm" v-click-outside="()=>toggleDropdown(false)">
-            <div class="relative">
+        <div class="rounded-md shadow-sm absolute" v-click-outside="()=>toggleDropdown(false)">
+            <div class="relative z-10">
               <input type="text" class="rounded input-field cursor-pointer"
                 :value="selectedJoined"
                 @click="toggleDropdown(!state.isDroppedDown)" readonly/>
               <span class="absolute material-icons right-0 m-1 transform"
                 :class="state.isDroppedDown? 'rotate-180' : ''">
                 arrow_drop_down</span>
-              <div v-show="state.isDroppedDown" class="shadow-md rounded bg-white absolute w-full mt-1">
+              <div v-show="state.isDroppedDown" 
+                class="shadow-md rounded bg-white absolute w-full mt-1">
                 <div v-for="option in state.options" :key="option.value"
                   class="p-2 hover:bg-secondary-light hover:bg-opacity-20 text-sm cursor-pointer"
                   @click="select(option)">

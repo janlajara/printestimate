@@ -5,9 +5,19 @@ from .models import Item, Stock, BaseStockUnit, AlternateStockUnit
 from .properties.models import ItemProperties, Line, Tape, Paper, Panel, Liquid
 
 
+class BaseStockUnitOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BaseStockUnit
+        fields = ['id', 'name', 'abbrev']
+
+class AlternateStockUnitOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlternateStockUnit
+        fields = ['id', 'name', 'abbrev']
+
+
 class BaseStockUnitSerializer(serializers.ModelSerializer):
-    alternate_stock_units = serializers.SlugRelatedField(many=True, 
-        read_only=True, slug_field='name')
+    alternate_stock_units = AlternateStockUnitOptionSerializer(many=True)
 
     class Meta:
         model = BaseStockUnit
@@ -16,8 +26,7 @@ class BaseStockUnitSerializer(serializers.ModelSerializer):
 
 
 class AlternateStockUnitSerializer(serializers.ModelSerializer):
-    base_stock_units = serializers.SlugRelatedField(many=True, 
-        read_only=True, slug_field='name')
+    base_stock_units = BaseStockUnitOptionSerializer(many=True)
 
     class Meta:
         model = AlternateStockUnit
@@ -138,6 +147,8 @@ class ItemSerializer(serializers.ModelSerializer):
 
 
 class ItemCreateUpdateSerializer(ItemSerializer):
+    base_uom = BaseStockUnitSerializer
+    alternate_uom = AlternateStockUnitSerializer
     override_price = MoneyField(max_digits=14, decimal_places=2)
     latest_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
     average_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)

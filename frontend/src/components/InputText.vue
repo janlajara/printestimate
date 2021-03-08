@@ -31,7 +31,9 @@ export default {
         prefix: String,
         postfix: String,
         placeholder: String,
-        value: String,
+        value: {
+            type: [String, Number]
+        },
         type: {
             type: String,
             required: true,

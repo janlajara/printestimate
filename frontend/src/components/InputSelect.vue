@@ -1,8 +1,8 @@
 <template>
     <div class="input">
         <label class="input-label">{{$props.name}}</label>
-        <div class="rounded-md shadow-sm absolute" v-click-outside="()=>toggleDropdown(false)">
-            <div class="relative z-10">
+        <div class="rounded-md shadow-sm" v-click-outside="()=>toggleDropdown(false)">
+            <div class="relative">
               <input type="text" class="rounded input-field cursor-pointer"
                 :value="selectedJoined"
                 @click="toggleDropdown(!state.isDroppedDown)" readonly/>
@@ -10,7 +10,7 @@
                 :class="state.isDroppedDown? 'rotate-180' : ''">
                 arrow_drop_down</span>
               <div v-show="state.isDroppedDown" 
-                class="shadow-md rounded bg-white absolute w-full mt-1">
+                class="shadow-md rounded bg-white absolute w-full mt-1 z-10">
                 <div v-for="option in state.options" :key="option.value"
                   class="p-2 hover:bg-secondary-light hover:bg-opacity-20 text-sm cursor-pointer"
                   @click="select(option)">
@@ -32,7 +32,7 @@
 </template>
 
 <script>
-import {reactive, computed} from 'vue'
+import {reactive, computed, watch} from 'vue'
 
 export default {
     props: {
@@ -49,6 +49,10 @@ export default {
         options: props.options,
         isDroppedDown: false,
       }); 
+      watch(()=>props.options, ()=>{
+        console.log(props.options);
+        state.options = props.options;
+      });
       const selectedOptions = computed(() => 
         state.options
           .filter(option=> option.isSelected)

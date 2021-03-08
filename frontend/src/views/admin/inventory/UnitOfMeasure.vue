@@ -231,7 +231,9 @@ export default {
                 isEditable: baseUnit.is_editable,
                 pluralName: baseUnit.plural_name, 
                 pluralAbbrev: baseUnit.plural_abbrev, 
-                altStockUnits: baseUnit.alternate_stock_units.join(', ')
+                altStockUnits: baseUnit.alternate_stock_units
+                    .map(unit => unit.name)
+                    .join(', ')
             }));
         }
         const populateAlternateUnits = async ()=> { 
@@ -243,7 +245,9 @@ export default {
                 isEditable: alternateUnit.is_editable,
                 pluralName: alternateUnit.plural_name, 
                 pluralAbbrev: alternateUnit.plural_abbrev, 
-                baseStockUnits: alternateUnit.base_stock_units.join(', ')
+                baseStockUnits: alternateUnit.base_stock_units
+                    .map(unit => unit.name)
+                    .join(', ')
             }));
         }
         const loadTableData = ()=> {

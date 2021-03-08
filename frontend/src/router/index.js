@@ -19,15 +19,9 @@ const routes = [
         meta: {label: 'Dashboard', group: 'Inventory'}
       },
       {
-        path: 'inventory/items',
-        name: 'inventory-items',
-        component: ()=>import('../components/Placeholder.vue'),
-        meta: {label: 'Items', group: 'Inventory'}
-      },
-      {
         path: 'inventory/stock',
         name: 'inventory-stock',
-        component: ()=>import('../components/Placeholder.vue'),
+        component: ()=>import('../views/pages/inventory/Stock.vue'),
         meta: {label: 'Stock', group: 'Inventory'}
       },
       {

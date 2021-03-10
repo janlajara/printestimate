@@ -11,10 +11,11 @@
                 class="input-field-part rounded-l-md">
                 {{$props.prefix}}
             </span>
-            <input :type="$props.type" :placeholder="$props.placeholder"
+            <input :type="($props.type == 'password')? 'password': 'text'" 
+                :placeholder="$props.placeholder"
                 class="input-field w-full" :value="$props.value"
                 :class="inputStyle" :disabled="$props.disabled"
-                @input="(e)=>$emit('input', e.target.value)"
+                @input="(event)=>emitInput(event)"
                 :readonly="$props.readonly"/>
             <span v-if="$props.postfix"
                 class="input-field-part rounded-r-md">
@@ -47,7 +48,7 @@ export default {
         disabled: Boolean,
         readonly: Boolean,
     },
-    setup(props) {
+    setup(props, {emit}) {
         const inputStyle = ref([])
 
         if (!props.prefix && !props.postfix)
@@ -56,13 +57,26 @@ export default {
             inputStyle.value = ['rounded-r-md']
         else if (!props.prefix && props.postfix)
             inputStyle.value = ['rounded-l-md']
-
         if (props.disabled) {
             inputStyle.value.push('text-gray-400')
         }
 
+        const emitInput = (event)=> {
+            let input = event.target.value;
+            if (props.type == 'number') {
+                const firstOccur = input.indexOf('.');
+                if (firstOccur >= 0) {
+                    input = input.substr(0, firstOccur+1) + 
+                        input.slice(firstOccur+1).replaceAll('.', '');
+                }
+                input = input.replace(/[^\d.]/g, "");
+            }
+            emit('input', input);
+            event.target.value = input;
+        }
+
         return {
-            inputStyle
+            inputStyle, emitInput
         }
     }
 }

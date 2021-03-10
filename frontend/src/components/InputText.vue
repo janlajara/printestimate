@@ -14,6 +14,7 @@
             <input :type="$props.type" :placeholder="$props.placeholder"
                 class="input-field w-full" :value="$props.value"
                 :class="inputStyle" :disabled="$props.disabled"
+                @input="(e)=>$emit('input', e.target.value)"
                 :readonly="$props.readonly"/>
             <span v-if="$props.postfix"
                 class="input-field-part rounded-r-md">
@@ -26,6 +27,7 @@
 import {ref} from 'vue'
 
 export default {
+    emits: ['input'],
     props: {
         name: String,
         prefix: String,

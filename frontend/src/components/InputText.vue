@@ -41,7 +41,7 @@ export default {
             type: String,
             required: true,
             validator: (value) => {
-                return ['text', 'number', 'password'].indexOf(value) !== -1
+                return ['text', 'number', 'decimal', 'password'].indexOf(value) !== -1
             }
         },
         required: Boolean,
@@ -63,11 +63,13 @@ export default {
 
         const emitInput = (event)=> {
             let input = event.target.value;
-            if (props.type == 'number') {
-                const firstOccur = input.indexOf('.');
-                if (firstOccur >= 0) {
-                    input = input.substr(0, firstOccur+1) + 
-                        input.slice(firstOccur+1).replaceAll('.', '');
+            if (props.type == 'number' || props.type == 'decimal') {
+                if (props.type == 'decimal') {
+                    const firstOccur = input.indexOf('.');
+                    if (firstOccur >= 0) {
+                        input = input.substr(0, firstOccur+1) + 
+                            input.slice(firstOccur+1).replaceAll('.', '');
+                    }
                 }
                 input = input.replace(/[^\d.]/g, "");
             }

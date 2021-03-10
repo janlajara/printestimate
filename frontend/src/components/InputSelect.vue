@@ -50,7 +50,6 @@ export default {
         isDroppedDown: false,
       }); 
       watch(()=>props.options, ()=>{
-        console.log(props.options);
         state.options = props.options;
       });
       const selectedOptions = computed(() => 
@@ -75,7 +74,8 @@ export default {
           toggleDropdown(false);
         }
         const selectedIds = selectedOptions.value.map(o=> o.value);
-        if (emit) emit('input', selectedIds);
+        const val = (props.multiple)? selectedIds : selectedIds.shift(); 
+        if (emit) emit('input', val);
       };
       return {
         state, toggleDropdown, select, selectedJoined

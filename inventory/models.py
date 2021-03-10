@@ -99,7 +99,7 @@ class ItemManager(models.Manager):
         item = self.create(**data)
         type_key = data.get('type')
         if type_key is not None:
-            clazz = ItemManager._get_properties_class(type_key)
+            clazz = ItemManager.get_properties_class(type_key)
             if clazz is not None:
                 properties = clazz.objects.create()
                 item.properties = properties
@@ -108,7 +108,7 @@ class ItemManager(models.Manager):
         return item
 
     @staticmethod
-    def _get_properties_class(item_type):
+    def get_properties_class(item_type):
         mapping = {
             Item.TAPE: Tape,
             Item.LINE: Line,

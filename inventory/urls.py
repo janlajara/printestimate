@@ -9,6 +9,8 @@ urlpatterns = [
          views.ItemViewSet.as_view(GETLIST_POSTCREATE)),
     path('api/item/<int:pk>/',
          views.ItemViewSet.as_view(GETRETRIEVE_PUTUPDATE_POSTDESTROY)),
+    path('api/itemproperties',
+         views.ItemPropertiesListCreateSerializer.as_view(GETLIST_POSTCREATE)),
     path('api/itemproperties/<int:pk>/',
          views.ItemPropertiesViewSet.as_view(GETRETRIEVE_PUTUPDATE_POSTDESTROY)),
     path('api/basestockunit',

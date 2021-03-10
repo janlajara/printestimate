@@ -1,4 +1,4 @@
-from inventory.models import Item, BaseStockUnit, AlternateStockUnit
+from inventory.models import Item, ItemManager, BaseStockUnit, AlternateStockUnit
 from inventory.properties.models import ItemProperties
 from rest_framework import viewsets
 from inventory import serializers
@@ -45,10 +45,25 @@ class ItemPropertiesViewSet(viewsets.ModelViewSet):
     queryset = ItemProperties.objects.all()
 
     def get_serializer_class(self):
-        prop = self.get_object()
         mapping = serializers.ItemPropertiesPolymorphicSerializer.model_serializer_mapping
-        serializer = mapping[prop.__class__]
-        if self.action in ['metadata', 'update'] and serializer is not None:
+
+        if self.action in ['retrieve', 'update', 'metadata']:    
+            prop = self.get_object()    
+            serializer = mapping[prop.__class__]
+            return serializer
+        else:
+            return serializers.ItemPropertiesPolymorphicSerializer
+
+
+class ItemPropertiesListCreateSerializer(ItemPropertiesViewSet):
+
+    def get_serializer_class(self):
+        mapping = serializers.ItemPropertiesPolymorphicSerializer.model_serializer_mapping
+        item_type = self.request.GET.get('type', None)
+
+        if (item_type and self.action in ['metadata']):
+            clazz = ItemManager.get_properties_class(item_type)
+            serializer = mapping[clazz]
             return serializer
         else:
             return serializers.ItemPropertiesPolymorphicSerializer

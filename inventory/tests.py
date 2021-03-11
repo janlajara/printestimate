@@ -20,7 +20,7 @@ def alt_unit__ream(db, base_unit__sheet):
 @pytest.fixture
 def item(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateStockUnit):
     return Item.objects.create_item(name='Bond Paper',
-                                   type=Item.PAPER_SHEET,
+                                   type=Item.PAPER,
                                    base_uom=base_unit__sheet,
                                    alternate_uom=alt_unit__ream,
                                    properties=ItemProperties.objects.create())
@@ -295,7 +295,7 @@ def test_item__wire(db, item_factory):
 
 
 def test_item__paper(db, item_factory):
-    item = item_factory(name='Carbonless', type=Item.PAPER_SHEET)
+    item = item_factory(name='Carbonless', type=Item.PAPER)
     item.properties.size_uom = 'inch'
     item.properties.length_value = 34
     item.properties.width_value = 22

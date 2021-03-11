@@ -152,7 +152,7 @@ class ItemCreateUpdateSerializer(ItemSerializer):
     override_price = MoneyField(max_digits=14, decimal_places=2)
     latest_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
     average_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
-    properties = ItemPropertiesPolymorphicSerializer(read_only=True)
+    properties = ItemPropertiesPolymorphicSerializer(read_only=False)
 
     class Meta:
         model = Item
@@ -161,8 +161,16 @@ class ItemCreateUpdateSerializer(ItemSerializer):
                   'average_price_per_quantity', 'is_raw_material', 'available_quantity',
                   'onhand_quantity', 'onhand_stocks', 'base_uom', 'alternate_uom']
 
+    def validate(self, data):
+        print('validate')
+        print(data)
+        return data
+
     def create(self, validated_data):
-        return Item.objects.create_item(**validated_data)
+        print('create')
+        print(validated_data)
+        return None
+        #return Item.objects.create_item(**validated_data)
 
 
 class ItemRetrieveSerializer(ItemCreateUpdateSerializer):

@@ -55,15 +55,18 @@ class ItemPropertiesViewSet(viewsets.ModelViewSet):
             return serializers.ItemPropertiesPolymorphicSerializer
 
 
-class ItemPropertiesListCreateSerializer(ItemPropertiesViewSet):
+class ItemPropertiesListCreateViewSet(ItemPropertiesViewSet):
 
     def get_serializer_class(self):
         mapping = serializers.ItemPropertiesPolymorphicSerializer.model_serializer_mapping
-        item_type = self.request.GET.get('type', None)
+        item_type = self.request.GET.get('resourcetype', None)
 
         if (item_type and self.action in ['metadata']):
             clazz = ItemManager.get_properties_class(item_type)
-            serializer = mapping[clazz]
-            return serializer
+            if (clazz is not None):
+                serializer = mapping[clazz]
+                return serializer
+            else:
+                return serializers.ItemPropertiesPolymorphicSerializer
         else:
             return serializers.ItemPropertiesPolymorphicSerializer

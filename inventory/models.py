@@ -112,8 +112,9 @@ class ItemManager(models.Manager):
         mapping = {
             Item.TAPE: Tape,
             Item.LINE: Line,
-            Item.PAPER_SHEET: Paper,
-            Item.PAPER_ROLL: Paper,
+            Item.PAPER: Paper,
+            #Item.PAPER_SHEET: Paper,
+            #Item.PAPER_ROLL: Paper,
             Item.PANEL: Panel,
             Item.LIQUID: Liquid,
             Item.OTHER: None
@@ -125,16 +126,18 @@ class ItemManager(models.Manager):
 class Item(models.Model):
     TAPE = 'tape'
     LINE = 'line'
-    PAPER_SHEET = 'papersheet'
-    PAPER_ROLL = 'paperroll'
+    PAPER = 'paper'
+    #PAPER_SHEET = 'papersheet'
+    #PAPER_ROLL = 'paperroll'
     PANEL = 'panel'
     LIQUID = 'liquid'
-    OTHER = 'other'
+    OTHER = 'others'
     TYPES = [
         (TAPE, 'Tape'),
         (LINE, 'Line'),
-        (PAPER_SHEET, 'Paper - Sheet'),
-        (PAPER_ROLL, 'Paper - Roll'),
+        (PAPER, 'Paper'),
+        #(PAPER_SHEET, 'Paper - Sheet'),
+        #(PAPER_ROLL, 'Paper - Roll'),
         (PANEL, 'Panel'),
         (LIQUID, 'Liquid'),
         (OTHER, 'Other')

@@ -31,13 +31,13 @@
                     <span v-if="bsu.error" class="text-sm text-red-600">*{{bsu.error}}</span>
                     <div class="md:grid md:grid-cols-4 md:gap-4">
                         <InputText name="Name" type="text" :value="bsu.selected.name" required
-                            @input="(e)=>bsu.selected.name = e.target.value"/>
+                            @input="(value)=>bsu.selected.name = value"/>
                         <InputText name="Abbreviation" type="text" :value="bsu.selected.abbrev" required
-                            @input="(e)=>bsu.selected.abbrev = e.target.value"/>
+                            @input="(value)=>bsu.selected.abbrev = value"/>
                         <InputText name="Name (Plural)" type="text" :value="bsu.selected.pluralName"
-                            @input="(e)=>bsu.selected.pluralName = e.target.value" disabled/>
+                            @input="(value)=>bsu.selected.pluralName = value" disabled/>
                         <InputText name="Abbreviation (Plural)" type="text" :value="bsu.selected.pluralAbbrev"
-                            @input="(e)=>bsu.selected.pluralAbbrev = e.target.value" disabled/>
+                            @input="(value)=>bsu.selected.pluralAbbrev = value" disabled/>
                         <InputSelect name="Parent Alternate Stock Unit" multiple
                             class="col-span-2" 
                             @input="(value)=>bsu.selected.altStockUnitIds = value"
@@ -78,13 +78,13 @@
                     <span v-if="asu.error" class="text-sm text-red-600">*{{asu.error}}</span>
                     <div class="md:grid md:grid-cols-4 md:gap-4">
                         <InputText name="Name" type="text" :value="asu.selected.name"
-                            @input="(e)=>asu.selected.name = e.target.value"/>
+                            @input="(value)=>asu.selected.name = value"/>
                         <InputText name="Abbreviation" type="text" :value="asu.selected.abbrev"
-                            @input="(e)=>asu.selected.abbrev = e.target.value"/>
+                            @input="(value)=>asu.selected.abbrev = value"/>
                         <InputText name="Name (Plural)" type="text" :value="asu.selected.pluralName"
-                            @input="(e)=>asu.selected.pluralName = e.target.value" disabled/>
+                            @input="(value)=>asu.selected.pluralName = value" disabled/>
                         <InputText name="Abbreviation (Plural)" type="text" :value="asu.selected.pluralAbbrev"
-                            @input="(e)=>asu.selected.pluralAbbrev = e.target.value" disabled/>
+                            @input="(value)=>asu.selected.pluralAbbrev = value" disabled/>
                         <InputSelect name="Parent Alternate Stock Unit" multiple
                             class="col-span-2" 
                             @input="(value)=>asu.selected.baseStockUnitIds = value"

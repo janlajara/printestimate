@@ -258,10 +258,11 @@ class Form(Product):
     def substrate_options(self):
         def __get_materials(paper_type):
             return Item.objects.filter(type=paper_type)
-        if self.type == Form.PADDED or self.type == Form.SHEET:
-            substrate = __get_materials(Item.PAPER_SHEET)
-        else:
-            substrate = __get_materials(Item.PAPER_ROLL)
+        #if self.type == Form.PADDED or self.type == Form.SHEET:
+        #    substrate = __get_materials(Item.PAPER_SHEET)
+        #else:
+        #    substrate = __get_materials(Item.PAPER_ROLL)
+        substrate = __get_materials(Item.PAPER)
         return substrate
 
     @property

@@ -33,7 +33,7 @@ def item_factory(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateS
 
 @pytest.fixture
 def carbonless_white(db, item_factory):
-    item = item_factory(name='Carbonless White', type=Item.PAPER_SHEET,
+    item = item_factory(name='Carbonless White', type=Item.PAPER,
                         override_price=2, is_override_price=True)
     item.properties.length_value = 22
     item.properties.width_value = 34
@@ -44,7 +44,7 @@ def carbonless_white(db, item_factory):
 
 @pytest.fixture
 def carbonless_red(db, item_factory):
-    item = item_factory(name='Carbonless Red', type=Item.PAPER_SHEET,
+    item = item_factory(name='Carbonless Red', type=Item.PAPER,
                         override_price=2, is_override_price=True)
     item.properties.length_value = 22
     item.properties.width_value = 34
@@ -55,7 +55,7 @@ def carbonless_red(db, item_factory):
 
 @pytest.fixture
 def carbonless_blue(db, item_factory):
-    item = item_factory(name='Carbonless Blue', type=Item.PAPER_SHEET,
+    item = item_factory(name='Carbonless Blue', type=Item.PAPER,
                         override_price=2, is_override_price=True)
     item.properties.length_value = 22
     item.properties.width_value = 34
@@ -66,7 +66,7 @@ def carbonless_blue(db, item_factory):
 
 @pytest.fixture
 def carbonless_roll(db, item_factory):
-    item = item_factory(name='Carbonless Roll', type=Item.PAPER_ROLL)
+    item = item_factory(name='Carbonless Roll', type=Item.PAPER)
     item.properties.length_value = 50
     item.properties.width_value = 1.219
     item.properties.size_uom = 'meter'

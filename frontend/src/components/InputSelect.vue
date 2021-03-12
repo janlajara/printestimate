@@ -1,6 +1,8 @@
 <template>
     <div class="input">
-        <label class="input-label">{{$props.name}}</label>
+        <label class="input-label">{{$props.name}}
+          <span v-if="$props.required" class="text-secondary-light">*</span>
+        </label>
         <div class="rounded-md shadow-sm" v-click-outside="()=>toggleDropdown(false)">
             <div class="relative">
               <input type="text" class="rounded input-field cursor-pointer"
@@ -38,11 +40,12 @@ export default {
     props: {
         name: String,
         multiple: Boolean,
+        required: Boolean,
         options: {
             type: Array 
             //Array of Objects 
             //{label:String, value:number, isSelected:Boolean}
-        }
+        },
     },
     setup(props, {emit}) {  
       const state = reactive({

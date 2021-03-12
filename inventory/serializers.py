@@ -128,6 +128,9 @@ class ItemPropertiesPolymorphicSerializer(PolymorphicSerializer):
         Liquid: LiquidSerializer,
     }
 
+    def to_resource_type(self, model_or_instance):
+        return model_or_instance._meta.object_name.lower()
+
 
 class StockSerializer(serializers.ModelSerializer):
     class Meta:

@@ -7,9 +7,9 @@ const showToast = (type='default', message=null)=> {
 }
 const toastResponse = (response, success, error)=> {
     if (response.status >= 200 && response.status <= 299) {
-        showToast("success", success);
+        if (success) showToast("success", success);
     } else {
-        showToast("error", error);
+        if (error) showToast("error", error);
         console.error(response);
     }
 };
@@ -17,19 +17,19 @@ const toastResponse = (response, success, error)=> {
 const _axios = require('axios')
 const API_HOSTNAME = 'http://localhost:8000'
 const AXIOS =  {
-    execute: async (method, uri, success, error, data)=> {
+    execute: async (method, uri, success, error, data, params)=> {
         const methods = ["post", "put", "get", "delete", "options"];
         const url = API_HOSTNAME + uri;
         const config = {
             url: url,
             method: methods[method],
-            data
-        }
+            data, params
+        }; 
         let response;
 
         try {
             response = await _axios.request(config);
-            if (success != null && error != null)
+            if (success != null || error != null)
                 toastResponse(response, success, error);
         } catch (err) {
             showToast('error', 'An error occurred in the server. Please try again.')
@@ -57,12 +57,24 @@ export class ItemApi {
 
     static async createItem(item) {
         const response = await AXIOS.execute(AXIOS.POST, ItemApi.uri, item);
-        return response
+        return response;
     }
 
     static async listItems() {
         const response = await AXIOS.execute(AXIOS.GET, ItemApi.item_uri);
         return response.data;
+    }
+}
+
+
+export class ItemPropertiesApi {
+    static uri = '/inventory/api/itemproperties'
+
+    static async getItemProperties(itemType) {
+        const response = await AXIOS.execute(AXIOS.OPTIONS, 
+            ItemPropertiesApi.uri, null, null, null, {resourcetype: itemType});
+        if (response.data && response.data.actions.POST)
+            return response.data.actions.POST;
     }
 }
 

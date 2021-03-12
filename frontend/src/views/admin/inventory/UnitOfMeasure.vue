@@ -140,9 +140,10 @@ export default {
             },
             validate: ()=> {
                 let errors = []
-                if (bsu.selected.name.length == 0) errors.push('Name must not be empty.');
-                if (bsu.selected.abbrev.length == 0) errors.push('Abbrev must not be empty.');
-                bsu.error = errors.join(' ');
+                if (bsu.selected.name.length == 0) errors.push('name');
+                if (bsu.selected.abbrev.length == 0) errors.push('abbrev');
+                if (errors.length > 0)
+                    bsu.error = `The following fields must not be empty: ${errors.join(', ')}.`;
                 return errors.length > 0;
             },
             save: async (closeModalAfter)=> {
@@ -193,9 +194,10 @@ export default {
             },
             validate: ()=> {
                 let errors = []
-                if (asu.selected.name.length == 0) errors.push('Name must not be empty.');
-                if (asu.selected.abbrev.length == 0) errors.push('Abbrev must not be empty.');
-                asu.error = errors.join(' ');
+                if (asu.selected.name.length == 0) errors.push('name');
+                if (asu.selected.abbrev.length == 0) errors.push('abbrev');
+                if (errors.length > 0)
+                    asu.error = `The following fields must not be empty: ${errors.join(', ')}.`;
                 return errors.length > 0;
             },
             save: async (closeModalAfter)=> {

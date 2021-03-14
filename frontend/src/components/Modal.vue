@@ -58,7 +58,7 @@ export default {
     }, 
     setup(props, {emit}) {
         const modal = reactive({
-            ref: null, styleHeight: null
+            ref: {}, styleHeight: null, 
         });
         const resize = () => {
             let h = window.innerHeight * 0.6;

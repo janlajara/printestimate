@@ -159,11 +159,6 @@ class ItemCreateUpdateSerializer(serializers.ModelSerializer):
                   'is_override_price', 'is_raw_material', 
                   'base_uom', 'alternate_uom']
 
-    #def validate(self, data):
-    #    print('validate')
-    #    print(data)
-    #    return data
-
     def create(self, validated_data):
         props = validated_data.pop('properties')
         item = Item.objects.create(**validated_data)

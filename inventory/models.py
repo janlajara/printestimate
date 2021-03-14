@@ -2,7 +2,6 @@ from django.db import models
 from django.db.models import Q, Sum, Avg
 from djmoney.models.fields import MoneyField
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
-#from .properties.models import ItemProperties, Tape, Line, Paper, Panel, Liquid
 import inflect
 
 _inflect = inflect.engine()
@@ -88,40 +87,6 @@ class AlternateStockUnit(StokUnit):
     def clear_base_stock_units(self):
         self.base_stock_units.clear()
 
-"""
-class ItemManager(models.Manager):
-
-    def create_item(self, **data):
-        # remove properties if supplied. to be overridden
-        if data.get('properties') is not None:
-            data.pop('properties')
-
-        item = self.create(**data)
-        type_key = data.get('type')
-        if type_key is not None:
-            clazz = ItemManager.get_properties_class(type_key)
-            if clazz is not None:
-                properties = clazz.objects.create()
-                item.properties = properties
-                item.save()
-
-        return item
-
-    @staticmethod
-    def get_properties_class(item_type):
-        mapping = {
-            Item.TAPE: Tape,
-            Item.LINE: Line,
-            Item.PAPER: Paper,
-            #Item.PAPER_SHEET: Paper,
-            #Item.PAPER_ROLL: Paper,
-            Item.PANEL: Panel,
-            Item.LIQUID: Liquid,
-            Item.OTHER: None
-        }
-        if mapping.get(item_type) is not None:
-            return mapping[item_type]
-"""
 
 class Item(models.Model):
     TAPE = 'tape'

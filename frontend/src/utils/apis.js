@@ -25,7 +25,7 @@ const AXIOS =  {
             method: methods[method],
             data, params
         }; 
-        let response;
+        let response; 
 
         try {
             response = await _axios.request(config);
@@ -56,7 +56,8 @@ export class ItemApi {
     }
 
     static async createItem(item) {
-        const response = await AXIOS.execute(AXIOS.POST, ItemApi.uri, item);
+        const response = await AXIOS.execute(AXIOS.POST, ItemApi.uri, 
+            'Item created successfully.', 'Create failed. Please try again.', item);
         return response;
     }
 
@@ -88,13 +89,13 @@ export class BaseStockUnitApi {
 
     static async createBaseStockUnit(baseStockUnit) {
         const response = await AXIOS.execute(AXIOS.POST, BaseStockUnitApi.uri,
-            'Stock unit created successfully', 'Create failed. Please try again.', baseStockUnit);
+            'Stock unit created successfully.', 'Create failed. Please try again.', baseStockUnit);
         return response.data;
     }
 
     static async deleteBaseStockUnit(id) {
         await AXIOS.execute(AXIOS.DELETE, BaseStockUnitApi.uri + `/${id}/`, 
-            'Stock unit deleted successfully', 'Delete failed. Please try again.');
+            'Stock unit deleted successfully.', 'Delete failed. Please try again.');
     }
 
     static async retrieveBaseStockUnit(id) {
@@ -104,7 +105,7 @@ export class BaseStockUnitApi {
 
     static async updateBaseStockUnit(id, baseStockUnit) {
         const response = await AXIOS.execute(AXIOS.PUT, BaseStockUnitApi.uri + `/${id}/`, 
-            'Stock unit updated successfully', 'Update failed. Please try again.', baseStockUnit);
+            'Stock unit updated successfully.', 'Update failed. Please try again.', baseStockUnit);
         if (response) return response.data;
     }
 }
@@ -114,13 +115,13 @@ export class AlternateStockUnitApi {
 
     static async createAlternateStockUnit(baseStockUnit) {
         const response = await AXIOS.execute(AXIOS.POST, AlternateStockUnitApi.uri,
-            'Stock unit created successfully', 'Create failed. Please try again.', baseStockUnit);
+            'Stock unit created successfully.', 'Create failed. Please try again.', baseStockUnit);
         return response.data;
     }
 
     static async deleteAlternateStockUnit(id) {
         await AXIOS.execute(AXIOS.DELETE, AlternateStockUnitApi.uri + `/${id}/`, 
-            'Stock unit deleted successfully', 'Delete failed. Please try again.');
+            'Stock unit deleted successfully.', 'Delete failed. Please try again.');
     }
 
     static async listAlternateStockUnits() {
@@ -135,7 +136,7 @@ export class AlternateStockUnitApi {
 
     static async updateAlternateStockUnit(id, alternateStockUnit) {
         const response = await AXIOS.execute(AXIOS.PUT, AlternateStockUnitApi.uri + `/${id}/`, 
-            'Stock unit updated successfully', 'Update failed. Please try again.', alternateStockUnit
+            'Stock unit updated successfully.', 'Update failed. Please try again.', alternateStockUnit
         )
         if (response) return response.data;
     }

@@ -1,4 +1,4 @@
-from inventory.models import Item, ItemManager, BaseStockUnit, AlternateStockUnit
+from inventory.models import Item, BaseStockUnit, AlternateStockUnit
 from inventory.properties.models import ItemProperties
 from rest_framework import viewsets
 from inventory import serializers
@@ -62,7 +62,7 @@ class ItemPropertiesListCreateViewSet(ItemPropertiesViewSet):
         item_type = self.request.GET.get('resourcetype', None)
 
         if (item_type and self.action in ['metadata']):
-            clazz = ItemManager.get_properties_class(item_type)
+            clazz = ItemProperties.get_class(item_type)
             if (clazz is not None):
                 serializer = mapping[clazz]
                 return serializer

@@ -149,13 +149,39 @@ class ItemSerializer(serializers.ModelSerializer):
                   'onhand_quantity', 'base_uom', 'alternate_uom']
 
 
-class ItemCreateUpdateSerializer(ItemSerializer):
-    base_uom = BaseStockUnitSerializer
-    alternate_uom = AlternateStockUnitSerializer
+class ItemCreateUpdateSerializer(serializers.ModelSerializer):
     override_price = MoneyField(max_digits=14, decimal_places=2)
+    properties = ItemPropertiesPolymorphicSerializer(read_only=False)
+
+    class Meta:
+        model = Item
+        fields = ['id', 'name', 'type', 'properties', 'override_price', 
+                  'is_override_price', 'is_raw_material', 
+                  'base_uom', 'alternate_uom']
+
+    #def validate(self, data):
+    #    print('validate')
+    #    print(data)
+    #    return data
+
+    def create(self, validated_data):
+        props = validated_data.pop('properties')
+        item = Item.objects.create(**validated_data)
+        if (props is not None):
+            type_key = props.pop('resourcetype')
+            clazz = ItemProperties.get_class(type_key)
+            itemprops = clazz.objects.create(**props)
+            item.properties = itemprops
+        return item 
+
+
+class ItemRetrieveSerializer(serializers.ModelSerializer):
+    price = MoneyField(max_digits=14, decimal_places=2, read_only=True)
     latest_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
     average_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
-    properties = ItemPropertiesPolymorphicSerializer(read_only=False)
+    properties = ItemPropertiesPolymorphicSerializer(read_only=True)
+    base_uom = BaseStockUnitSerializer()
+    alternate_uom = AlternateStockUnitSerializer()
 
     class Meta:
         model = Item
@@ -163,19 +189,3 @@ class ItemCreateUpdateSerializer(ItemSerializer):
                   'override_price', 'is_override_price', 'latest_price_per_quantity',
                   'average_price_per_quantity', 'is_raw_material', 'available_quantity',
                   'onhand_quantity', 'onhand_stocks', 'base_uom', 'alternate_uom']
-
-    def validate(self, data):
-        print('validate')
-        print(data)
-        return data
-
-    def create(self, validated_data):
-        print('create')
-        print(validated_data)
-        return None
-        #return Item.objects.create_item(**validated_data)
-
-
-class ItemRetrieveSerializer(ItemCreateUpdateSerializer):
-    base_uom = BaseStockUnitSerializer()
-    alternate_uom = AlternateStockUnitSerializer()

@@ -1,6 +1,7 @@
 import pytest
 from measurement.measures import Distance
 from inventory.models import BaseStockUnit, AlternateStockUnit, Item
+from inventory.properties.models import ItemProperties
 from core.utils.measures import Quantity
 from .models import Form, ProductProcessMapping
 from ..machine.models import SheetfedPress
@@ -24,9 +25,11 @@ def alt_unit__ream(db, base_unit__sheet):
 @pytest.fixture
 def item_factory(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateStockUnit):
     def create_item(**data):
-        item = Item.objects.create_item(base_uom=base_unit__sheet,
+        item = Item.objects.create(base_uom=base_unit__sheet,
                                         alternate_uom=alt_unit__ream,
                                         **data)
+        clazz = ItemProperties.get_class(data.get('type'))
+        item.properties = clazz.objects.create()
         return item
     return create_item
 

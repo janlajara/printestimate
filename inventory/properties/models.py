@@ -3,9 +3,12 @@ from django_measurement.models import MeasurementField
 from measurement.measures import Distance, Volume
 from polymorphic.models import PolymorphicModel
 from core.utils.measures import Measure
+from ..models import Item
 
 
 class ItemProperties(PolymorphicModel):
+    item = models.OneToOneField(Item, on_delete=models.RESTRICT, null=True, 
+        related_name='properties')
 
     @classmethod
     def join(cls, arr):
@@ -20,6 +23,21 @@ class ItemProperties(PolymorphicModel):
         uom = split[1] if len(split) == 2 else ''
         num_fmt = int(num) if num.is_integer() else num
         return '%s%s' % (num_fmt, uom)
+
+    @staticmethod
+    def get_class(item_type):
+        mapping = {
+            Item.TAPE: Tape,
+            Item.LINE: Line,
+            Item.PAPER: Paper,
+            #Item.PAPER_SHEET: Paper,
+            #Item.PAPER_ROLL: Paper,
+            Item.PANEL: Panel,
+            Item.LIQUID: Liquid,
+            Item.OTHER: None
+        }
+        if mapping.get(item_type) is not None:
+            return mapping[item_type]
 
     def __str__(self):
         return ''
@@ -65,20 +83,20 @@ class Tape(Line):
 
 
 class Rectangle(ItemProperties):
-    length_value = models.FloatField(null=True, blank=True)
-    width_value = models.FloatField(null=True, blank=True)
-    size_uom = models.CharField(max_length=30, default='m',
+    length_value = models.FloatField(null=False, blank=False, default=0.00)
+    width_value = models.FloatField(null=False, blank=False, default=0.00)
+    size_uom = models.CharField(max_length=30, null=False, blank=False,
                                 choices=Measure.UNITS[Measure.DISTANCE])
 
     @property
     def length(self):
-        if self.length_value is not None:
+        if self.length_value is not None and self.length_value > 0:
             arg = {self.size_uom: self.length_value}
             return Distance(**arg)
 
     @property
     def width(self):
-        if self.width_value is not None:
+        if self.width_value is not None and self.width_value > 0:
             arg = {self.size_uom: self.width_value}
             return Distance(**arg)
 

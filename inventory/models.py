@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import Q, Sum, Avg
 from djmoney.models.fields import MoneyField
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
-from .properties.models import ItemProperties, Tape, Line, Paper, Panel, Liquid
+#from .properties.models import ItemProperties, Tape, Line, Paper, Panel, Liquid
 import inflect
 
 _inflect = inflect.engine()
@@ -88,7 +88,7 @@ class AlternateStockUnit(StokUnit):
     def clear_base_stock_units(self):
         self.base_stock_units.clear()
 
-
+"""
 class ItemManager(models.Manager):
 
     def create_item(self, **data):
@@ -121,7 +121,7 @@ class ItemManager(models.Manager):
         }
         if mapping.get(item_type) is not None:
             return mapping[item_type]
-
+"""
 
 class Item(models.Model):
     TAPE = 'tape'
@@ -143,11 +143,10 @@ class Item(models.Model):
         (OTHER, 'Other')
     ]
 
-    objects = ItemManager()
+    #objects = ItemManager()
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=15, choices=TYPES, null=False, blank=False)
-    properties = models.OneToOneField(ItemProperties, on_delete=models.RESTRICT, null=True)
-    override_price = MoneyField(null=True, blank=False, max_digits=14, decimal_places=2, default_currency='PHP')
+    override_price = MoneyField(null=True, max_digits=14, decimal_places=2, default_currency='PHP')
     is_override_price = models.BooleanField(default=False)
     is_raw_material = models.BooleanField(default=False)
     base_uom = models.ForeignKey(BaseStockUnit, on_delete=models.RESTRICT,

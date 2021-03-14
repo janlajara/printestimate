@@ -18,21 +18,14 @@ def alt_unit__ream(db, base_unit__sheet):
 
 
 @pytest.fixture
-def item(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateStockUnit):
-    return Item.objects.create_item(name='Bond Paper',
-                                   type=Item.PAPER,
-                                   base_uom=base_unit__sheet,
-                                   alternate_uom=alt_unit__ream,
-                                   properties=ItemProperties.objects.create())
-                                   #supplying properties with a dummy value to test a branch. see code
-
-
-@pytest.fixture
 def item_factory(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateStockUnit):
     def create_item(**data):
-        item = Item.objects.create_item(base_uom=base_unit__sheet,
+        item = Item.objects.create(base_uom=base_unit__sheet,
                                         alternate_uom=alt_unit__ream,
                                         **data)
+        clazz = ItemProperties.get_class(data.get('type'))
+        props = clazz.objects.create()
+        item.properties = props
         return item
     return create_item
 
@@ -129,11 +122,6 @@ def test_alt_unit__clear(db):
 
     box_stock_unit.clear_base_stock_units()
     assert len(box_stock_unit.base_stock_units.all()) == 0
-
-
-def test_item__create(db, item: Item):
-    assert item.properties is not None
-    assert isinstance(item.properties, Paper)
 
 
 def test_item__onhand_stocks(db, item: Item, deposited_stock: Stock):

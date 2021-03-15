@@ -45,7 +45,7 @@ class ItemProperties(PolymorphicModel):
 
 class Line(ItemProperties):
     length_value = models.FloatField(null=True, blank=True)
-    length_uom = models.CharField(max_length=30, default='m',
+    length_uom = models.CharField(max_length=30, default='m', null=True, 
                                   choices=Measure.UNITS[Measure.DISTANCE])
 
     @property
@@ -64,7 +64,7 @@ class Line(ItemProperties):
 
 class Tape(Line):
     width_value = models.FloatField(null=True, blank=True)
-    width_uom = models.CharField(max_length=30, default='m',
+    width_uom = models.CharField(max_length=30, default='m', null=True,
                                  choices=Measure.UNITS[Measure.DISTANCE])
 
     @property

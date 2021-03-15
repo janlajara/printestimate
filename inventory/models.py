@@ -59,7 +59,6 @@ class BaseStockUnit(StokUnit):
 
 class AlternateStockUnit(StokUnit):
     base_stock_units = models.ManyToManyField(BaseStockUnit, blank=True, related_name='alternate_stock_units')
-    # type = models.CharField(max_length=15, choices=Item.TYPES, null=False, blank=False)
 
     def add_base_stock_unit(self, stock_unit_id):
         stock_unit = BaseStockUnit.objects.get(pk=stock_unit_id)
@@ -92,8 +91,6 @@ class Item(models.Model):
     TAPE = 'tape'
     LINE = 'line'
     PAPER = 'paper'
-    #PAPER_SHEET = 'papersheet'
-    #PAPER_ROLL = 'paperroll'
     PANEL = 'panel'
     LIQUID = 'liquid'
     OTHER = 'others'
@@ -101,24 +98,20 @@ class Item(models.Model):
         (TAPE, 'Tape'),
         (LINE, 'Line'),
         (PAPER, 'Paper'),
-        #(PAPER_SHEET, 'Paper - Sheet'),
-        #(PAPER_ROLL, 'Paper - Roll'),
         (PANEL, 'Panel'),
         (LIQUID, 'Liquid'),
         (OTHER, 'Other')
     ]
 
-    #objects = ItemManager()
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=15, choices=TYPES, null=False, blank=False)
     override_price = MoneyField(null=True, max_digits=14, decimal_places=2, default_currency='PHP')
     is_override_price = models.BooleanField(default=False)
     is_raw_material = models.BooleanField(default=False)
-    base_uom = models.ForeignKey(BaseStockUnit, on_delete=models.RESTRICT,
-                                 related_name='base_uom')
+    base_uom = models.ForeignKey(BaseStockUnit, on_delete=models.RESTRICT)
     alternate_uom = models.ForeignKey(AlternateStockUnit,
                                       on_delete=models.RESTRICT, null=True,
-                                      blank=True, related_name='alternate_uom')
+                                      blank=True)
 
     @property
     def full_name(self):

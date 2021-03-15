@@ -42,6 +42,18 @@
                 </div>
             </Section>
         </Modal>
+        <Section>
+            <Table :headers="['Item', 'Type', 'Unit of Measure', 
+                'Available Qty', 'On-hand Qty']">
+                <Row v-for="(item, key) in item.list" :key="key">
+                    <Cell label="Item">{{item.name}}</Cell>
+                    <Cell label="Type" class="capitalize">{{item.type}}</Cell>
+                    <Cell label="UoM">{{item.baseUom}}</Cell>
+                    <Cell label="Available Qty">{{item.available}}</Cell>
+                    <Cell label="Onhand Qty">{{item.onhand}}</Cell>
+                </Row>
+            </Table>
+        </Section>
     </Page>
 </template>
 
@@ -52,6 +64,9 @@ import Button from '@/components/Button.vue' ;
 import Modal from '@/components/Modal.vue';
 import InputText from '@/components/InputText.vue';
 import InputSelect from '@/components/InputSelect.vue';
+import Table from '@/components/Table.vue';
+import Row from '@/components/Row.vue';
+import Cell from '@/components/Cell.vue';
 
 import {reactive, computed, watch} from 'vue';
 import {ItemApi, ItemPropertiesApi, BaseStockUnitApi} from '@/utils/apis.js';
@@ -59,7 +74,7 @@ import {ItemApi, ItemPropertiesApi, BaseStockUnitApi} from '@/utils/apis.js';
 export default {
     name: 'Stock',
     components: {
-        Page, Section, Button, Modal, InputText, InputSelect
+        Page, Section, Button, Modal, InputText, InputSelect, Table, Row, Cell
     },
     setup() {
         const item = reactive({
@@ -118,13 +133,16 @@ export default {
                     base_uom: data.baseUnit, alternate_uom: data.altUnit,
                     properties: Object.assign({}, data.properties)
                 }
-                console.log(request);
+                item.isProcessing = true;
                 const response = await ItemApi.createItem(request);
-                console.log(response);
+                if (response) item.modal.IsOpen = false;
+                item.isProcessing = false;
             },
             delete: ()=>{}
         });
         
+
+        // Pre-load the data for item types, stock units, items
         const populateItemTypes = async() => {
             const response = await ItemApi.getItemTypes();
             if (response) {
@@ -146,8 +164,21 @@ export default {
                 item.modal.baseStockUnits = baseStockUnits;
             }
         }
+        const populateItemList = async() => {
+            const response = await ItemApi.listItems();
+            item.list = response.map(i=> ({
+                id: i.id, name: i.full_name, type: i.type,
+                baseUom: i.base_uom, 
+                available: i.available_quantity,
+                onhand: i.onhand_quantity 
+            }))
+        }
         populateItemTypes();
         populateStockUnits();
+        populateItemList();
+
+        // Make AlternateStockUnit select options  dependent on selected 
+        // BaseStockUnit option.
         watch(()=> item.modal.selected.baseUnit,()=>{
             item.modal.selected.altUnit = null;
             item.modal.altStockUnits = [{}];
@@ -163,6 +194,8 @@ export default {
             } 
         });
 
+        // Fetch the property fields for the selected item type and 
+        // load the data into the form
         const loadProperties = async(itemType)=> {
             item.error = '';
             const response = await ItemPropertiesApi.getItemProperties(itemType);
@@ -209,7 +242,6 @@ export default {
                 loadProperties(itemType);
             }
         });
-
 
         return {
             item

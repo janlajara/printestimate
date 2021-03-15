@@ -83,8 +83,8 @@ class Tape(Line):
 
 
 class Rectangle(ItemProperties):
-    length_value = models.FloatField(null=False, blank=False, default=0.00)
-    width_value = models.FloatField(null=False, blank=False, default=0.00)
+    length_value = models.FloatField(null=False, blank=False)
+    width_value = models.FloatField(null=False, blank=False)
     size_uom = models.CharField(max_length=30, null=False, blank=False,
                                 choices=Measure.UNITS[Measure.DISTANCE])
 

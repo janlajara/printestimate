@@ -70,6 +70,11 @@ export class ItemApi {
         const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}`)
         return response.data
     }
+
+    static async deleteItem(id) {
+        await AXIOS.execute(AXIOS.DELETE, ItemApi.uri + `/${id}/`, 
+            'Item deleted successfully.', 'Delete failed. Please try again.');
+    }
 }
 
 

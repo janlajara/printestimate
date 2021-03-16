@@ -1,5 +1,5 @@
 <template>
-    <tr class="flex flex-wrap lg:table-row row bg-gray-50"
+    <tr class="flex flex-wrap lg:table-row row bg-tertiary-light bg-opacity-30"
         :class="$props.select? 'hover:bg-secondary-light hover:bg-opacity-20 cursor-pointer': ''"
         @click="executeSelect">
         <slot/>

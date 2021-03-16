@@ -28,8 +28,14 @@ def item_factory(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateS
         item = Item.objects.create(base_uom=base_unit__sheet,
                                         alternate_uom=alt_unit__ream,
                                         **data)
+        type = data.get('type')
         clazz = ItemProperties.get_class(data.get('type'))
-        item.properties = clazz.objects.create()
+        args = {}
+        if (type == Item.PAPER or type == Item.PANEL):
+            args = {'length_value': 0, 'width_value': 0}
+        props = clazz.objects.create(**args)
+        item.properties = props
+
         return item
     return create_item
 

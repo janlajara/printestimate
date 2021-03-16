@@ -65,6 +65,11 @@ export class ItemApi {
         const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri);
         if (response) return response.data;
     }
+
+    static async retrieveItem(id) {
+        const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}`)
+        return response.data
+    }
 }
 
 

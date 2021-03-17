@@ -61,6 +61,12 @@ export class ItemApi {
         return response;
     }
 
+    static async updateItem(id, item) {
+        const response = await AXIOS.execute(AXIOS.PUT, ItemApi.uri + `/${id}/`, 
+            'Item updated successfully.', 'Update failed. Please try again.', item);
+        return response;
+    }
+
     static async listItems() {
         const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri);
         if (response) return response.data;

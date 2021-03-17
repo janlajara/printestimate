@@ -159,6 +159,17 @@ class ItemCreateUpdateSerializer(serializers.ModelSerializer):
                   'is_override_price', 'is_raw_material', 
                   'base_uom', 'alternate_uom']
 
+    def update(self, instance, validated_data):
+        validated_data.pop('type') #prevent changing type
+        props = validated_data.pop('properties')
+        Item.objects.filter(pk=instance.pk).update(**validated_data)
+        if (props is not None):
+            type_key = props.pop('resourcetype')
+            clazz = ItemProperties.get_class(type_key)
+            props = {k: v for k, v in props.items() if v is not None}
+            clazz.objects.filter(pk=instance.properties.pk).update(**props)
+        return instance
+
     def create(self, validated_data):
         props = validated_data.pop('properties')
         item = Item.objects.create(**validated_data)

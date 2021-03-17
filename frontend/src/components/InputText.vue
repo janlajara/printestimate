@@ -72,6 +72,7 @@ export default {
                     }
                 }
                 input = input.replace(/[^\d.]/g, "");
+                if (input.trim() == "") input = null;
             }
             emit('input', input);
             event.target.value = input;

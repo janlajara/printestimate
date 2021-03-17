@@ -7,7 +7,7 @@ from ..models import Item
 
 
 class ItemProperties(PolymorphicModel):
-    item = models.OneToOneField(Item, on_delete=models.RESTRICT, null=True, 
+    item = models.OneToOneField(Item, on_delete=models.CASCADE, null=True, 
         related_name='properties')
 
     @classmethod

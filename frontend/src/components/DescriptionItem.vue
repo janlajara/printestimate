@@ -12,7 +12,8 @@ export default {
     props: {
         name: String,
         value: {
-            type: [Number, String]
+            type: [Number, String],
+            required: false
         }
     }
 }

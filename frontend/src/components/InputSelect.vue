@@ -2,11 +2,14 @@
     <div class="input">
         <label class="input-label">{{$props.name}}
           <span v-if="$props.required" class="text-secondary-light">*</span>
+          <span v-if="$props.disabled" 
+                class="material-icons text-sm text-secondary-light">lock</span>
         </label>
         <div class="rounded-md shadow-sm" v-click-outside="()=>toggleDropdown(false)">
             <div class="relative">
               <input type="text" class="rounded input-field cursor-pointer"
-                :value="selectedJoined"
+                :class="($props.disabled)? 'text-gray-400' : ''"
+                :value="selectedJoined" :disabled="$props.disabled"
                 @click="toggleDropdown(!state.isDroppedDown)" readonly/>
               <span class="absolute material-icons right-0 m-1 transform"
                 :class="state.isDroppedDown? 'rotate-180' : ''">
@@ -23,12 +26,6 @@
                 </div>
               </div>
             </div>
-            <!--select v-else class="rounded input-field">
-                <option disabled value="">Select</option>
-                <option v-for="option in $props.options" :key="option.value">
-                    {{option.label}}
-                </option>
-            </select-->
         </div>
     </div>
 </template>
@@ -41,6 +38,7 @@ export default {
         name: String,
         multiple: Boolean,
         required: Boolean,
+        disabled: Boolean,
         options: {
             type: Array 
             //Array of Objects 

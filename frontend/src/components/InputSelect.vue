@@ -59,7 +59,6 @@ export default {
       }); 
       watch(()=>props.options, ()=> {
         state.baseOptions = props.options.filter(prop => prop.value != null);
-        console.log(state.baseOptions);
       });
 
       const selectedOptions = computed(() => 

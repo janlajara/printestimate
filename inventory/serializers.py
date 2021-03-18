@@ -103,13 +103,13 @@ class TapeSerializer(ItemPropertiesSerializer):
 class PaperSerializer(ItemPropertiesSerializer):
     class Meta:
         model = Paper
-        fields = ['id', 'length_value', 'width_value', 'size_uom', 'gsm', 'finish']
+        fields = ['id', 'width_value', 'length_value', 'size_uom', 'gsm', 'finish']
 
 
 class PanelSerializer(ItemPropertiesSerializer):
     class Meta:
         model = Panel
-        fields = ['id', 'length_value', 'width_value', 'size_uom', 'thickness_value', 'thickness_uom']
+        fields = ['id', 'width_value', 'length_value', 'size_uom', 'thickness_value', 'thickness_uom']
 
 
 class LiquidSerializer(ItemPropertiesSerializer):

@@ -167,7 +167,11 @@ export default {
                         item.detail.reload();
                     }
                     populateItemList();
-                    if (response) item.modal.IsOpen = false;
+                    if (!response.error) { 
+                        item.modal.IsOpen = false;
+                    } else {
+                        item.modal.error = response.error;
+                    }
                     item.modal.isProcessing = false;
                 },
             },
@@ -212,7 +216,7 @@ export default {
         // Pre-load the data for item types, stock units, items
         const populateItemTypes = async() => {
             const response = await ItemApi.getItemTypes();
-            if (response) {
+            if (response && !response.error) {
                 const itemTypes = response.map(type=> ({
                     value: type.value, label: type.display_name
                 }));
@@ -221,7 +225,7 @@ export default {
         };
         const populateStockUnits = async() => {
             const response = await BaseStockUnitApi.listBaseStockUnits();
-            if (response) {
+            if (response  && !response.error) {
                 const baseStockUnits = response.map(bu=> ({
                     id: bu.id, name: bu.name, 
                     alternateStockUnits: bu.alternate_stock_units.map(au => ({
@@ -266,7 +270,7 @@ export default {
         const loadProperties = async(itemType)=> {
             item.modal.error = '';
             const response = await ItemPropertiesApi.getItemProperties(itemType);
-            if (response) {
+            if (response && !response.error) {
                 const responseData = Object.entries(response)
                     .filter(entry => entry[0] != 'id');
                 const itemProps = responseData.map(entry => {

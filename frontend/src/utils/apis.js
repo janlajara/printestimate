@@ -33,7 +33,17 @@ const AXIOS =  {
                 toastResponse(response, success, error);
         } catch (err) {
             showToast('error', 'An error occurred in the server. Please try again.')
-            console.error(err);
+            let error = err.response.data;
+            if (err.response.data.properties) {
+                const errArr = [];
+                Object.entries(err.response.data.properties).forEach(entry => {
+                    errArr.push(`${entry[0]} : ${entry[1]}`)
+                })
+                error = errArr.join(', ');
+            }
+            return {
+                error
+            };
         }
         return response;
     },

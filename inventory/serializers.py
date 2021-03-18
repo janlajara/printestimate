@@ -93,11 +93,31 @@ class LineSerializer(ItemPropertiesSerializer):
         model = Line
         fields = ['id', 'length_value', 'length_uom']
 
+    def validate(self, data):
+        errors = {}
+        if data.get('length_value', None) is not None and data.get('length_uom', None) is None:
+            errors['length_uom'] = 'Must provide value if length_value is populated'
+        if errors:
+            raise serializers.ValidationError(errors)
+        return data
+
 
 class TapeSerializer(ItemPropertiesSerializer):
     class Meta:
         model = Tape
         fields = ['id', 'length_value', 'length_uom', 'width_value', 'width_uom']
+
+    def validate(self, data):
+        errors = {}
+        if data.get('length_value', None) is not None and data.get('length_uom', None) is None:
+            errors['length_uom'] = 'Must provide value if length_value is populated'
+        if data.get('width_value', None) is not None and data.get('width_uom', None) is None:
+            errors['width_uom'] = 'Must provide value if width_value is populated'
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        return data
 
 
 class PaperSerializer(ItemPropertiesSerializer):
@@ -111,11 +131,25 @@ class PanelSerializer(ItemPropertiesSerializer):
         model = Panel
         fields = ['id', 'width_value', 'length_value', 'size_uom', 'thickness_value', 'thickness_uom']
 
+    def validate(self, data):
+        if data.get('thickness_value', None) is not None and data.get('thickness_uom', None) is None:
+            raise serializers.ValidationError(
+                {'thickness_uom': 'Must provide value if thickness_value is populated'})
+        return data
+
 
 class LiquidSerializer(ItemPropertiesSerializer):
     class Meta:
         model = Liquid
         fields = ['id', 'volume_value', 'volume_uom']
+
+    def validate(self, data):
+        errors = {}
+        if data.get('volume_value', None) is not None and data.get('volume_uom', None) is None:
+            errors['volume_uom'] = 'Must provide value if volume_value is populated'
+        if errors:
+            raise serializers.ValidationError(errors)
+        return data
 
 
 class ItemPropertiesPolymorphicSerializer(PolymorphicSerializer):

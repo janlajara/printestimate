@@ -50,7 +50,7 @@ class Line(ItemProperties):
 
     @property
     def length(self):
-        if self.length_value is not None:
+        if self.length_value is not None and self.length_uom is not None:
             return Distance(**{self.length_uom: self.length_value})
 
     def __str__(self):
@@ -64,12 +64,12 @@ class Line(ItemProperties):
 
 class Tape(Line):
     width_value = models.FloatField(null=True, blank=True)
-    width_uom = models.CharField(max_length=30, blank=True, null=True,
+    width_uom = models.CharField(max_length=30, blank=True, null=True, 
                                  choices=Measure.UNITS[Measure.DISTANCE])
 
     @property
     def width(self):
-        if self.width_value is not None:
+        if self.width_value is not None and self.width_uom is not None:
             return Distance(**{self.width_uom: self.width_value})
 
     def __str__(self):
@@ -147,12 +147,12 @@ class Paper(Rectangle):
 
 class Panel(Rectangle):
     thickness_value = models.FloatField(null=True, blank=True)
-    thickness_uom = models.CharField(max_length=30, default='m',
+    thickness_uom = models.CharField(max_length=30, null=True, blank=True,
                                      choices=Measure.UNITS[Measure.DISTANCE])
 
     @property
     def thickness(self):
-        if self.thickness_value is not None:
+        if self.thickness_value is not None and self.thickness_uom is not None:
             return Distance(**{self.thickness_uom: self.thickness_value})
 
     def __str__(self):

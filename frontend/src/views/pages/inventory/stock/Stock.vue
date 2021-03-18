@@ -53,7 +53,7 @@
                     <Button icon="delete" :action="item.detail.delete"/>
                 </div>  
                 <StockDetail :item-id="item.detail.id" :key="item.detail.key"
-                    @load-data="(data)=> item.detail.data = data"/>
+                    @load-data="(data)=> {item.detail.data = data}"/>
             </div>
             <div v-else>
                 <Button color="secondary" :action="()=>item.modal.toggle(true)">
@@ -109,14 +109,15 @@ export default {
                 baseStockUnits: [{}],
                 altStockUnits: [{}],
                 error: '',
-                toggle: (value, data)=>{
+                toggle: (value, data)=>{ 
                     item.modal.error = ''; 
                     if (data != null && item.detail.isOpen){
                         item.modal.form = {
                             id: data.id, name: data.name,
                             type: data.type, baseUnit: data.baseUom.value,
-                            altUnit: data.altUom.value, properties: data.properties
-                        };
+                            altUnit: data.altUom.value, 
+                            properties: Object.assign({},data.properties)
+                        }; 
                     } else {
                         item.modal.form = {
                             name:'', type: null,
@@ -165,7 +166,7 @@ export default {
                         response = await ItemApi.updateItem(item.modal.form.id, request); 
                         item.detail.reload();
                     }
-
+                    populateItemList();
                     if (response) item.modal.IsOpen = false;
                     item.modal.isProcessing = false;
                 },
@@ -189,7 +190,7 @@ export default {
                     // Force reload hack
                     item.detail.key = new Date().getTime();
                 },
-                edit: ()=> {
+                edit: ()=> {   
                     if (item.detail.id)
                         item.modal.toggle(true, item.detail.data);
                 },

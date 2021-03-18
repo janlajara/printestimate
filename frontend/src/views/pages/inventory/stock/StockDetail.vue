@@ -44,26 +44,28 @@ export default {
         const loadItem = async (id) => {
             const response = await ItemApi.retrieveItem(id); 
             if (response) {
-                detail.data.id = id;
-                detail.data.name = response.name;
-                detail.data.fullname = response.full_name;
-                detail.data.type = response.type;
-                detail.data.baseUom = {
-                    value: response.base_uom.id,
-                    label: response.base_uom.name};
-                detail.data.altUom =  {
-                    value: (response.alternate_uom)? response.alternate_uom.id: null,
-                    label: (response.alternate_uom)? response.alternate_uom.name: null}
-                detail.data.properties = {};
-                
+                const data = {
+                    id: id,
+                    name: response.name,
+                    fullname: response.full_name,
+                    type: response.type,
+                    baseUom: {
+                        value: response.base_uom.id,
+                        label: response.base_uom.name},
+                    altUom: {
+                        value: (response.alternate_uom)? response.alternate_uom.id: null,
+                        label: (response.alternate_uom)? response.alternate_uom.name: null},
+                    properties: {}
+                };
                 if (response.properties) {
                     Object.entries(response.properties)
                         .filter(entry => entry[0] != 'id')
-                        .forEach(entry => detail.data.properties[entry[0]] = entry[1]);
+                        .forEach(entry => data.properties[entry[0]] = entry[1]);
                     
                     loadPropLabels(response.properties.resourcetype); 
                 }
-                emit('load-data', detail.data);
+                detail.data = data; 
+                emit('load-data', data);
             }
         };
         const loadPropLabels = async (resourcetype) => {

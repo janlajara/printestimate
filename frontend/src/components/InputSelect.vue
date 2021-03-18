@@ -22,7 +22,8 @@
                   <input v-if="$props.multiple" type="checkbox" 
                     class="input-checkbox mr-4" disabled 
                     :name="name" :checked="option.isSelected"/> 
-                  {{option.label}}
+                    <span :class="(option.value == null)? 'text-gray-400 italic' : ''">
+                      {{(option.value == null)?  'None': option.label}}</span>
                 </div>
               </div>
             </div>
@@ -47,12 +48,20 @@ export default {
     },
     setup(props, {emit}) {  
       const state = reactive({
-        options: props.options,
+        baseOptions: props.options.filter(prop => prop.value != null),
+        options: computed(()=> {
+          const options = (!props.required && !props.multiple)? 
+            [{value: null, label: ''}].concat(state.baseOptions):
+            state.baseOptions;
+          return options;
+        }),
         isDroppedDown: false,
       }); 
-      watch(()=>props.options, ()=>{
-        state.options = props.options;
+      watch(()=>props.options, ()=> {
+        state.baseOptions = props.options.filter(prop => prop.value != null);
+        console.log(state.baseOptions);
       });
+
       const selectedOptions = computed(() => 
         state.options
           .filter(option=> option.isSelected)

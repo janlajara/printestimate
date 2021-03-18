@@ -166,7 +166,6 @@ class ItemCreateUpdateSerializer(serializers.ModelSerializer):
         if (props is not None):
             type_key = props.pop('resourcetype')
             clazz = ItemProperties.get_class(type_key)
-            props = {k: v for k, v in props.items() if v is not None}
             clazz.objects.filter(pk=instance.properties.pk).update(**props)
         return instance
 

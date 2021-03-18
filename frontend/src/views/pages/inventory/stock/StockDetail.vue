@@ -6,7 +6,9 @@
                 <DescriptionItem name="Type" :value="detail.data.type" class="capitalize"/>
                 <DescriptionItem name="Base Stock Unit" :value="detail.data.baseUom.label"/>
                 <DescriptionItem name="Alternate Stock Unit" :value="detail.data.altUom.label"/>
-                <DescriptionItem v-for="(entry, key) in Object.entries(detail.data.properties)" 
+                <DescriptionItem 
+                    v-for="(entry, key) in Object.entries(detail.data.properties)
+                        .filter(entry => entry[0] != 'resourcetype')" 
                     :key="key" :name="detail.propertyLabels[entry[0]]" :value="entry[1]"/>
             </DescriptionList>
         </Section>
@@ -56,12 +58,12 @@ export default {
                 
                 if (response.properties) {
                     Object.entries(response.properties)
-                        .filter(entry => entry[0] != 'id' && entry[0] != 'resourcetype')
+                        .filter(entry => entry[0] != 'id')
                         .forEach(entry => detail.data.properties[entry[0]] = entry[1]);
                     
                     loadPropLabels(response.properties.resourcetype); 
                 }
-                emit('load-data', detail.data); 
+                emit('load-data', detail.data);
             }
         };
         const loadPropLabels = async (resourcetype) => {

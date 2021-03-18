@@ -52,7 +52,7 @@
                     <Button icon="mode_edit" class="mx-4" :action="item.detail.edit"/>
                     <Button icon="delete" :action="item.detail.delete"/>
                 </div>  
-                <StockDetail :item-id="item.detail.id" 
+                <StockDetail :item-id="item.detail.id" :key="item.detail.key"
                     @load-data="(data)=> item.detail.data = data"/>
             </div>
             <div v-else>
@@ -111,13 +111,12 @@ export default {
                 error: '',
                 toggle: (value, data)=>{
                     item.modal.error = ''; 
-                    if (data != null){
+                    if (data != null && item.detail.isOpen){
                         item.modal.form = {
                             id: data.id, name: data.name,
                             type: data.type, baseUnit: data.baseUom.value,
                             altUnit: data.altUom.value, properties: data.properties
                         };
-                        item.modal.form.properties.resourcetype = data.type;
                     } else {
                         item.modal.form = {
                             name:'', type: null,
@@ -162,7 +161,10 @@ export default {
                     let response;
                     
                     if (item.modal.isCreate) response = await ItemApi.createItem(request);
-                    else response = await ItemApi.updateItem(item.modal.form.id, request); 
+                    else {
+                        response = await ItemApi.updateItem(item.modal.form.id, request); 
+                        item.detail.reload();
+                    }
 
                     if (response) item.modal.IsOpen = false;
                     item.modal.isProcessing = false;
@@ -170,6 +172,7 @@ export default {
             },
             detail: {
                 id: null,
+                key: 0,
                 isOpen: false,
                 selectedItem: computed(()=>item.detail.data.fullname),
                 data: {},
@@ -179,7 +182,12 @@ export default {
                 },
                 close: ()=> {
                     item.detail.isOpen = false;
+                    item.detail.id = null;
                     item.detail.data = {}; 
+                },
+                reload: ()=> {
+                    // Force reload hack
+                    item.detail.key = new Date().getTime();
                 },
                 edit: ()=> {
                     if (item.detail.id)

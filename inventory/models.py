@@ -120,18 +120,34 @@ class Item(models.Model):
 
     @property
     def price(self):
-        if self.is_override_price and self.is_override_price is not None:
+        if self.is_override_price and self.override_price is not None:
             return self.override_price
         elif self.latest_price_per_quantity is not None:
             return self.latest_price_per_quantity
 
     @property
-    def latest_price_per_quantity(self):
+    def price_currency(self):
+        if self.price:
+            return self.override_price_currency
+
+    @property
+    def latest_stock(self):
         stocks = Stock.objects.filter(item__pk=self.id)
         if len(stocks) > 0:
             latest_stock = stocks.latest('created_at')
             if latest_stock is not None:
-                return latest_stock.price_per_quantity
+                return latest_stock
+
+    @property
+    def latest_price_per_quantity(self):
+        latest_stock = self.latest_stock
+        if latest_stock is not None:
+            return latest_stock.price_per_quantity
+    
+    @property
+    def latest_price_per_quantity_currency(self):
+        if self.latest_price_per_quantity is not None:
+            return self.override_price_currency
 
     @property
     def average_price_per_quantity(self):
@@ -142,6 +158,11 @@ class Item(models.Model):
             for stock in stocks:
                 total += stock.price_per_quantity
             return total / stocks_len
+
+    @property
+    def average_price_per_quantity_currency(self):
+        if self.average_price_per_quantity:
+            return self.override_price_currency
 
     @property
     def available_quantity(self):

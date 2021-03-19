@@ -173,7 +173,7 @@ class StockSerializer(serializers.ModelSerializer):
 
 
 class ItemSerializer(serializers.ModelSerializer):
-    price = MoneyField(max_digits=14, decimal_places=2, read_only=True)
+    price = MoneyField(max_digits=14, decimal_places=2, read_only=True, default_currency='PHP')
     base_uom = serializers.SlugRelatedField(slug_field='abbrev', read_only=True)
     alternate_uom = serializers.SlugRelatedField(slug_field='abbrev', read_only=True)
 
@@ -224,7 +224,9 @@ class ItemRetrieveSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Item
-        fields = ['id', 'name', 'full_name', 'type', 'properties', 'price',
-                  'override_price', 'is_override_price', 'latest_price_per_quantity',
-                  'average_price_per_quantity', 'is_raw_material', 'available_quantity',
-                  'onhand_quantity', 'onhand_stocks', 'base_uom', 'alternate_uom']
+        fields = ['id', 'name', 'full_name', 'type', 'properties', 'price', 'price_currency',
+                  'override_price', 'override_price_currency', 'is_override_price', 
+                  'latest_price_per_quantity', 'latest_price_per_quantity_currency', 
+                  'average_price_per_quantity', 'average_price_per_quantity_currency',
+                  'is_raw_material', 'available_quantity', 'onhand_quantity', 
+                  'onhand_stocks', 'base_uom', 'alternate_uom']

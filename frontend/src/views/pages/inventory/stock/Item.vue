@@ -52,7 +52,7 @@
                     <Button icon="mode_edit" class="mx-4" :action="item.detail.edit"/>
                     <Button icon="delete" :action="item.detail.delete"/>
                 </div>  
-                <StockDetail :item-id="item.detail.id" :key="item.detail.key"
+                <ItemDetail :item-id="item.detail.id" :key="item.detail.key"
                     @load-data="(data)=> {item.detail.data = data}"/>
             </div>
             <div v-else>
@@ -84,7 +84,7 @@ import InputSelect from '@/components/InputSelect.vue';
 import Table from '@/components/Table.vue';
 import Row from '@/components/Row.vue';
 import Cell from '@/components/Cell.vue';
-import StockDetail from '@/views/pages/inventory/stock/StockDetail.vue';
+import ItemDetail from '@/views/pages/inventory/stock/ItemDetail.vue';
 
 import {reactive, computed, watch} from 'vue';
 import {ItemApi, ItemPropertiesApi, BaseStockUnitApi} from '@/utils/apis.js';
@@ -93,7 +93,7 @@ export default {
     name: 'Stock',
     components: {
         Page, Section, Button, Modal, InputText, InputSelect, 
-        Table, Row, Cell, StockDetail
+        Table, Row, Cell, ItemDetail
     },
     setup() {
         const item = reactive({

@@ -1,7 +1,7 @@
 <template>
     <div>
         <Section>
-            <DescriptionList class="md:grid-cols-4">
+            <DescriptionList class="grid-cols-2 md:grid-cols-4">
                 <DescriptionItem name="Item" :value="detail.data.name"/>
                 <DescriptionItem name="Type" :value="detail.data.type" class="capitalize"/>
                 <DescriptionItem name="Base Stock Unit" :value="detail.data.baseUom.label"/>
@@ -12,6 +12,20 @@
                     :key="key" :name="detail.propertyLabels[entry[0]]" :value="entry[1]"/>
             </DescriptionList>
         </Section>
+        <Section heading="Stock Management" class="mt-12">
+            <DescriptionList class="grid-cols-2 md:grid-cols-4">
+                <DescriptionItem name="Available" value="5 sheets"/>
+                <DescriptionItem name="On-hand" value="10 sheets"/>
+                <DescriptionItem name="Average Price" value="P 1,000.00"/>
+                <DescriptionItem name="Latest Price" value="P 1,000.00"/>
+            </DescriptionList>
+            <Tabs>
+                <Tab title="On-hand"></Tab>
+                <Tab title="Requests"></Tab>
+                <Tab title="Incoming"></Tab>
+                <Tab title="History"></Tab>
+            </Tabs>
+        </Section>
     </div>
 </template>
 
@@ -19,13 +33,15 @@
 import Section from '@/components/Section.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
+import Tabs from '@/components/Tabs.vue';
+import Tab from '@/components/Tab.vue';
 
 import {reactive, onBeforeMount} from 'vue';
 import {ItemApi, ItemPropertiesApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Section, DescriptionList, DescriptionItem
+        Section, DescriptionList, DescriptionItem, Tabs, Tab
     },
     props: {
         itemId: Number,

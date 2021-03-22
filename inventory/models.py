@@ -172,11 +172,25 @@ class Item(models.Model):
         return total
 
     @property
+    def available_quantity_formatted(self):
+        unit = self.base_uom.plural_abbrev
+        if self.available_quantity == 1:
+            unit = self.base_uom.abbrev
+        return '%d %s' % (self.available_quantity, unit)
+
+    @property
     def onhand_quantity(self):
         total = 0
         for stock in self.onhand_stocks:
             total += stock.onhand_quantity
         return total
+
+    @property
+    def onhand_quantity_formatted(self):
+        unit = self.base_uom.plural_abbrev
+        if self.onhand_quantity == 1:
+            unit = self.base_uom.abbrev
+        return '%d %s' % (self.onhand_quantity, unit)
 
     @property
     def onhand_stocks(self):

@@ -228,5 +228,6 @@ class ItemRetrieveSerializer(serializers.ModelSerializer):
                   'override_price', 'override_price_currency', 'is_override_price', 
                   'latest_price_per_quantity', 'latest_price_per_quantity_currency', 
                   'average_price_per_quantity', 'average_price_per_quantity_currency',
-                  'is_raw_material', 'available_quantity', 'onhand_quantity', 
+                  'is_raw_material', 'available_quantity', 'available_quantity_formatted', 
+                  'onhand_quantity', 'onhand_quantity_formatted', 
                   'onhand_stocks', 'base_uom', 'alternate_uom']

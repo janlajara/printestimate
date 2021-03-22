@@ -1,5 +1,14 @@
 <template>
-    <div>
+    <div v-if="$props.isOpen">
+        <ItemInputModal :is-open="detail.modal.isOpen" :is-create="false" 
+            :on-after-save="()=>loadItem($props.itemId)" :data="detail.data"
+            @toggle="(value)=> detail.modal.isOpen = value"/>
+        <div class="flex">
+            <Button color="secondary" icon="arrow_back"
+                :action="()=>$emit('toggle', false)">Go Back</Button>
+            <Button icon="mode_edit" class="mx-4" :action="detail.edit"/>
+            <Button icon="delete" :action="()=>detail.delete($props.itemId)"/>
+        </div> 
         <Section>
             <DescriptionList class="grid-cols-2 md:grid-cols-4">
                 <DescriptionItem name="Item" :value="detail.data.name"/>
@@ -13,6 +22,10 @@
             </DescriptionList>
         </Section>
         <Section heading="Stock Management" class="mt-12">{{detail.onhandQuantity}}
+            <div class="flex">
+                <Button icon="upload" color="secondary" class="mr-4">Withdraw</Button>
+                <Button icon="download" color="secondary" class="mr-4">Deposit</Button>
+            </div>
             <DescriptionList class="grid-cols-2 md:grid-cols-4">
                 <DescriptionItem name="Available" :value="detail.data.availableQuantityFormatted"/>
                 <DescriptionItem name="On-hand" :value="detail.data.onhandQuantityFormatted"/>
@@ -36,20 +49,30 @@ import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import Tabs from '@/components/Tabs.vue';
 import Tab from '@/components/Tab.vue';
+import Button from '@/components/Button.vue';
+import ItemInputModal from '@/views/pages/inventory/stock/ItemInputModal.vue';
 
 import {reactive, onBeforeMount} from 'vue';
 import {ItemApi, ItemPropertiesApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Section, DescriptionList, DescriptionItem, Tabs, Tab
+        Section, DescriptionList, DescriptionItem, Tabs, Tab, Button, ItemInputModal
     },
     props: {
         itemId: Number,
+        isOpen: {
+            type: Boolean,
+            required: true
+        },
+        onAfterDelete: Function
     },
-    emits: ['load-data'],
+    emits: ['toggle'],
     setup(props, {emit}) {
         const detail = reactive({
+            modal: {
+                isOpen: false
+            },
             data: {
                 id: null,
                 name: null, fullname: null,
@@ -60,9 +83,19 @@ export default {
                 onhandQuantityFormatted: null,
                 availableQuantityFormatted: null,
             },
-            propertyLabels: {}
+            propertyLabels: {},
+            edit: ()=> {   
+                detail.modal.isOpen = true;
+            }, 
+            delete: async (itemId)=>{
+                if (itemId) {
+                    await ItemApi.deleteItem(itemId);
+                    if (props.onAfterDelete) props.onAfterDelete();
+                    emit('toggle', false);
+                }
+            }
         });
-        const loadItem = async (id) => {
+        const loadItem = async (id) => { 
             const response = await ItemApi.retrieveItem(id); 
             if (response) {
                 const data = {
@@ -100,7 +133,6 @@ export default {
                     loadPropLabels(response.properties.resourcetype); 
                 }
                 detail.data = data; 
-                emit('load-data', data);
             }
         };
         const loadPropLabels = async (resourcetype) => {
@@ -117,7 +149,7 @@ export default {
             if (props.itemId != null) loadItem(props.itemId);
         })
         return {
-            detail
+            detail, loadItem
         }
     }
 }

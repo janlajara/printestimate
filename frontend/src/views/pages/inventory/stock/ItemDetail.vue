@@ -12,15 +12,16 @@
                     :key="key" :name="detail.propertyLabels[entry[0]]" :value="entry[1]"/>
             </DescriptionList>
         </Section>
-        <Section heading="Stock Management" class="mt-12">
+        <Section heading="Stock Management" class="mt-12">{{detail.onhandQuantity}}
             <DescriptionList class="grid-cols-2 md:grid-cols-4">
-                <DescriptionItem name="Available" value="5 sheets"/>
-                <DescriptionItem name="On-hand" value="10 sheets"/>
-                <DescriptionItem name="Average Price" value="P 1,000.00"/>
-                <DescriptionItem name="Latest Price" value="P 1,000.00"/>
+                <DescriptionItem name="Available" :value="detail.data.availableQuantityFormatted"/>
+                <DescriptionItem name="On-hand" :value="detail.data.onhandQuantityFormatted"/>
+                <DescriptionItem name="Average Price" :value="detail.data.averagePriceFormatted"/>
+                <DescriptionItem name="Latest Price" :value="detail.data.latestPriceFormatted"/>
             </DescriptionList>
             <Tabs>
-                <Tab title="On-hand"></Tab>
+                <Tab title="On-hand">
+                </Tab>
                 <Tab title="Requests"></Tab>
                 <Tab title="Incoming"></Tab>
                 <Tab title="History"></Tab>
@@ -53,7 +54,11 @@ export default {
                 id: null,
                 name: null, fullname: null,
                 type: null, baseUom: {}, 
-                altUom: {}, properties: {}
+                altUom: {}, properties: {},
+                latestPrice: null, latestPriceFormatted: null,
+                averagePrice: null, averagePriceFormatted: null,
+                onhandQuantityFormatted: null,
+                availableQuantityFormatted: null,
             },
             propertyLabels: {}
         });
@@ -71,7 +76,21 @@ export default {
                     altUom: {
                         value: (response.alternate_uom)? response.alternate_uom.id: null,
                         label: (response.alternate_uom)? response.alternate_uom.name: null},
-                    properties: {}
+                    properties: {},
+                    onhandQuantity: response.onhand_quantity,
+                    onhandQuantityFormatted: response.onhand_quantity_formatted,
+                    availableQuantity: response.available_quantity,
+                    availableQuantityFormatted: response.available_quantity_formatted,
+                    averagePrice: response.average_price_per_quantity,
+                    averagePriceFormatted:
+                        (response.average_price_per_quantity)?  
+                            `${response.average_price_per_quantity_currency} ${response.average_price_per_quantity}`:
+                            null,
+                    latestPrice: response.latest_price_per_quantity,
+                    latestPriceFormatted: 
+                        (response.latest_price_per_quantity)?  
+                            `${response.latest_price_per_quantity_currency} ${response.latest_price_per_quantity}`:
+                            null,
                 };
                 if (response.properties) {
                     Object.entries(response.properties)

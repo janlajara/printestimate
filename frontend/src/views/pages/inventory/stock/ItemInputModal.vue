@@ -24,7 +24,10 @@
                     }))"/>
                 <InputSelect name="Alternate Unit" 
                     @input="(value)=>modal.form.altUnit = value"
-                    :options="modal.altStockUnits"/>
+                    :options="modal.altStockUnits.map(au=>({
+                       value: au.id, label: au.name,
+                       isSelected: modal.form.altUnit == au.id 
+                    }))"/>
             </div>    
         </Section>
         <Section heading="Properties" v-if="modal.itemProperties">
@@ -125,7 +128,7 @@ export default {
                 } else {
                     modal.error = response.error;
                 }
-                if (props.onAfterSave) props.onAfterSave();
+                if (props.onAfterSave) await props.onAfterSave();
                 modal.isProcessing = false;
             },
         });
@@ -134,7 +137,7 @@ export default {
             modal.error = ''; 
             const data = props.data;
 
-            if (data != null && !props.isCreate){
+            if (data != null && !props.isCreate){ 
                 modal.form = {
                     id: data.id, name: data.name,
                     type: data.type, baseUnit: data.baseUom.value,
@@ -149,6 +152,7 @@ export default {
                 }
                 modal.itemProperties = null; 
             }
+
         });
 
         // Pre-load the data for item types, stock units, items
@@ -179,16 +183,11 @@ export default {
         // Make AlternateStockUnit select options  dependent on selected 
         // BaseStockUnit option.
         watch(()=> modal.form.baseUnit,()=>{
-            modal.form.altUnit = null;
-            modal.altStockUnits = [{}];
             if (modal.baseStockUnits && modal.form.baseUnit) {
                 const bUnits = Array.from(modal.baseStockUnits)
                     .map(b => Object.assign({}, b));
                 const aUnits = bUnits.find(bu=>bu.id==modal.form.baseUnit)
                         .alternateStockUnits
-                        .map(au=>({
-                            value: au.id, label: au.name,
-                            isSelected: modal.form.altUnit == au.id}));
                 modal.altStockUnits = aUnits;
             } 
         });

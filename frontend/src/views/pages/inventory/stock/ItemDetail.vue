@@ -13,33 +13,15 @@
             <DescriptionList class="grid-cols-2 md:grid-cols-4">
                 <DescriptionItem name="Item" :value="detail.data.name"/>
                 <DescriptionItem name="Type" :value="detail.data.type" class="capitalize"/>
-                <DescriptionItem name="Base Stock Unit" :value="detail.data.baseUom.label"/>
-                <DescriptionItem name="Alternate Stock Unit" :value="detail.data.altUom.label"/>
+                <DescriptionItem name="Base Stock Unit" :value="detail.data.baseUom.name"/>
+                <DescriptionItem name="Alternate Stock Unit" :value="detail.data.altUom.name"/>
                 <DescriptionItem 
                     v-for="(entry, key) in Object.entries(detail.data.properties)
                         .filter(entry => entry[0] != 'resourcetype')" 
                     :key="key" :name="detail.propertyLabels[entry[0]]" :value="entry[1]"/>
             </DescriptionList>
         </Section>
-        <Section heading="Stock Management" class="mt-12">{{detail.onhandQuantity}}
-            <div class="flex">
-                <Button icon="upload" color="secondary" class="mr-4">Withdraw</Button>
-                <Button icon="download" color="secondary" class="mr-4">Deposit</Button>
-            </div>
-            <DescriptionList class="grid-cols-2 md:grid-cols-4">
-                <DescriptionItem name="Available" :value="detail.data.availableQuantityFormatted"/>
-                <DescriptionItem name="On-hand" :value="detail.data.onhandQuantityFormatted"/>
-                <DescriptionItem name="Average Price" :value="detail.data.averagePriceFormatted"/>
-                <DescriptionItem name="Latest Price" :value="detail.data.latestPriceFormatted"/>
-            </DescriptionList>
-            <Tabs>
-                <Tab title="On-hand">
-                </Tab>
-                <Tab title="Requests"></Tab>
-                <Tab title="Incoming"></Tab>
-                <Tab title="History"></Tab>
-            </Tabs>
-        </Section>
+        <StockManagement :data="detail.data"/>
     </div>
 </template>
 
@@ -47,17 +29,17 @@
 import Section from '@/components/Section.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
-import Tabs from '@/components/Tabs.vue';
-import Tab from '@/components/Tab.vue';
 import Button from '@/components/Button.vue';
 import ItemInputModal from '@/views/pages/inventory/stock/ItemInputModal.vue';
+import StockManagement from '@/views/pages/inventory/stock/StockManagement.vue';
 
 import {reactive, onBeforeMount} from 'vue';
 import {ItemApi, ItemPropertiesApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Section, DescriptionList, DescriptionItem, Tabs, Tab, Button, ItemInputModal
+        Section, DescriptionList, DescriptionItem, Button, 
+        ItemInputModal, StockManagement
     },
     props: {
         itemId: Number,
@@ -97,7 +79,7 @@ export default {
         });
         const loadItem = async (id) => { 
             const response = await ItemApi.retrieveItem(id); 
-            if (response) {
+            if (response) { 
                 const data = {
                     id: id,
                     name: response.name,
@@ -105,10 +87,12 @@ export default {
                     type: response.type,
                     baseUom: {
                         value: response.base_uom.id,
-                        label: response.base_uom.name},
+                        name: response.base_uom.name,
+                        plural: response.base_uom.plural_name},
                     altUom: {
                         value: (response.alternate_uom)? response.alternate_uom.id: null,
-                        label: (response.alternate_uom)? response.alternate_uom.name: null},
+                        name: (response.alternate_uom)? response.alternate_uom.name: null,
+                        plural: (response.alternate_uom)? response.alternate_uom.plural_name : null},
                     properties: {},
                     onhandQuantity: response.onhand_quantity,
                     onhandQuantityFormatted: response.onhand_quantity_formatted,

@@ -1,11 +1,12 @@
 <template>
     <div class="flex pr-4 mt-2">
-        <div class="inline-flex pr-4"
+        <div class="self-end pr-4"
             :class="$slots.default? 'items-start pt-2' : 'items-center'">
             <input type="checkbox" class="input-checkbox" 
-                :name="name" :value="$props.option"/>
+                :value="$props.value" 
+                @change="(event)=>$emit('input', event.target.checked)"/>
         </div>
-        <div v-if="$props.label">
+        <div v-if="$props.label" class="self-end">
             <label class="input-label">{{$props.label}}</label>
             <p v-if="$slots.default" class="text-sm font-medium text-justify">
                 <slot/>
@@ -17,10 +18,10 @@
 <script>
 export default {
     props: {
-        name: String,
-        option: String,
+        value: Boolean,
         label: String
-    }
+    },
+    emits: ['input']
 }
 </script>
 

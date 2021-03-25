@@ -17,3 +17,10 @@ class InvalidExpireQuantity(Exception):
         self.message = 'Cannot expire %s units. Stock only has %s units on-hand.' % \
                        (expire_quantity, onhand_quantity)
         super().__init__(self.message)
+
+
+class IllegalUnboundedDeposit(Exception):
+    def __init__(self, alt_quantity):
+        self.message = 'Cannot deposit unbounded stock when alternate quantity of % units is greater than 1' % \
+            alt_quantity
+        super().__init__(self.message)

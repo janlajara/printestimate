@@ -2,7 +2,7 @@ import pytest
 from measurement.measures import Distance, Volume
 from .models import BaseStockUnit, AlternateStockUnit, Item, Stock, StockRequest, StockMovement
 from .properties.models import ItemProperties, Paper
-from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
+from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity, IllegalUnboundedDeposit
 
 
 @pytest.fixture
@@ -291,6 +291,11 @@ def test_item__stock_unbounded(db, item: Item):
 
     stock.returned(600)
     assert item.onhand_quantity == 1000
+
+
+def test_item_stock_unbounded__illegal_deposit(db, item: Item):
+    with pytest.raises(IllegalUnboundedDeposit):
+        deposited = item.deposit_stock('Generic', 500, 1, 5, True)
 
 
 def test_item__tape(db, item_factory):

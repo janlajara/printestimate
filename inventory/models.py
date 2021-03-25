@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import Q, Sum, Avg
 from djmoney.models.fields import MoneyField
-from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity
+from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity, IllegalUnboundedDeposit
 import inflect
 
 _inflect = inflect.engine()
@@ -203,6 +203,9 @@ class Item(models.Model):
 
     def deposit_stock(self, brand_name, base_quantity, price, alt_quantity=1, unbounded=False):
         deposited = []
+        if unbounded and alt_quantity > 1:
+            raise IllegalUnboundedDeposit(alt_quantity)
+
         for x in range(alt_quantity):
             stock = Stock.objects.create_stock(item=self, brand_name=brand_name,
                                                base_quantity=base_quantity, price=price,

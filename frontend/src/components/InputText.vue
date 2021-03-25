@@ -14,7 +14,8 @@
             <input :type="($props.type == 'password')? 'password': 'text'" 
                 :placeholder="$props.placeholder"
                 class="input-field w-full" :value="$props.value"
-                :class="inputStyle" :disabled="$props.disabled"
+                :class="[inputStyle, $props.disabled ? 'text-gray-400' : '']" 
+                :disabled="$props.disabled"
                 @input="(event)=>emitInput(event)"
                 :readonly="$props.readonly"/>
             <span v-if="$props.postfix"
@@ -57,9 +58,6 @@ export default {
             inputStyle.value = ['rounded-r-md']
         else if (!props.prefix && props.postfix)
             inputStyle.value = ['rounded-l-md']
-        if (props.disabled) {
-            inputStyle.value.push('text-gray-400')
-        }
 
         const emitInput = (event)=> {
             let input = event.target.value;

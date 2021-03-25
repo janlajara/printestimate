@@ -3,7 +3,7 @@
         <div class="self-end pr-4"
             :class="$slots.default? 'items-start pt-2' : 'items-center'">
             <input type="checkbox" class="input-checkbox" 
-                :value="$props.value" 
+                :value="$props.value" :checked="$props.value"
                 @change="(event)=>$emit('input', event.target.checked)"/>
         </div>
         <div v-if="$props.label" class="self-end">

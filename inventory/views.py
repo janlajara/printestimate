@@ -1,6 +1,8 @@
-from inventory.models import Item, BaseStockUnit, AlternateStockUnit
+from inventory.models import Item, Stock, BaseStockUnit, AlternateStockUnit
 from inventory.properties.models import ItemProperties
 from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework.decorators import action
 from inventory import serializers
 
 
@@ -70,3 +72,24 @@ class ItemPropertiesListCreateViewSet(ItemPropertiesViewSet):
                 return serializers.ItemPropertiesPolymorphicSerializer
         else:
             return serializers.ItemPropertiesPolymorphicSerializer
+
+
+class ItemDepositStockViewSet(viewsets.ViewSet):
+
+    def create(self, request, pk=None):
+        item = Item.objects.get(pk=pk)
+        serializer = serializers.StockSerializer(data=request.data)
+
+        if serializer.is_valid():
+            data = serializer.data
+            brand_name = data.get('brand_name')
+            base_quantity = data.get('base_quantity', 1)
+            alt_quantity = request.data.get('alt_quantity', 1)
+            price = data.get('price', None)
+            
+            deposited = item.deposit_stock(brand_name, base_quantity, price, alt_quantity)
+            serialized_deposited = serializers.StockSerializer(deposited, many=True)
+            return Response(serialized_deposited.data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

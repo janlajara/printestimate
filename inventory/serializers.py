@@ -169,7 +169,7 @@ class ItemPropertiesPolymorphicSerializer(PolymorphicSerializer):
 class StockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stock
-        fields = '__all__'
+        fields = ['id', 'brand_name', 'price', 'base_quantity']
 
 
 class ItemSerializer(serializers.ModelSerializer):

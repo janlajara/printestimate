@@ -201,11 +201,12 @@ class Item(models.Model):
                 available_stocks.append(stock)
         return available_stocks
 
-    def deposit_stock(self, brand_name, base_quantity, price, alt_quantity=1):
+    def deposit_stock(self, brand_name, base_quantity, price, alt_quantity=1, unbounded=False):
         deposited = []
         for x in range(alt_quantity):
             stock = Stock.objects.create_stock(item=self, brand_name=brand_name,
-                                               base_quantity=base_quantity, price=price)
+                                               base_quantity=base_quantity, price=price,
+                                               unbounded=unbounded)
             deposited.append(stock)
         return deposited
 
@@ -250,26 +251,37 @@ class Item(models.Model):
 
 class StockManager(models.Manager):
     def create_stock(self, **data):
+        deposit_quantity = data.get('base_quantity', 1)
+        if data.get('unbounded', False):
+            # Remove base_quantity from data so it defaults to 1
+            data.pop('base_quantity')
         stock = self.create(**data)
-        stock.deposit(data['base_quantity'])
+        stock.deposit(deposit_quantity)
         return stock
 
 
 class Stock(models.Model):
     objects = StockManager()
-    item = models.ForeignKey(Item, on_delete=models.RESTRICT, null=False)
+    item = models.ForeignKey(Item, on_delete=models.RESTRICT, null=False, related_name='stocks')
     brand_name = models.CharField(max_length=100, null=True, blank=True)
     price = MoneyField(default=0, max_digits=14, decimal_places=2, default_currency='PHP')
     base_quantity = models.IntegerField(default=1)
+    unbounded = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     @property
     def is_quantity_full(self):
-        return self.onhand_quantity == self.base_quantity
+        if self.unbounded:
+            return False
+        else:
+            return self.onhand_quantity == self.base_quantity
 
     @property
     def price_per_quantity(self):
-        return self.price / self.base_quantity
+        if self.unbounded:
+            return self.price
+        else:
+            return self.price / self.base_quantity
 
     @property
     def available_quantity(self):
@@ -301,13 +313,13 @@ class Stock(models.Model):
         return added - removed
 
     def deposit(self, quantity):
-        if quantity + self.onhand_quantity <= self.base_quantity:
+        if self.unbounded or (quantity + self.onhand_quantity <= self.base_quantity):
             self._create_movement(quantity, StockMovement.DEPOSIT)
         else:
             raise DepositTooBig(quantity, self.onhand_quantity, self.base_quantity)
 
     def withdraw(self, quantity):
-        if quantity <= self.onhand_quantity:
+        if self.unbounded or (quantity <= self.onhand_quantity):
             self._create_movement(quantity, StockMovement.WITHDRAW)
         else:
             raise InsufficientStock(quantity, self.onhand_quantity, self.base_quantity)
@@ -319,7 +331,7 @@ class Stock(models.Model):
             raise InsufficientStock(quantity, self.available_quantity, self.base_quantity)
 
     def returned(self, quantity):
-        if quantity + self.onhand_quantity <= self.base_quantity:
+        if self.unbounded or (quantity + self.onhand_quantity <= self.base_quantity):
             self._create_movement(quantity, StockMovement.RETURN)
         else:
             raise DepositTooBig(quantity, self.onhand_quantity, self.base_quantity)

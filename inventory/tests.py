@@ -278,6 +278,21 @@ def test_stock__expired_invalid_quantity(db, deposited_stock: Stock):
         deposited_stock.expired(501)
 
 
+def test_item__stock_unbounded(db, item: Item):
+    deposited = item.deposit_stock('Generic', 500, 1, 1, True)
+    stock = deposited[0]
+    assert stock.price_per_quantity.amount == 1
+
+    stock.deposit(500)
+    assert item.onhand_quantity == 1000
+
+    stock.withdraw(600)
+    assert item.onhand_quantity == 400
+
+    stock.returned(600)
+    assert item.onhand_quantity == 1000
+
+
 def test_item__tape(db, item_factory):
     item = item_factory(name='Adhesive Tape', type=Item.TAPE)
     item.properties.length_value = 50

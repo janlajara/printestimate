@@ -167,7 +167,7 @@ class ItemPropertiesPolymorphicSerializer(PolymorphicSerializer):
 
 
 class StockSerializer(serializers.ModelSerializer):
-    price = MoneyField(max_digits=14, decimal_places=2, read_only=True, default_currency='PHP')
+    price = MoneyField(max_digits=14, decimal_places=2, read_only=False, default_currency='PHP')
     price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True, default_currency='PHP')
 
     class Meta:

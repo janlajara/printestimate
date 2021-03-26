@@ -68,6 +68,8 @@ export default {
                         input = input.substr(0, firstOccur+1) + 
                             input.slice(firstOccur+1).replaceAll('.', '');
                     }
+                } else {
+                    input = input.replaceAll('.', '');
                 }
                 input = input.replace(/[^\d.]/g, "");
                 if (input.trim() == "") input = null;

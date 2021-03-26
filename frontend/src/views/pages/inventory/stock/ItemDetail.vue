@@ -33,8 +33,9 @@ import Button from '@/components/Button.vue';
 import ItemInputModal from '@/views/pages/inventory/stock/ItemInputModal.vue';
 import StockManagement from '@/views/pages/inventory/stock/StockManagement.vue';
 
-import {reactive, onBeforeMount} from 'vue';
+import {reactive, onBeforeMount, inject} from 'vue';
 import {ItemApi, ItemPropertiesApi} from '@/utils/apis.js';
+import {formatMoney} from '@/utils/format.js';
 
 export default {
     components: {
@@ -51,6 +52,7 @@ export default {
     },
     emits: ['toggle'],
     setup(props, {emit}) {
+        const currency = inject('currency');
         const detail = reactive({
             modal: {
                 isOpen: false
@@ -101,12 +103,12 @@ export default {
                     averagePrice: response.average_price_per_quantity,
                     averagePriceFormatted:
                         (response.average_price_per_quantity)?  
-                            `${response.average_price_per_quantity_currency} ${response.average_price_per_quantity}`:
+                            formatMoney(response.average_price_per_quantity, currency.abbreviation):
                             null,
                     latestPrice: response.latest_price_per_quantity,
                     latestPriceFormatted: 
                         (response.latest_price_per_quantity)?  
-                            `${response.latest_price_per_quantity_currency} ${response.latest_price_per_quantity}`:
+                            formatMoney(response.latest_price_per_quantity, currency.abbreviation):
                             null,
                 };
                 if (response.properties) {

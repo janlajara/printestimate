@@ -91,11 +91,17 @@ export class ItemApi {
         await AXIOS.execute(AXIOS.DELETE, ItemApi.uri + `/${id}/`, 
             'Item deleted successfully.', 'Delete failed. Please try again.');
     }
+
+    static async depositStock(id, stock) {
+        const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}/deposit/stock`,
+        'Stock deposited successfully.', 'Deposit failed. Please try again.', stock);
+        return response.data
+    }
 }
 
 
 export class ItemPropertiesApi {
-    static uri = '/inventory/api/itemproperties'
+    static uri = '/inventory/api/item/properties'
 
     static async getItemProperties(itemType) {
         const response = await AXIOS.execute(AXIOS.OPTIONS, 

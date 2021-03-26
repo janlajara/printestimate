@@ -6,13 +6,16 @@
         <Section class="grid md:grid-cols-4 md:gap-4">
             <InputSelect name="Deposit By" required
                 @input="(value)=>stock.data.depositBy = value"
-                :options="Object.entries($props.data.units).map((entry, index)=>({
+                :options="Object.entries($props.data.units).map((entry)=>({
                     value: entry[1].value, label: entry[1].name,
-                    isSelected: index == 0
+                    isSelected: entry[1].value == stock.data.depositBy
                 }))"/>
-            <InputText type="text" name="Brand Name" class="md:col-span-3"
+            <InputText type="text" name="Brand Name" class="md:col-span-2"
                 @input="(value)=>stock.data.brandName = value"
                 :value="stock.data.brandName"/>
+            <InputCheckbox label="Unbounded stock" 
+                @input="(value)=> stock.data.unbounded = value"
+                :value="stock.data.unbounded"/>
         </Section>
         <Section class="grid md:grid-cols-4 md:gap-4">
             <InputText
@@ -23,19 +26,22 @@
                 @input="(value)=>stock.data.baseQuantity = value"
                 :value="stock.data.baseQuantity"/> 
             <InputText v-if="stock.uom.isAlt"
-                type="number" required
+                type="number" required :disabled="stock.data.unbounded"
                 :name="`${$props.data.units.alternate.name} Quantity`" 
                 @input="(value)=>stock.data.alternateQuantity = value"
                 :value="stock.data.alternateQuantity"/> 
-            <InputText type="decimal" required
-                    postfix="PHP"
+            <InputText type="decimal"
+                    :prefix="currency.symbol"
                     :name="`Price per ${stock.uom.target.name}`" 
                     @input="(value)=>stock.data.price = value"
                     :value="stock.data.price"/>
         </Section>
         <div class="grid md:grid-cols-4 md:gap-4">
             <dt class="text-lg mb-1 font-semibold">Summary</dt>
-            <dd class="md:col-span-3 text-sm mt-2">
+            <dd class="md:col-span-3 text-sm">
+                <p class="my-2">
+                    Note : This creates <span class="font-bold">{{stock.data.depositCount}} Stock 
+                    {{stock.data.depositCount == 1 ? 'record' : 'records'}}</span>.</p>
                 <p class="pb-2">
                     <span>Total {{$props.data.units.base.name}} Quantity : </span>
                     <span class="font-bold">{{stock.data.totalQuantityFormatted}}</span>
@@ -66,12 +72,14 @@ import Modal from '@/components/Modal.vue';
 import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
 import InputSelect from '@/components/InputSelect.vue';
+import InputCheckbox from '@/components/InputCheckbox.vue';
+import {formatQuantity, formatMoney} from '@/utils/format.js';
 
-import {reactive, computed, watch} from 'vue';
+import {reactive, computed, watch, inject} from 'vue';
 
 export default {
     components: {
-        Modal, Section, InputText, InputSelect
+        Modal, Section, InputText, InputSelect, InputCheckbox
     },
     props: {
         isOpen: {
@@ -85,6 +93,7 @@ export default {
     },
     emits: ['toggle'],
     setup(props) {
+        const currency = inject('currency')
         const stock = reactive({
             uom: {
                 base: {}, 
@@ -101,28 +110,25 @@ export default {
             data: {
                 brandName: null,
                 depositBy: null,
+                unbounded: true,
                 price: 0,
                 priceFormatted: computed(()=> {
                     const price = stock.data.price? stock.data.price : 0;
-                    return Number(price).toLocaleString() + ' PHP';
+                    return formatMoney(price, currency.abbreviation);
                 }),
                 baseQuantity: 0,
                 baseFormatted: computed(()=> {
                     const qty = (stock.data.baseQuantity)?
                         stock.data.baseQuantity : 0;
-                    const unit = (stock.data.baseQuantity == 1)?
-                        props.data.units.base.name:
-                        props.data.units.base.plural;
-                    return `${Number(qty).toLocaleString()} ${unit}`;
+                    const baseUnit = props.data.units.base;
+                    return formatQuantity(qty, baseUnit.name, baseUnit.plural)
                 }),
-                alternateQuantity: 0,
+                alternateQuantity: 1,
                 alternateFormatted: computed(()=> {
                     const qty = (stock.data.alternateQuantity)?
                         stock.data.alternateQuantity : 0;
-                    const unit = (stock.data.alternateQuantity == 1)?
-                        props.data.units.alternate.name:
-                        props.data.units.alternate.plural;
-                    return `${Number(qty).toLocaleString()} ${unit}`;
+                    const altUnit = props.data.units.alternate;
+                    return formatQuantity(qty, altUnit.name, altUnit.plural)
                 }),
                 totalQuantity: computed(()=> {
                     let total = stock.data.baseQuantity ? 
@@ -135,10 +141,8 @@ export default {
                     return total ? total : 0;
                 }),
                 totalQuantityFormatted: computed(()=> {
-                    const unit = (stock.data.totalQuantity == 1)?
-                        props.data.units.base.name : props.data.units.base.plural; 
-                    return `${Number(stock.data.totalQuantity).toLocaleString()} 
-                            ${unit}`;
+                    const baseUnit = props.data.units.base;
+                    return formatQuantity(stock.data.totalQuantity, baseUnit.name, baseUnit.plural)
                 }),
                 totalPrice: computed(()=> {
                     const baseQty = stock.data.baseQuantity ? stock.data.baseQuantity : 0;
@@ -149,7 +153,8 @@ export default {
                     } 
                     return price * baseQty;
                 }),
-                totalPriceFormatted: computed(()=> Number(stock.data.totalPrice).toLocaleString() + ' PHP'),
+                totalPriceFormatted: computed(()=> 
+                    formatMoney(stock.data.totalPrice, currency.abbreviation)),
                 pricePerBase: computed(()=> {
                     const baseQty = stock.data.baseQuantity ? stock.data.baseQuantity : 0;
                     const price = stock.data.price ? stock.data.price : 0;
@@ -157,13 +162,32 @@ export default {
                 }),
                 pricePerBaseFormatted: computed(()=> {
                     return stock.data.pricePerBase > 0 ?
-                        Number(stock.data.pricePerBase).toLocaleString() + ' PHP':
+                        formatMoney(stock.data.pricePerBase, currency.abbreviation):
                         'N/A';
-                })
+                }),
+                depositCount: computed(()=> {
+                    let count = 0;
+                    if (stock.uom.isAlt) count = stock.data.alternateQuantity;
+                    else count = (stock.data.baseQuantity > 0) ? 1 : 0;
+
+                    return count; 
+                }),
             },
             isProcessing: false,
             deposit: ()=> {
-                console.log('deposit')
+                let price = stock.data.price;
+                if (!stock.data.unbounded && !stock.uom.isAlt)
+                    price = stock.data.baseQuantity * stock.data.price;
+
+                const data = {
+                    brand_name: stock.data.brandName,
+                    base_quantity: stock.data.baseQuantity,
+                    price: price,
+                    alt_quantity: stock.uom.isAlt ? 
+                        stock.data.alternateQuantity : 1,
+                    unbounded: stock.data.unbounded,
+                }
+                console.log(data);
             }
         });
 
@@ -173,10 +197,15 @@ export default {
         });
         watch(()=> stock.data.depositBy, ()=> {
             stock.data.price = 0;
+            stock.data.unbounded = !stock.uom.isAlt;
+        });
+        watch(()=> stock.data.unbounded, ()=> {
+            stock.data.alternateQuantity = 1;
         });
 
         return {
-            stock
+            stock,
+            currency
         }
     }
 }

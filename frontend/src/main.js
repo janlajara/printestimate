@@ -28,4 +28,9 @@ createApp(App)
             document.body.removeEventListener('click', el.clickOutsideEvent);
         }
     })
+    .provide('currency', {
+        name: 'Philippine Peso',
+        abbreviation: 'PHP',
+        symbol: '₱'
+    })
     .mount('#app')

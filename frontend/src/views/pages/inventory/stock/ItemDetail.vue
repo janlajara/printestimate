@@ -21,7 +21,7 @@
                     :key="key" :name="detail.propertyLabels[entry[0]]" :value="entry[1]"/>
             </DescriptionList>
         </Section>
-        <StockManagement :data="detail.data"/>
+        <StockManagement :item-id="$props.itemId"/>
     </div>
 </template>
 
@@ -33,9 +33,8 @@ import Button from '@/components/Button.vue';
 import ItemInputModal from '@/views/pages/inventory/stock/ItemInputModal.vue';
 import StockManagement from '@/views/pages/inventory/stock/StockManagement.vue';
 
-import {reactive, onBeforeMount, inject} from 'vue';
+import {reactive, onBeforeMount} from 'vue';
 import {ItemApi, ItemPropertiesApi} from '@/utils/apis.js';
-import {formatMoney} from '@/utils/format.js';
 
 export default {
     components: {
@@ -52,7 +51,6 @@ export default {
     },
     emits: ['toggle'],
     setup(props, {emit}) {
-        const currency = inject('currency');
         const detail = reactive({
             modal: {
                 isOpen: false
@@ -61,11 +59,7 @@ export default {
                 id: null,
                 name: null, fullname: null,
                 type: null, baseUom: {}, 
-                altUom: {}, properties: {},
-                latestPrice: null, latestPriceFormatted: null,
-                averagePrice: null, averagePriceFormatted: null,
-                onhandQuantityFormatted: null,
-                availableQuantityFormatted: null,
+                altUom: {}, properties: {}
             },
             propertyLabels: {},
             edit: ()=> {   
@@ -96,20 +90,6 @@ export default {
                         name: (response.alternate_uom)? response.alternate_uom.name: null,
                         plural: (response.alternate_uom)? response.alternate_uom.plural_name : null},
                     properties: {},
-                    onhandQuantity: response.onhand_quantity,
-                    onhandQuantityFormatted: response.onhand_quantity_formatted,
-                    availableQuantity: response.available_quantity,
-                    availableQuantityFormatted: response.available_quantity_formatted,
-                    averagePrice: response.average_price_per_quantity,
-                    averagePriceFormatted:
-                        (response.average_price_per_quantity)?  
-                            formatMoney(response.average_price_per_quantity, currency.abbreviation):
-                            null,
-                    latestPrice: response.latest_price_per_quantity,
-                    latestPriceFormatted: 
-                        (response.latest_price_per_quantity)?  
-                            formatMoney(response.latest_price_per_quantity, currency.abbreviation):
-                            null,
                 };
                 if (response.properties) {
                     Object.entries(response.properties)

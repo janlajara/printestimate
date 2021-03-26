@@ -221,8 +221,6 @@ class ItemCreateUpdateSerializer(serializers.ModelSerializer):
 
 class ItemRetrieveSerializer(serializers.ModelSerializer):
     price = MoneyField(max_digits=14, decimal_places=2, read_only=True)
-    latest_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
-    average_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
     properties = ItemPropertiesPolymorphicSerializer(read_only=True)
     base_uom = BaseStockUnitSerializer()
     alternate_uom = AlternateStockUnitSerializer()
@@ -230,7 +228,20 @@ class ItemRetrieveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
         fields = ['id', 'name', 'full_name', 'type', 'properties', 'price', 
-                  'override_price', 'is_override_price', 'latest_price_per_quantity', 
-                  'average_price_per_quantity', 'is_raw_material', 'available_quantity', 
-                  'available_quantity_formatted', 'onhand_quantity', 
-                  'onhand_quantity_formatted', 'base_uom', 'alternate_uom']
+                  'override_price', 'is_override_price', 'is_raw_material',
+                  'base_uom', 'alternate_uom']
+
+
+class ItemStockRetrieveSerializer(serializers.ModelSerializer):
+    latest_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
+    average_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
+    onhand_stocks = StockSerializer(many=True)
+    base_uom = BaseStockUnitSerializer()
+    alternate_uom = AlternateStockUnitSerializer()
+
+    class Meta:
+        model = Item
+        fields = ['id', 'latest_price_per_quantity', 'average_price_per_quantity',  
+                  'available_quantity', 'available_quantity_formatted', 
+                  'onhand_quantity', 'onhand_quantity_formatted', 
+                  'onhand_stocks', 'base_uom', 'alternate_uom']

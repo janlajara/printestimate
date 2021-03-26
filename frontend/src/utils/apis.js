@@ -92,8 +92,13 @@ export class ItemApi {
             'Item deleted successfully.', 'Delete failed. Please try again.');
     }
 
+    static async retrieveItemStocks(id) {
+        const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}/stocks`)
+        return response.data
+    }
+
     static async depositStock(id, stock) {
-        const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}/deposit/stock`,
+        const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}/stocks/deposit`,
         'Stock deposited successfully.', 'Deposit failed. Please try again.', stock);
         return response.data
     }

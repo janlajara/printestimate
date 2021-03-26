@@ -74,6 +74,11 @@ class ItemPropertiesListCreateViewSet(ItemPropertiesViewSet):
             return serializers.ItemPropertiesPolymorphicSerializer
 
 
+class ItemStockRetrieveViewSet(viewsets.ModelViewSet):
+    queryset = Item.objects.all()
+    serializer_class = serializers.ItemStockRetrieveSerializer
+
+
 class ItemDepositStockViewSet(viewsets.ViewSet):
 
     def create(self, request, pk=None):

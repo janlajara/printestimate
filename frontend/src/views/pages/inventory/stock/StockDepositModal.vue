@@ -13,7 +13,7 @@
             <InputText type="text" name="Brand Name" class="md:col-span-2"
                 @input="(value)=>stock.data.brandName = value"
                 :value="stock.data.brandName"/>
-            <InputCheckbox label="Unbounded stock" 
+            <InputCheckbox label="Unbounded stock" v-if="!stock.uom.isAlt"
                 @input="(value)=> stock.data.unbounded = value"
                 :value="stock.data.unbounded"/>
         </Section>
@@ -26,7 +26,7 @@
                 @input="(value)=>stock.data.baseQuantity = value"
                 :value="stock.data.baseQuantity"/> 
             <InputText v-if="stock.uom.isAlt"
-                type="number" required :disabled="stock.data.unbounded"
+                type="number" required 
                 :name="`${$props.data.units.alternate.name} Quantity`" 
                 @input="(value)=>stock.data.alternateQuantity = value"
                 :value="stock.data.alternateQuantity"/> 
@@ -73,9 +73,10 @@ import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
 import InputSelect from '@/components/InputSelect.vue';
 import InputCheckbox from '@/components/InputCheckbox.vue';
-import {formatQuantity, formatMoney} from '@/utils/format.js';
-
 import {reactive, computed, watch, inject} from 'vue';
+
+import {formatQuantity, formatMoney} from '@/utils/format.js';
+import {ItemApi} from '@/utils/apis.js';
 
 export default {
     components: {
@@ -92,12 +93,10 @@ export default {
         }
     },
     emits: ['toggle'],
-    setup(props) {
+    setup(props, {emit}) {
         const currency = inject('currency')
         const stock = reactive({
             uom: {
-                base: {}, 
-                alternate: {},
                 target: computed(()=> {
                     let unit = props.data.units.base;
                     if (stock.uom.isAlt) 
@@ -120,7 +119,7 @@ export default {
                 baseFormatted: computed(()=> {
                     const qty = (stock.data.baseQuantity)?
                         stock.data.baseQuantity : 0;
-                    const baseUnit = props.data.units.base;
+                    const baseUnit = props.data.units.base; 
                     return formatQuantity(qty, baseUnit.name, baseUnit.plural)
                 }),
                 alternateQuantity: 1,
@@ -141,7 +140,7 @@ export default {
                     return total ? total : 0;
                 }),
                 totalQuantityFormatted: computed(()=> {
-                    const baseUnit = props.data.units.base;
+                    const baseUnit = props.data.units.base; 
                     return formatQuantity(stock.data.totalQuantity, baseUnit.name, baseUnit.plural)
                 }),
                 totalPrice: computed(()=> {
@@ -174,7 +173,7 @@ export default {
                 }),
             },
             isProcessing: false,
-            deposit: ()=> {
+            deposit: async ()=> {
                 let price = stock.data.price;
                 if (!stock.data.unbounded && !stock.uom.isAlt)
                     price = stock.data.baseQuantity * stock.data.price;
@@ -188,19 +187,26 @@ export default {
                     unbounded: stock.data.unbounded,
                 }
                 console.log(data);
+                stock.isProcessing = true;
+                const response = await ItemApi.depositStock(props.data.itemId, data)
+                if (response && !response.error) {
+                    emit('toggle', false);
+                }
+                stock.isProcessing = false;
             }
         });
 
-        watch(()=> props.data.units, ()=> { 
-            stock.uom.base = props.data.units;
-            stock.uom.alternate = props.data.alternate; 
-        });
+        watch(()=> props.isOpen, ()=> {
+            stock.data.brandName = null;
+            stock.data.depositBy = null;
+            stock.data.unbounded = true;
+            stock.data.price = 0;
+            stock.data.baseQuantity = 0;
+            stock.data.alternateQuantity = 1;
+        })
         watch(()=> stock.data.depositBy, ()=> {
             stock.data.price = 0;
             stock.data.unbounded = !stock.uom.isAlt;
-        });
-        watch(()=> stock.data.unbounded, ()=> {
-            stock.data.alternateQuantity = 1;
         });
 
         return {

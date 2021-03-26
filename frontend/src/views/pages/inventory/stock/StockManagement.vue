@@ -5,9 +5,11 @@
             <Button icon="download" color="secondary" class="mr-4"
                 :action="()=> stock.deposit.isOpen = true">Deposit</Button>
             <StockDepositModal :is-open="stock.deposit.isOpen"
-                :data="{units: {
-                    base: stock.data.baseUom,
-                    alternate: stock.data.altUom}}"
+                :data="{
+                    itemId: $props.itemId,
+                    units: {
+                        base: stock.data.baseUom,
+                        alternate: stock.data.altUom}}"
                 @toggle="(value)=> stock.deposit.isOpen = value"/>
         </div>
         <DescriptionList class="grid-cols-2 md:grid-cols-4">

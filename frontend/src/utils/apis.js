@@ -98,7 +98,7 @@ export class ItemApi {
     }
 
     static async depositStock(id, stock) {
-        const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}/stocks/deposit`,
+        const response = await AXIOS.execute(AXIOS.POST, ItemApi.uri + `/${id}/stocks/deposit`,
         'Stock deposited successfully.', 'Deposit failed. Please try again.', stock);
         return response.data
     }

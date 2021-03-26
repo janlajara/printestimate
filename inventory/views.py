@@ -92,7 +92,7 @@ class ItemDepositStockViewSet(viewsets.ViewSet):
             alt_quantity = request.data.get('alt_quantity', 1)
             price = data.get('price', None)
             
-            deposited = item.deposit_stock(brand_name, base_quantity, price, alt_quantity)
+            deposited = item.deposit_stock(brand_name, base_quantity, price, int(alt_quantity))
             serialized_deposited = serializers.StockSerializer(deposited, many=True)
             return Response(serialized_deposited.data)
         else:

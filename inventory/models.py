@@ -126,11 +126,6 @@ class Item(models.Model):
             return self.latest_price_per_quantity
 
     @property
-    def price_currency(self):
-        if self.price:
-            return self.override_price_currency
-
-    @property
     def latest_stock(self):
         stocks = Stock.objects.filter(item__pk=self.id)
         if len(stocks) > 0:
@@ -143,11 +138,6 @@ class Item(models.Model):
         latest_stock = self.latest_stock
         if latest_stock is not None:
             return latest_stock.price_per_quantity
-    
-    @property
-    def latest_price_per_quantity_currency(self):
-        if self.latest_price_per_quantity is not None:
-            return self.override_price_currency
 
     @property
     def average_price_per_quantity(self):
@@ -158,11 +148,6 @@ class Item(models.Model):
             for stock in stocks:
                 total += stock.price_per_quantity
             return total / stocks_len
-
-    @property
-    def average_price_per_quantity_currency(self):
-        if self.average_price_per_quantity:
-            return self.override_price_currency
 
     @property
     def available_quantity(self):
@@ -176,7 +161,7 @@ class Item(models.Model):
         unit = self.base_uom.plural_abbrev
         if self.available_quantity == 1:
             unit = self.base_uom.abbrev
-        return '%d %s' % (self.available_quantity, unit)
+        return '%s %s' % (f'{self.available_quantity:,}', unit)
 
     @property
     def onhand_quantity(self):
@@ -190,7 +175,7 @@ class Item(models.Model):
         unit = self.base_uom.plural_abbrev
         if self.onhand_quantity == 1:
             unit = self.base_uom.abbrev
-        return '%d %s' % (self.onhand_quantity, unit)
+        return '%s %s' % (f'{self.onhand_quantity:,}', unit)
 
     @property
     def onhand_stocks(self):

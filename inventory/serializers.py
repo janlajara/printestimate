@@ -167,9 +167,14 @@ class ItemPropertiesPolymorphicSerializer(PolymorphicSerializer):
 
 
 class StockSerializer(serializers.ModelSerializer):
+    price = MoneyField(max_digits=14, decimal_places=2, read_only=True, default_currency='PHP')
+    price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True, default_currency='PHP')
+
     class Meta:
         model = Stock
-        fields = ['id', 'brand_name', 'price', 'base_quantity']
+        fields = ['id', 'brand_name', 'price', 'price_per_quantity', 
+                    'unbounded', 'base_quantity', 'onhand_quantity',
+                    'available_quantity', 'created_at']
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -224,10 +229,8 @@ class ItemRetrieveSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Item
-        fields = ['id', 'name', 'full_name', 'type', 'properties', 'price', 'price_currency',
-                  'override_price', 'override_price_currency', 'is_override_price', 
-                  'latest_price_per_quantity', 'latest_price_per_quantity_currency', 
-                  'average_price_per_quantity', 'average_price_per_quantity_currency',
-                  'is_raw_material', 'available_quantity', 'available_quantity_formatted', 
-                  'onhand_quantity', 'onhand_quantity_formatted', 
-                  'onhand_stocks', 'base_uom', 'alternate_uom']
+        fields = ['id', 'name', 'full_name', 'type', 'properties', 'price', 
+                  'override_price', 'is_override_price', 'latest_price_per_quantity', 
+                  'average_price_per_quantity', 'is_raw_material', 'available_quantity', 
+                  'available_quantity_formatted', 'onhand_quantity', 
+                  'onhand_quantity_formatted', 'base_uom', 'alternate_uom']

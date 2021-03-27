@@ -19,6 +19,9 @@ export const formatMoney = (amount, currency) => {
     return formatted;
 }
 
-export const assignValue = (value, defaultValue) => {
-    return value ? value : defaultValue;
+export const defaultIfNull = (object, defaultValue, property=null) => {
+    if (property)
+        return object && object[property]? object[property] : defaultValue;
+    else
+        return object ? object : defaultValue;
 }

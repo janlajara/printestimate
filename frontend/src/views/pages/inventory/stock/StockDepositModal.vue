@@ -6,10 +6,12 @@
         <Section class="grid md:grid-cols-4 md:gap-4">
             <InputSelect name="Deposit By" required
                 @input="(value)=>stock.data.depositBy = value"
-                :options="Object.entries($props.data.units).map((entry)=>({
-                    value: entry[1].value, label: entry[1].name,
-                    isSelected: entry[1].value == stock.data.depositBy
-                }))"/>
+                :options="Object.entries($props.data.units)
+                    .filter( entry => entry[1] != null)
+                    .map((entry)=>({
+                        value: entry[1].value, label: entry[1].name,
+                        isSelected: entry[1].value == stock.data.depositBy
+                    }))"/>
             <InputText type="text" name="Brand Name" class="md:col-span-2"
                 @input="(value)=>stock.data.brandName = value"
                 :value="stock.data.brandName"/>
@@ -21,13 +23,13 @@
             <InputText
                 type="number" required
                 :name="(stock.uom.isAlt)?
-                    `${$props.data.units.base.plural} per ${$props.data.units.alternate.name}`:
-                    `${$props.data.units.base.name} Quantity`" 
+                    `${stock.uom.base.plural} per ${stock.uom.alternate.name}`:
+                    `${stock.uom.base.name} Quantity`" 
                 @input="(value)=>stock.data.baseQuantity = value"
                 :value="stock.data.baseQuantity"/> 
             <InputText v-if="stock.uom.isAlt"
                 type="number" required 
-                :name="`${$props.data.units.alternate.name} Quantity`" 
+                :name="`${stock.uom.alternate.name} Quantity`" 
                 @input="(value)=>stock.data.alternateQuantity = value"
                 :value="stock.data.alternateQuantity"/> 
             <InputText type="decimal"
@@ -43,7 +45,7 @@
                     Note : This creates <span class="font-bold">{{stock.data.depositCount}} Stock 
                     {{stock.data.depositCount == 1 ? 'record' : 'records'}}</span>.</p>
                 <p class="pb-2">
-                    <span>Total {{$props.data.units.base.name}} Quantity : </span>
+                    <span>Total {{stock.uom.base.name}} Quantity : </span>
                     <span class="font-bold">{{stock.data.totalQuantityFormatted}}</span>
                     <span class="text-gray-400" v-if="stock.uom.isAlt && stock.data.alternateQuantity > 0">
                         {{` (${stock.data.baseFormatted} x ${stock.data.alternateFormatted}) `}}</span>                  
@@ -57,7 +59,7 @@
                     </span>
                 </p>
                 <p class="pb-2" v-if="stock.data.price > 0 && stock.uom.isAlt">
-                    <span>Price per {{$props.data.units.base.name}} : </span>
+                    <span>Price per {{stock.uom.base.name}} : </span>
                     <span class="font-bold">{{stock.data.pricePerBaseFormatted}}</span>
                     <span class="text-gray-400">
                         {{` (${stock.data.baseFormatted} / ${stock.data.priceFormatted})`}}</span>
@@ -90,21 +92,27 @@ export default {
         data: {
             type: Object,
             required: true
-        }
+        },
+        onAfterDeposit: Function
     },
     emits: ['toggle'],
     setup(props, {emit}) {
         const currency = inject('currency')
         const stock = reactive({
             uom: {
+                base: {name: '', plural: ''},
+                alternate: {name: '', plural: ''},
                 target: computed(()=> {
-                    let unit = props.data.units.base;
+                    let unit = stock.uom.base;
                     if (stock.uom.isAlt) 
-                        unit = props.data.units.alternate;
+                        unit = stock.uom.alternate;
                     return unit;
                 }),
-                isAlt: computed(()=> 
-                    props.data.units.alternate.value == stock.data.depositBy),
+                isAlt: computed(()=> (
+                    stock.uom.alternate && stock.uom.alternate.value != null ?
+                        stock.uom.alternate.value == stock.data.depositBy :
+                        false
+                )),
             },
             data: {
                 brandName: null,
@@ -119,14 +127,14 @@ export default {
                 baseFormatted: computed(()=> {
                     const qty = (stock.data.baseQuantity)?
                         stock.data.baseQuantity : 0;
-                    const baseUnit = props.data.units.base; 
+                    const baseUnit = stock.uom.base; 
                     return formatQuantity(qty, baseUnit.name, baseUnit.plural)
                 }),
                 alternateQuantity: 1,
                 alternateFormatted: computed(()=> {
                     const qty = (stock.data.alternateQuantity)?
                         stock.data.alternateQuantity : 0;
-                    const altUnit = props.data.units.alternate;
+                    const altUnit = stock.uom.alternate;
                     return formatQuantity(qty, altUnit.name, altUnit.plural)
                 }),
                 totalQuantity: computed(()=> {
@@ -140,7 +148,7 @@ export default {
                     return total ? total : 0;
                 }),
                 totalQuantityFormatted: computed(()=> {
-                    const baseUnit = props.data.units.base; 
+                    const baseUnit = stock.uom.base; 
                     return formatQuantity(stock.data.totalQuantity, baseUnit.name, baseUnit.plural)
                 }),
                 totalPrice: computed(()=> {
@@ -186,11 +194,11 @@ export default {
                         stock.data.alternateQuantity : 1,
                     unbounded: stock.data.unbounded,
                 }
-                console.log(data);
                 stock.isProcessing = true;
                 const response = await ItemApi.depositStock(props.data.itemId, data)
                 if (response && !response.error) {
                     emit('toggle', false);
+                    if (props.onAfterDeposit) props.onAfterDeposit();
                 }
                 stock.isProcessing = false;
             }
@@ -203,6 +211,10 @@ export default {
             stock.data.price = 0;
             stock.data.baseQuantity = 0;
             stock.data.alternateQuantity = 1;
+        })
+        watch(()=> props.data.units, ()=> { 
+            if (props.data.units.base) stock.uom.base = props.data.units.base;
+            if (props.data.units.alternate) stock.uom.alternate = props.data.units.alternate;
         })
         watch(()=> stock.data.depositBy, ()=> {
             stock.data.price = 0;

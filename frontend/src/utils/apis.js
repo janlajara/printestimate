@@ -92,14 +92,21 @@ export class ItemApi {
             'Item deleted successfully.', 'Delete failed. Please try again.');
     }
 
-    static async retrieveItemStocks(id) {
+    static async retrieveItemStockSummary(id) {
         const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}/stocks`)
+        return response.data
+    }
+
+    static async getItemStockList(id, limit, offset) {
+        const params = offset != null && limit != null? {limit, offset} : null;
+        const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}/stocks/list`,
+            null, null, null, params)
         return response.data
     }
 
     static async depositStock(id, stock) {
         const response = await AXIOS.execute(AXIOS.POST, ItemApi.uri + `/${id}/stocks/deposit`,
-        'Stock deposited successfully.', 'Deposit failed. Please try again.', stock);
+            'Stock deposited successfully.', 'Deposit failed. Please try again.', stock);
         return response.data
     }
 }

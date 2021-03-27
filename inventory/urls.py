@@ -11,6 +11,8 @@ urlpatterns = [
           views.ItemViewSet.as_view(GETRETRIEVE_PUTUPDATE_POSTDESTROY)),
      path('api/item/<int:pk>/stocks',
           views.ItemStockRetrieveViewSet.as_view({'get': 'retrieve'})),
+     path('api/item/<int:pk>/stocks/list',
+          views.ItemStockListViewSet.as_view({'get': 'list'})),
      path('api/item/<int:pk>/stocks/deposit',
           views.ItemDepositStockViewSet.as_view({'post': 'create'})),
      path('api/item/properties',

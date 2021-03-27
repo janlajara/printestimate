@@ -169,10 +169,11 @@ class ItemPropertiesPolymorphicSerializer(PolymorphicSerializer):
 class StockSerializer(serializers.ModelSerializer):
     price = MoneyField(max_digits=14, decimal_places=2, read_only=False, default_currency='PHP')
     price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True, default_currency='PHP')
+    created_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
 
     class Meta:
         model = Stock
-        fields = ['id', 'brand_name', 'price', 'price_per_quantity', 
+        fields = ['id', 'item', 'brand_name', 'price', 'price_per_quantity', 
                     'unbounded', 'base_quantity', 'onhand_quantity',
                     'available_quantity', 'created_at']
 
@@ -235,7 +236,7 @@ class ItemRetrieveSerializer(serializers.ModelSerializer):
 class ItemStockRetrieveSerializer(serializers.ModelSerializer):
     latest_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
     average_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
-    onhand_stocks = StockSerializer(many=True)
+    #onhand_stocks = StockSerializer(many=True)
     base_uom = BaseStockUnitSerializer()
     alternate_uom = AlternateStockUnitSerializer()
 
@@ -244,4 +245,5 @@ class ItemStockRetrieveSerializer(serializers.ModelSerializer):
         fields = ['id', 'latest_price_per_quantity', 'average_price_per_quantity',  
                   'available_quantity', 'available_quantity_formatted', 
                   'onhand_quantity', 'onhand_quantity_formatted', 
-                  'onhand_stocks', 'base_uom', 'alternate_uom']
+                  #'onhand_stocks', 
+                   'base_uom', 'alternate_uom']

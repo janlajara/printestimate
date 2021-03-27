@@ -1,6 +1,6 @@
 from inventory.models import Item, Stock, BaseStockUnit, AlternateStockUnit
 from inventory.properties.models import ItemProperties
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from inventory import serializers
@@ -79,6 +79,13 @@ class ItemStockRetrieveViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ItemStockRetrieveSerializer
 
 
+class ItemStockListViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.StockSerializer
+
+    def get_queryset(self):
+        return Stock.objects.filter(item=self.kwargs['pk'])
+
+
 class ItemDepositStockViewSet(viewsets.ViewSet):
 
     def create(self, request, pk=None):
@@ -89,10 +96,11 @@ class ItemDepositStockViewSet(viewsets.ViewSet):
             data = serializer.data
             brand_name = data.get('brand_name')
             base_quantity = data.get('base_quantity', 1)
-            alt_quantity = request.data.get('alt_quantity', 1)
+            alt_quantity = int(request.data.get('alt_quantity', 1))
             price = data.get('price', None)
+            unbounded = data.get('unbounded')
             
-            deposited = item.deposit_stock(brand_name, base_quantity, price, int(alt_quantity))
+            deposited = item.deposit_stock(brand_name, base_quantity, price, alt_quantity, unbounded)
             serialized_deposited = serializers.StockSerializer(deposited, many=True)
             return Response(serialized_deposited.data)
         else:

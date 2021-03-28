@@ -23,7 +23,7 @@ const button_styles_active = {
 const button_styles_disabled = {
     'primary': 'bg-primary text-black text-opacity-30',
     'secondary': 'bg-tertiary text-black text-opacity-30',
-    'none': ''
+    'none': 'text-black text-opacity-30'
 }
 
 export default {

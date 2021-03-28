@@ -14,15 +14,15 @@
             <div v-else>
                 <Button color="secondary" :action="()=>item.create.isOpen = true">
                     Create Item</Button>
-                <Table :headers="['Item', 'Type', 'Unit of Measure', 
-                    'Available Qty', 'On-hand Qty']">
+                <Table :headers="['Item', 'Type', 'Available Qty', 
+                        'On-hand Qty', 'Price per Unit']">
                     <Row v-for="(i, key) in item.list" :key="key"
                         :select="()=>item.detail.open(i.id, i.name)">
                         <Cell label="Item">{{i.name}}</Cell>
                         <Cell label="Type" class="capitalize">{{i.type}}</Cell>
-                        <Cell label="UoM">{{i.baseUom}}</Cell>
-                        <Cell label="Available Qty">{{i.available}}</Cell>
-                        <Cell label="Onhand Qty">{{i.onhand}}</Cell>
+                        <Cell label="Available Qty">{{i.availableFormatted}}</Cell>
+                        <Cell label="Onhand Qty">{{i.onhandFormatted}}</Cell>
+                        <Cell label="Price per Unit">{{moneyFormat(i.price)}}</Cell>
                     </Row>
                 </Table>
                 <TablePaginator class="w-full justify-end"
@@ -46,8 +46,9 @@ import TablePaginator from '@/components/TablePaginator.vue';
 import ItemInputModal from '@/views/pages/inventory/stock/ItemInputModal.vue';
 import ItemDetail from '@/views/pages/inventory/stock/ItemDetail.vue';
 
-import {reactive, onBeforeMount} from 'vue';
+import {reactive, onBeforeMount, inject} from 'vue';
 import {ItemApi} from '@/utils/apis.js';
+import {formatMoney} from '@/utils/format.js'
 
 export default {
     name: 'Stock',
@@ -56,6 +57,7 @@ export default {
         ItemInputModal, ItemDetail, TablePaginator
     },
     setup() {
+        const currency = inject('currency').abbreviation
         const item = reactive({
             create: {
                 isOpen: false, 
@@ -65,9 +67,11 @@ export default {
                 isOpen: false,
                 selectedItem: null,
                 open: async (id, name)=> { 
-                    item.detail.isOpen = true;
-                    item.detail.id = id;
-                    item.detail.selectedItem = name;
+                    if (id) {
+                        item.detail.isOpen = true;
+                        item.detail.id = id;
+                        item.detail.selectedItem = name;
+                    }
                 },
                 close: ()=> {
                     item.detail.isOpen = false;
@@ -87,7 +91,10 @@ export default {
                     id: i.id, name: i.full_name, type: i.type,
                     baseUom: i.base_uom, 
                     available: i.available_quantity,
-                    onhand: i.onhand_quantity 
+                    availableFormatted: i.available_quantity_formatted,
+                    onhand: i.onhand_quantity,
+                    onhandFormatted: i.onhand_quantity_formatted,
+                    price: i.price
                 }))
             }
         }
@@ -95,8 +102,11 @@ export default {
             populateItemList(item.listLimit, 0);
         });
 
+        const moneyFormat = (amount) => 
+            amount != null ? formatMoney(amount, currency) : '';
+
         return {
-            item, populateItemList
+            item, populateItemList, moneyFormat
         }
     }
 }

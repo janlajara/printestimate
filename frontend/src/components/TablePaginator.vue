@@ -1,22 +1,30 @@
 <template>
-    <div class="flex">
-        <div>
+    <div class="grid md:flex">
+        <div class="flex-grow mb-4 md:mb-0 md:mr-8">
             <span class="text-xs mr-4">Rows per page:</span>
             <select @input="pagination.changeLimit"
                 :value="pagination.limit"
                 class="rounded-md shadow-sm border-none bg-tertiary-light 
-                    bg-opacity-50 text-xs mr-8">
+                    bg-opacity-50 text-xs">
                 <option>5</option>
                 <option>10</option>
                 <option>50</option>
                 <option>100</option>
             </select>
+            <span class="my-auto  text-xs ml-8">Total: {{$props.count}} rows</span>
         </div>
-        <Button icon="first_page" @click="pagination.first" class="mr-4"></Button>
-        <Button icon="chevron_left" @click="pagination.back" class="mr-4"></Button>
-        <span class="text-xs my-auto mr-4">{{pagination.pageLabel}}</span>
-        <Button icon="chevron_right" @click="pagination.forward" class="mr-4"></Button>
-        <Button icon="last_page" @click="pagination.last"></Button>
+        <div class="grid grid-cols-5 gap-4">
+            <Button icon="first_page" @click="pagination.first" 
+                :disabled="pagination.leftIsDisabled"></Button>
+            <Button icon="chevron_left" @click="pagination.back"
+                :disabled="pagination.leftIsDisabled"></Button>
+            <span class="text-xs my-auto">
+                {{pagination.pageNum.current}} / {{pagination.pageNum.max}}</span>
+            <Button icon="chevron_right" @click="pagination.forward" 
+                :disabled="pagination.rightIsDisabled"></Button>
+            <Button icon="last_page" @click="pagination.last"
+                :disabled="pagination.rightIsDisabled"></Button>
+        </div>
     </div>
 </template>
 
@@ -37,7 +45,7 @@ export default {
         const pagination = reactive({
             limit: 5,
             offset: 0,
-            pageLabel: computed(()=> {
+            pageNum: computed(()=> {
                 let current = 1;
                 let max = 1;
                 if (props.count && pagination.limit &&
@@ -45,8 +53,14 @@ export default {
                     current = (pagination.offset / pagination.limit) + 1;
                     max = parseInt(props.count / pagination.limit) + 1;
                 }
-                return `${current} /  ${max}`;
+                return {current, max};
             }),
+            leftIsDisabled: computed(()=> (
+                pagination.pageNum.current == 1
+            )),
+            rightIsDisabled: computed(()=> (
+                pagination.pageNum.current == pagination.pageNum.max 
+            )),
             first: ()=> {
                 pagination.offset = 0;
                 pagination.load();

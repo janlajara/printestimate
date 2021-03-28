@@ -2,13 +2,13 @@
     <Page :title="(item.detail.isOpen)? item.detail.selectedItem : 'Inventory : Stock'">
         <hr class="my-4"/>
         <ItemInputModal :is-open="item.create.isOpen" :is-create="true" 
-            :on-after-save="populateItemList"
+            :on-after-save="()=> populateItemList(item.listLimit, 0)"
             @toggle="(value)=> item.create.isOpen = value"/>
         <Section>
             <div v-if="item.detail.isOpen"> 
                 <ItemDetail :item-id="item.detail.id" :key="item.detail.key"
                     :is-open="item.detail.isOpen" 
-                    :on-after-delete="populateItemList"
+                    :on-after-delete="()=> populateItemList(item.listLimit, 0)"
                     @toggle="(value)=> item.detail.isOpen = value"/>
             </div>
             <div v-else>
@@ -25,6 +25,11 @@
                         <Cell label="Onhand Qty">{{i.onhand}}</Cell>
                     </Row>
                 </Table>
+                <TablePaginator class="w-full justify-end"
+                    :limit="item.listLimit" :count="item.listCount"
+                    @change-limit="(limit)=> item.listLimit = limit"
+                    @change-page="({limit, offset})=> 
+                        populateItemList(limit, offset)" />
             </div>
         </Section>
     </Page>
@@ -37,16 +42,18 @@ import Button from '@/components/Button.vue' ;
 import Table from '@/components/Table.vue';
 import Row from '@/components/Row.vue';
 import Cell from '@/components/Cell.vue';
+import TablePaginator from '@/components/TablePaginator.vue';
 import ItemInputModal from '@/views/pages/inventory/stock/ItemInputModal.vue';
 import ItemDetail from '@/views/pages/inventory/stock/ItemDetail.vue';
 
-import {reactive} from 'vue';
+import {reactive, onBeforeMount} from 'vue';
 import {ItemApi} from '@/utils/apis.js';
 
 export default {
     name: 'Stock',
     components: {
-        Page, Section, Button, Table, Row, Cell, ItemInputModal, ItemDetail
+        Page, Section, Button, Table, Row, Cell,
+        ItemInputModal, ItemDetail, TablePaginator
     },
     setup() {
         const item = reactive({
@@ -67,19 +74,26 @@ export default {
                     item.detail.id = null;
                 },
             },
-            list: [{}]
+            list: [{}],
+            listLimit: 5,
+            listCount: 0
         });
         
-        const populateItemList = async() => {
-            const response = await ItemApi.listItems();
-            item.list = response.map(i=> ({
-                id: i.id, name: i.full_name, type: i.type,
-                baseUom: i.base_uom, 
-                available: i.available_quantity,
-                onhand: i.onhand_quantity 
-            }))
+        const populateItemList = async(limit, offset) => {
+            const response = await ItemApi.listItems(limit, offset);
+            if (response && response.results) {
+                item.listCount = response.count;
+                item.list = response.results.map(i=> ({
+                    id: i.id, name: i.full_name, type: i.type,
+                    baseUom: i.base_uom, 
+                    available: i.available_quantity,
+                    onhand: i.onhand_quantity 
+                }))
+            }
         }
-        populateItemList();
+        onBeforeMount(()=> {
+            populateItemList(item.listLimit, 0);
+        });
 
         return {
             item, populateItemList

@@ -14,9 +14,14 @@
                         {{col}}
                     </Cell>
                 </Row>
-                <slot/>
+                <slot v-if="$slots.default()[0].children.length > 0"/>
+                <Row v-else-if="$props.rows == null">
+                    <Cell :colspan="columnCount">
+                    </Cell>
+                </Row>
             </tbody>
         </table>
+        {{$props.rows}}
     </div>
 </template>
 
@@ -36,7 +41,7 @@ export default {
         },
         rows: Array
     },
-    setup(props){
+    setup(props) {
         const columnCount = computed(()=> (props.headers? props.headers.length: 0));
         return {
             columnCount

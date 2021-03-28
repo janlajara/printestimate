@@ -90,8 +90,8 @@ export default {
                 emit('change-page',  {limit: pagination.limit, offset: pagination.offset})
             },
             changeLimit: (event)=> {
+                pagination.offset = 0;
                 emit('change-limit', parseInt(event.target.value));
-                pagination.first();
             }
         });
         watch(()=> props.limit, ()=> {

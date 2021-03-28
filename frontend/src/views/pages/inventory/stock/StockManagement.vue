@@ -25,6 +25,7 @@
                     @withdraw="(selected) => stock.withdraw.selected = selected"
                     :data="{
                         itemId: $props.itemId,
+                        onhandQty: stock.data.onhandQty,
                         units: {
                             base: stock.data.baseUom,
                             alternate: stock.data.altUom}}"/>

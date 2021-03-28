@@ -82,7 +82,9 @@ export default {
             if (props.data.units.base) onhand.units.base = props.data.units.base
             if (props.data.units.alternate) onhand.units.alternate = props.data.units.alternate
         })
-
+        watch(()=> props.data.onhandQty, ()=> {
+            if (props.data.onhandQty) loadItemStockList(props.data.itemId, onhand.stocksLimit, 0);
+        })
 
         const loadItemStockList = async (id, limit, offset) => {
             const response = await ItemApi.getItemStockList(id, limit, offset);

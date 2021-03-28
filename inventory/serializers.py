@@ -185,8 +185,10 @@ class ItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Item
-        fields = ['id', 'name', 'full_name', 'type', 'price', 'available_quantity',
-                  'onhand_quantity', 'base_uom', 'alternate_uom']
+        fields = ['id', 'name', 'full_name', 'type', 'price', 
+            'available_quantity', 'available_quantity_formatted',
+            'onhand_quantity', 'onhand_quantity_formatted',
+            'base_uom', 'alternate_uom']
 
 
 class ItemCreateUpdateSerializer(serializers.ModelSerializer):

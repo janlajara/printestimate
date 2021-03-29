@@ -9,7 +9,7 @@
         <Tabs>
             <Tab title="On-hand">
                 <div class="flex">
-                    <Button icon="add" color="tertiary" class="mr-4"
+                    <Button icon="download" color="tertiary" class="mr-4"
                         :action="()=> stock.deposit.toggle(true)">Deposit</Button>
                     <StockDepositModal :is-open="stock.deposit.isOpen"
                         :data="{
@@ -19,13 +19,19 @@
                                 alternate: stock.data.altUom}}"
                         @toggle="stock.deposit.toggle"
                         :on-after-deposit="()=>loadItemStocks($props.itemId)"/>
-                    <Button icon="remove" class="mr-4" color="secondary"
+                    <Button icon="upload" class="mr-4" color="secondary"
                         :disabled="!stock.withdraw.hasWithdraw"
                         :action="()=> stock.withdraw.toggle(true)">Withdraw</Button>
                     <div v-if="stock.withdraw.hasWithdraw" class="text-sm my-auto">
                         Selected : <span class="font-bold">{{formatQuantity(stock.withdraw.totalQuantity, 
                             stock.data.baseUom.name, stock.data.baseUom.plural)}}</span>
                     </div>
+                    <StockWithdrawModal :is-open="stock.withdraw.isOpen"
+                        :data="{
+                            unit: stock.data.baseUom,
+                            total: stock.withdraw.totalQuantity,
+                            selected: stock.withdraw.selected}"
+                        @toggle="stock.withdraw.toggle"/>
                 </div>
                 <StocksOnhand 
                     @withdraw="(selected) => stock.withdraw.selected = selected"
@@ -51,6 +57,7 @@ import Button from '@/components/Button.vue';
 import Tabs from '@/components/Tabs.vue';
 import Tab from '@/components/Tab.vue';
 import StockDepositModal from '@/views/pages/inventory/stock/StockDepositModal.vue';
+import StockWithdrawModal from '@/views/pages/inventory/stock/StockWithdrawModal.vue';
 import StocksOnhand from '@/views/pages/inventory/stock/StocksOnhand.vue';
 
 import {reactive, computed, inject, onBeforeMount} from 'vue';
@@ -60,7 +67,7 @@ import {formatMoney, formatQuantity} from '@/utils/format.js';
 export default {
     components: {
         Section, DescriptionList, DescriptionItem, Tabs, Tab, Button,
-        StockDepositModal, StocksOnhand
+        StockDepositModal, StockWithdrawModal, StocksOnhand
     },
     props: {
         itemId: {

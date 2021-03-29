@@ -77,7 +77,11 @@ export default {
                 let withdrawMap = [];
                 onhand.withdraw.forEach( stockId => {
                     const stock = onhand.stocks.find(stock => stockId == stock.id)
-                    if (stock) withdrawMap.push({id: stockId, quantity: parseInt(stock.withdrawQty)})
+                    if (stock) withdrawMap.push(
+                        {id: stockId, 
+                         brandName: stock.brandName,
+                         price: stock.price,
+                         quantity: parseInt(stock.withdrawQty)})
                 })
                 return withdrawMap;
             }),

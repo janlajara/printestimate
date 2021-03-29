@@ -51,7 +51,7 @@ export default {
                 if (props.count && pagination.limit &&
                         props.count > pagination.limit) {
                     current = (pagination.offset / pagination.limit) + 1;
-                    max = parseInt(props.count / pagination.limit) + 1;
+                    max = parseInt(props.count / pagination.limit);
                 }
                 return {current, max};
             }),

@@ -1,7 +1,8 @@
 from django.db import models
 from django.db.models import Q, Sum, Avg
 from djmoney.models.fields import MoneyField
-from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity, IllegalUnboundedDeposit
+from .exceptions import DepositTooBig, InsufficientStock, \
+    InvalidExpireQuantity, IllegalUnboundedDeposit, IllegalWithdrawal
 import inflect
 
 _inflect = inflect.engine()
@@ -200,11 +201,14 @@ class Item(models.Model):
 
     def withdraw_stock(self, stock_request_id):
         stock_request = StockRequest.objects.get(pk=stock_request_id)
-        stock = stock_request.stock
-        quantity = stock_request.stock_unit.quantity
-        stock.withdraw(quantity)
-        stock_request.status = StockRequest.FULFILLED
-        stock_request.save()
+        if stock_request.status == StockRequest.APPROVED:
+            stock = stock_request.stock
+            quantity = stock_request.stock_unit.quantity
+            stock.withdraw(quantity)
+            stock_request.status = StockRequest.FULFILLED
+            stock_request.save()
+        else:
+            raise IllegalWithdrawal(stock_request.status)
 
     def request_stock(self, quantity):
         stock_requests = []
@@ -278,7 +282,8 @@ class Stock(models.Model):
             aggr_sum = aggregate['sum_stock'] if aggregate['sum_stock'] is not None else 0
             return aggr_sum
 
-        new_requests = StockRequest.objects.filter(stock=self, status=StockRequest.NEW)
+        new_requests = StockRequest.objects.filter(stock=self, 
+            status__in=[StockRequest.NEW, StockRequest.APPROVED])
         requested = __get_sum(new_requests)
         return self.onhand_quantity - requested
 
@@ -348,22 +353,32 @@ class StockUnit(models.Model):
 
 
 class StockLog(models.Model):
-    stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name="stock_log")
     stock_unit = models.OneToOneField(StockUnit, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
 
 
 class StockRequest(StockLog):
     NEW = 'NEW'
+    APPROVED = 'APP'
     FULFILLED = 'FUL'
     CANCELLED = 'CNL'
     STATUS = [
         (NEW, 'New'),
+        (APPROVED, 'Approved'),
         (FULFILLED, 'Fulfilled'),
         (CANCELLED, 'Cancelled'),
     ]
-    status = models.CharField(max_length=3, choices=STATUS)
+    status = models.CharField(max_length=3, choices=STATUS, default='NEW')
     last_modified = models.DateTimeField(auto_now=True)
+
+    def approve(self):
+        self.status = StockRequest.APPROVED
+        self.save()
+    
+    def cancel(self):
+        self.status = StockRequest.CANCELLED
+        self.save()
 
 
 class StockMovement(StockLog):

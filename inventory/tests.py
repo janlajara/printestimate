@@ -2,7 +2,8 @@ import pytest
 from measurement.measures import Distance, Volume
 from .models import BaseStockUnit, AlternateStockUnit, Item, Stock, StockRequest, StockMovement
 from .properties.models import ItemProperties, Paper
-from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity, IllegalUnboundedDeposit
+from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity, \
+    IllegalUnboundedDeposit, IllegalWithdrawal
 
 
 @pytest.fixture
@@ -192,6 +193,8 @@ def test_item__request_stock_lesser_quantity(db, item: Item):
 def test_item__request_and_withdraw(db, item: Item):
     stock = item.deposit_stock('Generic', 500, 1000)[0]
     stock_request = item.request_stock(250)[0]
+    stock_request.approve()
+
     item.withdraw_stock(stock_request.id)
     stock_request.refresh_from_db()
     assert stock_request.status == StockRequest.FULFILLED
@@ -202,6 +205,8 @@ def test_item__request_and_withdraw(db, item: Item):
 def test_item_return_stock(db, item: Item):
     stock = item.deposit_stock('Generic', 500, 1000)[0]
     stock_request = item.request_stock(250)[0]
+    stock_request.approve()
+
     item.withdraw_stock(stock_request.id)
     item.return_stock(stock.id, 125)
     assert item.available_quantity == 375
@@ -296,6 +301,13 @@ def test_item__stock_unbounded(db, item: Item):
 def test_item_stock_unbounded__illegal_deposit(db, item: Item):
     with pytest.raises(IllegalUnboundedDeposit):
         deposited = item.deposit_stock('Generic', 500, 1, 5, True)
+
+
+def test_item_stock__illegal_withdraw(db, item: Item):
+    with pytest.raises(IllegalWithdrawal):
+        item.deposit_stock('Generic', 500, 1, 1, True)
+        stock_request = item.request_stock(10)[0]
+        item.withdraw_stock(stock_request.id)
 
 
 def test_item__tape(db, item_factory):

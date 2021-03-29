@@ -106,3 +106,12 @@ class ItemDepositStockViewSet(viewsets.ViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class WithdrawStocksViewSet(viewsets.ViewSet):
+
+    def create(self, request, pk=None):
+        if request.data:
+            #stock_ids = [i.id for i in request.data]
+            #stocks = Stock.objects.filter(item__pk=pk, pk__in=stock_ids)
+            for entry in request.data:
+                stock = Stock.objects.get(item__pk=pk, pk=entry.id)
+                print(stock)

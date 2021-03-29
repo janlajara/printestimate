@@ -9,17 +9,23 @@
         <Tabs>
             <Tab title="On-hand">
                 <div class="flex">
-                    <Button icon="upload" color="secondary" class="mr-4">Withdraw</Button>
-                    <Button icon="download" color="secondary" class="mr-4"
-                        :action="()=> stock.deposit.isOpen = true">Deposit</Button>
+                    <Button icon="add" color="tertiary" class="mr-4"
+                        :action="()=> stock.deposit.toggle(true)">Deposit</Button>
                     <StockDepositModal :is-open="stock.deposit.isOpen"
                         :data="{
                             itemId: $props.itemId,
                             units: {
                                 base: stock.data.baseUom,
                                 alternate: stock.data.altUom}}"
-                        @toggle="(value)=> stock.deposit.isOpen = value"
+                        @toggle="stock.deposit.toggle"
                         :on-after-deposit="()=>loadItemStocks($props.itemId)"/>
+                    <Button icon="remove" class="mr-4" color="secondary"
+                        :disabled="!stock.withdraw.hasWithdraw"
+                        :action="()=> stock.withdraw.toggle(true)">Withdraw</Button>
+                    <div v-if="stock.withdraw.hasWithdraw" class="text-sm my-auto">
+                        Selected : <span class="font-bold">{{formatQuantity(stock.withdraw.totalQuantity, 
+                            stock.data.baseUom.name, stock.data.baseUom.plural)}}</span>
+                    </div>
                 </div>
                 <StocksOnhand 
                     @withdraw="(selected) => stock.withdraw.selected = selected"
@@ -49,7 +55,7 @@ import StocksOnhand from '@/views/pages/inventory/stock/StocksOnhand.vue';
 
 import {reactive, computed, inject, onBeforeMount} from 'vue';
 import {ItemApi} from '@/utils/apis.js';
-import {formatMoney} from '@/utils/format.js';
+import {formatMoney, formatQuantity} from '@/utils/format.js';
 
 export default {
     components: {
@@ -86,10 +92,19 @@ export default {
             },
             withdraw: {
                 isOpen: false,
-                selected: []
+                selected: [],
+                hasWithdraw: computed(()=> stock.withdraw.selected.length > 0),
+                totalQuantity: computed(()=> (
+                    stock.withdraw.selected.reduce((a, b)=> a + (b['quantity'] || 0), 0)
+                )),
+                toggle: (value)=> {
+                    stock.withdraw.isOpen = value
+                    console.log(stock.withdraw.selected)
+                },
             },
             deposit: {
-                isOpen: false
+                isOpen: false,
+                toggle: (value)=> stock.deposit.isOpen = value,
             }
         });
 
@@ -117,7 +132,7 @@ export default {
         })
 
         return {
-            stock, loadItemStocks
+            stock, loadItemStocks, formatQuantity
         }
     }
 }

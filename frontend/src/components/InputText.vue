@@ -62,16 +62,16 @@ export default {
         const emitInput = (event)=> {
             let input = event.target.value;
             if (props.type == 'number' || props.type == 'decimal') {
+                let pattern = /[^\d]/g;
                 if (props.type == 'decimal') {
                     const firstOccur = input.indexOf('.');
                     if (firstOccur >= 0) {
                         input = input.substr(0, firstOccur+1) + 
                             input.slice(firstOccur+1).replaceAll('.', '');
                     }
-                } else {
-                    input = input.replaceAll('.', '');
-                }
-                input = input.replace(/[^\d.]/g, "");
+                    pattern = /[^\d.]/g;
+                } 
+                input = input.replace(pattern, "");
                 if (input.trim() == "") input = null;
             }
             emit('input', input);

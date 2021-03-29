@@ -17,12 +17,14 @@ import Icon from '@/components/Icon.vue'
 const button_styles_active = {
     'primary': 'bg-primary hover:bg-primary-light active:bg-primary-dark',
     'secondary': 'bg-tertiary hover:bg-tertiary-light active:bg-tertiary-dark',
+    'tertiary': 'bg-secondary hover:bg-secondary-light active:bg-secondary-dark',
     'none': 'hover:text-secondary'
 }
 
 const button_styles_disabled = {
     'primary': 'bg-primary text-black text-opacity-30',
     'secondary': 'bg-tertiary text-black text-opacity-30',
+    'tertiary': 'bg-secondary text-black text-opacity-30',
     'none': 'text-black text-opacity-30'
 }
 
@@ -41,7 +43,7 @@ export default {
         color: {
             type: String,
             validator: (value) => 
-                ['primary', 'secondary'].indexOf(value) !== -1
+                ['primary', 'secondary', 'tertiary'].indexOf(value) !== -1
         },
         action: {
             type: Function,
@@ -51,7 +53,7 @@ export default {
     setup(props) { 
         const buttonClass = computed(()=> {
             let key = (props.color && 
-                ['primary', 'secondary'].indexOf(props.color) != -1)?
+                ['primary', 'secondary', 'tertiary'].indexOf(props.color) != -1)?
                     props.color : 'none';
 
             let styles = (props.disabled)? 

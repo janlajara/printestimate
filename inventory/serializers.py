@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 from djmoney.contrib.django_rest_framework import MoneyField
-from .models import Item, Stock, BaseStockUnit, AlternateStockUnit
+from .models import Item, Stock, StockRequest, StockRequestGroup, \
+    StockUnit, BaseStockUnit, AlternateStockUnit
 from .properties.models import ItemProperties, Line, Tape, Paper, Panel, Liquid
 
 
@@ -238,7 +239,6 @@ class ItemRetrieveSerializer(serializers.ModelSerializer):
 class ItemStockRetrieveSerializer(serializers.ModelSerializer):
     latest_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
     average_price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True)
-    #onhand_stocks = StockSerializer(many=True)
     base_uom = BaseStockUnitSerializer()
     alternate_uom = AlternateStockUnitSerializer()
 
@@ -247,5 +247,27 @@ class ItemStockRetrieveSerializer(serializers.ModelSerializer):
         fields = ['id', 'latest_price_per_quantity', 'average_price_per_quantity',  
                   'available_quantity', 'available_quantity_formatted', 
                   'onhand_quantity', 'onhand_quantity_formatted', 
-                  #'onhand_stocks', 
                    'base_uom', 'alternate_uom']
+
+
+class StockUnitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockUnit
+        fields = ['id', 'quantity']
+
+
+class StockRequestSerializer(serializers.ModelSerializer):
+    stock = StockSerializer(read_only=True)
+    stock_unit = StockUnitSerializer(read_only=True)
+
+    class Meta:
+        model = StockRequest
+        fields = ['id', 'stock', 'stock_unit', 'status', 'created', 'last_modified']
+
+
+class StockRequestGroupSerializer(serializers.ModelSerializer):
+    stock_requests = StockRequestSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = StockRequestGroup
+        fields = ['reason', 'stock_requests']

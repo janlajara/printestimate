@@ -106,7 +106,8 @@ class Item(models.Model):
 
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=15, choices=TYPES, null=False, blank=False)
-    override_price = MoneyField(null=True, max_digits=14, decimal_places=2, default_currency='PHP')
+    override_price = MoneyField(null=True, max_digits=14, decimal_places=2, 
+        default_currency='PHP')
     is_override_price = models.BooleanField(default=False)
     is_raw_material = models.BooleanField(default=False)
     base_uom = models.ForeignKey(BaseStockUnit, on_delete=models.RESTRICT)
@@ -210,13 +211,14 @@ class Item(models.Model):
         else:
             raise IllegalWithdrawal(stock_request.status)
 
-    def request_stock(self, quantity):
-        stock_requests = []
+    def request_stock(self, quantity, reason=None):
+        request_group = None
 
         if self.available_quantity >= quantity:
             stocks = Stock.objects.filter(item=self)
             stocks_iter = stocks.iterator()
             qty_counter = 0
+            stock_requests = []
 
             while qty_counter < quantity:
                 stock = next(stocks_iter)
@@ -226,8 +228,10 @@ class Item(models.Model):
                 stock_request = stock.request(qty)
                 stock_requests.append(stock_request)
                 qty_counter += qty
+            request_group = StockRequestGroup.objects.create(reason=reason)
+            request_group.stock_requests.set(stock_requests)
 
-        return stock_requests
+        return request_group
 
     def return_stock(self, stock_id, quantity):
         stock = Stock.objects.get(pk=stock_id)
@@ -254,9 +258,11 @@ class StockManager(models.Manager):
 
 class Stock(models.Model):
     objects = StockManager()
-    item = models.ForeignKey(Item, on_delete=models.RESTRICT, null=False, related_name='stocks')
+    item = models.ForeignKey(Item, on_delete=models.RESTRICT, 
+        null=False, related_name='stocks')
     brand_name = models.CharField(max_length=100, null=True, blank=True)
-    price = MoneyField(default=0, max_digits=14, decimal_places=2, default_currency='PHP')
+    price = MoneyField(default=0, max_digits=14, decimal_places=2, 
+        default_currency='PHP')
     base_quantity = models.IntegerField(default=1)
     unbounded = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -358,6 +364,10 @@ class StockLog(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
 
+class StockRequestGroup(models.Model):
+    reason = models.CharField(max_length=100, null=True, blank=True)
+
+
 class StockRequest(StockLog):
     NEW = 'NEW'
     APPROVED = 'APP'
@@ -370,6 +380,8 @@ class StockRequest(StockLog):
         (CANCELLED, 'Cancelled'),
     ]
     status = models.CharField(max_length=3, choices=STATUS, default='NEW')
+    stock_request_group = models.ForeignKey(StockRequestGroup, null=True, blank=True,
+        on_delete=models.RESTRICT, related_name='stock_requests')
     last_modified = models.DateTimeField(auto_now=True)
 
     def approve(self):
@@ -393,3 +405,4 @@ class StockMovement(StockLog):
         (EXPIRED, 'Expired'),
     ]
     action = models.CharField(max_length=3, choices=ACTIONS)
+

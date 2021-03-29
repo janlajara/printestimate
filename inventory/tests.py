@@ -176,7 +176,7 @@ def test_item__deposit_multiple_stocks(db, item: Item):
 
 def test_item__request_stock_greater_quantity(db, item: Item):
     item.deposit_stock('Generic', 500, 1000, 2)
-    stock_requests = item.request_stock(600)
+    stock_requests = item.request_stock(600).stock_requests.all()
     assert item.available_quantity == 400
     assert item.onhand_quantity == 1000
     assert len(stock_requests) == 2
@@ -184,7 +184,7 @@ def test_item__request_stock_greater_quantity(db, item: Item):
 
 def test_item__request_stock_lesser_quantity(db, item: Item):
     item.deposit_stock('Generic', 500, 1000, 2)
-    stock_requests = item.request_stock(400)
+    stock_requests = item.request_stock(400).stock_requests.all()
     assert item.available_quantity == 600
     assert item.onhand_quantity == 1000
     assert len(stock_requests) == 1
@@ -192,7 +192,7 @@ def test_item__request_stock_lesser_quantity(db, item: Item):
 
 def test_item__request_and_withdraw(db, item: Item):
     stock = item.deposit_stock('Generic', 500, 1000)[0]
-    stock_request = item.request_stock(250)[0]
+    stock_request = item.request_stock(250).stock_requests.first()
     stock_request.approve()
 
     item.withdraw_stock(stock_request.id)
@@ -204,7 +204,7 @@ def test_item__request_and_withdraw(db, item: Item):
 
 def test_item_return_stock(db, item: Item):
     stock = item.deposit_stock('Generic', 500, 1000)[0]
-    stock_request = item.request_stock(250)[0]
+    stock_request = item.request_stock(250).stock_requests.first()
     stock_request.approve()
 
     item.withdraw_stock(stock_request.id)
@@ -306,7 +306,7 @@ def test_item_stock_unbounded__illegal_deposit(db, item: Item):
 def test_item_stock__illegal_withdraw(db, item: Item):
     with pytest.raises(IllegalWithdrawal):
         item.deposit_stock('Generic', 500, 1, 1, True)
-        stock_request = item.request_stock(10)[0]
+        stock_request = item.request_stock(10).stock_requests.first()
         item.withdraw_stock(stock_request.id)
 
 

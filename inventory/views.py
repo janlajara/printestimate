@@ -1,4 +1,5 @@
-from inventory.models import Item, Stock, BaseStockUnit, AlternateStockUnit
+from inventory.models import Item, Stock, StockRequest, \
+    StockRequestGroup, BaseStockUnit, AlternateStockUnit
 from inventory.properties.models import ItemProperties
 from rest_framework import viewsets, status
 from rest_framework.response import Response
@@ -106,12 +107,33 @@ class ItemDepositStockViewSet(viewsets.ViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class WithdrawStocksViewSet(viewsets.ViewSet):
+class ItemWithdrawStocksViewSet(viewsets.ViewSet):
 
     def create(self, request, pk=None):
-        if request.data:
-            #stock_ids = [i.id for i in request.data]
-            #stocks = Stock.objects.filter(item__pk=pk, pk__in=stock_ids)
-            for entry in request.data:
-                stock = Stock.objects.get(item__pk=pk, pk=entry.id)
-                print(stock)
+        serializer = serializers.StockRequestGroupSerializer(data=request.data)
+
+        if request.data and serializer.is_valid():
+            stock_requests = []
+            reason = request.data.get('reason', None)
+            stocks = request.data.get('stock_requests', [])
+
+            for entry in stocks:
+                id = entry.get('id', None)
+                quantity = int(entry.get('quantity', 0))
+                if id is not None and quantity > 0:
+                    try:
+                        stock = Stock.objects.get(item=pk, pk=id)
+                        stock_request = stock.request(quantity)
+                        stock_requests.append(stock_request)
+                    except Stock.DoesNotExist:
+                        pass
+            
+            if len(stock_requests) > 0:
+                stock_request_group = StockRequestGroup.objects.create(reason=reason)
+                stock_request_group.stock_requests.set(stock_requests)
+                serialized_request = serializers.StockRequestGroupSerializer(stock_request_group)
+                return Response(serialized_request.data) 
+            else:
+                return Response({"data": "no available stocks"})
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)   

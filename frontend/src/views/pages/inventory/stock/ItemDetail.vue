@@ -86,9 +86,12 @@ export default {
                         name: response.base_uom.name,
                         plural: response.base_uom.plural_name},
                     altUom: {
-                        value: (response.alternate_uom)? response.alternate_uom.id: null,
-                        name: (response.alternate_uom)? response.alternate_uom.name: null,
-                        plural: (response.alternate_uom)? response.alternate_uom.plural_name : null},
+                        value: (response.alternate_uom)? 
+                            response.alternate_uom.id: null,
+                        name: (response.alternate_uom)? 
+                            response.alternate_uom.name: null,
+                        plural: (response.alternate_uom)? 
+                            response.alternate_uom.plural_name : null},
                     properties: {},
                 };
                 if (response.properties) {

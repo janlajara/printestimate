@@ -1,7 +1,7 @@
 <template>
     <div>
         <Section>
-            <Table 
+            <Table :loader="onhand.isProcessing"
                 :headers="['Brand Name', 
                     `Price / ${onhand.units.base.name}`, 
                     'Available', 'Date Deposited', 'Withdraw Qty']"> 
@@ -50,7 +50,7 @@ import Row from '@/components/Row.vue'
 import Cell from '@/components/Cell.vue'
 import TablePaginator from '@/components/TablePaginator.vue'
 
-import {reactive, watch, inject, computed, onBeforeMount} from 'vue';
+import {reactive, watch, inject, computed} from 'vue';
 import {formatMoney} from '@/utils/format.js';
 import {ItemApi} from '@/utils/apis.js';
 
@@ -72,6 +72,7 @@ export default {
                 base: {name: null, plural: null},
                 alternate: {name: null, plural: null}
             },
+            isProcessing: false,
             withdraw: [],
             withdrawMap: computed(()=> {
                 let withdrawMap = [];
@@ -93,30 +94,36 @@ export default {
             if (props.data.units.base) onhand.units.base = props.data.units.base
             if (props.data.units.alternate) onhand.units.alternate = props.data.units.alternate
         })
-        watch(()=> props.data.onhandQty, ()=> {
-            if (props.data.onhandQty) loadItemStockList(props.data.itemId, onhand.stocksLimit, 0);
+        watch(()=> props.data.availableQty, ()=> {
+            if (props.data.availableQty) 
+                loadItemStockList(props.data.itemId, onhand.stocksLimit, 0);
+            onhand.withdraw = [];
+            emit('withdraw', [])
         })
         watch(()=> onhand.withdrawMap, ()=> {
             emit('withdraw', Array.from(onhand.withdrawMap))
         })
 
         const loadItemStockList = async (id, limit, offset) => {
-            const response = await ItemApi.getItemStockList(id, limit, offset);
+            if (id == null) return;
+
+            onhand.isProcessing = true;
+            const response = await ItemApi.getItemStockList(id, limit, offset, true);
             if (response && response.results) {
                 onhand.stocksCount = response.count;
-                onhand.stocks = response.results.map(stock => ({
-                    id: stock.id, brandName: stock.brand_name,
-                    price: stock.price, pricePerQty: stock.price_per_quantity,
-                    unbounded: stock.unbounded, baseQty: stock.base_quantity,
-                    onhandQty: stock.onhand_quantity, availableQty: stock.available_quantity,
-                    createdAt: stock.created_at,
-                    withdrawQty: stock.available_quantity
-                }));
+                onhand.stocks = response.results
+                    .map(stock => ({
+                        id: stock.id, brandName: stock.brand_name,
+                        price: stock.price, pricePerQty: stock.price_per_quantity,
+                        unbounded: stock.unbounded, baseQty: stock.base_quantity,
+                        onhandQty: stock.onhand_quantity, availableQty: stock.available_quantity,
+                        createdAt: stock.created_at,
+                        withdrawQty: stock.available_quantity
+                    }));
             }
+            onhand.isProcessing = false;
         }
-        onBeforeMount(()=> {
-            loadItemStockList(props.data.itemId, onhand.stocksLimit, 0);
-        });
+
         return {
             onhand, loadItemStockList, formatMoney, currency, 
             inputWithdraw: (event, stock)=> {

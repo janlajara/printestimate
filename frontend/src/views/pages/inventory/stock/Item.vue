@@ -8,14 +8,17 @@
             <div v-if="item.detail.isOpen"> 
                 <ItemDetail :item-id="item.detail.id" :key="item.detail.key"
                     :is-open="item.detail.isOpen" 
-                    :on-after-delete="()=> populateItemList(item.listLimit, 0)"
-                    @toggle="(value)=> item.detail.isOpen = value"/>
+                    @toggle="(value)=> {
+                        item.detail.isOpen = value;
+                        if (!value) populateItemList(item.listLimit, 0);
+                    }"/>
             </div>
             <div v-else>
                 <Button color="secondary" :action="()=>item.create.isOpen = true">
                     Create Item</Button>
                 <Table :headers="['Item', 'Type', 'Available Qty', 
-                        'On-hand Qty', 'Price per Unit']">
+                        'On-hand Qty', 'Price per Unit']"
+                        :loader="item.isProcessing">
                     <Row v-for="(i, key) in item.list" :key="key"
                         :select="()=>item.detail.open(i.id, i.name)">
                         <Cell label="Item">{{i.name}}</Cell>
@@ -78,12 +81,14 @@ export default {
                     item.detail.id = null;
                 },
             },
+            isProcessing: false,
             list: [{}],
             listLimit: 5,
             listCount: 0
         });
         
         const populateItemList = async(limit, offset) => {
+            item.isProcessing = true;
             const response = await ItemApi.listItems(limit, offset);
             if (response && response.results) {
                 item.listCount = response.count;
@@ -97,6 +102,7 @@ export default {
                     price: i.price
                 }))
             }
+            item.isProcessing = false;
         }
         onBeforeMount(()=> {
             populateItemList(item.listLimit, 0);

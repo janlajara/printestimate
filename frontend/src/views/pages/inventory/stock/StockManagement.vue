@@ -7,9 +7,10 @@
             <DescriptionItem name="Latest Price" :value="stock.data.latestPriceFormatted"/>
         </DescriptionList>
         <Tabs>
-            <Tab title="On-hand">
+            <Tab title="Available">
                 <div class="flex">
-                    <Button icon="download" color="tertiary" class="mr-4"
+                    <Button icon="download" color="tertiary" 
+                        class="mr-4" :disabled="stock.withdraw.hasWithdraw || stock.isProcessing"
                         :action="()=> stock.deposit.toggle(true)">Deposit</Button>
                     <StockDepositModal :is-open="stock.deposit.isOpen"
                         :data="{
@@ -19,8 +20,8 @@
                                 alternate: stock.data.altUom}}"
                         @toggle="stock.deposit.toggle"
                         :on-after-deposit="()=>loadItemStocks($props.itemId)"/>
-                    <Button icon="upload" class="mr-4" color="secondary"
-                        :disabled="!stock.withdraw.hasWithdraw"
+                    <Button icon="upload" class="mr-4" 
+                        color="secondary" :disabled="!stock.withdraw.hasWithdraw || stock.isProcessing"
                         :action="()=> stock.withdraw.toggle(true)">Withdraw</Button>
                     <div v-if="stock.withdraw.hasWithdraw" class="text-sm my-auto">
                         Selected : <span class="font-bold">{{formatQuantity(stock.withdraw.totalQuantity, 
@@ -28,16 +29,18 @@
                     </div>
                     <StockWithdrawModal :is-open="stock.withdraw.isOpen"
                         :data="{
+                            itemId: $props.itemId,
                             unit: stock.data.baseUom,
                             total: stock.withdraw.totalQuantity,
                             selected: stock.withdraw.selected}"
-                        @toggle="stock.withdraw.toggle"/>
+                        @toggle="stock.withdraw.toggle"
+                        :on-after-withdraw="()=>loadItemStocks($props.itemId)"/>
                 </div>
-                <StocksOnhand 
+                <StocksAvailable
                     @withdraw="(selected) => stock.withdraw.selected = selected"
                     :data="{
                         itemId: $props.itemId,
-                        onhandQty: stock.data.onhandQty,
+                        availableQty: stock.data.availableQty,
                         units: {
                             base: stock.data.baseUom,
                             alternate: stock.data.altUom}}"/>
@@ -58,7 +61,7 @@ import Tabs from '@/components/Tabs.vue';
 import Tab from '@/components/Tab.vue';
 import StockDepositModal from '@/views/pages/inventory/stock/StockDepositModal.vue';
 import StockWithdrawModal from '@/views/pages/inventory/stock/StockWithdrawModal.vue';
-import StocksOnhand from '@/views/pages/inventory/stock/StocksOnhand.vue';
+import StocksAvailable from '@/views/pages/inventory/stock/StocksAvailable.vue';
 
 import {reactive, computed, inject, onBeforeMount} from 'vue';
 import {ItemApi} from '@/utils/apis.js';
@@ -67,7 +70,7 @@ import {formatMoney, formatQuantity} from '@/utils/format.js';
 export default {
     components: {
         Section, DescriptionList, DescriptionItem, Tabs, Tab, Button,
-        StockDepositModal, StockWithdrawModal, StocksOnhand
+        StockDepositModal, StockWithdrawModal, StocksAvailable
     },
     props: {
         itemId: {
@@ -97,6 +100,7 @@ export default {
                 altUom: null,
                 onhandStocks: []
             },
+            isProcessing: false,
             withdraw: {
                 isOpen: false,
                 selected: [],
@@ -106,7 +110,6 @@ export default {
                 )),
                 toggle: (value)=> {
                     stock.withdraw.isOpen = value
-                    console.log(stock.withdraw.selected)
                 },
             },
             deposit: {
@@ -116,6 +119,7 @@ export default {
         });
 
         const loadItemStocks = async (id) => {
+            stock.isProcessing = true;
             const response = await ItemApi.retrieveItemStockSummary(id);
             if (response) {
                 stock.data.latestPrice = response.latest_price_per_quantity;
@@ -133,6 +137,7 @@ export default {
                     name: (response.alternate_uom)? response.alternate_uom.name: null,
                     plural: (response.alternate_uom)? response.alternate_uom.plural_name : null};
             }
+            stock.isProcessing = false;
         }
         onBeforeMount(()=> {
             loadItemStocks(props.itemId);

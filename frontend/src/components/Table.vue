@@ -1,5 +1,13 @@
 <template>
-    <div class="my-4 rounded-md overflow-hidden">
+    <div class="my-4 rounded-md overflow-hidden relative">
+        <div v-if="$props.loader"
+            class="absolute w-full h-full flex justify-center bg-white bg-opacity-30">
+            <div class="self-center">
+                <span class="material-icons animate-spin text-secondary-light">
+                    autorenew
+                </span>
+            </div>
+        </div>
         <table class="table-auto w-full">
             <thead class="hidden lg:table-header-group">
                 <tr class="flex flex-wrap lg:table-row row bg-primary-light bg-opacity-50">
@@ -15,10 +23,6 @@
                     </Cell>
                 </Row>
                 <slot v-if="$slots.default()[0].children.length > 0"/>
-                <Row v-else-if="$props.rows == null">
-                    <Cell :colspan="columnCount">
-                    </Cell>
-                </Row>
             </tbody>
         </table>
         {{$props.rows}}
@@ -39,7 +43,8 @@ export default {
             type: Array,
             required: true
         },
-        rows: Array
+        rows: Array,
+        loader: Boolean
     },
     setup(props) {
         const columnCount = computed(()=> (props.headers? props.headers.length: 0));

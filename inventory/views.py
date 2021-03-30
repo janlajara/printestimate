@@ -1,6 +1,7 @@
 from inventory.models import Item, Stock, StockRequest, \
     StockRequestGroup, BaseStockUnit, AlternateStockUnit
 from inventory.properties.models import ItemProperties
+from inventory.exceptions import InsufficientStock
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -127,6 +128,8 @@ class ItemWithdrawStocksViewSet(viewsets.ViewSet):
                         stock_requests.append(stock_request)
                     except Stock.DoesNotExist:
                         pass
+                    except InsufficientStock:
+                        pass
             
             if len(stock_requests) > 0:
                 stock_request_group = StockRequestGroup.objects.create(reason=reason)
@@ -134,6 +137,7 @@ class ItemWithdrawStocksViewSet(viewsets.ViewSet):
                 serialized_request = serializers.StockRequestGroupSerializer(stock_request_group)
                 return Response(serialized_request.data) 
             else:
-                return Response({"data": "no available stocks"})
+                return Response({"detail": "no available stocks to withdraw"},
+                    status=status.HTTP_409_CONFLICT)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)   

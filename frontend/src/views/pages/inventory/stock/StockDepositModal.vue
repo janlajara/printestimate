@@ -3,44 +3,43 @@
         @toggle="(value)=> $emit('toggle', value)"
         :buttons="[{color: 'primary', icon:'download', text:'Deposit',
                     action:()=>stock.deposit(), disabled: stock.isProcessing},]">
-        <Section class="grid md:grid-cols-4 md:gap-4">
-            <InputSelect name="Deposit By" required
-                @input="(value)=>stock.data.depositBy = value"
-                :options="Object.entries($props.data.units)
-                    .filter( entry => entry[1] != null)
-                    .map((entry)=>({
-                        value: entry[1].value, label: entry[1].name,
-                        isSelected: entry[1].value == stock.data.depositBy
-                    }))"/>
-            <InputText type="text" name="Brand Name" class="md:col-span-2"
-                @input="(value)=>stock.data.brandName = value"
-                :value="stock.data.brandName"/>
-            <InputCheckbox label="Unbounded stock" v-if="!stock.uom.isAlt"
-                @input="(value)=> stock.data.unbounded = value"
-                :value="stock.data.unbounded"/>
+        <Section heading="Details" class="grid md:grid-cols-4 md:gap-4">
+            <div class="md:col-span-3 md:grid md:grid-cols-3 md:gap-4">
+                <InputSelect name="Deposit By" required
+                    @input="(value)=>stock.data.depositBy = value"
+                    :options="Object.entries($props.data.units)
+                        .filter( entry => entry[1] != null)
+                        .map((entry)=>({
+                            value: entry[1].value, label: entry[1].name,
+                            isSelected: entry[1].value == stock.data.depositBy
+                        }))"/>
+                <InputText type="text" name="Brand Name" class="md:col-span-2"
+                    @input="(value)=>stock.data.brandName = value"
+                    :value="stock.data.brandName"/>
+                <InputText
+                    type="number" required
+                    :name="(stock.uom.isAlt)?
+                        `${stock.uom.base.plural} per ${stock.uom.alternate.name}`:
+                        `${stock.uom.base.name} Quantity`" 
+                    @input="(value)=>stock.data.baseQuantity = value"
+                    :value="stock.data.baseQuantity"/> 
+                <InputText v-if="stock.uom.isAlt"
+                    type="number" required 
+                    :name="`${stock.uom.alternate.name} Quantity`" 
+                    @input="(value)=>stock.data.alternateQuantity = value"
+                    :value="stock.data.alternateQuantity"/> 
+                <InputText type="decimal" required
+                        :prefix="currency.symbol"
+                        :name="`Price per ${stock.uom.target.name}`" 
+                        @input="(value)=>stock.data.price = value"
+                        :value="stock.data.price"/>
+                <InputCheckbox label="Unbounded stock" v-if="!stock.uom.isAlt"
+                    @input="(value)=> stock.data.unbounded = value"
+                    :value="stock.data.unbounded"/>
+            </div>
         </Section>
-        <Section class="grid md:grid-cols-4 md:gap-4">
-            <InputText
-                type="number" required
-                :name="(stock.uom.isAlt)?
-                    `${stock.uom.base.plural} per ${stock.uom.alternate.name}`:
-                    `${stock.uom.base.name} Quantity`" 
-                @input="(value)=>stock.data.baseQuantity = value"
-                :value="stock.data.baseQuantity"/> 
-            <InputText v-if="stock.uom.isAlt"
-                type="number" required 
-                :name="`${stock.uom.alternate.name} Quantity`" 
-                @input="(value)=>stock.data.alternateQuantity = value"
-                :value="stock.data.alternateQuantity"/> 
-            <InputText type="decimal" required
-                    :prefix="currency.symbol"
-                    :name="`Price per ${stock.uom.target.name}`" 
-                    @input="(value)=>stock.data.price = value"
-                    :value="stock.data.price"/>
-        </Section>
-        <div class="grid md:grid-cols-4 md:gap-4">
-            <dt class="text-lg mb-1 font-semibold">Summary</dt>
-            <dd class="md:col-span-3 text-sm">
+        <Section heading="Summary" class="grid md:grid-cols-4 md:gap-4">
+            <dd class="md:mt-2 md:col-span-3 text-sm">
                 <p class="my-2">
                     Note : This creates <span class="font-bold">{{stock.data.depositCount}} Stock 
                     {{stock.data.depositCount == 1 ? 'record' : 'records'}}</span>.</p>
@@ -65,7 +64,7 @@
                         {{` (${stock.data.baseFormatted} / ${stock.data.priceFormatted})`}}</span>
                 </p>
             </dd>
-        </div>
+        </Section>
     </Modal>
 </template>
 

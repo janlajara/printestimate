@@ -85,7 +85,17 @@ class ItemStockListViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.StockSerializer
 
     def get_queryset(self):
-        return Stock.objects.filter(item=self.kwargs['pk'])
+        pk = self.kwargs.get('pk', None)
+        available_only = self.request.GET.get('available-only', False)
+        all = Stock.objects.all()
+
+        if pk is not None:
+            all = all.filter(item=pk).all()
+        if available_only and available_only.lower() == 'true':
+            filtered = [stock for stock in all if stock.available_quantity > 0]
+            return filtered
+        else:
+            return all
 
 
 class ItemDepositStockViewSet(viewsets.ViewSet):

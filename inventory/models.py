@@ -153,10 +153,13 @@ class Item(models.Model):
 
     @property
     def available_quantity(self):
-        total = 0
-        for stock in self.onhand_stocks:
-            total += stock.available_quantity
-        return total
+        stock_ids = [stock.pk for stock in self.stocks.all()]
+        sr_aggregate = StockRequest.objects.aggregate(
+            requested_stocks=Sum('stock_unit__quantity',
+                filter=Q(stock_id__in=stock_ids, 
+                        status__in=[StockRequest.NEW, StockRequest.APPROVED])))
+        requested = sr_aggregate.get('requested_stocks') or 0
+        return self.onhand_quantity - requested
 
     @property
     def available_quantity_formatted(self):
@@ -167,10 +170,18 @@ class Item(models.Model):
 
     @property
     def onhand_quantity(self):
-        total = 0
-        for stock in self.onhand_stocks:
-            total += stock.onhand_quantity
-        return total
+        stock_ids = [stock.pk for stock in self.stocks.all()]
+        sm_aggregate = StockMovement.objects.aggregate(
+            added_stocks=Sum('stock_unit__quantity', 
+                filter=Q(stock_id__in=stock_ids, 
+                        action__in=[StockMovement.DEPOSIT, StockMovement.RETURN])),
+            removed_stocks=Sum('stock_unit__quantity', 
+                filter=Q(stock_id__in=stock_ids,
+                        action__in=[StockMovement.WITHDRAW, StockMovement.EXPIRED]))
+        )
+        removed = sm_aggregate.get('removed_stocks') or 0
+        added = sm_aggregate.get('added_stocks') or 0
+        return added - removed
 
     @property
     def onhand_quantity_formatted(self):
@@ -283,32 +294,24 @@ class Stock(models.Model):
 
     @property
     def available_quantity(self):
-        def __get_sum(query_set):
-            aggregate = query_set.aggregate(sum_stock=Sum('stock_unit__quantity'))
-            aggr_sum = aggregate['sum_stock'] if aggregate['sum_stock'] is not None else 0
-            return aggr_sum
-
-        new_requests = StockRequest.objects.filter(stock=self, 
-            status__in=[StockRequest.NEW, StockRequest.APPROVED])
-        requested = __get_sum(new_requests)
+        aggregate = StockRequest.objects.aggregate(
+            requested_quantity=Sum('stock_unit__quantity',
+                filter=Q(stock=self, status__in=[StockRequest.NEW, StockRequest.APPROVED])))
+        requested = aggregate.get('requested_quantity', 0) or 0
+        print(requested)
         return self.onhand_quantity - requested
 
     @property
     def onhand_quantity(self):
-        def __get_sum(query_set):
-            aggregate = query_set.aggregate(sum_stock=Sum('stock_unit__quantity'))
-            aggr_sum = aggregate['sum_stock'] if aggregate['sum_stock'] is not None else 0
-            return aggr_sum
+        aggregate = StockMovement.objects.aggregate(
+            added_stocks=Sum('stock_unit__quantity', 
+                filter=Q(stock=self, action__in=[StockMovement.DEPOSIT, StockMovement.RETURN])),
+            removed_stocks=Sum('stock_unit__quantity', 
+                filter=Q(stock=self, action__in=[StockMovement.WITHDRAW, StockMovement.EXPIRED])))
 
-        added_stocks = StockMovement.objects.filter(Q(stock=self) &
-                                                    (Q(action=StockMovement.DEPOSIT) |
-                                                     Q(action=StockMovement.RETURN)))
-        removed_stocks = StockMovement.objects.filter(Q(stock=self) &
-                                                      (Q(action=StockMovement.WITHDRAW) |
-                                                       Q(action=StockMovement.EXPIRED)))
+        added = aggregate.get('added_stocks', 0) or 0 
+        removed = aggregate.get('removed_stocks', 0) or 0 
 
-        added = __get_sum(added_stocks)
-        removed = __get_sum(removed_stocks)
         return added - removed
 
     def deposit(self, quantity):

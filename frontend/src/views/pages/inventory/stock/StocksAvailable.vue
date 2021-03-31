@@ -19,14 +19,14 @@
                 color="secondary" :disabled="!onhand.withdraw.hasSelected || onhand.isProcessing"
                 :action="()=> onhand.withdraw.toggle(true)">Withdraw</Button>
             <div v-if="onhand.withdraw.hasSelected" class="text-sm my-auto">
-                Selected : <span class="font-bold">{{formatQuantity(onhand.withdraw.totalQuantity, 
-                    onhand.units.base.name, onhand.units.base.plural)}}</span>
+                Selected : <span class="font-bold">
+                    {{onhand.withdraw.totalQuantityFormatted}}</span>
             </div>
             <StockWithdrawModal :is-open="onhand.withdraw.isOpen"
                 :data="{
                     itemId: $props.data.itemId,
-                    unit: onhand.units.base,
-                    total: onhand.withdraw.totalQuantity,
+                    unit: onhand.units.base.name,
+                    total: onhand.withdraw.totalQuantityFormatted,
                     selected: onhand.withdraw.map}"
                 @toggle="onhand.withdraw.toggle"
                 :on-after-withdraw="()=>{
@@ -51,7 +51,7 @@
                     <span v-if="stock.availableQty">
                         {{stock.availableQty}} / 
                         {{stock.unbounded ? '∞' : stock.baseQty}} 
-                        {{stock.availableQty == 1 ? onhand.units.base.name : onhand.units.base.plural}}
+                        {{onhand.units.getUnit(stock.availableQty,  onhand.units.base)}}
                     </span>
                 </Cell>
                 <Cell label="Date Deposited">  
@@ -86,7 +86,7 @@ import Button from '@/components/Button.vue'
 import StockDepositModal from '@/views/pages/inventory/stock/StockDepositModal'
 import StockWithdrawModal from '@/views/pages/inventory/stock/StockWithdrawModal'
 
-import {reactive, watch, inject, computed, onBeforeMount} from 'vue';
+import {reactive, inject, computed, onBeforeMount} from 'vue';
 import {formatMoney, formatQuantity} from '@/utils/format.js';
 import {ItemApi} from '@/utils/apis.js';
 
@@ -105,8 +105,24 @@ export default {
         const currency = inject('currency');
         const onhand = reactive({
             units: {
-                base: {name: null, plural: null},
-                alternate: {name: null, plural: null}
+                base: computed(()=> {
+                    const firstStock = onhand.stocks[0]
+                    if (firstStock.id) return firstStock.baseUom
+                    return {name: null, plural: null}
+                }),
+                alternate: computed(()=> {
+                    const firstStock = onhand.stocks[0]
+                    if (firstStock.id) return firstStock.alternateUom
+                    return {name: null, plural: null}
+                }),
+                formatQuantity: (quantity, unit)=> {
+                    if (quantity != null)
+                        return formatQuantity(quantity, unit.abbrev, unit.plural_abbrev)
+                    else return ''
+                },
+                getUnit: (quantity, unit)=> {
+                    return quantity == 1 ? unit.abbrev : unit.plural_abbrev
+                }
             },
             isProcessing: false,
             withdraw: {
@@ -116,6 +132,10 @@ export default {
                 totalQuantity: computed(()=> (
                     onhand.withdraw.map.reduce((a, b)=> a + (b['quantity'] || 0), 0)
                 )),
+                totalQuantityFormatted: computed(()=> {
+                    const qty = onhand.withdraw.totalQuantity;
+                    return onhand.units.formatQuantity(qty, onhand.units.base)
+                }),
                 map: computed(()=> {
                     let map = [];
                     onhand.withdraw.selected.forEach( stockId => {
@@ -124,7 +144,9 @@ export default {
                             {id: stockId, 
                             brandName: stock.brandName,
                             price: stock.price,
-                            quantity: parseInt(stock.withdrawQty)})
+                            quantity: parseInt(stock.withdrawQty),
+                            quantityFormatted: 
+                                onhand.units.formatQuantity(stock.withdrawQty, onhand.units.base)})
                     })
                     return map;
                 }),
@@ -140,10 +162,6 @@ export default {
             stocksLimit: 5,
             stocksCount: 0,
         });
-        watch(()=> props.data.units, ()=> {
-            if (props.data.units.base) onhand.units.base = props.data.units.base
-            if (props.data.units.alternate) onhand.units.alternate = props.data.units.alternate
-        })
         onBeforeMount(()=> {
             loadItemStockList(props.data.itemId, onhand.stocksLimit, 0);
             onhand.withdraw.selected = [];
@@ -161,7 +179,11 @@ export default {
                         id: stock.id, brandName: stock.brand_name,
                         price: stock.price, pricePerQty: stock.price_per_quantity,
                         unbounded: stock.unbounded, baseQty: stock.base_quantity,
-                        onhandQty: stock.onhand_quantity, availableQty: stock.available_quantity,
+                        baseUom: stock.base_uom, alternateUom: stock.alternate_uom,
+                        onhandQty: stock.onhand_quantity, 
+                        onhandQtyFormatted: stock.onhand_quantity_formatted,
+                        availableQty: stock.available_quantity,
+                        availableQtyFormatted: stock.available_quantity_formatted,
                         createdAt: stock.created_at,
                         withdrawQty: stock.available_quantity
                     }));

@@ -19,9 +19,21 @@ import Row from '@/components/Row.vue'
 import Cell from '@/components/Cell.vue'
 import TablePaginator from '@/components/TablePaginator.vue'
 
+import {reactive} from 'vue'
+
 export default {
     components: {
         Section, Table, Row, Cell, TablePaginator
+    },
+    props: {
+        data: Object
+    },
+    setup() {
+        const requests = reactive({
+        })
+        return {
+            requests
+        }
     }
 }
 </script>

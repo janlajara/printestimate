@@ -30,7 +30,7 @@ class BaseStockUnitViewSet(viewsets.ModelViewSet):
         elif self.action in ['retrieve']:
             return serializers.BaseStockUnitRetrieveSerializer
         else:
-            return serializers.BaseStockUnitSerializer
+            return serializers.BaseStockUnitRetrieveSerializer
 
 
 class AlternateStockUnitViewSet(viewsets.ModelViewSet):
@@ -42,7 +42,7 @@ class AlternateStockUnitViewSet(viewsets.ModelViewSet):
         elif self.action in ['retrieve']:
             return serializers.AlternateStockUnitRetrieveSerializer
         else:
-            return serializers.AlternateStockUnitSerializer
+            return serializers.BaseStockUnitRetrieveSerializer
 
 
 class ItemPropertiesViewSet(viewsets.ModelViewSet):
@@ -82,7 +82,7 @@ class ItemStockRetrieveViewSet(viewsets.ModelViewSet):
 
 
 class ItemStockListViewSet(viewsets.ModelViewSet):
-    serializer_class = serializers.StockSerializer
+    serializer_class = serializers.StockReadOnlySerializer
 
     def get_queryset(self):
         pk = self.kwargs.get('pk', None)

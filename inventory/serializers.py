@@ -18,7 +18,21 @@ class AlternateStockUnitOptionSerializer(serializers.ModelSerializer):
 
 
 class BaseStockUnitSerializer(serializers.ModelSerializer):
-    alternate_stock_units = AlternateStockUnitOptionSerializer(many=True)
+    class Meta:
+        model = BaseStockUnit
+        fields = ['id', 'name', 'abbrev', 'is_editable', 'plural_name', 
+            'plural_abbrev']
+
+
+class AlternateStockUnitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlternateStockUnit
+        fields = ['id', 'name', 'abbrev', 'is_editable', 'plural_name', 
+            'plural_abbrev']
+
+
+class BaseStockUnitRetrieveSerializer(BaseStockUnitSerializer):
+    alternate_stock_units = AlternateStockUnitSerializer(many=True)
 
     class Meta:
         model = BaseStockUnit
@@ -26,21 +40,13 @@ class BaseStockUnitSerializer(serializers.ModelSerializer):
             'plural_abbrev', 'alternate_stock_units']
 
 
-class AlternateStockUnitSerializer(serializers.ModelSerializer):
-    base_stock_units = BaseStockUnitOptionSerializer(many=True)
+class AlternateStockUnitRetrieveSerializer(AlternateStockUnitSerializer):
+    base_stock_units = BaseStockUnitSerializer(many=True)
 
     class Meta:
         model = AlternateStockUnit
         fields = ['id', 'name', 'abbrev', 'is_editable', 'plural_name', 
             'plural_abbrev', 'base_stock_units']
-
-
-class BaseStockUnitRetrieveSerializer(BaseStockUnitSerializer):
-    alternate_stock_units = AlternateStockUnitSerializer(many=True)
-
-
-class AlternateStockUnitRetrieveSerializer(AlternateStockUnitSerializer):
-    base_stock_units = BaseStockUnitSerializer(many=True)
 
 
 class BaseStockUnitCreateUpdateSerializer(serializers.ModelSerializer):
@@ -169,14 +175,34 @@ class ItemPropertiesPolymorphicSerializer(PolymorphicSerializer):
 
 class StockSerializer(serializers.ModelSerializer):
     price = MoneyField(max_digits=14, decimal_places=2, read_only=False, default_currency='PHP')
+
+    class Meta:
+        model = Stock
+        fields = ['id', 'brand_name', 'price', 'unbounded', 'base_quantity']
+
+
+class StockReadOnlySerializer(StockSerializer):
+    price = MoneyField(max_digits=14, decimal_places=2, default_currency='PHP')
     price_per_quantity = MoneyField(max_digits=14, decimal_places=2, read_only=True, default_currency='PHP')
     created_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    base_uom = serializers.SerializerMethodField()
+    alternate_uom = serializers.SerializerMethodField()
 
     class Meta:
         model = Stock
         fields = ['id', 'brand_name', 'price', 'price_per_quantity', 
-                    'unbounded', 'base_quantity', 'onhand_quantity',
-                    'available_quantity', 'created_at']
+                    'unbounded', 'base_uom', 'alternate_uom', 'base_quantity',
+                    'onhand_quantity', 'onhand_quantity_formatted',
+                    'available_quantity', 'available_quantity_formatted',
+                    'created_at']
+    
+    def get_base_uom(self, obj):
+        serialized = BaseStockUnitSerializer(obj.item.base_uom)
+        return serialized.data
+
+    def get_alternate_uom(self, obj):
+        serialized = AlternateStockUnitSerializer(obj.item.alternate_uom)
+        return serialized.data
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -257,7 +283,7 @@ class StockUnitSerializer(serializers.ModelSerializer):
 
 
 class StockRequestSerializer(serializers.ModelSerializer):
-    stock = StockSerializer(read_only=True)
+    stock = StockReadOnlySerializer(read_only=True)
     stock_unit = StockUnitSerializer(read_only=True)
 
     class Meta:

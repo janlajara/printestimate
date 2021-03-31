@@ -12,18 +12,16 @@
             <dd class="text-sm md:col-span-3 md:mt-3">
                 <p class="text-sm">Would you like to withdraw
                     <span class="font-bold">
-                        {{formatQuantity($props.data.total,
-                            $props.data.unit.name, $props.data.unit.plural)}}
+                        {{$props.data.total}}
                     </span>?
                 </p>
                 <Table :headers="['Brand Name', 
-                    `Price / ${$props.data.unit.name}`, 'Withdraw Qty']">
+                    `Price / ${$props.data.unit}`, 'Withdraw Qty']">
                     <Row v-for="(s, key) in $props.data.selected" :key="key">
                         <Cell label="Brand Name">{{s.brandName}}</Cell>
                         <Cell label="Price">{{formatCurrency(s.price)}}</Cell>
                         <Cell label="Withdraw Qty">
-                            {{formatQuantity(s.quantity, 
-                                $props.data.unit.name, $props.data.unit.plural)}}
+                            {{s.quantityFormatted}}
                         </Cell>
                     </Row>
                 </Table>
@@ -41,7 +39,7 @@ import Cell from '@/components/Cell.vue'
 import InputText from '@/components/InputText.vue';
 
 import {inject, reactive, watch} from 'vue';
-import {formatMoney, formatQuantity} from '@/utils/format.js';
+import {formatMoney} from '@/utils/format.js';
 import {ItemApi} from '@/utils/apis.js';
 
 export default {
@@ -90,7 +88,7 @@ export default {
         })
 
         return {
-            formatCurrency, formatQuantity, 
+            formatCurrency, 
             stock
         }
     }

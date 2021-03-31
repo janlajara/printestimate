@@ -164,9 +164,10 @@ class Item(models.Model):
     @property
     def available_quantity_formatted(self):
         unit = self.base_uom.plural_abbrev
-        if self.available_quantity == 1:
+        qty = self.available_quantity
+        if qty == 1:
             unit = self.base_uom.abbrev
-        return '%s %s' % (f'{self.available_quantity:,}', unit)
+        return '%s %s' % (f'{qty:,}', unit)
 
     @property
     def onhand_quantity(self):
@@ -186,9 +187,10 @@ class Item(models.Model):
     @property
     def onhand_quantity_formatted(self):
         unit = self.base_uom.plural_abbrev
-        if self.onhand_quantity == 1:
+        qty = self.onhand_quantity
+        if qty == 1:
             unit = self.base_uom.abbrev
-        return '%s %s' % (f'{self.onhand_quantity:,}', unit)
+        return '%s %s' % (f'{qty:,}', unit)
 
     @property
     def onhand_stocks(self):
@@ -301,6 +303,14 @@ class Stock(models.Model):
         return self.onhand_quantity - requested
 
     @property
+    def available_quantity_formatted(self):
+        unit = self.item.base_uom.plural_abbrev
+        qty = self.available_quantity
+        if qty == 1:
+            unit = self.item.base_uom.abbrev
+        return '%s %s' % (f'{qty:,}', unit)
+
+    @property
     def onhand_quantity(self):
         aggregate = StockMovement.objects.aggregate(
             added_stocks=Sum('stock_unit__quantity', 
@@ -312,6 +322,14 @@ class Stock(models.Model):
         removed = aggregate.get('removed_stocks', 0) or 0 
 
         return added - removed
+
+    @property
+    def onhand_quantity_formatted(self):
+        unit = self.item.base_uom.plural_abbrev
+        qty = self.onhand_quantity
+        if qty == 1:
+            unit = self.item.base_uom.abbrev
+        return '%s %s' % (f'{qty:,}', unit)
 
     def deposit(self, quantity):
         if self.unbounded or (quantity + self.onhand_quantity <= self.base_quantity):

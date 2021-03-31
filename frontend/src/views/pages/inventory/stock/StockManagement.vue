@@ -14,11 +14,7 @@
             <Tab title="Available">
                 <StocksAvailable
                     @reload="()=> loadItemStockSummary($props.itemId)"
-                    :data="{
-                        itemId: $props.itemId,
-                        units: {
-                            base: stock.data.baseUom,
-                            alternate: stock.data.altUom}}"/>
+                    :data="{itemId: $props.itemId}"/>
             </Tab>
             <Tab title="Requests">
                 <StockRequests/>
@@ -71,8 +67,6 @@ export default {
                 availableQtyFormatted: null,
                 onhandQty: null,
                 onhandQtyFormatted: null,
-                baseUom: null,
-                altUom: null,
                 onhandStocks: []
             },
             isProcessing: false
@@ -88,14 +82,6 @@ export default {
                 stock.data.availableQtyFormatted = response.available_quantity_formatted;
                 stock.data.onhandQty = response.onhand_quantity;
                 stock.data.onhandQtyFormatted = response.onhand_quantity_formatted;
-                stock.data.baseUom = {
-                    value: response.base_uom.id,
-                    name: response.base_uom.name,
-                    plural: response.base_uom.plural_name};
-                stock.data.altUom = {
-                    value: (response.alternate_uom)? response.alternate_uom.id: null,
-                    name: (response.alternate_uom)? response.alternate_uom.name: null,
-                    plural: (response.alternate_uom)? response.alternate_uom.plural_name : null};
             }
             stock.isProcessing = false;
         }

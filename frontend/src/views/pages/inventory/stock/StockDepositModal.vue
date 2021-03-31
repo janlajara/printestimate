@@ -10,8 +10,8 @@
                     :options="Object.entries($props.data.units)
                         .filter( entry => entry[1] != null)
                         .map((entry)=>({
-                            value: entry[1].value, label: entry[1].name,
-                            isSelected: entry[1].value == stock.data.depositBy
+                            value: entry[1].id, label: entry[1].name,
+                            isSelected: entry[1].id == stock.data.depositBy
                         }))"/>
                 <InputText type="text" name="Brand Name" class="md:col-span-2"
                     @input="(value)=>stock.data.brandName = value"
@@ -19,7 +19,7 @@
                 <InputText
                     type="number" required
                     :name="(stock.uom.isAlt)?
-                        `${stock.uom.base.plural} per ${stock.uom.alternate.name}`:
+                        `${stock.uom.base.plural_name} per ${stock.uom.alternate.name}`:
                         `${stock.uom.base.name} Quantity`" 
                     @input="(value)=>stock.data.baseQuantity = value"
                     :value="stock.data.baseQuantity"/> 
@@ -99,8 +99,8 @@ export default {
         const currency = inject('currency')
         const stock = reactive({
             uom: {
-                base: {name: '', plural: ''},
-                alternate: {name: '', plural: ''},
+                base: {id: null, name: '', plural_name: ''},
+                alternate: {id: null, name: '', plural_name: ''},
                 target: computed(()=> {
                     let unit = stock.uom.base;
                     if (stock.uom.isAlt) 
@@ -108,8 +108,8 @@ export default {
                     return unit;
                 }),
                 isAlt: computed(()=> (
-                    stock.uom.alternate && stock.uom.alternate.value != null ?
-                        stock.uom.alternate.value == stock.data.depositBy :
+                    stock.uom.alternate && stock.uom.alternate.id != null ?
+                        stock.uom.alternate.id == stock.data.depositBy :
                         false
                 )),
             },
@@ -127,14 +127,14 @@ export default {
                     const qty = (stock.data.baseQuantity)?
                         stock.data.baseQuantity : 0;
                     const baseUnit = stock.uom.base; 
-                    return formatQuantity(qty, baseUnit.name, baseUnit.plural)
+                    return formatQuantity(qty, baseUnit.abbrev, baseUnit.plural_abbrev)
                 }),
                 alternateQuantity: 1,
                 alternateFormatted: computed(()=> {
                     const qty = (stock.data.alternateQuantity)?
                         stock.data.alternateQuantity : 0;
                     const altUnit = stock.uom.alternate;
-                    return formatQuantity(qty, altUnit.name, altUnit.plural)
+                    return formatQuantity(qty, altUnit.abbrev, altUnit.plural_abbrev)
                 }),
                 totalQuantity: computed(()=> {
                     let total = stock.data.baseQuantity ? 
@@ -148,7 +148,7 @@ export default {
                 }),
                 totalQuantityFormatted: computed(()=> {
                     const baseUnit = stock.uom.base; 
-                    return formatQuantity(stock.data.totalQuantity, baseUnit.name, baseUnit.plural)
+                    return formatQuantity(stock.data.totalQuantity, baseUnit.abbrev, baseUnit.plural_abbrev)
                 }),
                 totalPrice: computed(()=> {
                     const baseQty = stock.data.baseQuantity ? stock.data.baseQuantity : 0;

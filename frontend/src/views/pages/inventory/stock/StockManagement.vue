@@ -12,39 +12,10 @@
         </DescriptionList>
         <Tabs>
             <Tab title="Available">
-                <div class="flex">
-                    <Button icon="download" color="tertiary" 
-                        class="mr-4" :disabled="stock.withdraw.hasWithdraw || stock.isProcessing"
-                        :action="()=> stock.deposit.toggle(true)">Deposit</Button>
-                    <StockDepositModal :is-open="stock.deposit.isOpen"
-                        :data="{
-                            itemId: $props.itemId,
-                            units: {
-                                base: stock.data.baseUom,
-                                alternate: stock.data.altUom}}"
-                        @toggle="stock.deposit.toggle"
-                        :on-after-deposit="()=>loadItemStockSummary($props.itemId)"/>
-                    <Button icon="upload" class="mr-4" 
-                        color="secondary" :disabled="!stock.withdraw.hasWithdraw || stock.isProcessing"
-                        :action="()=> stock.withdraw.toggle(true)">Withdraw</Button>
-                    <div v-if="stock.withdraw.hasWithdraw" class="text-sm my-auto">
-                        Selected : <span class="font-bold">{{formatQuantity(stock.withdraw.totalQuantity, 
-                            stock.data.baseUom.name, stock.data.baseUom.plural)}}</span>
-                    </div>
-                    <StockWithdrawModal :is-open="stock.withdraw.isOpen"
-                        :data="{
-                            itemId: $props.itemId,
-                            unit: stock.data.baseUom,
-                            total: stock.withdraw.totalQuantity,
-                            selected: stock.withdraw.selected}"
-                        @toggle="stock.withdraw.toggle"
-                        :on-after-withdraw="()=>loadItemStockSummary($props.itemId)"/>
-                </div>
                 <StocksAvailable
-                    @withdraw="(selected) => stock.withdraw.selected = selected"
+                    @reload="()=> loadItemStockSummary($props.itemId)"
                     :data="{
                         itemId: $props.itemId,
-                        availableQty: stock.data.availableQty,
                         units: {
                             base: stock.data.baseUom,
                             alternate: stock.data.altUom}}"/>
@@ -62,22 +33,19 @@
 import Section from '@/components/Section.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
-import Button from '@/components/Button.vue';
 import Tabs from '@/components/Tabs.vue';
 import Tab from '@/components/Tab.vue';
-import StockDepositModal from '@/views/pages/inventory/stock/StockDepositModal.vue';
-import StockWithdrawModal from '@/views/pages/inventory/stock/StockWithdrawModal.vue';
 import StocksAvailable from '@/views/pages/inventory/stock/StocksAvailable.vue';
 import StockRequests from '@/views/pages/inventory/stock/StockRequests.vue';
 
 import {reactive, computed, inject, onBeforeMount} from 'vue';
 import {ItemApi} from '@/utils/apis.js';
-import {formatMoney, formatQuantity} from '@/utils/format.js';
+import {formatMoney} from '@/utils/format.js';
 
 export default {
     components: {
-        Section, DescriptionList, DescriptionItem, Tabs, Tab, Button,
-        StockDepositModal, StockWithdrawModal, StocksAvailable, StockRequests
+        Section, DescriptionList, DescriptionItem, Tabs, Tab,
+        StocksAvailable, StockRequests
     },
     props: {
         itemId: {
@@ -107,22 +75,7 @@ export default {
                 altUom: null,
                 onhandStocks: []
             },
-            isProcessing: false,
-            withdraw: {
-                isOpen: false,
-                selected: [],
-                hasWithdraw: computed(()=> stock.withdraw.selected.length > 0),
-                totalQuantity: computed(()=> (
-                    stock.withdraw.selected.reduce((a, b)=> a + (b['quantity'] || 0), 0)
-                )),
-                toggle: (value)=> {
-                    stock.withdraw.isOpen = value
-                },
-            },
-            deposit: {
-                isOpen: false,
-                toggle: (value)=> stock.deposit.isOpen = value,
-            }
+            isProcessing: false
         });
 
         const loadItemStockSummary = async (id) => {
@@ -151,7 +104,7 @@ export default {
         })
 
         return {
-            stock, loadItemStockSummary, formatQuantity
+            stock, loadItemStockSummary
         }
     }
 }

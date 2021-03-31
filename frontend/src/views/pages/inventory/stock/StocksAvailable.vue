@@ -1,5 +1,40 @@
 <template>
     <Section>
+        <div class="flex">
+            <Button icon="download" color="tertiary" 
+                class="mr-4" :disabled="onhand.withdraw.hasSelected || onhand.isProcessing"
+                :action="()=> onhand.deposit.toggle(true)">Deposit</Button>
+            <StockDepositModal :is-open="onhand.deposit.isOpen"
+                :data="{
+                    itemId: $props.data.itemId,
+                    units: {
+                        base: onhand.units.base,
+                        alternate: onhand.units.alternate}}"
+                @toggle="onhand.deposit.toggle"
+                :on-after-deposit="()=>{
+                    loadItemStockList($props.data.itemId, onhand.stocksLimit, 0);
+                    $emit('reload');
+            }"/>
+            <Button icon="upload" class="mr-4" 
+                color="secondary" :disabled="!onhand.withdraw.hasSelected || onhand.isProcessing"
+                :action="()=> onhand.withdraw.toggle(true)">Withdraw</Button>
+            <div v-if="onhand.withdraw.hasSelected" class="text-sm my-auto">
+                Selected : <span class="font-bold">{{formatQuantity(onhand.withdraw.totalQuantity, 
+                    onhand.units.base.name, onhand.units.base.plural)}}</span>
+            </div>
+            <StockWithdrawModal :is-open="onhand.withdraw.isOpen"
+                :data="{
+                    itemId: $props.data.itemId,
+                    unit: onhand.units.base,
+                    total: onhand.withdraw.totalQuantity,
+                    selected: onhand.withdraw.map}"
+                @toggle="onhand.withdraw.toggle"
+                :on-after-withdraw="()=>{
+                    loadItemStockList($props.data.itemId, onhand.stocksLimit, 0);
+                    $emit('reload');
+                    onhand.withdraw.selected = [];
+            }"/>
+        </div>
         <Table :loader="onhand.isProcessing"
             :headers="['Brand Name', 
                 `Price / ${onhand.units.base.name}`, 
@@ -24,8 +59,8 @@
                 </Cell>
                 <Cell label="Withdraw Qty">
                     <input type="checkbox" class="input-checkbox" 
-                        :value="stock.id" v-model="onhand.withdraw"/> 
-                    <input v-if="onhand.withdraw.includes(stock.id)"
+                        :value="stock.id" v-model="onhand.withdraw.selected"/> 
+                    <input v-if="onhand.withdraw.selected.includes(stock.id)"
                         :value="stock.withdrawQty"
                         @input="(event)=> inputWithdraw(event, stock)"
                         type="text" class="text-xs rounded p-1 ml-4 w-14 border-tertiary" 
@@ -47,14 +82,17 @@ import Table from '@/components/Table.vue'
 import Row from '@/components/Row.vue'
 import Cell from '@/components/Cell.vue'
 import TablePaginator from '@/components/TablePaginator.vue'
+import Button from '@/components/Button.vue'
+import StockDepositModal from '@/views/pages/inventory/stock/StockDepositModal'
+import StockWithdrawModal from '@/views/pages/inventory/stock/StockWithdrawModal'
 
-import {reactive, watch, inject, computed} from 'vue';
-import {formatMoney} from '@/utils/format.js';
+import {reactive, watch, inject, computed, onBeforeMount} from 'vue';
+import {formatMoney, formatQuantity} from '@/utils/format.js';
 import {ItemApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Section, Table, Row, Cell, TablePaginator
+        Section, Table, Row, Cell, TablePaginator, Button, StockDepositModal, StockWithdrawModal
     },
     props: {
         data: {
@@ -62,8 +100,8 @@ export default {
             required: true
         }
     },
-    emits: ['withdraw'],
-    setup(props, {emit}) {
+    emits: ['reload'],
+    setup(props) {
         const currency = inject('currency');
         const onhand = reactive({
             units: {
@@ -71,19 +109,33 @@ export default {
                 alternate: {name: null, plural: null}
             },
             isProcessing: false,
-            withdraw: [],
-            withdrawMap: computed(()=> {
-                let withdrawMap = [];
-                onhand.withdraw.forEach( stockId => {
-                    const stock = onhand.stocks.find(stock => stockId == stock.id)
-                    if (stock) withdrawMap.push(
-                        {id: stockId, 
-                         brandName: stock.brandName,
-                         price: stock.price,
-                         quantity: parseInt(stock.withdrawQty)})
-                })
-                return withdrawMap;
-            }),
+            withdraw: {
+                isOpen: false,
+                selected: [],
+                hasSelected: computed(()=> onhand.withdraw.selected.length > 0),
+                totalQuantity: computed(()=> (
+                    onhand.withdraw.map.reduce((a, b)=> a + (b['quantity'] || 0), 0)
+                )),
+                map: computed(()=> {
+                    let map = [];
+                    onhand.withdraw.selected.forEach( stockId => {
+                        const stock = onhand.stocks.find(stock => stockId == stock.id)
+                        if (stock) map.push(
+                            {id: stockId, 
+                            brandName: stock.brandName,
+                            price: stock.price,
+                            quantity: parseInt(stock.withdrawQty)})
+                    })
+                    return map;
+                }),
+                toggle: (value)=> {
+                    onhand.withdraw.isOpen = value
+                }
+            },
+            deposit: {
+                isOpen: false,
+                toggle: (value)=> onhand.deposit.isOpen = value,
+            },
             stocks: [{}],
             stocksLimit: 5,
             stocksCount: 0,
@@ -92,14 +144,9 @@ export default {
             if (props.data.units.base) onhand.units.base = props.data.units.base
             if (props.data.units.alternate) onhand.units.alternate = props.data.units.alternate
         })
-        watch(()=> props.data.availableQty, ()=> {
-            if (props.data.availableQty) 
-                loadItemStockList(props.data.itemId, onhand.stocksLimit, 0);
-            onhand.withdraw = [];
-            emit('withdraw', [])
-        })
-        watch(()=> onhand.withdrawMap, ()=> {
-            emit('withdraw', Array.from(onhand.withdrawMap))
+        onBeforeMount(()=> {
+            loadItemStockList(props.data.itemId, onhand.stocksLimit, 0);
+            onhand.withdraw.selected = [];
         })
 
         const loadItemStockList = async (id, limit, offset) => {
@@ -123,7 +170,7 @@ export default {
         }
 
         return {
-            onhand, loadItemStockList, formatMoney, currency, 
+            onhand, loadItemStockList, formatMoney, formatQuantity, currency, 
             inputWithdraw: (event, stock)=> {
                 const value = event.target.value
                 const replaced = value != null ?  

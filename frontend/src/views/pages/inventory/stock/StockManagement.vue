@@ -17,7 +17,8 @@
                     :data="{itemId: $props.itemId}"/>
             </Tab>
             <Tab title="Requests">
-                <StockRequests/>
+                <StockRequests
+                    :data="{itemId: $props.itemId}"/>
             </Tab>
             <Tab title="Incoming"></Tab>
             <Tab title="History"></Tab>

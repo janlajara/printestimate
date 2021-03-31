@@ -191,7 +191,8 @@ class StockReadOnlySerializer(StockSerializer):
     class Meta:
         model = Stock
         fields = ['id', 'brand_name', 'price', 'price_per_quantity', 
-                    'unbounded', 'base_uom', 'alternate_uom', 'base_quantity',
+                    'unbounded', 'base_uom', 'alternate_uom', 
+                    'base_quantity', 'base_quantity_formatted',
                     'onhand_quantity', 'onhand_quantity_formatted',
                     'available_quantity', 'available_quantity_formatted',
                     'created_at']

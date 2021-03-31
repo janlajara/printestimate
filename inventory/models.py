@@ -295,6 +295,14 @@ class Stock(models.Model):
             return self.price / self.base_quantity
 
     @property
+    def base_quantity_formatted(self):
+        unit = self.item.base_uom.plural_abbrev
+        qty = self.base_quantity
+        if qty == 1:
+            unit = self.item.base_uom.abbrev
+        return '%s %s' % (f'{qty:,}', unit)
+
+    @property
     def available_quantity(self):
         aggregate = StockRequest.objects.aggregate(
             requested_quantity=Sum('stock_unit__quantity',

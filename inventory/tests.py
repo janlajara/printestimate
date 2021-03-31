@@ -1,6 +1,7 @@
 import pytest
 from measurement.measures import Distance, Volume
-from .models import BaseStockUnit, AlternateStockUnit, Item, Stock, StockRequest, StockMovement
+from .models import BaseStockUnit, AlternateStockUnit, Item, \
+    Stock, StockRequest, StockRequestGroup, StockMovement
 from .properties.models import ItemProperties, Paper
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity, \
     IllegalUnboundedDeposit, IllegalWithdrawal
@@ -192,11 +193,13 @@ def test_item__request_stock_lesser_quantity(db, item: Item):
 
 def test_item__request_and_withdraw(db, item: Item):
     stock = item.deposit_stock('Generic', 500, 1000)[0]
-    stock_request = item.request_stock(250).stock_requests.first()
+    stock_request_group = item.request_stock(250)
+    stock_request = stock_request_group.stock_requests.first()
     stock_request.approve()
 
     item.withdraw_stock(stock_request.id)
     stock_request.refresh_from_db()
+    assert stock_request_group.status == StockRequestGroup.FINISHED
     assert stock_request.status == StockRequest.FULFILLED
     assert item.onhand_quantity == 250
     assert item.available_quantity == 250
@@ -307,6 +310,7 @@ def test_item_stock__illegal_withdraw(db, item: Item):
     with pytest.raises(IllegalWithdrawal):
         item.deposit_stock('Generic', 500, 1, 1, True)
         stock_request = item.request_stock(10).stock_requests.first()
+        stock_request.cancel()
         item.withdraw_stock(stock_request.id)
 
 

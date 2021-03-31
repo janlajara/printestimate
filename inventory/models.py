@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Q, Sum, Avg
+from django.db.models import Q, Sum, Avg, Count
 from djmoney.models.fields import MoneyField
 from .exceptions import DepositTooBig, InsufficientStock, \
     InvalidExpireQuantity, IllegalUnboundedDeposit, IllegalWithdrawal
@@ -367,7 +367,29 @@ class StockLog(models.Model):
 
 
 class StockRequestGroup(models.Model):
+    PENDING = 'Pending'
+    FINISHED = 'Finished'
+
     reason = models.CharField(max_length=100, null=True, blank=True)
+
+    @property
+    def status(self):
+        status = StockRequestGroup.PENDING
+
+        aggregate = StockRequest.objects.aggregate(
+            pending=Count('status', 
+                filter=Q(status__in=[StockRequest.NEW, StockRequest.APPROVED], 
+                    stock_request_group=self)),
+            finished=Count('status', 
+                filter=Q(status__in=[StockRequest.FULFILLED, StockRequest.CANCELLED], 
+                    stock_request_group=self))
+        )
+        pending = aggregate.get('pending') or 0
+        finished = aggregate.get('finished') or 0
+        if finished > 0 and pending == 0:
+            status = StockRequestGroup.FINISHED
+
+        return status
 
 
 class StockRequest(StockLog):

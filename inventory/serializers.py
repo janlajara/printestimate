@@ -270,4 +270,4 @@ class StockRequestGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StockRequestGroup
-        fields = ['reason', 'stock_requests']
+        fields = ['status', 'reason', 'stock_requests']

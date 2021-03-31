@@ -151,3 +151,17 @@ class ItemWithdrawStocksViewSet(viewsets.ViewSet):
                     status=status.HTTP_409_CONFLICT)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)   
+
+
+class ItemStockRequestListViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.StockRequestGroupSerializer
+
+    def get_queryset(self):
+        pk = self.kwargs.get('pk', None)
+        available_only = self.request.GET.get('available-only', False)
+        all = StockRequestGroup.objects.all()
+
+        if pk is not None:
+            all = all.filter(stock_requests__stock__item__pk=pk).all()
+
+        return all

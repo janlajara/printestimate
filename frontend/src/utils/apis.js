@@ -99,7 +99,7 @@ export class ItemApi {
         return response.data
     }
 
-    static async getItemStockList(id, limit, offset, availableOnly=false) {
+    static async listItemStocks(id, limit, offset, availableOnly=false) {
         const params = offset != null && limit != null? 
             {limit, offset, "available-only": availableOnly} : null;
         const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}/stocks/list`,
@@ -116,6 +116,14 @@ export class ItemApi {
     static async withdrawStocks(id, requests) {
         const response = await AXIOS.execute(AXIOS.POST, ItemApi.uri + `/${id}/stocks/withdraw`,
             'Stock requested successfully.', 'Stock request failed. Please try again.', requests);
+        return response.data
+    }
+
+    static async listItemStockRequests(id, limit, offset) {
+        const params = offset != null && limit != null? 
+            {limit, offset} : null;
+        const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}/stockrequests/list`,
+            null, null, null, params)
         return response.data
     }
 }

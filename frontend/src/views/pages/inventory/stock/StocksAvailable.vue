@@ -1,46 +1,44 @@
 <template>
-    <div>
-        <Section>
-            <Table :loader="onhand.isProcessing"
-                :headers="['Brand Name', 
-                    `Price / ${onhand.units.base.name}`, 
-                    'Available', 'Date Deposited', 'Withdraw Qty']"> 
-                <Row v-for="(stock, key) in onhand.stocks" :key="key">
-                    <Cell label="Brand Name">  
-                        {{stock.brandName}}
-                    </Cell>
-                    <Cell :label="`Price / ${onhand.units.base.name}`">  
-                        {{stock.pricePerQty ? 
-                            formatMoney(stock.pricePerQty, currency.abbreviation) : ''}}
-                    </Cell>
-                    <Cell label="Available">  
-                        <span v-if="stock.availableQty">
-                            {{stock.availableQty}} / 
-                            {{stock.unbounded ? '∞' : stock.baseQty}} 
-                            {{stock.availableQty == 1 ? onhand.units.base.name : onhand.units.base.plural}}
-                        </span>
-                    </Cell>
-                    <Cell label="Date Deposited">  
-                        {{stock.createdAt}}
-                    </Cell>
-                    <Cell label="Withdraw Qty">
-                        <input type="checkbox" class="input-checkbox" 
-                            :value="stock.id" v-model="onhand.withdraw"/> 
-                        <input v-if="onhand.withdraw.includes(stock.id)"
-                            :value="stock.withdrawQty"
-                            @input="(event)=> inputWithdraw(event, stock)"
-                            type="text" class="text-xs rounded p-1 ml-4 w-14 border-tertiary" 
-                            style="-moz-appearance:textfield;"/>
-                    </Cell>
-                </Row>
-            </Table>
-            <TablePaginator class="w-full justify-end"
-                :limit="onhand.stocksLimit" :count="onhand.stocksCount"
-                @change-limit="(limit)=> onhand.stocksLimit = limit"
-                @change-page="({limit, offset})=> 
-                    loadItemStockList($props.data.itemId, limit, offset)" />
-        </Section>
-    </div>
+    <Section>
+        <Table :loader="onhand.isProcessing"
+            :headers="['Brand Name', 
+                `Price / ${onhand.units.base.name}`, 
+                'Available', 'Date Deposited', 'Withdraw Qty']"> 
+            <Row v-for="(stock, key) in onhand.stocks" :key="key">
+                <Cell label="Brand Name">  
+                    {{stock.brandName}}
+                </Cell>
+                <Cell :label="`Price / ${onhand.units.base.name}`">  
+                    {{stock.pricePerQty ? 
+                        formatMoney(stock.pricePerQty, currency.abbreviation) : ''}}
+                </Cell>
+                <Cell label="Available">  
+                    <span v-if="stock.availableQty">
+                        {{stock.availableQty}} / 
+                        {{stock.unbounded ? '∞' : stock.baseQty}} 
+                        {{stock.availableQty == 1 ? onhand.units.base.name : onhand.units.base.plural}}
+                    </span>
+                </Cell>
+                <Cell label="Date Deposited">  
+                    {{stock.createdAt}}
+                </Cell>
+                <Cell label="Withdraw Qty">
+                    <input type="checkbox" class="input-checkbox" 
+                        :value="stock.id" v-model="onhand.withdraw"/> 
+                    <input v-if="onhand.withdraw.includes(stock.id)"
+                        :value="stock.withdrawQty"
+                        @input="(event)=> inputWithdraw(event, stock)"
+                        type="text" class="text-xs rounded p-1 ml-4 w-14 border-tertiary" 
+                        style="-moz-appearance:textfield;"/>
+                </Cell>
+            </Row>
+        </Table>
+        <TablePaginator class="w-full justify-end"
+            :limit="onhand.stocksLimit" :count="onhand.stocksCount"
+            @change-limit="(limit)=> onhand.stocksLimit = limit"
+            @change-page="({limit, offset})=> 
+                loadItemStockList($props.data.itemId, limit, offset)" />
+    </Section>
 </template>
 
 <script>
@@ -108,7 +106,7 @@ export default {
             if (id == null) return;
 
             onhand.isProcessing = true;
-            const response = await ItemApi.getItemStockList(id, limit, offset, true);
+            const response = await ItemApi.listItemStocks(id, limit, offset, true);
             if (response && response.results) {
                 onhand.stocksCount = response.count;
                 onhand.stocks = response.results

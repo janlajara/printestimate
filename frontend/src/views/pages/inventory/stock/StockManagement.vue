@@ -49,7 +49,9 @@
                             base: stock.data.baseUom,
                             alternate: stock.data.altUom}}"/>
             </Tab>
-            <Tab title="Requests"></Tab>
+            <Tab title="Requests">
+                <StockRequests/>
+            </Tab>
             <Tab title="Incoming"></Tab>
             <Tab title="History"></Tab>
         </Tabs>
@@ -66,6 +68,7 @@ import Tab from '@/components/Tab.vue';
 import StockDepositModal from '@/views/pages/inventory/stock/StockDepositModal.vue';
 import StockWithdrawModal from '@/views/pages/inventory/stock/StockWithdrawModal.vue';
 import StocksAvailable from '@/views/pages/inventory/stock/StocksAvailable.vue';
+import StockRequests from '@/views/pages/inventory/stock/StockRequests.vue';
 
 import {reactive, computed, inject, onBeforeMount} from 'vue';
 import {ItemApi} from '@/utils/apis.js';
@@ -74,7 +77,7 @@ import {formatMoney, formatQuantity} from '@/utils/format.js';
 export default {
     components: {
         Section, DescriptionList, DescriptionItem, Tabs, Tab, Button,
-        StockDepositModal, StockWithdrawModal, StocksAvailable
+        StockDepositModal, StockWithdrawModal, StocksAvailable, StockRequests
     },
     props: {
         itemId: {

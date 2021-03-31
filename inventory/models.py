@@ -298,7 +298,6 @@ class Stock(models.Model):
             requested_quantity=Sum('stock_unit__quantity',
                 filter=Q(stock=self, status__in=[StockRequest.NEW, StockRequest.APPROVED])))
         requested = aggregate.get('requested_quantity', 0) or 0
-        print(requested)
         return self.onhand_quantity - requested
 
     @property

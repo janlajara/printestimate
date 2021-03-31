@@ -1,10 +1,14 @@
 <template>
     <Section heading="Stock Management" class="mt-12">
         <DescriptionList class="grid-cols-2 md:grid-cols-4">
-            <DescriptionItem name="Available" :value="stock.data.availableQtyFormatted"/>
-            <DescriptionItem name="On-hand" :value="stock.data.onhandQtyFormatted"/>
-            <DescriptionItem name="Average Price" :value="stock.data.averagePriceFormatted"/>
-            <DescriptionItem name="Latest Price" :value="stock.data.latestPriceFormatted"/>
+            <DescriptionItem :loader="stock.isProcessing"
+                name="Available" :value="stock.data.availableQtyFormatted"/>
+            <DescriptionItem :loader="stock.isProcessing"
+                name="On-hand" :value="stock.data.onhandQtyFormatted"/>
+            <DescriptionItem :loader="stock.isProcessing"
+                name="Average Price" :value="stock.data.averagePriceFormatted"/>
+            <DescriptionItem :loader="stock.isProcessing"
+                name="Latest Price" :value="stock.data.latestPriceFormatted"/>
         </DescriptionList>
         <Tabs>
             <Tab title="Available">
@@ -19,7 +23,7 @@
                                 base: stock.data.baseUom,
                                 alternate: stock.data.altUom}}"
                         @toggle="stock.deposit.toggle"
-                        :on-after-deposit="()=>loadItemStocks($props.itemId)"/>
+                        :on-after-deposit="()=>loadItemStockSummary($props.itemId)"/>
                     <Button icon="upload" class="mr-4" 
                         color="secondary" :disabled="!stock.withdraw.hasWithdraw || stock.isProcessing"
                         :action="()=> stock.withdraw.toggle(true)">Withdraw</Button>
@@ -34,7 +38,7 @@
                             total: stock.withdraw.totalQuantity,
                             selected: stock.withdraw.selected}"
                         @toggle="stock.withdraw.toggle"
-                        :on-after-withdraw="()=>loadItemStocks($props.itemId)"/>
+                        :on-after-withdraw="()=>loadItemStockSummary($props.itemId)"/>
                 </div>
                 <StocksAvailable
                     @withdraw="(selected) => stock.withdraw.selected = selected"
@@ -118,7 +122,7 @@ export default {
             }
         });
 
-        const loadItemStocks = async (id) => {
+        const loadItemStockSummary = async (id) => {
             stock.isProcessing = true;
             const response = await ItemApi.retrieveItemStockSummary(id);
             if (response) {
@@ -140,11 +144,11 @@ export default {
             stock.isProcessing = false;
         }
         onBeforeMount(()=> {
-            loadItemStocks(props.itemId);
+            loadItemStockSummary(props.itemId);
         })
 
         return {
-            stock, loadItemStocks, formatQuantity
+            stock, loadItemStockSummary, formatQuantity
         }
     }
 }

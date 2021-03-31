@@ -11,11 +11,15 @@
         </div> 
         <Section>
             <DescriptionList class="grid-cols-2 md:grid-cols-4">
-                <DescriptionItem name="Item" :value="detail.data.name"/>
-                <DescriptionItem name="Type" :value="detail.data.type" class="capitalize"/>
-                <DescriptionItem name="Base Stock Unit" :value="detail.data.baseUom.name"/>
-                <DescriptionItem name="Alternate Stock Unit" :value="detail.data.altUom.name"/>
-                <DescriptionItem 
+                <DescriptionItem :loader="detail.isProcessing"
+                    name="Item" :value="detail.data.name"/>
+                <DescriptionItem :loader="detail.isProcessing"
+                    name="Type" :value="detail.data.type" class="capitalize"/>
+                <DescriptionItem :loader="detail.isProcessing" 
+                    name="Base Stock Unit" :value="detail.data.baseUom.name"/>
+                <DescriptionItem :loader="detail.isProcessing"
+                    name="Alternate Stock Unit" :value="detail.data.altUom.name"/>
+                <DescriptionItem :loader="detail.isProcessing"
                     v-for="(entry, key) in Object.entries(detail.data.properties)
                         .filter(entry => entry[0] != 'resourcetype')" 
                     :key="key" :name="detail.propertyLabels[entry[0]]" :value="entry[1]"/>
@@ -62,6 +66,7 @@ export default {
                 altUom: {}, properties: {}
             },
             propertyLabels: {},
+            isProcessing: false,
             edit: ()=> {   
                 detail.modal.isOpen = true;
             }, 
@@ -74,6 +79,7 @@ export default {
             }
         });
         const loadItem = async (id) => { 
+            detail.isProcessing = true;
             const response = await ItemApi.retrieveItem(id); 
             if (response) { 
                 const data = {
@@ -103,6 +109,7 @@ export default {
                 }
                 detail.data = data; 
             }
+            detail.isProcessing = false;
         };
         const loadPropLabels = async (resourcetype) => {
             if (resourcetype) {

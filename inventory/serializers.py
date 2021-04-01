@@ -294,7 +294,8 @@ class StockRequestSerializer(serializers.ModelSerializer):
 
 class StockRequestGroupSerializer(serializers.ModelSerializer):
     stock_requests = StockRequestSerializer(many=True, read_only=True)
+    created_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
 
     class Meta:
         model = StockRequestGroup
-        fields = ['status', 'reason', 'stock_requests']
+        fields = ['id', 'status', 'reason', 'stock_requests', 'created_at']

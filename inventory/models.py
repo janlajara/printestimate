@@ -397,6 +397,7 @@ class StockRequestGroup(models.Model):
     FINISHED = 'Finished'
 
     reason = models.CharField(max_length=100, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     @property
     def status(self):

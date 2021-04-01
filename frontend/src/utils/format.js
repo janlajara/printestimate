@@ -25,3 +25,18 @@ export const defaultIfNull = (object, defaultValue, property=null) => {
     else
         return object ? object : defaultValue;
 }
+
+export const reference = {
+    stockRequest: 'MRS',
+    formatId: (id, code)=> {
+        if (id != null && code != null) {
+            const padded = Number(id).toString().padStart(5, '0');
+            return code + padded
+        } else {
+            return ''
+        }
+    },
+    getId: (formattedId)=> {
+        return formattedId.replace(/[^\d]/g, "");
+    }
+}

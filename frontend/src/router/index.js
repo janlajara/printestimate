@@ -21,14 +21,14 @@ const routes = [
       {
         path: 'inventory/stocks',
         name: 'inventory-stocks',
-        component: ()=>import('../views/pages/inventory/stock/Item.vue'),
+        component: ()=>import('../views/pages/inventory/stock/ItemList.vue'),
         meta: {label: 'Stocks', group: 'Inventory'}
       },
       {
         path: 'inventory/stockrequests',
         name: 'inventory-stockrequests',
-        component: ()=>import('../views/pages/inventory/stock/Item.vue'),
-        meta: {label: 'Stocks Requests', group: 'Inventory'}
+        component: ()=>import('../views/pages/inventory/stockrequest/StockRequestList.vue'),
+        meta: {label: 'Stock Requests', group: 'Inventory'}
       },
       {
         path: 'admin/inventory',

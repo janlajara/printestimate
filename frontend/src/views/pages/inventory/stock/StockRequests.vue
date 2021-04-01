@@ -1,8 +1,10 @@
 <template>
     <Section>
         <Table :loader="requests.isProcessing"
-            :headers="['Total Quantity', 'Status', 'Reason', 'Date Created']">
+            :headers="['Request #', 'Total Quantity', 'Status', 'Reason', 'Date Created']">
             <Row v-for="(request, key) in requests.list" :key="key">
+                <Cell label="Request #">{{
+                    reference.formatId(request.id, reference.stockRequest)}}</Cell>
                 <Cell label="Total Quantity">{{
                     formatQuantity(request.totalQuantity, 
                         request.stockRequests[0].baseUom)}}</Cell>
@@ -28,7 +30,7 @@ import TablePaginator from '@/components/TablePaginator.vue'
 
 import {reactive, onBeforeMount} from 'vue'
 import {ItemApi} from '@/utils/apis.js'
-import {formatQuantity} from '@/utils/format.js'
+import {formatQuantity, reference} from '@/utils/format.js'
 
 export default {
     components: {
@@ -52,6 +54,7 @@ export default {
                 if (response && response.results) {
                     requests.count = response.count;
                     requests.list = response.results.map( requestGroup => ({
+                        id: requestGroup.id,
                         totalQuantity: requestGroup.stock_requests
                             .reduce((a, b)=> a + (b['stock_unit']['quantity'] || 0), 0),
                         reason: requestGroup.reason,
@@ -74,7 +77,6 @@ export default {
                         })),
                         dateCreated: requestGroup.created_at 
                     }));
-
                     console.log(requests.list)
                 }
             }
@@ -86,6 +88,7 @@ export default {
 
         return {
             requests, listStockRequests,
+            reference,
             formatQuantity: (quantity, unit)=> {
                 if (quantity != null && unit != null)
                     return formatQuantity(quantity, unit.abbrev, unit.plural_abbrev)

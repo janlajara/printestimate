@@ -14,8 +14,16 @@
                     }"/>
             </div>
             <div v-else>
-                <Button color="secondary" :action="()=>item.create.isOpen = true">
-                    Create Item</Button>
+                <div class="space-y-4 md:space-y-0 md:flex md:justify-between">
+                    <div class="my-auto">
+                        <Button color="secondary" :action="()=>item.create.isOpen = true">
+                        Create Item</Button>
+                    </div>
+                    <SearchField placeholder="Search" :disabled="item.isProcessing"
+                        @search="(search)=> {
+                            populateItemList(item.listLimit, 0, search);
+                        }"/>
+                </div>
                 <Table :headers="['Item', 'Type', 'Available Qty', 
                         'On-hand Qty', 'Price per Unit']"
                         :loader="item.isProcessing">
@@ -42,6 +50,7 @@
 import Page from '@/components/Page.vue';
 import Section from '@/components/Section.vue';
 import Button from '@/components/Button.vue' ;
+import SearchField from '@/components/SearchField.vue';
 import Table from '@/components/Table.vue';
 import Row from '@/components/Row.vue';
 import Cell from '@/components/Cell.vue';
@@ -56,7 +65,7 @@ import {formatMoney} from '@/utils/format.js'
 export default {
     name: 'Stock',
     components: {
-        Page, Section, Button, Table, Row, Cell,
+        Page, Section, Button, SearchField, Table, Row, Cell,
         ItemInputModal, ItemDetail, TablePaginator
     },
     setup() {
@@ -87,9 +96,9 @@ export default {
             listCount: 0
         });
         
-        const populateItemList = async(limit, offset) => {
+        const populateItemList = async(limit, offset, search=null) => {
             item.isProcessing = true;
-            const response = await ItemApi.listItems(limit, offset);
+            const response = await ItemApi.listItems(limit, offset, search);
             if (response && response.results) {
                 item.listCount = response.count;
                 item.list = response.results.map(i=> ({

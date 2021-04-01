@@ -2,7 +2,7 @@ from inventory.models import Item, Stock, StockRequest, \
     StockRequestGroup, StockMovement, BaseStockUnit, AlternateStockUnit
 from inventory.properties.models import ItemProperties
 from inventory.exceptions import InsufficientStock
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from inventory import serializers
@@ -11,6 +11,8 @@ from inventory import serializers
 # Create your views here.
 class ItemViewSet(viewsets.ModelViewSet):
     queryset = Item.objects.all()
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'type', 'stocks__brand_name']
 
     def get_serializer_class(self):
         if self.action in ['create', 'update']:

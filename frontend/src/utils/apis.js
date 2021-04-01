@@ -77,8 +77,9 @@ export class ItemApi {
         return response;
     }
 
-    static async listItems(limit, offset) {
-        const params = offset != null && limit != null? {limit, offset} : null;
+    static async listItems(limit, offset, search) {
+        const params = offset != null && limit != null? 
+            {limit, offset, search} : {search};
         const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri,
             null, null, null, params);
         if (response) return response.data;

@@ -17,6 +17,8 @@ urlpatterns = [
           views.ItemDepositStockViewSet.as_view({'post': 'create'})),
      path('api/item/<int:pk>/stocks/withdraw',
           views.ItemWithdrawStocksViewSet.as_view({'post': 'create'})),
+     path('api/item/<int:pk>/stocks/history',
+          views.StockMovementSerializer.as_view({'get': 'list'})),
      path('api/item/<int:pk>/stockrequests/list',
           views.ItemStockRequestListViewSet.as_view({'get': 'list'})),
      path('api/item/properties',

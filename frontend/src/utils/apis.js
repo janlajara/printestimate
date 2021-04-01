@@ -119,9 +119,17 @@ export class ItemApi {
         return response.data
     }
 
-    static async listItemStockRequests(id, limit, offset) {
+    static async listItemStockHistory(id, limit, offset) {
         const params = offset != null && limit != null? 
-            {limit, offset} : null;
+            {limit, offset} : null; 
+        const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}/stocks/history`,
+            null, null, null, params)
+        return response.data
+    }
+
+    static async listItemStockRequests(id, limit, offset, status=null) {
+        const params = offset != null && limit != null? 
+            {limit, offset, status} : {status};
         const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}/stockrequests/list`,
             null, null, null, params)
         return response.data

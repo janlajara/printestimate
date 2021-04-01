@@ -1,5 +1,5 @@
 from inventory.models import Item, Stock, StockRequest, \
-    StockRequestGroup, BaseStockUnit, AlternateStockUnit
+    StockRequestGroup, StockMovement, BaseStockUnit, AlternateStockUnit
 from inventory.properties.models import ItemProperties
 from inventory.exceptions import InsufficientStock
 from rest_framework import viewsets, status
@@ -170,5 +170,18 @@ class ItemStockRequestListViewSet(viewsets.ModelViewSet):
                     stock_requests__status__in=status_map[status]).all()
             else:
                 all = all.filter(stock_requests__stock__item__pk=pk).all()
+
+        return all
+    
+
+class StockMovementSerializer(viewsets.ModelViewSet):
+    serializer_class = serializers.StockMovementSerializer
+
+    def get_queryset(self):
+        pk = self.kwargs.get('pk', None)
+        all = StockMovement.objects.all()
+
+        if pk is not None:
+            all = all.filter(stock__item__pk=pk).all()
 
         return all

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 from djmoney.contrib.django_rest_framework import MoneyField
 from .models import Item, Stock, StockRequest, StockRequestGroup, \
-    StockUnit, BaseStockUnit, AlternateStockUnit
+    StockUnit, BaseStockUnit, AlternateStockUnit, StockMovement
 from .properties.models import ItemProperties, Line, Tape, Paper, Panel, Liquid
 
 
@@ -299,3 +299,14 @@ class StockRequestGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = StockRequestGroup
         fields = ['id', 'status', 'reason', 'stock_requests', 'created_at']
+
+
+class StockMovementSerializer(serializers.ModelSerializer):
+    stock = StockReadOnlySerializer(read_only=True)
+    stock_unit = StockUnitSerializer(read_only=True)
+    action = serializers.CharField(source='get_action_display') 
+    created = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+
+    class Meta:
+        model = StockMovement
+        fields = ['id', 'stock', 'stock_unit', 'action', 'created']

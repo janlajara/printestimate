@@ -20,8 +20,13 @@
                 <StockRequests
                     :data="{itemId: $props.itemId}"/>
             </Tab>
-            <Tab title="Incoming"></Tab>
-            <Tab title="History"></Tab>
+            <Tab title="Incoming">
+                
+            </Tab>
+            <Tab title="History">
+                <StockHistory
+                    :data="{itemId: $props.itemId}"/>
+            </Tab>
         </Tabs>
     </Section>
 </template>
@@ -34,6 +39,7 @@ import Tabs from '@/components/Tabs.vue';
 import Tab from '@/components/Tab.vue';
 import StocksAvailable from '@/views/pages/inventory/stock/StocksAvailable.vue';
 import StockRequests from '@/views/pages/inventory/stock/StockRequests.vue';
+import StockHistory from '@/views/pages/inventory/stock/StockHistory.vue';
 
 import {reactive, computed, inject, onBeforeMount} from 'vue';
 import {ItemApi} from '@/utils/apis.js';
@@ -42,7 +48,7 @@ import {formatMoney} from '@/utils/format.js';
 export default {
     components: {
         Section, DescriptionList, DescriptionItem, Tabs, Tab,
-        StocksAvailable, StockRequests
+        StocksAvailable, StockRequests, StockHistory
     },
     props: {
         itemId: {

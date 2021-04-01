@@ -77,7 +77,6 @@ export default {
                         })),
                         dateCreated: requestGroup.created_at 
                     }));
-                    console.log(requests.list)
                 }
             }
             requests.isProcessing = false;

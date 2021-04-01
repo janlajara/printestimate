@@ -19,10 +19,16 @@ const routes = [
         meta: {label: 'Dashboard', group: 'Inventory'}
       },
       {
-        path: 'inventory/stock',
-        name: 'inventory-stock',
+        path: 'inventory/stocks',
+        name: 'inventory-stocks',
         component: ()=>import('../views/pages/inventory/stock/Item.vue'),
-        meta: {label: 'Stock', group: 'Inventory'}
+        meta: {label: 'Stocks', group: 'Inventory'}
+      },
+      {
+        path: 'inventory/stockrequests',
+        name: 'inventory-stockrequests',
+        component: ()=>import('../views/pages/inventory/stock/Item.vue'),
+        meta: {label: 'Stocks Requests', group: 'Inventory'}
       },
       {
         path: 'admin/inventory',

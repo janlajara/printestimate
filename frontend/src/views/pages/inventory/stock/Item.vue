@@ -1,5 +1,5 @@
 <template>
-    <Page :title="(item.detail.isOpen)? item.detail.selectedItem : 'Inventory : Stock'">
+    <Page :title="(item.detail.isOpen)? item.detail.selectedItem : 'Inventory : Stocks'">
         <hr class="my-4"/>
         <ItemInputModal :is-open="item.create.isOpen" :is-create="true" 
             :on-after-save="()=> populateItemList(item.listLimit, 0)"
@@ -63,7 +63,7 @@ import {ItemApi} from '@/utils/apis.js';
 import {formatMoney} from '@/utils/format.js'
 
 export default {
-    name: 'Stock',
+    name: 'Stocks',
     components: {
         Page, Section, Button, SearchField, Table, Row, Cell,
         ItemInputModal, ItemDetail, TablePaginator

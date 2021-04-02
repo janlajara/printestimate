@@ -106,13 +106,17 @@ export default {
         const onhand = reactive({
             units: {
                 base: computed(()=> {
-                    const firstStock = onhand.stocks[0]
-                    if (firstStock.id) return firstStock.baseUom
+                    if (onhand.stocks[0]) {
+                        const firstStock = onhand.stocks[0];
+                        return firstStock.baseUom
+                    }
                     return {name: null, plural: null}
                 }),
                 alternate: computed(()=> {
-                    const firstStock = onhand.stocks[0]
-                    if (firstStock.id) return firstStock.alternateUom
+                    if (onhand.stocks[0]) {
+                        const firstStock = onhand.stocks[0]
+                        return firstStock.alternateUom
+                    }
                     return {name: null, plural: null}
                 }),
                 formatQuantity: (quantity, unit)=> {
@@ -158,7 +162,7 @@ export default {
                 isOpen: false,
                 toggle: (value)=> onhand.deposit.isOpen = value,
             },
-            stocks: [{}],
+            stocks: [],
             stocksLimit: 5,
             stocksCount: 0,
         });

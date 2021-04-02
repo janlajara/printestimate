@@ -106,17 +106,13 @@ export default {
         const onhand = reactive({
             units: {
                 base: computed(()=> {
-                    if (onhand.stocks[0]) {
-                        const firstStock = onhand.stocks[0];
-                        return firstStock.baseUom
-                    }
+                    if (props.data.units.base) 
+                        return props.data.units.base
                     return {name: null, plural: null}
                 }),
                 alternate: computed(()=> {
-                    if (onhand.stocks[0]) {
-                        const firstStock = onhand.stocks[0]
-                        return firstStock.alternateUom
-                    }
+                    if (props.data.units.alternate) 
+                        return props.data.units.alternate
                     return {name: null, plural: null}
                 }),
                 formatQuantity: (quantity, unit)=> {

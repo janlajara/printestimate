@@ -14,7 +14,7 @@
             <Tab title="Available">
                 <StocksAvailable
                     @reload="()=> loadItemStockSummary($props.itemId)"
-                    :data="{itemId: $props.itemId}"/>
+                    :data="{itemId: $props.itemId, units: stock.units}"/>
             </Tab>
             <Tab title="Requests">
                 <StockRequests
@@ -59,6 +59,10 @@ export default {
     setup(props) { 
         const currency = inject('currency')
         const stock = reactive({
+            units: {
+                base: null,
+                alternate: null,
+            },
             data: {
                 latestPrice: null, 
                 latestPriceFormatted: computed(()=>(
@@ -83,6 +87,8 @@ export default {
             stock.isProcessing = true;
             const response = await ItemApi.retrieveItemStockSummary(id);
             if (response) {
+                stock.units.base = response.base_uom;
+                stock.units.alternate = response.alternate_uom;
                 stock.data.latestPrice = response.latest_price_per_quantity;
                 stock.data.averagePrice = response.average_price_per_quantity;
                 stock.data.availableQty = response.available_quantity;

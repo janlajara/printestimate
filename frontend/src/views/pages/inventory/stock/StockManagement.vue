@@ -11,21 +11,21 @@
                 name="Latest Price" :value="stock.data.latestPriceFormatted"/>
         </DescriptionList>
         <Tabs>
-            <Tab title="Available">
+            <Tab title="Available"> 
                 <StocksAvailable
-                    @reload="()=> loadItemStockSummary($props.itemId)"
-                    :data="{itemId: $props.itemId, units: stock.units}"/>
+                    @reload="()=> loadItemStockSummary(stock.data.id)"
+                    :data="{itemId: stock.data.id, units: $props.data.units}"/>
             </Tab>
             <Tab title="Requests">
                 <StockRequests
-                    :data="{itemId: $props.itemId}"/>
+                    :data="{itemId: stock.data.id}"/>
             </Tab>
             <Tab title="Incoming">
                 
             </Tab>
             <Tab title="History">
                 <StockHistory
-                    :data="{itemId: $props.itemId}"/>
+                    :data="{itemId: stock.data.id}"/>
             </Tab>
         </Tabs>
     </Section>
@@ -51,19 +51,13 @@ export default {
         StocksAvailable, StockRequests, StockHistory
     },
     props: {
-        itemId: {
-            type: Number,
-            required: true
-        }
+        data: Object
     },
     setup(props) { 
         const currency = inject('currency')
         const stock = reactive({
-            units: {
-                base: null,
-                alternate: null,
-            },
             data: {
+                id: props.data.itemId,
                 latestPrice: null, 
                 latestPriceFormatted: computed(()=>(
                     stock.data.latestPrice ? 
@@ -87,8 +81,6 @@ export default {
             stock.isProcessing = true;
             const response = await ItemApi.retrieveItemStockSummary(id);
             if (response) {
-                stock.units.base = response.base_uom;
-                stock.units.alternate = response.alternate_uom;
                 stock.data.latestPrice = response.latest_price_per_quantity;
                 stock.data.averagePrice = response.average_price_per_quantity;
                 stock.data.availableQty = response.available_quantity;
@@ -99,7 +91,7 @@ export default {
             stock.isProcessing = false;
         }
         onBeforeMount(()=> {
-            loadItemStockSummary(props.itemId);
+            loadItemStockSummary(stock.data.id);
         })
 
         return {

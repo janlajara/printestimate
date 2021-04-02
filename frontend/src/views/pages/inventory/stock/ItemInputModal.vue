@@ -140,8 +140,8 @@ export default {
             if (data != null && !props.isCreate){ 
                 modal.form = {
                     id: data.id, name: data.name,
-                    type: data.type, baseUnit: data.baseUom.value,
-                    altUnit: data.altUom.value, 
+                    type: data.type, baseUnit: data.baseUom.id,
+                    altUnit: data.altUom ? data.altUom.id : null, 
                     properties: Object.assign({},data.properties)
                 }; 
             } else {

@@ -16,16 +16,25 @@
                 <DescriptionItem :loader="detail.isProcessing"
                     name="Type" :value="detail.data.type" class="capitalize"/>
                 <DescriptionItem :loader="detail.isProcessing" 
-                    name="Base Stock Unit" :value="detail.data.baseUom.name"/>
+                    name="Base Stock Unit" 
+                    :value="detail.data.baseUom ? detail.data.baseUom.name : null"/>
                 <DescriptionItem :loader="detail.isProcessing"
-                    name="Alternate Stock Unit" :value="detail.data.altUom.name"/>
+                    name="Alternate Stock Unit" 
+                    :value="detail.data.altUom ? detail.data.altUom.name : null"/>
                 <DescriptionItem :loader="detail.isProcessing"
                     v-for="(entry, key) in Object.entries(detail.data.properties)
                         .filter(entry => entry[0] != 'resourcetype')" 
                     :key="key" :name="detail.propertyLabels[entry[0]]" :value="entry[1]"/>
             </DescriptionList>
         </Section>
-        <StockManagement :item-id="$props.itemId"/>
+        <StockManagement
+            :data="{
+                itemId: $props.itemId,
+                units: {
+                    base: detail.data.baseUom,
+                    alternate: detail.data.altUom
+                }
+            }"/>
     </div>
 </template>
 
@@ -87,17 +96,8 @@ export default {
                     name: response.name,
                     fullname: response.full_name,
                     type: response.type,
-                    baseUom: {
-                        value: response.base_uom.id,
-                        name: response.base_uom.name,
-                        plural: response.base_uom.plural_name},
-                    altUom: {
-                        value: (response.alternate_uom)? 
-                            response.alternate_uom.id: null,
-                        name: (response.alternate_uom)? 
-                            response.alternate_uom.name: null,
-                        plural: (response.alternate_uom)? 
-                            response.alternate_uom.plural_name : null},
+                    baseUom: response.base_uom,
+                    altUom: response.alternate_uom,
                     properties: {},
                 };
                 if (response.properties) {

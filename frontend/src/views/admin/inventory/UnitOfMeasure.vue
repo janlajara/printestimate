@@ -5,9 +5,10 @@
             <Button color="secondary" :action="()=>bsu.toggle(true)">Create</Button>
             <Table :headers="['Unit name', 'Abbreviation', 'Plural', 
                 'Abbreviation (Pl.)', 'Parent Alternate Stock Units']">
-                <Row v-for="(unit, key) in bsu.units" :key="key"
+                <Row v-for="(unit, key) in bsu.units" :key="key" clickable
                     :class="unit.isEditable? []: 'row-disabled'"
-                    :select="unit.isEditable? ()=>{bsu.toggle(true, unit.id)} : null">
+                    @click="()=>{
+                        if (unit.isEditable) bsu.toggle(true, unit.id)}">
                     <Cell label="Name">{{unit.name}}</Cell>
                     <Cell label="Abbrev.">{{unit.abbrev}}</Cell>
                     <Cell label="Plural Name">{{unit.pluralName}}</Cell>
@@ -55,9 +56,10 @@
             <Button color="secondary" :action="()=>asu.toggle(true)">Create</Button>
             <Table :headers="['Unit name', 'Abbreviation', 'Plural', 
                 'Abbreviation (Pl.)', 'Child Base Stock Units']">
-                <Row v-for="(unit, key) in asu.units" :key="key"
+                <Row v-for="(unit, key) in asu.units" :key="key" clickable
                     :class="unit.isEditable? []: 'row-disabled'"
-                    :select="unit.isEditable? ()=>{asu.toggle(true, unit.id)}: null">
+                    @click="()=>{
+                        if (unit.isEditable) asu.toggle(true, unit.id)}">
                     <Cell label="Name">{{unit.name}}</Cell>
                     <Cell label="Abbrev.">{{unit.abbrev}}</Cell>
                     <Cell label="Plural Name">{{unit.pluralName}}</Cell>

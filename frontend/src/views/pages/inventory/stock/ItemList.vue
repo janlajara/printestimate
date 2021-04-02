@@ -28,8 +28,8 @@
                 <Table :headers="['Item', 'Type', 'Available Qty', 
                         'On-hand Qty', 'Price per Unit']"
                         :loader="item.isProcessing">
-                    <Row v-for="(i, key) in item.list" :key="key"
-                        :select="()=>item.detail.open(i.id, i.name)">
+                    <Row v-for="(i, key) in item.list" :key="key" clickable
+                        @click="()=>item.detail.open(i.id, i.name)">
                         <Cell label="Item">{{i.name}}</Cell>
                         <Cell label="Type" class="capitalize">{{i.type}}</Cell>
                         <Cell label="Available Qty">{{i.availableFormatted}}</Cell>

@@ -1,7 +1,6 @@
 <template>
     <tr class="flex flex-wrap lg:table-row row bg-tertiary-light bg-opacity-30"
-        :class="$props.select? 'hover:bg-secondary-light hover:bg-opacity-20 cursor-pointer': ''"
-        @click="executeSelect">
+        :class="$props.clickable? 'hover:bg-secondary-light hover:bg-opacity-20 cursor-pointer': ''">
         <slot/>
     </tr>
 </template>
@@ -9,16 +8,7 @@
 export default {
     name: 'Row',
     props: {
-        select: Function
-    },
-    setup(props){
-        const executeSelect = ()=> {
-            if (props.select)
-                props.select();
-        };
-        return {
-            executeSelect
-        }
+        clickable: Boolean
     }
 }
 </script>

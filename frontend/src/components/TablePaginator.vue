@@ -4,7 +4,7 @@
             <span class="text-xs mr-4">Rows per page:</span>
             <select @input="pagination.changeLimit"
                 :value="pagination.limit"
-                class="rounded-md shadow-sm border-none bg-tertiary-light 
+                class="rounded border-none bg-tertiary-light 
                     bg-opacity-50 text-xs">
                 <option>5</option>
                 <option>10</option>

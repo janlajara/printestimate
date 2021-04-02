@@ -2,14 +2,28 @@
     <Page title="Inventory : Stock Requests">
         <hr class="my-4"/>
         <Section>
-            <div class="space-y-4 md:space-y-0 md:flex md:justify-between">
-                <div class="my-auto">
-                    <Button color="secondary" icon="add"
-                        :action="()=>request.create.toggle(true)">
-                        Create Request</Button>
+            <div class="space-y-4 md:space-x-4 md:space-y-0 md:flex md:justify-between">
+                <div class="flex flex-grow">
+                    <div class="my-auto">
+                        <Button color="secondary" icon="add"
+                            :action="()=>request.create.toggle(true)">
+                            Create Request</Button>
+                    </div>
+                    <div class="grid flex-grow">
+                        <SearchFilter class="justify-self-end"
+                            label="Status Filter" 
+                            @filter="(value)=> {
+                                request.filter = value;
+                                populateRequestList(request.listLimit, 0);}"
+                            :options="[{label: 'All', value: ''}, 
+                                {label: 'Pending', value: 'pending'}, 
+                                {label: 'Finished', value: 'finished'}]"/>
+                    </div>
                 </div>
                 <SearchField placeholder="Search" :disabled="request.isProcessing"
-                    @search="(search)=> populateRequestList(request.listLimit, 0, search)"/>
+                    @search="(search)=> {
+                        request.search = search;
+                        populateRequestList(request.listLimit, 0);}"/>
             </div>
             <Table :headers="['Request Id', 'Status', 'Reason', 'Date Created']"
                 :loader="request.isProcessing">
@@ -37,6 +51,7 @@ import Row from '@/components/Row.vue';
 import Cell from '@/components/Cell.vue';
 import TablePaginator from '@/components/TablePaginator.vue';
 import SearchField from '@/components/SearchField.vue';
+import SearchFilter from '@/components/SearchFilter.vue';
 import Button from '@/components/Button.vue';
 
 import {reactive, onBeforeMount} from 'vue';
@@ -45,7 +60,8 @@ import {reference} from '@/utils/format.js';
 
 export default {
     components: {
-        Page, Section, Table, Row, Cell, TablePaginator, SearchField, Button
+        Page, Section, Table, Row, Cell, TablePaginator, 
+        SearchField, SearchFilter, Button
     },
     setup() {
         const request = reactive({
@@ -53,6 +69,8 @@ export default {
             list: [],
             listLimit: 5,
             listCount: 0,
+            search: null,
+            filter: null,
             create: {
                 isOpen: false,
                 toggle: (value)=> { 
@@ -60,9 +78,10 @@ export default {
                 }
             }
         })
-        const populateRequestList = async (limit, offset, search=null)=> {
+        const populateRequestList = async (limit, offset)=> {
             request.isProcessing = true;
-            const response = await StockRequestApi.listStockRequestGroups(limit, offset, search);
+            const response = await StockRequestApi.listStockRequestGroups(
+                limit, offset, request.search, request.filter);
             if (response && response.results) {
                 request.listCount = response.count;
                 request.list = response.results.map( r=> ({

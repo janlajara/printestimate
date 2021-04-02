@@ -140,9 +140,9 @@ export class ItemApi {
 export class StockRequestApi {
     static uri = '/inventory/api/stockrequests'
 
-    static async listStockRequestGroups(limit, offset, search=null) {
+    static async listStockRequestGroups(limit, offset, search=null, status=null) {
         const params = offset != null && limit != null? 
-            {limit, offset, search} : {search};
+            {limit, offset, search, status} : {search, status};
         const response = await AXIOS.execute(AXIOS.GET, StockRequestApi.uri + `/list`,
             null, null, null, params)
         return response.data

@@ -280,7 +280,7 @@ class ItemStockRetrieveSerializer(serializers.ModelSerializer):
 class StockUnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = StockUnit
-        fields = ['id', 'quantity']
+        fields = ['id', 'quantity', 'quantity_formatted']
 
 
 class StockRequestSerializer(serializers.ModelSerializer):

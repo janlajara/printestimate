@@ -385,10 +385,19 @@ class Stock(models.Model):
 class StockUnit(models.Model):
     quantity = models.IntegerField(null=False, blank=False)
 
+    @property
+    def quantity_formatted(self):
+        base_uom = self.stock_log.stock.item.base_uom
+        unit = base_uom.plural_abbrev
+        qty = self.quantity
+        if qty == 1:
+            unit = base_uom.abbrev
+        return '%s %s' % (f'{qty:,}', unit)
+
 
 class StockLog(models.Model):
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name="stock_log")
-    stock_unit = models.OneToOneField(StockUnit, on_delete=models.CASCADE)
+    stock_unit = models.OneToOneField(StockUnit, on_delete=models.CASCADE, related_name='stock_log')
     created = models.DateTimeField(auto_now_add=True)
 
 

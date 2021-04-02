@@ -160,18 +160,18 @@ class ItemStockRequestGroupListViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         pk = self.kwargs.get('pk', None)
-        status = self.request.GET.get('status', 'Pending')
+        status = self.request.GET.get('status', 'Open')
         all = StockRequestGroup.objects.all()
         status_map = {
-            'pending': [StockRequest.NEW, StockRequest.APPROVED],
-            'finished': [StockRequest.FULFILLED, StockRequest.CANCELLED]
+            'open': [StockRequest.DRAFT, StockRequest.FOR_APPROVAL, StockRequest.APPROVED],
+            'closed': [StockRequest.FULFILLED, StockRequest.CANCELLED]
         }
         if pk is not None:
             if status is not None and status_map.get(status.lower()) is not None:
                 all = all.filter(stock_requests__stock__item__pk=pk,
-                    stock_requests__status__in=status_map[status.lower()]).all()
+                    stock_requests__status__in=status_map[status.lower()]).distinct()
             else:
-                all = all.filter(stock_requests__stock__item__pk=pk).all()
+                all = all.filter(stock_requests__stock__item__pk=pk).distinct()
 
         return all
 
@@ -182,11 +182,11 @@ class StockRequestGroupViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         pk = self.kwargs.get('pk', None)
-        status = self.request.GET.get('status', 'Pending')
+        status = self.request.GET.get('status', 'Open')
         all = StockRequestGroup.objects.all()
         status_map = {
-            'pending': [StockRequest.NEW, StockRequest.APPROVED],
-            'finished': [StockRequest.FULFILLED, StockRequest.CANCELLED]
+            'open': [StockRequest.DRAFT, StockRequest.FOR_APPROVAL, StockRequest.APPROVED],
+            'closed': [StockRequest.FULFILLED, StockRequest.CANCELLED]
         }
         if pk is not None:
             all = all.filter(pk=pk)

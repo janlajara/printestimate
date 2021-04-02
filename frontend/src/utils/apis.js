@@ -147,6 +147,11 @@ export class StockRequestApi {
             null, null, null, params)
         return response.data
     }
+
+    static async retrieveStockRequestGroup(id) {
+        const response = await AXIOS.execute(AXIOS.GET, StockRequestApi.uri + `/${id}/`)
+        return response.data
+    }
 }
 
 export class ItemPropertiesApi {

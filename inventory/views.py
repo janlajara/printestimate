@@ -160,38 +160,47 @@ class ItemStockRequestGroupListViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         pk = self.kwargs.get('pk', None)
-        status = self.request.GET.get('status', 'Pending').lower()
+        status = self.request.GET.get('status', 'Pending')
         all = StockRequestGroup.objects.all()
         status_map = {
             'pending': [StockRequest.NEW, StockRequest.APPROVED],
             'finished': [StockRequest.FULFILLED, StockRequest.CANCELLED]
         }
         if pk is not None:
-            if status is not None and status_map.get(status) is not None:
+            if status is not None and status_map.get(status.lower()) is not None:
                 all = all.filter(stock_requests__stock__item__pk=pk,
-                    stock_requests__status__in=status_map[status]).all()
+                    stock_requests__status__in=status_map[status.lower()]).all()
             else:
                 all = all.filter(stock_requests__stock__item__pk=pk).all()
 
         return all
 
 
-class StockRequestGroupListViewSet(viewsets.ModelViewSet):
-    serializer_class = serializers.StockRequestGroupListSerializer
+class StockRequestGroupViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
-    search_fields = ['=id', 'reason']
+    search_fields = ['=id', 'reason'] 
 
     def get_queryset(self):
-        status = self.request.GET.get('status', 'Pending').lower()
+        pk = self.kwargs.get('pk', None)
+        status = self.request.GET.get('status', 'Pending')
         all = StockRequestGroup.objects.all()
         status_map = {
             'pending': [StockRequest.NEW, StockRequest.APPROVED],
             'finished': [StockRequest.FULFILLED, StockRequest.CANCELLED]
         }
-        if status is not None and status_map.get(status) is not None:
-            all = all.filter(stock_requests__status__in=status_map[status]).distinct()
-
+        if pk is not None:
+            all = all.filter(pk=pk)
+        elif status is not None and status_map.get(status.lower()) is not None:
+            all = all.filter(stock_requests__status__in=status_map[status.lower()]).distinct()
         return all
+
+    def get_serializer_class(self):
+        if self.action in ['list']:
+            return serializers.StockRequestGroupListSerializer
+        elif self.action in ['retrieve']:
+            return serializers.StockRequestGroupSerializer
+        else:
+            return serializers.StockRequestGroupSerializer
     
 
 class StockMovementSerializer(viewsets.ModelViewSet):

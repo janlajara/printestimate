@@ -286,6 +286,8 @@ class StockUnitSerializer(serializers.ModelSerializer):
 class StockRequestSerializer(serializers.ModelSerializer):
     stock = StockReadOnlySerializer(read_only=True)
     stock_unit = StockUnitSerializer(read_only=True)
+    created = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    last_modified = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
 
     class Meta:
         model = StockRequest

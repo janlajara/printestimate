@@ -5,10 +5,13 @@ GETLIST_POSTCREATE = {'get': 'list', 'post': 'create'}
 GETRETRIEVE_PUTUPDATE_POSTDESTROY = {'get': 'retrieve', 'put': 'update', 'delete': 'destroy'}
 
 urlpatterns = [
+     # ITEM
      path('api/items',
           views.ItemViewSet.as_view(GETLIST_POSTCREATE)),
      path('api/items/<int:pk>/',
           views.ItemViewSet.as_view(GETRETRIEVE_PUTUPDATE_POSTDESTROY)),
+     
+     # ITEM STOCKS
      path('api/items/<int:pk>/stocks',
           views.ItemStockRetrieveViewSet.as_view({'get': 'retrieve'})),
      path('api/items/<int:pk>/stocks/list',
@@ -21,12 +24,20 @@ urlpatterns = [
           views.StockMovementSerializer.as_view({'get': 'list'})),
      path('api/items/<int:pk>/stockrequests/list',
           views.ItemStockRequestGroupListViewSet.as_view({'get': 'list'})),
+
+     # ITEM PROPERTIES
      path('api/items/properties',
           views.ItemPropertiesListCreateViewSet.as_view(GETLIST_POSTCREATE)), 
      path('api/items/properties/<int:pk>/',
           views.ItemPropertiesViewSet.as_view(GETRETRIEVE_PUTUPDATE_POSTDESTROY)),
+
+     # STOCKS REQUESTS
      path('api/stockrequests/list',
-          views.StockRequestGroupListViewSet.as_view({'get': 'list'})),
+          views.StockRequestGroupViewSet.as_view({'get': 'list'})),
+     path('api/stockrequests/<int:pk>/',
+          views.StockRequestGroupViewSet.as_view({'get': 'retrieve'})),     
+
+     # STOCK UNIT OF MEASURES
      path('api/basestockunit',
           views.BaseStockUnitViewSet.as_view(GETLIST_POSTCREATE)),
      path('api/basestockunit/<int:pk>/',

@@ -27,7 +27,7 @@ import Row from '@/components/Row.vue'
 import Cell from '@/components/Cell.vue'
 import TablePaginator from '@/components/TablePaginator.vue'
 
-import {reactive, onBeforeMount, inject} from 'vue'
+import {reactive, onBeforeMount, inject, watch} from 'vue'
 import {ItemApi} from '@/utils/apis.js'
 import {formatQuantity, formatMoney} from '@/utils/format.js'
 
@@ -69,6 +69,9 @@ export default {
         onBeforeMount(()=> {
             listStockHistory(history.listLimit, 0);
         });
+        watch(()=> props.data.availableQuantity, ()=> {
+            listStockHistory(history.listLimit, 0);
+        })
         return {
             history, listStockHistory,
             formatQuantity: (quantity, unit)=> {

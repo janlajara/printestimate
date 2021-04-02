@@ -17,15 +17,17 @@
                     :data="{itemId: stock.data.id, units: $props.data.units}"/>
             </Tab>
             <Tab title="Requests">
-                <StockRequests
-                    :data="{itemId: stock.data.id}"/>
+                <StockRequests :data="{
+                    itemId: stock.data.id, 
+                    availableQuantity: stock.data.availableQty}"/>
             </Tab>
             <Tab title="Incoming">
                 
             </Tab>
             <Tab title="History">
-                <StockHistory
-                    :data="{itemId: stock.data.id}"/>
+                <StockHistory :data="{
+                    itemId: stock.data.id,
+                    availableQuantity: stock.data.availableQty}"/>
             </Tab>
         </Tabs>
     </Section>

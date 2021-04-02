@@ -44,12 +44,11 @@
                     {{stock.brandName}}
                 </Cell>
                 <Cell :label="`Price / ${onhand.units.base.name}`">  
-                    {{stock.pricePerQty ? 
-                        formatMoney(stock.pricePerQty, currency.abbreviation) : ''}}
+                    {{stock.pricePerQty ? formatMoney(stock.pricePerQty) : ''}}
                 </Cell>
                 <Cell label="Available">  
                     <span v-if="stock.availableQty">
-                        {{stock.availableQty}} / 
+                        {{formatNumber(stock.availableQty, 0)}} / 
                         {{stock.unbounded ? '∞' : stock.baseQty}} 
                         {{onhand.units.getUnit(stock.availableQty,  onhand.units.base)}}
                     </span>
@@ -87,7 +86,7 @@ import StockDepositModal from '@/views/pages/inventory/stock/StockDepositModal'
 import StockWithdrawModal from '@/views/pages/inventory/stock/StockWithdrawModal'
 
 import {reactive, inject, computed, onBeforeMount} from 'vue';
-import {formatMoney, formatQuantity} from '@/utils/format.js';
+import {formatMoney, formatQuantity, formatNumber} from '@/utils/format.js';
 import {ItemApi} from '@/utils/apis.js';
 
 export default {
@@ -192,7 +191,12 @@ export default {
         }
 
         return {
-            onhand, loadItemStockList, formatMoney, formatQuantity, currency, 
+            onhand, loadItemStockList, 
+            formatQuantity, 
+            formatNumber,
+            formatMoney: (amount) => {
+                return formatMoney(amount,  currency.abbreviation)
+            }, 
             inputWithdraw: (event, stock)=> {
                 const value = event.target.value
                 const replaced = value != null ?  

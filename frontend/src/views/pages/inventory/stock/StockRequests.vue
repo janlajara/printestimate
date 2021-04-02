@@ -28,7 +28,7 @@ import Row from '@/components/Row.vue'
 import Cell from '@/components/Cell.vue'
 import TablePaginator from '@/components/TablePaginator.vue'
 
-import {reactive, onBeforeMount} from 'vue'
+import {reactive, onBeforeMount, watch} from 'vue'
 import {ItemApi} from '@/utils/apis.js'
 import {formatQuantity, reference} from '@/utils/format.js'
 
@@ -82,6 +82,9 @@ export default {
             requests.isProcessing = false;
         }
         onBeforeMount(()=> {
+            listStockRequests(requests.listLimit, 0);
+        })
+        watch(()=> props.data.availableQuantity, ()=> {
             listStockRequests(requests.listLimit, 0);
         })
 

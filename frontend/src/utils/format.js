@@ -1,10 +1,13 @@
+export const formatNumber = (number, decimalPlaces, fixedDecimal=false) => {
+    return number.toLocaleString(undefined, {
+        minimumFractionDigits: fixedDecimal ? decimalPlaces : 0,
+        maximumFractionDigits: decimalPlaces
+    });
+}
 
 export const formatQuantity = (quantity, unit_singular, unit_plural) => {
     const number = Number(quantity)
-    const formatted = number.toLocaleString(undefined, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    });
+    const formatted = formatNumber(number, 0);
     return `${formatted} ${quantity == 1? unit_singular : unit_plural}`; 
 }
 

@@ -56,7 +56,7 @@ const AXIOS =  {
 
 
 export class ItemApi {
-    static uri = '/inventory/api/item'
+    static uri = '/inventory/api/items'
 
     static async getItemTypes() {
         const response = await AXIOS.execute(AXIOS.OPTIONS, ItemApi.uri);
@@ -137,9 +137,20 @@ export class ItemApi {
     }
 }
 
+export class StockRequestApi {
+    static uri = '/inventory/api/stockrequests'
+
+    static async listStockRequestGroups(limit, offset, search=null) {
+        const params = offset != null && limit != null? 
+            {limit, offset, search} : {search};
+        const response = await AXIOS.execute(AXIOS.GET, StockRequestApi.uri + `/list`,
+            null, null, null, params)
+        return response.data
+    }
+}
 
 export class ItemPropertiesApi {
-    static uri = '/inventory/api/item/properties'
+    static uri = '/inventory/api/items/properties'
 
     static async getItemProperties(itemType) {
         const response = await AXIOS.execute(AXIOS.OPTIONS, 

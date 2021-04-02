@@ -27,7 +27,7 @@ export const defaultIfNull = (object, defaultValue, property=null) => {
 }
 
 export const reference = {
-    stockRequest: 'MRS',
+    stockRequestGroup: 'MRS',
     formatId: (id, code)=> {
         if (id != null && code != null) {
             const padded = Number(id).toString().padStart(5, '0');

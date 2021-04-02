@@ -155,23 +155,41 @@ class ItemWithdrawStocksViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)   
 
 
-class ItemStockRequestListViewSet(viewsets.ModelViewSet):
+class ItemStockRequestGroupListViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.StockRequestGroupSerializer
 
     def get_queryset(self):
         pk = self.kwargs.get('pk', None)
-        status = self.request.GET.get('status', 'Pending')
+        status = self.request.GET.get('status', 'Pending').lower()
         all = StockRequestGroup.objects.all()
         status_map = {
-            'Pending': [StockRequest.NEW, StockRequest.APPROVED],
-            'Finished': [StockRequest.FULFILLED, StockRequest.CANCELLED]
+            'pending': [StockRequest.NEW, StockRequest.APPROVED],
+            'finished': [StockRequest.FULFILLED, StockRequest.CANCELLED]
         }
         if pk is not None:
-            if status is not None and status_map[status] is not None:
+            if status is not None and status_map.get(status) is not None:
                 all = all.filter(stock_requests__stock__item__pk=pk,
                     stock_requests__status__in=status_map[status]).all()
             else:
                 all = all.filter(stock_requests__stock__item__pk=pk).all()
+
+        return all
+
+
+class StockRequestGroupListViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.StockRequestGroupListSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['=id', 'reason']
+
+    def get_queryset(self):
+        status = self.request.GET.get('status', 'Pending').lower()
+        all = StockRequestGroup.objects.all()
+        status_map = {
+            'pending': [StockRequest.NEW, StockRequest.APPROVED],
+            'finished': [StockRequest.FULFILLED, StockRequest.CANCELLED]
+        }
+        if status is not None and status_map.get(status) is not None:
+            all = all.filter(stock_requests__status__in=status_map[status]).distinct()
 
         return all
     

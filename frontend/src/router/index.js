@@ -27,7 +27,7 @@ const routes = [
       {
         path: 'inventory/stockrequests',
         name: 'inventory-stockrequests',
-        component: ()=>import('../views/pages/inventory/stockrequest/StockRequestList.vue'),
+        component: ()=>import('../views/pages/inventory/stockrequest/StockRequestGroupList.vue'),
         meta: {label: 'Stock Requests', group: 'Inventory'}
       },
       {

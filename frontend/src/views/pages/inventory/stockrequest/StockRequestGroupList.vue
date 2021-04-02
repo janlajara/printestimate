@@ -1,0 +1,85 @@
+<template>
+    <Page title="Inventory : Stock Requests">
+        <hr class="my-4"/>
+        <Section>
+            <div class="space-y-4 md:space-y-0 md:flex md:justify-between">
+                <div class="my-auto">
+                    <Button color="secondary" icon="add"
+                        :action="()=>request.create.toggle(true)">
+                        Create Request</Button>
+                </div>
+                <SearchField placeholder="Search" :disabled="request.isProcessing"
+                    @search="(search)=> populateRequestList(request.listLimit, 0, search)"/>
+            </div>
+            <Table :headers="['Request Id', 'Status', 'Reason', 'Date Created']"
+                :loader="request.isProcessing">
+                <Row v-for="(r, key) in request.list" :key="key">
+                    <Cell label="Request Id">{{formatId(r.id)}}</Cell>
+                    <Cell label="Status">{{r.status}}</Cell>
+                    <Cell label="Reason">{{r.reason}}</Cell>
+                    <Cell label="Date Created">{{r.createdAt}}</Cell>
+                </Row>
+            </Table>
+            <TablePaginator class="w-full justify-end"
+                :limit="request.listLimit" :count="request.listCount"
+                @change-limit="(limit)=> request.listLimit = limit"
+                @change-page="({limit, offset})=> 
+                    populateRequestList(limit, offset)" />
+        </Section>
+    </Page>
+</template>
+
+<script>
+import Page from '@/components/Page.vue';
+import Section from '@/components/Section.vue';
+import Table from '@/components/Table.vue';
+import Row from '@/components/Row.vue';
+import Cell from '@/components/Cell.vue';
+import TablePaginator from '@/components/TablePaginator.vue';
+import SearchField from '@/components/SearchField.vue';
+import Button from '@/components/Button.vue';
+
+import {reactive, onBeforeMount} from 'vue';
+import {StockRequestApi} from '@/utils/apis.js';
+import {reference} from '@/utils/format.js';
+
+export default {
+    components: {
+        Page, Section, Table, Row, Cell, TablePaginator, SearchField, Button
+    },
+    setup() {
+        const request = reactive({
+            isProcessing: false,
+            list: [],
+            listLimit: 5,
+            listCount: 0,
+            create: {
+                isOpen: false,
+                toggle: (value)=> { 
+                    request.create.isOpen = value
+                }
+            }
+        })
+        const populateRequestList = async (limit, offset, search=null)=> {
+            request.isProcessing = true;
+            const response = await StockRequestApi.listStockRequestGroups(limit, offset, search);
+            if (response && response.results) {
+                request.listCount = response.count;
+                request.list = response.results.map( r=> ({
+                    id: r.id, status: r.status,
+                    reason: r.reason, stockRequestCount: r.stock_requests_count,
+                    createdAt: r.created_at
+                }));
+            }
+            request.isProcessing = false;
+        }
+        onBeforeMount(()=> {
+            populateRequestList(request.listLimit, 0);
+        })
+        return {
+            request, populateRequestList, 
+            formatId: (id)=> reference.formatId(id, reference.stockRequestGroup)
+        }
+    }
+}
+</script>

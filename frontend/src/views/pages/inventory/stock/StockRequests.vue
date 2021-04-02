@@ -1,10 +1,10 @@
 <template>
     <Section>
         <Table :loader="requests.isProcessing"
-            :headers="['Request #', 'Total Quantity', 'Status', 'Reason', 'Date Created']">
+            :headers="['Request Id', 'Total Quantity', 'Status', 'Reason', 'Date Created']">
             <Row v-for="(request, key) in requests.list" :key="key">
-                <Cell label="Request #">{{
-                    reference.formatId(request.id, reference.stockRequest)}}</Cell>
+                <Cell label="Request Id">{{
+                    reference.formatId(request.id, reference.stockRequestGroup)}}</Cell>
                 <Cell label="Total Quantity">{{
                     formatQuantity(request.totalQuantity, 
                         request.stockRequests[0].baseUom)}}</Cell>

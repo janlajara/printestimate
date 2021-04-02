@@ -301,6 +301,18 @@ class StockRequestGroupSerializer(serializers.ModelSerializer):
         fields = ['id', 'status', 'reason', 'stock_requests', 'created_at']
 
 
+class StockRequestGroupListSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    stock_requests_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StockRequestGroup
+        fields = ['id', 'status', 'reason', 'stock_requests', 'stock_requests_count', 'created_at']
+
+    def get_stock_requests_count(self, obj):
+        return len(obj.stock_requests.all())
+
+
 class StockMovementSerializer(serializers.ModelSerializer):
     stock = StockReadOnlySerializer(read_only=True)
     stock_unit = StockUnitSerializer(read_only=True)

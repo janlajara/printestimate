@@ -157,7 +157,9 @@ class Item(models.Model):
         sr_aggregate = StockRequest.objects.aggregate(
             requested_stocks=Sum('stock_unit__quantity',
                 filter=Q(stock_id__in=stock_ids, 
-                        status__in=[StockRequest.NEW, StockRequest.APPROVED])))
+                        status__in=[StockRequest.DRAFT, 
+                            StockRequest.FOR_APPROVAL,
+                            StockRequest.APPROVED])))
         requested = sr_aggregate.get('requested_stocks') or 0
         return self.onhand_quantity - requested
 
@@ -306,7 +308,10 @@ class Stock(models.Model):
     def available_quantity(self):
         aggregate = StockRequest.objects.aggregate(
             requested_quantity=Sum('stock_unit__quantity',
-                filter=Q(stock=self, status__in=[StockRequest.NEW, StockRequest.APPROVED])))
+                filter=Q(stock=self, status__in=[
+                    StockRequest.DRAFT,
+                    StockRequest.FOR_APPROVAL, 
+                    StockRequest.APPROVED])))
         requested = aggregate.get('requested_quantity', 0) or 0
         return self.onhand_quantity - requested
 
@@ -377,7 +382,7 @@ class Stock(models.Model):
 
     def _create_request(self, quantity):
         stock_unit = StockUnit.objects.create(quantity=quantity)
-        stock_request = StockRequest.objects.create(status=StockRequest.NEW,
+        stock_request = StockRequest.objects.create(status=StockRequest.DRAFT,
                                                     stock=self, stock_unit=stock_unit)
         return stock_request
 
@@ -402,44 +407,49 @@ class StockLog(models.Model):
 
 
 class StockRequestGroup(models.Model):
-    PENDING = 'Pending'
-    FINISHED = 'Finished'
+    OPEN = 'Open'
+    CLOSED = 'Closed'
 
     reason = models.CharField(max_length=100, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     @property
     def status(self):
-        status = StockRequestGroup.PENDING
+        status = StockRequestGroup.OPEN
 
         aggregate = StockRequest.objects.aggregate(
-            pending=Count('status', 
-                filter=Q(status__in=[StockRequest.NEW, StockRequest.APPROVED], 
+            open=Count('status', 
+                filter=Q(status__in=[StockRequest.DRAFT, StockRequest.FOR_APPROVAL,
+                    StockRequest.APPROVED], 
                     stock_request_group=self)),
-            finished=Count('status', 
+            closed=Count('status', 
                 filter=Q(status__in=[StockRequest.FULFILLED, StockRequest.CANCELLED], 
                     stock_request_group=self))
         )
-        pending = aggregate.get('pending') or 0
-        finished = aggregate.get('finished') or 0
-        if finished > 0 and pending == 0:
-            status = StockRequestGroup.FINISHED
+        open = aggregate.get('open') or 0
+        closed = aggregate.get('closed') or 0
+        if closed > 0 and open == 0:
+            status = StockRequestGroup.CLOSED
 
         return status
 
 
 class StockRequest(StockLog):
-    NEW = 'NEW'
+    DRAFT = 'DFT'
+    FOR_APPROVAL = 'FAP'
     APPROVED = 'APP'
+    DISAPPROVED = 'DAP'
     FULFILLED = 'FUL'
     CANCELLED = 'CNL'
     STATUS = [
-        (NEW, 'New'),
+        (DRAFT, 'Draft'),
+        (FOR_APPROVAL, 'For Approval'),
         (APPROVED, 'Approved'),
+        (DISAPPROVED, 'Disapproved'),
         (FULFILLED, 'Fulfilled'),
         (CANCELLED, 'Cancelled'),
     ]
-    status = models.CharField(max_length=3, choices=STATUS, default='NEW')
+    status = models.CharField(max_length=3, choices=STATUS, default='DFT')
     stock_request_group = models.ForeignKey(StockRequestGroup, null=True, blank=True,
         on_delete=models.RESTRICT, related_name='stock_requests')
     last_modified = models.DateTimeField(auto_now=True)

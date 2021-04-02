@@ -199,7 +199,7 @@ def test_item__request_and_withdraw(db, item: Item):
 
     item.withdraw_stock(stock_request.id)
     stock_request.refresh_from_db()
-    assert stock_request_group.status == StockRequestGroup.FINISHED
+    assert stock_request_group.status == StockRequestGroup.CLOSED
     assert stock_request.status == StockRequest.FULFILLED
     assert item.onhand_quantity == 250
     assert item.available_quantity == 250

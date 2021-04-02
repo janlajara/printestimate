@@ -16,7 +16,8 @@
             <div v-else>
                 <div class="space-y-4 md:space-y-0 md:flex md:justify-between">
                     <div class="my-auto">
-                        <Button color="secondary" :action="()=>item.create.isOpen = true">
+                        <Button color="secondary" icon="add"
+                            :action="()=>item.create.isOpen = true">
                         Create Item</Button>
                     </div>
                     <SearchField placeholder="Search" :disabled="item.isProcessing"

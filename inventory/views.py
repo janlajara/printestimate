@@ -44,7 +44,7 @@ class AlternateStockUnitViewSet(viewsets.ModelViewSet):
         elif self.action in ['retrieve']:
             return serializers.AlternateStockUnitRetrieveSerializer
         else:
-            return serializers.BaseStockUnitRetrieveSerializer
+            return serializers.AlternateStockUnitRetrieveSerializer
 
 
 class ItemPropertiesViewSet(viewsets.ModelViewSet):

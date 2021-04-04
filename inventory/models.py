@@ -2,7 +2,8 @@ from django.db import models
 from django.db.models import Q, Sum, Avg, Count
 from djmoney.models.fields import MoneyField
 from .exceptions import DepositTooBig, InsufficientStock, \
-    InvalidExpireQuantity, IllegalUnboundedDeposit, IllegalWithdrawal
+    InvalidExpireQuantity, IllegalUnboundedDeposit, IllegalWithdrawal, \
+    IllegalStockRequestOperation, IllegalStockRequestGroupOperation
 import inflect
 
 _inflect = inflect.engine()
@@ -382,7 +383,7 @@ class Stock(models.Model):
 
     def _create_request(self, quantity):
         stock_unit = StockUnit.objects.create(quantity=quantity)
-        stock_request = StockRequest.objects.create(status=StockRequest.DRAFT,
+        stock_request = StockRequest.objects.create_request(status=StockRequest.DRAFT,
                                                     stock=self, stock_unit=stock_unit)
         return stock_request
 
@@ -410,6 +411,7 @@ class StockRequestGroup(models.Model):
     OPEN = 'Open'
     CLOSED = 'Closed'
 
+    finished = models.BooleanField(blank=True, default=False)
     reason = models.CharField(max_length=100, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -433,6 +435,30 @@ class StockRequestGroup(models.Model):
 
         return status
 
+    def finish(self):
+        if self.status == StockRequestGroup.CLOSED:
+            self.finished = True
+        else:
+            raise IllegalStockRequestGroupOperation(True, 
+                StockRequestGroup.CLOSED)
+    
+    def unfinish(self):
+        if self.status == StockRequestGroup.CLOSED:
+            self.finished = False
+        else:
+            raise IllegalStockRequestGroupOperation(False, 
+                StockRequestGroup.CLOSED)
+
+
+class StockRequestManager(models.Manager):
+    def create_request(self, **data):
+        stock_request = self.create(**data)
+        request_log = StockRequestLog.objects.create(
+                stock_request=stock_request, 
+                status=StockRequest.DRAFT,
+                comments='New stock request.')
+        return stock_request
+
 
 class StockRequest(StockLog):
     DRAFT = 'DFT'
@@ -449,18 +475,110 @@ class StockRequest(StockLog):
         (FULFILLED, 'Fulfilled'),
         (CANCELLED, 'Cancelled'),
     ]
+    objects = StockRequestManager()
     status = models.CharField(max_length=3, choices=STATUS, default='DFT')
     stock_request_group = models.ForeignKey(StockRequestGroup, null=True, blank=True,
         on_delete=models.RESTRICT, related_name='stock_requests')
     last_modified = models.DateTimeField(auto_now=True)
 
-    def approve(self):
-        self.status = StockRequest.APPROVED
-        self.save()
+    @property
+    def status_choices(self):
+        def _get(status_codes):
+            return [status for status in StockRequest.STATUS if status[0] in status_codes]
+        choices_map = {
+            StockRequest.DRAFT: 
+                _get([StockRequest.FOR_APPROVAL, StockRequest.CANCELLED]),
+            StockRequest.FOR_APPROVAL: 
+                _get([StockRequest.APPROVED, StockRequest.DISAPPROVED, 
+                    StockRequest.CANCELLED]),
+            StockRequest.APPROVED: 
+                _get([StockRequest.FULFILLED, StockRequest.CANCELLED]),
+            StockRequest.DISAPPROVED: 
+                _get([StockRequest.CANCELLED]),
+            StockRequest.CANCELLED: 
+                _get([StockRequest.DRAFT]),
+            StockRequest.FULFILLED: []
+        }
+        return choices_map[self.status]
+
+    def draft(self, comments=None):
+        if self.status == StockRequest.CANCELLED:
+            self.status = StockRequest.DRAFT
+            self.save()
+            self._create_log(self.status, comments)
+        else:
+            raise IllegalStockRequestOperation(
+                StockRequest.CANCELLED, self.status, 
+                StockRequest.DRAFT)
+
+    def for_approval(self, comments=None):
+        if self.status == StockRequest.DRAFT:
+            self.status = StockRequest.FOR_APPROVAL
+            self.save()
+            self._create_log(self.status, comments)
+        else:
+            raise IllegalStockRequestOperation(
+                StockRequest.DRAFT, self.status, 
+                StockRequest.FOR_APPROVAL)
+
+    def approve(self, comments=None):
+        if self.status == StockRequest.FOR_APPROVAL:
+            self.status = StockRequest.APPROVED
+            self.save()
+            self._create_log(self.status, comments)
+        else:
+            raise IllegalStockRequestOperation(
+                StockRequest.FOR_APPROVAL, self.status, 
+                StockRequest.APPROVED)
     
-    def cancel(self):
-        self.status = StockRequest.CANCELLED
-        self.save()
+    def disapprove(self, comments=None):
+        if self.status == StockRequest.FOR_APPROVAL:
+            self.status = StockRequest.DISAPPROVED
+            self.save()
+            self._create_log(self.status, comments)
+        else:  
+            raise IllegalStockRequestOperation(
+                StockRequest.FOR_APPROVAL, self.status,
+                StockRequest.DISAPPROVED)
+
+    def cancel(self, comments=None):
+        expected_statuses = [StockRequest.DRAFT, 
+            StockRequest.FOR_APPROVAL, 
+            StockRequest.APPROVED, StockRequest.DISAPPROVED]
+        if self.status in expected_statuses:
+            self.status = StockRequest.CANCELLED
+            self.save()
+            self._create_log(self.status, comments)
+        else:
+            raise IllegalStockRequestOperation(
+                expected_statuses, self.status,
+                StockRequest.CANCELLED) 
+    
+    def fulfill(self, comments=None):
+        if self.status == StockRequest.APPROVED:
+            self.status = StockRequest.FULFILLED
+            self.save()
+            self._create_log(self.status, comments)
+        else:
+            raise IllegalStockRequestOperation(
+                StockRequest.APPROVED, self.status,
+                StockRequest.FULFILLED) 
+
+    def _create_log(self, status, comments=None):
+        if status is not None:
+            request_log = StockRequestLog.objects.create(
+                stock_request=self, status=status,
+                comments=comments)
+            return request_log
+
+
+class StockRequestLog(models.Model):
+    stock_request = models.ForeignKey(StockRequest, 
+        on_delete=models.CASCADE, related_name='stock_request_logs')
+    status = models.CharField(max_length=3, 
+        choices=StockRequest.STATUS, null=False, blank=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    comments = models.TextField(null=True, blank=True)
 
 
 class StockMovement(StockLog):

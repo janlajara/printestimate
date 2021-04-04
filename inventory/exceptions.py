@@ -31,3 +31,17 @@ class IllegalWithdrawal(Exception):
         self.message = 'Cannot fulfill stock request with status of %s. Expected status is Approved.' % \
             status
         super().__init__(self.message)
+
+
+class IllegalStockRequestOperation(Exception):
+    def __init__(self, from_expected, from_actual, to):
+        self.message = 'Cannot change the status of stock request from %s to %s. Expected from status is %s.' % \
+            (from_actual, to, from_expected)
+        super().__init__(self.message)
+
+
+class IllegalStockRequestGroupOperation(Exception):
+    def __init__(self, expected_status, finished):
+        self.message = 'Cannot mark the request group as finished=%s. Expected status must be %s to proceed.' % \
+            (finished, expected_status)
+        super().__init__(self.message)

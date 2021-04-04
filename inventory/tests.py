@@ -4,7 +4,8 @@ from .models import BaseStockUnit, AlternateStockUnit, Item, \
     Stock, StockRequest, StockRequestGroup, StockMovement
 from .properties.models import ItemProperties, Paper
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity, \
-    IllegalUnboundedDeposit, IllegalWithdrawal
+    IllegalUnboundedDeposit, IllegalWithdrawal, IllegalStockRequestOperation, \
+    IllegalStockRequestGroupOperation
 
 
 @pytest.fixture
@@ -195,6 +196,7 @@ def test_item__request_and_withdraw(db, item: Item):
     stock = item.deposit_stock('Generic', 500, 1000)[0]
     stock_request_group = item.request_stock(250)
     stock_request = stock_request_group.stock_requests.first()
+    stock_request.for_approval()
     stock_request.approve()
 
     item.withdraw_stock(stock_request.id)
@@ -205,9 +207,93 @@ def test_item__request_and_withdraw(db, item: Item):
     assert item.available_quantity == 250
 
 
+def test_item__request_approve_disapprove(db, item: Item):
+    def assert_status_choices(actual_choices, expected_choices):
+        for choice in actual_choices:
+            assert choice[0] in expected_choices
+
+    stock = item.deposit_stock('Generic', 500, 1000)[0]
+    stock_request_group = item.request_stock(250)
+    stock_request = stock_request_group.stock_requests.first()
+    assert stock_request.stock_request_logs.first().status == StockRequest.DRAFT
+    
+    stock_request.for_approval()
+    assert stock_request.status == StockRequest.FOR_APPROVAL
+    assert_status_choices(
+        stock_request.status_choices,
+        [StockRequest.APPROVED, StockRequest.DISAPPROVED, 
+            StockRequest.CANCELLED])
+
+    stock_request.disapprove()
+    assert stock_request.status == StockRequest.DISAPPROVED
+    assert_status_choices(
+        stock_request.status_choices,
+        [StockRequest.CANCELLED])
+
+    stock_request.cancel()
+    assert stock_request.status == StockRequest.CANCELLED
+    assert_status_choices(
+        stock_request.status_choices,
+        [StockRequest.DRAFT])
+
+    stock_request.draft()
+    assert stock_request.status == StockRequest.DRAFT
+    assert_status_choices(
+        stock_request.status_choices,
+        [StockRequest.FOR_APPROVAL, StockRequest.CANCELLED])
+
+    stock_request.for_approval()
+    stock_request.approve()
+    assert stock_request.status == StockRequest.APPROVED
+    assert_status_choices(
+        stock_request.status_choices,
+        [StockRequest.FULFILLED, StockRequest.CANCELLED])
+
+    stock_request.fulfill()
+    assert stock_request.status == StockRequest.FULFILLED
+    assert len(stock_request.status_choices) == 0
+
+    assert len(stock_request.stock_request_logs.all()) == 8
+    
+
+def test_item__request_illegal(db, item: Item):
+    stock = item.deposit_stock('Generic', 500, 1000)[0]
+    
+    stock_request_group = item.request_stock(250)
+    with pytest.raises(IllegalStockRequestGroupOperation):
+        stock_request_group.finish()
+    with pytest.raises(IllegalStockRequestGroupOperation):
+        stock_request_group.unfinish()
+
+    stock_request = stock_request_group.stock_requests.first()
+    assert stock_request.status == StockRequest.DRAFT
+
+    with pytest.raises(IllegalStockRequestOperation):
+        stock_request.approve()
+    with pytest.raises(IllegalStockRequestOperation):
+        stock_request.fulfill()
+    with pytest.raises(IllegalStockRequestOperation):
+        stock_request.disapprove()
+
+    stock_request.for_approval()
+    stock_request.approve()
+    stock_request.fulfill()
+
+    with pytest.raises(IllegalStockRequestOperation):
+        stock_request.draft()
+    with pytest.raises(IllegalStockRequestOperation):
+        stock_request.for_approval()
+    with pytest.raises(IllegalStockRequestOperation):
+        stock_request.cancel()
+
+    stock_request_group.finish()
+    assert stock_request_group.finished == True
+
+
 def test_item_return_stock(db, item: Item):
     stock = item.deposit_stock('Generic', 500, 1000)[0]
     stock_request = item.request_stock(250).stock_requests.first()
+    stock_request.for_approval()
     stock_request.approve()
 
     item.withdraw_stock(stock_request.id)

@@ -21,7 +21,7 @@ urlpatterns = [
      path('api/items/<int:pk>/stocks/withdraw',
           views.ItemWithdrawStocksViewSet.as_view({'post': 'create'})),
      path('api/items/<int:pk>/stocks/history',
-          views.StockMovementSerializer.as_view({'get': 'list'})),
+          views.StockMovementViewSet.as_view({'get': 'list'})),
      path('api/items/<int:pk>/stockrequests/list',
           views.ItemStockRequestGroupListViewSet.as_view({'get': 'list'})),
 
@@ -31,11 +31,13 @@ urlpatterns = [
      path('api/items/properties/<int:pk>/',
           views.ItemPropertiesViewSet.as_view(GETRETRIEVE_PUTUPDATE_POSTDESTROY)),
 
-     # STOCKS REQUESTS
-     path('api/stockrequests/list',
+     # STOCKS REQUEST GROUP
+     path('api/stockrequestgroups/list',
           views.StockRequestGroupViewSet.as_view({'get': 'list'})),
-     path('api/stockrequests/<int:pk>/',
-          views.StockRequestGroupViewSet.as_view({'get': 'retrieve'})),     
+     path('api/stockrequestgroups/<int:pk>/',
+          views.StockRequestGroupViewSet.as_view({'get': 'retrieve'})), 
+     path('api/stockrequestgroups/<int:pk>/update',
+          views.StockRequestUpdateViewSet.as_view({'put': 'update'})),
 
      # STOCK UNIT OF MEASURES
      path('api/basestockunit',

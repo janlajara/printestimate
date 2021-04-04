@@ -137,6 +137,7 @@ class ItemWithdrawStocksViewSet(viewsets.ViewSet):
                     try:
                         stock = Stock.objects.get(item=pk, pk=id)
                         stock_request = stock.request(quantity)
+                        stock_request.for_approval()
                         stock_requests.append(stock_request)
                     except Stock.DoesNotExist:
                         pass
@@ -203,7 +204,47 @@ class StockRequestGroupViewSet(viewsets.ModelViewSet):
             return serializers.StockRequestGroupSerializer
     
 
-class StockMovementSerializer(viewsets.ModelViewSet):
+
+class StockRequestUpdateViewSet(viewsets.ViewSet):
+
+    def update(self, request, pk=None):
+        data = request.data
+        stock_request_id = data.get('stock_request_id', None)
+        print(stock_request_id)
+
+        if pk is not None and stock_request_id is not None:
+            stock_request = StockRequest.objects.get(
+                pk=stock_request_id,
+                stock_request_group__pk=pk)
+            request_status = data.get('status', None)
+            comments = data.get('comments', None)
+
+            if stock_request is not None and request_status is not None:
+                if request_status == StockRequest.DRAFT:
+                    stock_request.draft(comments)
+                elif request_status == StockRequest.FOR_APPROVAL:
+                    stock_request.for_approval(comments)
+                elif request_status == StockRequest.APPROVED:
+                    stock_request.approve(comments)
+                elif request_status == StockRequest.FULFILLED:
+                    stock_request.fulfill(comments)
+                elif request_status == StockRequest.DISAPPROVED:
+                    stock_request.disapprove(comments)
+                elif request_status == StockRequest.CANCELLED:
+                    stock_request.cancel(comments)
+                serialized = serializers.StockRequestSerializer(stock_request)
+                return Response(serialized.data)
+            else:
+                return Response(
+                    {"error": "Stock request could not be found"}, 
+                    status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(
+                {"error": "Missing stock request id"}, 
+                status=status.HTTP_400_BAD_REQUEST)
+
+
+class StockMovementViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.StockMovementSerializer
 
     def get_queryset(self):

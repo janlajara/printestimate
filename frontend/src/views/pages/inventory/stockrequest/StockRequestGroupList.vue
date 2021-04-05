@@ -16,8 +16,8 @@
                                 request.filter = value;
                                 populateRequestList(request.listLimit, 0);}"
                             :options="[{label: 'All', value: ''}, 
-                                {label: 'Pending', value: 'pending'}, 
-                                {label: 'Finished', value: 'finished'}]"/>
+                                {label: 'Open', value: 'open'}, 
+                                {label: 'Closed', value: 'closed'}]"/>
                     </div>
                 </div>
                 <SearchField placeholder="Search" :disabled="request.isProcessing"
@@ -27,7 +27,8 @@
             </div>
             <Table :headers="['Request Id', 'Status', 'Reason', 'Date Created']"
                 :loader="request.isProcessing">
-                <Row v-for="(r, key) in request.list" :key="key">
+                <Row v-for="(r, key) in request.list" :key="key" clickable
+                    @click="()=> goToDetail(r.id)">
                     <Cell label="Request Id">{{formatId(r.id)}}</Cell>
                     <Cell label="Status">{{r.status}}</Cell>
                     <Cell label="Reason">{{r.reason}}</Cell>
@@ -55,15 +56,17 @@ import SearchFilter from '@/components/SearchFilter.vue';
 import Button from '@/components/Button.vue';
 
 import {reactive, onBeforeMount} from 'vue';
+import {useRouter} from 'vue-router';
 import {StockRequestApi} from '@/utils/apis.js';
 import {reference} from '@/utils/format.js';
 
 export default {
     components: {
         Page, Section, Table, Row, Cell, TablePaginator, 
-        SearchField, SearchFilter, Button
+        SearchField, SearchFilter, Button, 
     },
     setup() {
+        const router = useRouter();
         const request = reactive({
             isProcessing: false,
             list: [],
@@ -77,7 +80,8 @@ export default {
                     request.create.isOpen = value
                 }
             }
-        })
+        });
+
         const populateRequestList = async (limit, offset)=> {
             request.isProcessing = true;
             const response = await StockRequestApi.listStockRequestGroups(
@@ -91,12 +95,19 @@ export default {
                 }));
             }
             request.isProcessing = false;
-        }
+        };
         onBeforeMount(()=> {
             populateRequestList(request.listLimit, 0);
-        })
+        });
+
+        const goToDetail = (id)=> {
+            router.push({ 
+                name: 'inventory-stockrequest-detail', 
+                params: {id}});
+        };
+
         return {
-            request, populateRequestList, 
+            request, populateRequestList, goToDetail,
             formatId: (id)=> reference.formatId(id, reference.stockRequestGroup)
         }
     }

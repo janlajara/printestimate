@@ -3,8 +3,15 @@
         <Table :loader="requests.isProcessing"
             :headers="['Request Id', 'Total Quantity', 'Status', 'Reason', 'Date Created']">
             <Row v-for="(request, key) in requests.list" :key="key">
-                <Cell label="Request Id">{{
-                    reference.formatId(request.id, reference.stockRequestGroup)}}</Cell>
+                <Cell label="Request Id">
+                    <Href @click="()=>
+                        $router.push({ 
+                            name: 'inventory-stockrequest-detail', 
+                            params: {id: request.id}})">
+                        {{reference.formatId(
+                            request.id, reference.stockRequestGroup)}}
+                    </Href>
+                </Cell>
                 <Cell label="Total Quantity">{{
                     formatQuantity(request.totalQuantity, 
                         request.stockRequests[0].baseUom)}}</Cell>
@@ -27,6 +34,7 @@ import Table from '@/components/Table.vue'
 import Row from '@/components/Row.vue'
 import Cell from '@/components/Cell.vue'
 import TablePaginator from '@/components/TablePaginator.vue'
+import Href from '@/components/Href.vue'
 
 import {reactive, onBeforeMount, watch} from 'vue'
 import {ItemApi} from '@/utils/apis.js'
@@ -34,7 +42,7 @@ import {formatQuantity, reference} from '@/utils/format.js'
 
 export default {
     components: {
-        Section, Table, Row, Cell, TablePaginator
+        Section, Table, Row, Cell, TablePaginator, Href
     },
     props: {
         data: Object

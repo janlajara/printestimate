@@ -1,4 +1,5 @@
 import {useToast} from 'vue-toastification'
+import {reference} from '@/utils/format.js'
 
 const toast = useToast();
 const showToast = (type='default', message=null)=> {
@@ -116,7 +117,11 @@ export class ItemApi {
 
     static async withdrawStocks(id, requests) {
         const response = await AXIOS.execute(AXIOS.POST, ItemApi.uri + `/${id}/stocks/withdraw`,
-            'Stock requested successfully.', 'Stock request failed. Please try again.', requests);
+            null, 'Stock request failed. Please try again.', requests);
+        if (response.data) {
+            const requestId = reference.formatId(response.data.id, reference.stockRequestGroup)
+            showToast("success", `Request ${requestId} has been created.`);
+        }
         return response.data
     }
 

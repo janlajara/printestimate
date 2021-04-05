@@ -1,13 +1,14 @@
 <template>
-    <div v-if="$props.isOpen">
+    <Page :title="detail.data.fullname">
+        <hr class="my-4"/>
         <ItemInputModal :is-open="detail.modal.isOpen" :is-create="false" 
-            :on-after-save="()=>loadItem($props.itemId)" :data="detail.data"
+            :on-after-save="()=>loadItem(detail.id)" :data="detail.data"
             @toggle="(value)=> detail.modal.isOpen = value"/>
         <div class="flex">
             <Button color="secondary" icon="arrow_back"
-                :action="()=>$emit('toggle', false)">Go Back</Button>
+                :action="()=>$router.go(-1)">Go Back</Button>
             <Button icon="mode_edit" class="mx-4" :action="detail.edit"/>
-            <Button icon="delete" :action="()=>detail.delete($props.itemId)"/>
+            <Button icon="delete" :action="()=>detail.delete(detail.id)"/>
         </div> 
         <Section>
             <DescriptionList class="grid-cols-2 md:grid-cols-4">
@@ -29,16 +30,17 @@
         </Section>
         <StockManagement
             :data="{
-                itemId: $props.itemId,
+                itemId: detail.id,
                 units: {
                     base: detail.data.baseUom,
                     alternate: detail.data.altUom
                 }
             }"/>
-    </div>
+    </Page>
 </template>
 
 <script>
+import Page from '@/components/Page.vue';
 import Section from '@/components/Section.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
@@ -46,25 +48,20 @@ import Button from '@/components/Button.vue';
 import ItemInputModal from '@/views/pages/inventory/stock/ItemInputModal.vue';
 import StockManagement from '@/views/pages/inventory/stock/StockManagement.vue';
 
-import {reactive, onBeforeMount} from 'vue';
+import {useRoute} from 'vue-router';
+import {watch, reactive, onBeforeMount} from 'vue';
 import {ItemApi, ItemPropertiesApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Section, DescriptionList, DescriptionItem, Button, 
+        Page, Section, DescriptionList, DescriptionItem, Button, 
         ItemInputModal, StockManagement
-    },
-    props: {
-        itemId: Number,
-        isOpen: {
-            type: Boolean,
-            required: true
-        },
-        onAfterDelete: Function
     },
     emits: ['toggle'],
     setup(props, {emit}) {
+        const route = useRoute()
         const detail = reactive({
+            id: route.params.id,
             modal: {
                 isOpen: false
             },
@@ -122,7 +119,12 @@ export default {
             }
         }
         onBeforeMount(()=> {
-            if (props.itemId != null) loadItem(props.itemId);
+            loadItem(detail.id);
+        })
+        watch(()=> route.params.id, ()=> {
+            const id = route.params.id;
+            if (id != null && !isNaN(id))
+                detail.id = parseInt(id);
         })
         return {
             detail, loadItem

@@ -25,10 +25,22 @@ const routes = [
         meta: {label: 'Stocks', group: 'Inventory'}
       },
       {
+        path: 'inventory/stocks/:id',
+        name: 'inventory-stock-detail',
+        props: true,
+        component: ()=>import('../views/pages/inventory/stock/ItemDetail.vue'),
+      },
+      {
         path: 'inventory/stockrequests',
         name: 'inventory-stockrequests',
         component: ()=>import('../views/pages/inventory/stockrequest/StockRequestGroupList.vue'),
         meta: {label: 'Stock Requests', group: 'Inventory'}
+      },
+      {
+        path: 'inventory/stockrequests/:id',
+        name: 'inventory-stockrequest-detail',
+        props: true,
+        component: ()=>import('../views/pages/inventory/stockrequest/StockRequestGroupDetail.vue'),
       },
       {
         path: 'admin/inventory',

@@ -284,6 +284,7 @@ class StockUnitSerializer(serializers.ModelSerializer):
 
 
 class StockRequestSerializer(serializers.ModelSerializer):
+    item = serializers.SerializerMethodField()
     status = serializers.CharField(source='get_status_display') 
     status_choices = serializers.SerializerMethodField()
     stock = StockReadOnlySerializer(read_only=True)
@@ -293,7 +294,11 @@ class StockRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StockRequest
-        fields = ['id', 'stock', 'stock_unit', 'status', 'status_choices', 'created', 'last_modified']
+        fields = ['id', 'item', 'stock', 'stock_unit', 'status', 'status_choices', 
+            'created', 'last_modified']
+
+    def get_item(self, obj):
+        return '%s' % obj.stock.item
 
     def get_status_choices(self, obj):
         choices = []

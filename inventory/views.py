@@ -1,5 +1,5 @@
-from inventory.models import Item, Stock, StockRequest, \
-    StockRequestGroup, StockMovement, BaseStockUnit, AlternateStockUnit
+from inventory.models import Item, Stock, ItemRequest, \
+    ItemRequestGroup, StockMovement, BaseStockUnit, AlternateStockUnit
 from inventory.properties.models import ItemProperties
 from inventory.exceptions import InsufficientStock
 from rest_framework import viewsets, status, filters
@@ -123,116 +123,118 @@ class ItemDepositStockViewSet(viewsets.ViewSet):
 class ItemWithdrawStocksViewSet(viewsets.ViewSet):
 
     def create(self, request, pk=None):
-        serializer = serializers.StockRequestGroupSerializer(data=request.data)
+        item = Item.objects.get(pk=pk)
+        stock_requests = []
+        reason = request.data.get('reason', None)
+        stocks = request.data.get('stock_requests', [])
 
-        if request.data and serializer.is_valid():
-            stock_requests = []
-            reason = request.data.get('reason', None)
-            stocks = request.data.get('stock_requests', [])
+        for entry in stocks:
+            id = entry.get('id', None)
+            quantity = int(entry.get('quantity', 0))
+            if id is not None and quantity > 0:
+                try:
+                    stock = Stock.objects.get(item=pk, pk=id)
+                    stock_request = stock.request(quantity)
+                    stock_requests.append(stock_request)
+                except Stock.DoesNotExist:
+                    pass
+                except InsufficientStock:
+                    pass
+        
+        if len(stock_requests) > 0:
+            total_quantity = sum(stock_request.stock_unit.quantity 
+                for stock_request in stock_requests)
+            item_request = item.request(total_quantity)
+            item_request.stock_requests.set(stock_requests)
+            item_request.save()
 
-            for entry in stocks:
-                id = entry.get('id', None)
-                quantity = int(entry.get('quantity', 0))
-                if id is not None and quantity > 0:
-                    try:
-                        stock = Stock.objects.get(item=pk, pk=id)
-                        stock_request = stock.request(quantity)
-                        stock_request.for_approval()
-                        stock_requests.append(stock_request)
-                    except Stock.DoesNotExist:
-                        pass
-                    except InsufficientStock:
-                        pass
-            
-            if len(stock_requests) > 0:
-                stock_request_group = StockRequestGroup.objects.create(reason=reason)
-                stock_request_group.stock_requests.set(stock_requests)
-                serialized_request = serializers.StockRequestGroupSerializer(stock_request_group)
-                return Response(serialized_request.data) 
-            else:
-                return Response({"detail": "no available stocks to withdraw"},
-                    status=status.HTTP_409_CONFLICT)
+            item_request_group = ItemRequestGroup.objects.create(reason=reason)
+            item_request_group.item_requests.set(item_request)
+            item_request_group.save()
+
+            serialized = serializers.ItemRequestGroupSerializer(item_request_group)
+            return Response(serialized.data) 
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)   
+            return Response({"detail": "no available stocks to withdraw"},
+                status=status.HTTP_409_CONFLICT) 
 
 
-class ItemStockRequestGroupListViewSet(viewsets.ModelViewSet):
-    serializer_class = serializers.StockRequestGroupSerializer
+class ItemRequestGroupItemDetailViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.ItemRequestGroupSerializer
 
     def get_queryset(self):
         pk = self.kwargs.get('pk', None)
         status = self.request.GET.get('status', 'Open')
-        all = StockRequestGroup.objects.all()
+        all = ItemRequestGroup.objects.all()
         status_map = {
-            'open': [StockRequest.DRAFT, StockRequest.FOR_APPROVAL, StockRequest.APPROVED],
-            'closed': [StockRequest.FULFILLED, StockRequest.CANCELLED]
+            'open': [ItemRequest.DRAFT, ItemRequest.FOR_APPROVAL, ItemRequest.APPROVED],
+            'closed': [ItemRequest.FULFILLED, ItemRequest.CANCELLED]
         }
         if pk is not None:
             if status is not None and status_map.get(status.lower()) is not None:
-                all = all.filter(stock_requests__stock__item__pk=pk,
-                    stock_requests__status__in=status_map[status.lower()]).distinct()
+                all = all.filter(item_requests__item__pk=pk,
+                    item_requests__status__in=status_map[status.lower()]).all()
             else:
-                all = all.filter(stock_requests__stock__item__pk=pk).distinct()
+                all = all.filter(item_requests__item__pk=pk).all()
 
         return all
 
 
-class StockRequestGroupViewSet(viewsets.ModelViewSet):
+class ItemRequestGroupViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['=id', 'reason'] 
 
     def get_queryset(self):
         pk = self.kwargs.get('pk', None)
         status = self.request.GET.get('status', 'Open')
-        all = StockRequestGroup.objects.all()
+        all = ItemRequestGroup.objects.all()
         status_map = {
-            'open': [StockRequest.DRAFT, StockRequest.FOR_APPROVAL, StockRequest.APPROVED],
-            'closed': [StockRequest.FULFILLED, StockRequest.CANCELLED]
+            'open': [ItemRequest.DRAFT, ItemRequest.FOR_APPROVAL, ItemRequest.APPROVED],
+            'closed': [ItemRequest.FULFILLED, ItemRequest.CANCELLED]
         }
         if pk is not None:
             all = all.filter(pk=pk)
         elif status is not None and status_map.get(status.lower()) is not None:
-            all = all.filter(stock_requests__status__in=status_map[status.lower()]).distinct()
+            all = all.filter(item_requests__status__in=status_map[status.lower()]).distinct()
         return all
 
     def get_serializer_class(self):
         if self.action in ['list']:
-            return serializers.StockRequestGroupListSerializer
+            return serializers.ItemRequestGroupListSerializer
         elif self.action in ['retrieve']:
-            return serializers.StockRequestGroupSerializer
+            return serializers.ItemRequestGroupSerializer
         else:
-            return serializers.StockRequestGroupSerializer
+            return serializers.ItemRequestGroupSerializer
     
 
 
-class StockRequestUpdateViewSet(viewsets.ViewSet):
+class ItemRequestUpdateViewSet(viewsets.ViewSet):
 
     def update(self, request, pk=None):
         data = request.data
-        stock_request_id = data.get('stock_request_id', None)
-        print(stock_request_id)
+        item_request_id = data.get('id', None)
 
-        if pk is not None and stock_request_id is not None:
-            stock_request = StockRequest.objects.get(
-                pk=stock_request_id,
-                stock_request_group__pk=pk)
+        if pk is not None and item_request_id is not None:
+            item_request = ItemRequest.objects.get(
+                pk=item_request_id,
+                item_request_group__pk=pk)
             request_status = data.get('status', None)
             comments = data.get('comments', None)
 
-            if stock_request is not None and request_status is not None:
-                if request_status == StockRequest.DRAFT:
-                    stock_request.draft(comments)
-                elif request_status == StockRequest.FOR_APPROVAL:
-                    stock_request.for_approval(comments)
-                elif request_status == StockRequest.APPROVED:
-                    stock_request.approve(comments)
-                elif request_status == StockRequest.FULFILLED:
-                    stock_request.fulfill(comments)
-                elif request_status == StockRequest.DISAPPROVED:
-                    stock_request.disapprove(comments)
-                elif request_status == StockRequest.CANCELLED:
-                    stock_request.cancel(comments)
-                serialized = serializers.StockRequestSerializer(stock_request)
+            if item_request is not None and request_status is not None:
+                if request_status == ItemRequest.DRAFT:
+                    item_request.draft(comments)
+                elif request_status == ItemRequest.FOR_APPROVAL:
+                    item_request.for_approval(comments)
+                elif request_status == ItemRequest.APPROVED:
+                    item_request.approve(comments)
+                elif request_status == ItemRequest.FULFILLED:
+                    item_request.fulfill(comments)
+                elif request_status == ItemRequest.DISAPPROVED:
+                    item_request.disapprove(comments)
+                elif request_status == ItemRequest.CANCELLED:
+                    item_request.cancel(comments)
+                serialized = serializers.ItemRequestSerializer(item_request)
                 return Response(serialized.data)
             else:
                 return Response(

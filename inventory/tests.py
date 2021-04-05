@@ -1,11 +1,11 @@
 import pytest
 from measurement.measures import Distance, Volume
 from .models import BaseStockUnit, AlternateStockUnit, Item, \
-    Stock, StockRequest, StockRequestGroup, StockMovement
+    Stock, StockRequest, ItemRequest, ItemRequestGroup, StockMovement
 from .properties.models import ItemProperties, Paper
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity, \
-    IllegalUnboundedDeposit, IllegalWithdrawal, IllegalStockRequestOperation, \
-    IllegalStockRequestGroupOperation
+    IllegalUnboundedDeposit, IllegalWithdrawal, IllegalItemRequestOperation, \
+    IllegalItemRequestGroupOperation
 
 
 @pytest.fixture
@@ -194,15 +194,19 @@ def test_item__request_stock_lesser_quantity(db, item: Item):
 
 def test_item__request_and_withdraw(db, item: Item):
     stock = item.deposit_stock('Generic', 500, 1000)[0]
-    stock_request_group = item.request_stock(250)
-    stock_request = stock_request_group.stock_requests.first()
-    stock_request.for_approval()
-    stock_request.approve()
+    item_request_group = ItemRequestGroup.objects.create()
+    item_request = item.request(250, True)
+    item_request_group.item_requests.set([item_request])
 
+    item_request.for_approval()
+    item_request.approve()
+
+    stock_request = item_requests.stock_requests.first()
     item.withdraw_stock(stock_request.id)
+    
     stock_request.refresh_from_db()
-    assert stock_request_group.status == StockRequestGroup.CLOSED
-    assert stock_request.status == StockRequest.FULFILLED
+    assert stock_request_group.status == ItemRequestGroup.CLOSED
+    assert stock_request.status == ItemRequest.FULFILLED
     assert item.onhand_quantity == 250
     assert item.available_quantity == 250
 
@@ -258,36 +262,38 @@ def test_item__request_approve_disapprove(db, item: Item):
 
 def test_item__request_illegal(db, item: Item):
     stock = item.deposit_stock('Generic', 500, 1000)[0]
-    
-    stock_request_group = item.request_stock(250)
-    with pytest.raises(IllegalStockRequestGroupOperation):
-        stock_request_group.finish()
-    with pytest.raises(IllegalStockRequestGroupOperation):
-        stock_request_group.unfinish()
+    item_request_group = ItemRequestGroup.objects.create()
+    item_request = item.request(250, True)
+    stock_requests = item_request.stock_requests.all()
+    item_request_group.item_requests.set([item_request])
 
-    stock_request = stock_request_group.stock_requests.first()
-    assert stock_request.status == StockRequest.DRAFT
+    with pytest.raises(IllegalItemRequestGroupOperation):
+        item_request_group.finish()
+    with pytest.raises(IllegalItemRequestGroupOperation):
+        item_request_group.unfinish()
 
-    with pytest.raises(IllegalStockRequestOperation):
-        stock_request.approve()
-    with pytest.raises(IllegalStockRequestOperation):
-        stock_request.fulfill()
-    with pytest.raises(IllegalStockRequestOperation):
-        stock_request.disapprove()
+    assert item_request.status == ItemRequest.DRAFT
 
-    stock_request.for_approval()
-    stock_request.approve()
-    stock_request.fulfill()
+    with pytest.raises(IllegalItemRequestOperation):
+        item_request.approve()
+    with pytest.raises(IllegalItemRequestOperation):
+        item_request.fulfill()
+    with pytest.raises(IllegalItemRequestOperation):
+        item_request.disapprove()
 
-    with pytest.raises(IllegalStockRequestOperation):
-        stock_request.draft()
-    with pytest.raises(IllegalStockRequestOperation):
-        stock_request.for_approval()
-    with pytest.raises(IllegalStockRequestOperation):
-        stock_request.cancel()
+    item_request.for_approval()
+    item_request.approve()
+    item_request.fulfill()
 
-    stock_request_group.finish()
-    assert stock_request_group.finished == True
+    with pytest.raises(IllegalItemRequestOperation):
+        item_request.draft()
+    with pytest.raises(IllegalItemRequestOperation):
+        item_request.for_approval()
+    with pytest.raises(IllegalItemRequestOperation):
+        item_request.cancel()
+
+    item_request_group.finish()
+    assert item_request_group.finished == True
 
 
 def test_item_return_stock(db, item: Item):

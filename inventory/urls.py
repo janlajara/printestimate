@@ -23,7 +23,7 @@ urlpatterns = [
      path('api/items/<int:pk>/stocks/history',
           views.StockMovementViewSet.as_view({'get': 'list'})),
      path('api/items/<int:pk>/stockrequests/list',
-          views.ItemStockRequestGroupListViewSet.as_view({'get': 'list'})),
+          views.ItemRequestGroupItemDetailViewSet.as_view({'get': 'list'})),
 
      # ITEM PROPERTIES
      path('api/items/properties',
@@ -33,11 +33,11 @@ urlpatterns = [
 
      # STOCKS REQUEST GROUP
      path('api/stockrequestgroups/list',
-          views.StockRequestGroupViewSet.as_view({'get': 'list'})),
+          views.ItemRequestGroupViewSet.as_view({'get': 'list'})),
      path('api/stockrequestgroups/<int:pk>/',
-          views.StockRequestGroupViewSet.as_view({'get': 'retrieve'})), 
+          views.ItemRequestGroupViewSet.as_view({'get': 'retrieve'})), 
      path('api/stockrequestgroups/<int:pk>/update',
-          views.StockRequestUpdateViewSet.as_view({'put': 'update'})),
+          views.ItemRequestUpdateViewSet.as_view({'put': 'update'})),
 
      # STOCK UNIT OF MEASURES
      path('api/basestockunit',

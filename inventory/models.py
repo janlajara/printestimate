@@ -3,7 +3,7 @@ from django.db.models import Q, Sum, Avg, Count
 from djmoney.models.fields import MoneyField
 from .exceptions import DepositTooBig, InsufficientStock, \
     InvalidExpireQuantity, IllegalUnboundedDeposit, IllegalWithdrawal, \
-    IllegalStockRequestOperation, IllegalStockRequestGroupOperation
+    IllegalItemRequestOperation, IllegalItemRequestGroupOperation
 import inflect
 
 _inflect = inflect.engine()
@@ -158,9 +158,9 @@ class Item(models.Model):
         sr_aggregate = StockRequest.objects.aggregate(
             requested_stocks=Sum('stock_unit__quantity',
                 filter=Q(stock_id__in=stock_ids, 
-                        status__in=[StockRequest.DRAFT, 
-                            StockRequest.FOR_APPROVAL,
-                            StockRequest.APPROVED])))
+                        item_request__status__in=[ItemRequest.DRAFT, 
+                            ItemRequest.FOR_APPROVAL,
+                            ItemRequest.APPROVED])))
         requested = sr_aggregate.get('requested_stocks') or 0
         return self.onhand_quantity - requested
 
@@ -204,6 +204,16 @@ class Item(models.Model):
                 available_stocks.append(stock)
         return available_stocks
 
+    def request(self, quantity, auto_populate=False):
+        request = ItemRequest.objects.create_request(item=self, 
+            quantity_needed=quantity)
+
+        if auto_populate and self.available_quantity > 0:
+            stock_requests = self.request_stock(quantity)
+            request.allocate_stocks(stock_requests)
+
+        return request
+
     def deposit_stock(self, brand_name, base_quantity, price, alt_quantity=1, unbounded=False):
         deposited = []
         if unbounded and alt_quantity > 1:
@@ -216,38 +226,35 @@ class Item(models.Model):
             deposited.append(stock)
         return deposited
 
+    # TO DELETE. Might not be necessary.
     def withdraw_stock(self, stock_request_id):
         stock_request = StockRequest.objects.get(pk=stock_request_id)
-        if stock_request.status == StockRequest.APPROVED:
+        item_request = stock_request.item_request
+        if item_request.status == ItemRequest.APPROVED:
             stock = stock_request.stock
             quantity = stock_request.stock_unit.quantity
             stock.withdraw(quantity)
-            stock_request.status = StockRequest.FULFILLED
-            stock_request.save()
         else:
-            raise IllegalWithdrawal(stock_request.status)
+            raise IllegalWithdrawal(item_request.status)
 
-    def request_stock(self, quantity, reason=None):
-        request_group = None
+    def request_stock(self, quantity):
+        stock_requests = []
+        target_quantity = min(self.available_quantity, quantity)
 
-        if self.available_quantity >= quantity:
-            stocks = Stock.objects.filter(item=self)
-            stocks_iter = stocks.iterator()
-            qty_counter = 0
-            stock_requests = []
+        stocks = Stock.objects.filter(item=self)
+        stocks_iter = stocks.iterator()
+        qty_counter = 0
 
-            while qty_counter < quantity:
-                stock = next(stocks_iter)
-                stock_qty = stock.available_quantity
-                qty_remaining = quantity - qty_counter
-                qty = qty_remaining % stock_qty if qty_remaining > stock_qty else qty_remaining
-                stock_request = stock.request(qty)
-                stock_requests.append(stock_request)
-                qty_counter += qty
-            request_group = StockRequestGroup.objects.create(reason=reason)
-            request_group.stock_requests.set(stock_requests)
+        while qty_counter < target_quantity:
+            stock = next(stocks_iter)
+            stock_qty = stock.available_quantity
+            qty_remaining = target_quantity - qty_counter
+            qty = qty_remaining % stock_qty if qty_remaining > stock_qty else qty_remaining
+            stock_request = stock.request(qty)
+            stock_requests.append(stock_request)
+            qty_counter += qty
 
-        return request_group
+        return stock_requests
 
     def return_stock(self, stock_id, quantity):
         stock = Stock.objects.get(pk=stock_id)
@@ -259,6 +266,232 @@ class Item(models.Model):
 
     def __str__(self):
         return self.full_name
+
+
+class ItemRequestGroup(models.Model):
+    OPEN = 'Open'
+    CLOSED = 'Closed'
+
+    finished = models.BooleanField(blank=True, default=False)
+    reason = models.CharField(max_length=100, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def status(self):
+        status = ItemRequestGroup.OPEN
+
+        aggregate = ItemRequest.objects.aggregate(
+            open=Count('status', 
+                filter=Q(status__in=[ItemRequest.DRAFT, ItemRequest.FOR_APPROVAL,
+                    ItemRequest.APPROVED], 
+                    item_request_group=self)),
+            closed=Count('status', 
+                filter=Q(status__in=[ItemRequest.FULFILLED, ItemRequest.CANCELLED], 
+                    item_request_group=self))
+        )
+        open = aggregate.get('open') or 0
+        closed = aggregate.get('closed') or 0
+        if closed > 0 and open == 0:
+            status = ItemRequestGroup.CLOSED
+
+        return status
+
+    def finish(self):
+        if self.status == ItemRequestGroup.CLOSED:
+            self.finished = True
+        else:
+            raise IllegalItemRequestGroupOperation(True, 
+                ItemRequestGroup.CLOSED)
+    
+    def unfinish(self):
+        if self.status == ItemRequestGroup.CLOSED:
+            self.finished = False
+        else:
+            raise IllegalItemRequestGroupOperation(False, 
+                ItemRequestGroup.CLOSED)
+
+
+class ItemRequestManager(models.Manager):
+    def create_request(self, **data):
+        item_request = self.create(**data)
+        request_log = ItemRequestLog.objects.create(
+                item_request=item_request, 
+                status=ItemRequest.DRAFT,
+                comments='New item request.')
+        return item_request
+
+
+class ItemRequest(models.Model):
+    DRAFT = 'DFT'
+    FOR_APPROVAL = 'FAP'
+    APPROVED = 'APP'
+    DISAPPROVED = 'DAP'
+    PARTIALLY_FULFILLED = 'PFL'
+    FULFILLED = 'FUL'
+    CANCELLED = 'CNL'
+    STATUS = [
+        (DRAFT, 'Draft'),
+        (FOR_APPROVAL, 'For Approval'),
+        (APPROVED, 'Approved'),
+        (DISAPPROVED, 'Disapproved'),
+        (PARTIALLY_FULFILLED, 'Partially Fulfilled'),
+        (FULFILLED, 'Fulfilled'),
+        (CANCELLED, 'Cancelled'),
+    ]
+
+    objects = ItemRequestManager()
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, 
+        null=False, related_name='item_request')
+    status = models.CharField(max_length=3, choices=STATUS, default='DFT')
+    item_request_group = models.ForeignKey(ItemRequestGroup, null=True, blank=True,
+        on_delete=models.RESTRICT, related_name='item_requests')
+    quantity_needed = models.IntegerField(null=False, blank=False)
+    created = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def is_fully_allocated(self):
+        return self.allocation_difference == 0
+
+    @property
+    def allocation_difference(self):
+        return max(self.quantity_needed - self.quantity_stocked, 0)
+
+    @property
+    def quantity_needed_formatted(self):
+        base_uom = self.item.base_uom
+        unit = base_uom.plural_abbrev
+        qty = self.quantity
+        if qty == 1:
+            unit = base_uom.abbrev
+        return '%s %s' % (f'{qty:,}', unit)
+
+    @property
+    def quantity_stocked(self):
+        aggregated = StockRequest.objects.aggregate(
+            quantity_stocked=Sum('stock_unit__quantity',
+                filter=Q(item_request=self)))
+        stocked = aggregated.get('quantity_stocked') or 0
+        return stocked
+
+    @property
+    def status_choices(self):
+        def _get(status_codes):
+            return [status for status in ItemRequest.STATUS if status[0] in status_codes]
+        choices_map = {
+            ItemRequest.DRAFT: 
+                _get([ItemRequest.FOR_APPROVAL, ItemRequest.CANCELLED]),
+            ItemRequest.FOR_APPROVAL: 
+                _get([ItemRequest.APPROVED, ItemRequest.DISAPPROVED, 
+                    ItemRequest.CANCELLED]),
+            ItemRequest.DISAPPROVED: 
+                _get([ItemRequest.CANCELLED]),
+            ItemRequest.CANCELLED: 
+                _get([ItemRequest.DRAFT]),
+            ItemRequest.PARTIALLY_FULFILLED:
+                _get([ItemRequest.FULFILLED]) if self.is_fully_allocated else
+                _get([ItemRequest.PARTIALLY_FULFILLED]),
+            ItemRequest.FULFILLED: []
+        }
+        if self.is_fully_allocated:
+            choices_map[ItemRequest.APPROVED] = _get([ItemRequest.FULFILLED, ItemRequest.CANCELLED])
+        elif self.allocation_difference > 0:
+            choices_map[ItemRequest.APPROVED] = _get([ItemRequest.PARTIALLY_FULFILLED, ItemRequest.CANCELLED])
+        else:
+            choices_map[ItemRequest.APPROVED] = _get([ItemRequest.CANCELLED])
+
+        return choices_map[self.status]
+
+    def allocate_stocks(self, stock_requests):
+        self.stock_requests.set(stock_requests)
+
+    def draft(self, comments=None):
+        if self.status == ItemRequest.CANCELLED:
+            self.status = ItemRequest.DRAFT
+            self.save()
+            self._create_log(self.status, comments)
+        else:
+            raise IllegalItemRequestOperation(
+                ItemRequest.CANCELLED, self.status, 
+                ItemRequest.DRAFT)
+
+    def for_approval(self, comments=None):
+        if self.status == ItemRequest.DRAFT:
+            self.status = ItemRequest.FOR_APPROVAL
+            self.save()
+            self._create_log(self.status, comments)
+        else:
+            raise IllegalItemRequestOperation(
+                ItemRequest.DRAFT, self.status, 
+                ItemRequest.FOR_APPROVAL)
+
+    def approve(self, comments=None):
+        if self.status == ItemRequest.FOR_APPROVAL:
+            self.status = ItemRequest.APPROVED
+            self.save()
+            self._create_log(self.status, comments)
+        else:
+            raise IllegalItemRequestOperation(
+                ItemRequest.FOR_APPROVAL, self.status, 
+                ItemRequest.APPROVED)
+    
+    def disapprove(self, comments=None):
+        if self.status == ItemRequest.FOR_APPROVAL:
+            self.status = ItemRequest.DISAPPROVED
+            self.save()
+            self._create_log(self.status, comments)
+        else:  
+            raise IllegalItemRequestOperation(
+                ItemRequest.FOR_APPROVAL, self.status,
+                ItemRequest.DISAPPROVED)
+
+    def cancel(self, comments=None):
+        expected_statuses = [ItemRequest.DRAFT, 
+            ItemRequest.FOR_APPROVAL, 
+            ItemRequest.APPROVED, ItemRequest.DISAPPROVED]
+        if self.status in expected_statuses:
+            self.status = ItemRequest.CANCELLED
+            self.save()
+            self._create_log(self.status, comments)
+        else:
+            raise IllegalItemRequestOperation(
+                expected_statuses, self.status,
+                ItemRequest.CANCELLED) 
+
+    def partially_fulfill(self, comments=None):
+        if self.status in [ItemRequest.APPROVED, ItemRequest.PARTIALLY_FULFILLED]:
+            self.status = ItemRequest.PARTIALLY_FULFILLED
+            self.save()
+            self._create_log(self.status, comments)
+        else:
+            raise IllegalItemRequestOperation(
+                ItemRequest.APPROVED, self.status,
+                ItemRequest.PARTIALLY_FULFILLED) 
+
+    def fulfill(self, comments=None):
+        if self.status in [ItemRequest.APPROVED, ItemRequest.PARTIALLY_FULFILLED]:
+            self.status = ItemRequest.FULFILLED
+            self.save()
+            self._create_log(self.status, comments)
+        else:
+            raise IllegalItemRequestOperation(
+                ItemRequest.APPROVED, self.status,
+                ItemRequest.FULFILLED) 
+
+    def _create_log(self, status, comments=None):
+        if status is not None:
+            request_log = ItemRequestLog.objects.create(
+                item_request=self, status=status,
+                comments=comments)
+            return request_log
+
+
+class ItemRequestLog(models.Model):
+    item_request = models.ForeignKey(ItemRequest, 
+        on_delete=models.CASCADE, related_name='item_request_logs')
+    status = models.CharField(max_length=3, 
+        choices=ItemRequest.STATUS, null=False, blank=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    comments = models.TextField(null=True, blank=True)
 
 
 class StockManager(models.Manager):
@@ -309,10 +542,10 @@ class Stock(models.Model):
     def available_quantity(self):
         aggregate = StockRequest.objects.aggregate(
             requested_quantity=Sum('stock_unit__quantity',
-                filter=Q(stock=self, status__in=[
-                    StockRequest.DRAFT,
-                    StockRequest.FOR_APPROVAL, 
-                    StockRequest.APPROVED])))
+                filter=Q(stock=self, item_request__status__in=[
+                    ItemRequest.DRAFT,
+                    ItemRequest.FOR_APPROVAL, 
+                    ItemRequest.APPROVED])))
         requested = aggregate.get('requested_quantity', 0) or 0
         return self.onhand_quantity - requested
 
@@ -383,8 +616,7 @@ class Stock(models.Model):
 
     def _create_request(self, quantity):
         stock_unit = StockUnit.objects.create(quantity=quantity)
-        stock_request = StockRequest.objects.create_request(status=StockRequest.DRAFT,
-                                                    stock=self, stock_unit=stock_unit)
+        stock_request = StockRequest.objects.create(stock=self, stock_unit=stock_unit)
         return stock_request
 
 
@@ -407,178 +639,10 @@ class StockLog(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
 
-class StockRequestGroup(models.Model):
-    OPEN = 'Open'
-    CLOSED = 'Closed'
-
-    finished = models.BooleanField(blank=True, default=False)
-    reason = models.CharField(max_length=100, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    @property
-    def status(self):
-        status = StockRequestGroup.OPEN
-
-        aggregate = StockRequest.objects.aggregate(
-            open=Count('status', 
-                filter=Q(status__in=[StockRequest.DRAFT, StockRequest.FOR_APPROVAL,
-                    StockRequest.APPROVED], 
-                    stock_request_group=self)),
-            closed=Count('status', 
-                filter=Q(status__in=[StockRequest.FULFILLED, StockRequest.CANCELLED], 
-                    stock_request_group=self))
-        )
-        open = aggregate.get('open') or 0
-        closed = aggregate.get('closed') or 0
-        if closed > 0 and open == 0:
-            status = StockRequestGroup.CLOSED
-
-        return status
-
-    def finish(self):
-        if self.status == StockRequestGroup.CLOSED:
-            self.finished = True
-        else:
-            raise IllegalStockRequestGroupOperation(True, 
-                StockRequestGroup.CLOSED)
-    
-    def unfinish(self):
-        if self.status == StockRequestGroup.CLOSED:
-            self.finished = False
-        else:
-            raise IllegalStockRequestGroupOperation(False, 
-                StockRequestGroup.CLOSED)
-
-
-class StockRequestManager(models.Manager):
-    def create_request(self, **data):
-        stock_request = self.create(**data)
-        request_log = StockRequestLog.objects.create(
-                stock_request=stock_request, 
-                status=StockRequest.DRAFT,
-                comments='New stock request.')
-        return stock_request
-
-
 class StockRequest(StockLog):
-    DRAFT = 'DFT'
-    FOR_APPROVAL = 'FAP'
-    APPROVED = 'APP'
-    DISAPPROVED = 'DAP'
-    FULFILLED = 'FUL'
-    CANCELLED = 'CNL'
-    STATUS = [
-        (DRAFT, 'Draft'),
-        (FOR_APPROVAL, 'For Approval'),
-        (APPROVED, 'Approved'),
-        (DISAPPROVED, 'Disapproved'),
-        (FULFILLED, 'Fulfilled'),
-        (CANCELLED, 'Cancelled'),
-    ]
-    objects = StockRequestManager()
-    status = models.CharField(max_length=3, choices=STATUS, default='DFT')
-    stock_request_group = models.ForeignKey(StockRequestGroup, null=True, blank=True,
-        on_delete=models.RESTRICT, related_name='stock_requests')
+    item_request = models.ForeignKey(ItemRequest, on_delete=models.RESTRICT, 
+        blank=True, null=True, related_name='stock_requests')
     last_modified = models.DateTimeField(auto_now=True)
-
-    @property
-    def status_choices(self):
-        def _get(status_codes):
-            return [status for status in StockRequest.STATUS if status[0] in status_codes]
-        choices_map = {
-            StockRequest.DRAFT: 
-                _get([StockRequest.FOR_APPROVAL, StockRequest.CANCELLED]),
-            StockRequest.FOR_APPROVAL: 
-                _get([StockRequest.APPROVED, StockRequest.DISAPPROVED, 
-                    StockRequest.CANCELLED]),
-            StockRequest.APPROVED: 
-                _get([StockRequest.FULFILLED, StockRequest.CANCELLED]),
-            StockRequest.DISAPPROVED: 
-                _get([StockRequest.CANCELLED]),
-            StockRequest.CANCELLED: 
-                _get([StockRequest.DRAFT]),
-            StockRequest.FULFILLED: []
-        }
-        return choices_map[self.status]
-
-    def draft(self, comments=None):
-        if self.status == StockRequest.CANCELLED:
-            self.status = StockRequest.DRAFT
-            self.save()
-            self._create_log(self.status, comments)
-        else:
-            raise IllegalStockRequestOperation(
-                StockRequest.CANCELLED, self.status, 
-                StockRequest.DRAFT)
-
-    def for_approval(self, comments=None):
-        if self.status == StockRequest.DRAFT:
-            self.status = StockRequest.FOR_APPROVAL
-            self.save()
-            self._create_log(self.status, comments)
-        else:
-            raise IllegalStockRequestOperation(
-                StockRequest.DRAFT, self.status, 
-                StockRequest.FOR_APPROVAL)
-
-    def approve(self, comments=None):
-        if self.status == StockRequest.FOR_APPROVAL:
-            self.status = StockRequest.APPROVED
-            self.save()
-            self._create_log(self.status, comments)
-        else:
-            raise IllegalStockRequestOperation(
-                StockRequest.FOR_APPROVAL, self.status, 
-                StockRequest.APPROVED)
-    
-    def disapprove(self, comments=None):
-        if self.status == StockRequest.FOR_APPROVAL:
-            self.status = StockRequest.DISAPPROVED
-            self.save()
-            self._create_log(self.status, comments)
-        else:  
-            raise IllegalStockRequestOperation(
-                StockRequest.FOR_APPROVAL, self.status,
-                StockRequest.DISAPPROVED)
-
-    def cancel(self, comments=None):
-        expected_statuses = [StockRequest.DRAFT, 
-            StockRequest.FOR_APPROVAL, 
-            StockRequest.APPROVED, StockRequest.DISAPPROVED]
-        if self.status in expected_statuses:
-            self.status = StockRequest.CANCELLED
-            self.save()
-            self._create_log(self.status, comments)
-        else:
-            raise IllegalStockRequestOperation(
-                expected_statuses, self.status,
-                StockRequest.CANCELLED) 
-    
-    def fulfill(self, comments=None):
-        if self.status == StockRequest.APPROVED:
-            self.status = StockRequest.FULFILLED
-            self.save()
-            self._create_log(self.status, comments)
-        else:
-            raise IllegalStockRequestOperation(
-                StockRequest.APPROVED, self.status,
-                StockRequest.FULFILLED) 
-
-    def _create_log(self, status, comments=None):
-        if status is not None:
-            request_log = StockRequestLog.objects.create(
-                stock_request=self, status=status,
-                comments=comments)
-            return request_log
-
-
-class StockRequestLog(models.Model):
-    stock_request = models.ForeignKey(StockRequest, 
-        on_delete=models.CASCADE, related_name='stock_request_logs')
-    status = models.CharField(max_length=3, 
-        choices=StockRequest.STATUS, null=False, blank=False)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    comments = models.TextField(null=True, blank=True)
 
 
 class StockMovement(StockLog):

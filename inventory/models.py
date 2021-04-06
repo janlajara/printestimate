@@ -204,11 +204,11 @@ class Item(models.Model):
                 available_stocks.append(stock)
         return available_stocks
 
-    def request(self, quantity, auto_populate=False):
+    def request(self, quantity, auto_assign=False):
         request = ItemRequest.objects.create_request(item=self, 
             quantity_needed=quantity)
 
-        if auto_populate and self.available_quantity > 0:
+        if auto_assign and self.available_quantity > 0:
             stock_requests = self.request_stock(quantity)
             request.allocate_stocks(stock_requests)
 
@@ -227,15 +227,15 @@ class Item(models.Model):
         return deposited
 
     # TO DELETE. Might not be necessary.
-    def withdraw_stock(self, stock_request_id):
-        stock_request = StockRequest.objects.get(pk=stock_request_id)
-        item_request = stock_request.item_request
-        if item_request.status == ItemRequest.APPROVED:
-            stock = stock_request.stock
-            quantity = stock_request.stock_unit.quantity
-            stock.withdraw(quantity)
-        else:
-            raise IllegalWithdrawal(item_request.status)
+    #def withdraw_stock(self, stock_request_id):
+    #    stock_request = StockRequest.objects.get(pk=stock_request_id)
+    #    item_request = stock_request.item_request
+    #    if item_request.status == ItemRequest.APPROVED:
+    #        stock = stock_request.stock
+    #        quantity = stock_request.stock_unit.quantity
+    #        stock.withdraw(quantity)
+    #    else:
+    #        raise IllegalWithdrawal(item_request.status)
 
     def request_stock(self, quantity):
         stock_requests = []
@@ -283,7 +283,7 @@ class ItemRequestGroup(models.Model):
         aggregate = ItemRequest.objects.aggregate(
             open=Count('status', 
                 filter=Q(status__in=[ItemRequest.DRAFT, ItemRequest.FOR_APPROVAL,
-                    ItemRequest.APPROVED], 
+                    ItemRequest.APPROVED, ItemRequest.PARTIALLY_FULFILLED], 
                     item_request_group=self)),
             closed=Count('status', 
                 filter=Q(status__in=[ItemRequest.FULFILLED, ItemRequest.CANCELLED], 
@@ -350,20 +350,28 @@ class ItemRequest(models.Model):
 
     @property
     def is_fully_allocated(self):
-        return self.allocation_difference == 0
+        return self.missing_allocation == 0
 
     @property
-    def allocation_difference(self):
+    def missing_allocation(self):
         return max(self.quantity_needed - self.quantity_stocked, 0)
 
     @property
+    def missing_allocation_formatted(self):
+        return self._format_quantity(self.missing_allocation)
+
+    @property
+    def unfulfilled_stock_requests(self):
+        return StockRequest.objects.filter(item_request=self, is_fulfilled=False)
+
+    @property
+    def allocation_rate(self):
+        allocated = (self.quantity_needed_formatted - self.missing_allocation)
+        return allocated / self.quantity_needed_formatted
+
+    @property
     def quantity_needed_formatted(self):
-        base_uom = self.item.base_uom
-        unit = base_uom.plural_abbrev
-        qty = self.quantity
-        if qty == 1:
-            unit = base_uom.abbrev
-        return '%s %s' % (f'{qty:,}', unit)
+        return self._format_quantity(self.quantity)
 
     @property
     def quantity_stocked(self):
@@ -372,6 +380,10 @@ class ItemRequest(models.Model):
                 filter=Q(item_request=self)))
         stocked = aggregated.get('quantity_stocked') or 0
         return stocked
+
+    @property
+    def quantity_stocked_formatted(self):
+        return self._format_quantity(self.quantity_stocked)
 
     @property
     def status_choices(self):
@@ -394,7 +406,7 @@ class ItemRequest(models.Model):
         }
         if self.is_fully_allocated:
             choices_map[ItemRequest.APPROVED] = _get([ItemRequest.FULFILLED, ItemRequest.CANCELLED])
-        elif self.allocation_difference > 0:
+        elif self.missing_allocation > 0 and self.quantity_stocked > 0:
             choices_map[ItemRequest.APPROVED] = _get([ItemRequest.PARTIALLY_FULFILLED, ItemRequest.CANCELLED])
         else:
             choices_map[ItemRequest.APPROVED] = _get([ItemRequest.CANCELLED])
@@ -402,7 +414,13 @@ class ItemRequest(models.Model):
         return choices_map[self.status]
 
     def allocate_stocks(self, stock_requests):
-        self.stock_requests.set(stock_requests)
+        if not self.is_fully_allocated:
+            for stock_request in stock_requests:
+                self.stock_requests.add(stock_request)
+        else:
+            raise IllegalItemRequestOperation(
+                message="Cannot allocate more stocks. %s are already allocated"
+                    % self.quantity_stocked_formatted)
 
     def draft(self, comments=None):
         if self.status == ItemRequest.CANCELLED:
@@ -459,9 +477,24 @@ class ItemRequest(models.Model):
 
     def partially_fulfill(self, comments=None):
         if self.status in [ItemRequest.APPROVED, ItemRequest.PARTIALLY_FULFILLED]:
-            self.status = ItemRequest.PARTIALLY_FULFILLED
-            self.save()
-            self._create_log(self.status, comments)
+            if len(self.unfulfilled_stock_requests) == 0:
+                raise IllegalItemRequestOperation(
+                    message="There are no stock requests to fulfill.")
+
+            if self.missing_allocation > 0 and self.quantity_stocked > 0:
+                fulfilled = []
+                for stock_request in self.unfulfilled_stock_requests:
+                    stock_request.fulfill()
+                    fulfilled.append(stock_request)
+
+                self.status = ItemRequest.PARTIALLY_FULFILLED
+                self.save()
+                self._create_log(self.status, comments)
+
+                return fulfilled
+            else:
+                raise IllegalItemRequestOperation(
+                    message="Cannot proceed. Item request must only be partially allocated.")
         else:
             raise IllegalItemRequestOperation(
                 ItemRequest.APPROVED, self.status,
@@ -469,9 +502,25 @@ class ItemRequest(models.Model):
 
     def fulfill(self, comments=None):
         if self.status in [ItemRequest.APPROVED, ItemRequest.PARTIALLY_FULFILLED]:
-            self.status = ItemRequest.FULFILLED
-            self.save()
-            self._create_log(self.status, comments)
+            if len(self.unfulfilled_stock_requests) == 0:
+                raise IllegalItemRequestOperation(
+                    message="There are no stock requests to fulfill.")
+
+            if self.is_fully_allocated:
+                fulfilled = []
+                for stock_request in self.unfulfilled_stock_requests:
+                    stock_request.fulfill()
+                    fulfilled.append(stock_request)
+
+                self.status = ItemRequest.FULFILLED
+                self.save()
+                self._create_log(self.status, comments)
+
+                return fulfilled
+            else:
+                raise IllegalItemRequestOperation(
+                    message="Cannot fulfill request when stock is not fully allocated. Missing %s." \
+                        % self.missing_allocation_formatted)
         else:
             raise IllegalItemRequestOperation(
                 ItemRequest.APPROVED, self.status,
@@ -483,6 +532,13 @@ class ItemRequest(models.Model):
                 item_request=self, status=status,
                 comments=comments)
             return request_log
+
+    def _format_quantity(self, quantity):
+        base_uom = self.item.base_uom
+        unit = base_uom.plural_abbrev
+        if quantity == 1:
+            unit = base_uom.abbrev
+        return '%s %s' % (f'{quantity:,}', unit)
 
 
 class ItemRequestLog(models.Model):
@@ -634,15 +690,24 @@ class StockUnit(models.Model):
 
 
 class StockLog(models.Model):
-    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name="stock_log")
-    stock_unit = models.OneToOneField(StockUnit, on_delete=models.CASCADE, related_name='stock_log')
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, 
+        related_name="stock_log")
+    stock_unit = models.OneToOneField(StockUnit, on_delete=models.CASCADE, 
+        related_name='stock_log')
     created = models.DateTimeField(auto_now_add=True)
 
 
 class StockRequest(StockLog):
     item_request = models.ForeignKey(ItemRequest, on_delete=models.RESTRICT, 
         blank=True, null=True, related_name='stock_requests')
+    is_fulfilled = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
+
+    def fulfill(self):
+        if not self.is_fulfilled:
+            self.is_fulfilled = True
+            quantity = self.stock_unit.quantity
+            self.stock.withdraw(quantity)
 
 
 class StockMovement(StockLog):

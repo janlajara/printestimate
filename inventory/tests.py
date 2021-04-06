@@ -178,35 +178,34 @@ def test_item__deposit_multiple_stocks(db, item: Item):
 
 def test_item__request_stock_greater_quantity(db, item: Item):
     item.deposit_stock('Generic', 500, 1000, 2)
-    stock_requests = item.request_stock(600).stock_requests.all()
+    item_request = item.request(600, True)
     assert item.available_quantity == 400
     assert item.onhand_quantity == 1000
-    assert len(stock_requests) == 2
+    assert len(item_request.stock_requests.all()) == 2
 
 
 def test_item__request_stock_lesser_quantity(db, item: Item):
     item.deposit_stock('Generic', 500, 1000, 2)
-    stock_requests = item.request_stock(400).stock_requests.all()
+    item_request = item.request(400, True)
     assert item.available_quantity == 600
     assert item.onhand_quantity == 1000
-    assert len(stock_requests) == 1
+    assert len(item_request.stock_requests.all()) == 1
 
 
-def test_item__request_and_withdraw(db, item: Item):
+def test_item__request_and_fulfill(db, item: Item):
     stock = item.deposit_stock('Generic', 500, 1000)[0]
     item_request_group = ItemRequestGroup.objects.create()
     item_request = item.request(250, True)
     item_request_group.item_requests.set([item_request])
+    assert item_request.is_fully_allocated == True
 
     item_request.for_approval()
     item_request.approve()
+    stock_requests = item_request.fulfill()
 
-    stock_request = item_requests.stock_requests.first()
-    item.withdraw_stock(stock_request.id)
-    
-    stock_request.refresh_from_db()
-    assert stock_request_group.status == ItemRequestGroup.CLOSED
-    assert stock_request.status == ItemRequest.FULFILLED
+    assert stock_requests[0].is_fulfilled == True
+    assert item_request.status == ItemRequest.FULFILLED
+    assert item_request_group.status == ItemRequestGroup.CLOSED
     assert item.onhand_quantity == 250
     assert item.available_quantity == 250
 
@@ -216,55 +215,53 @@ def test_item__request_approve_disapprove(db, item: Item):
         for choice in actual_choices:
             assert choice[0] in expected_choices
 
-    stock = item.deposit_stock('Generic', 500, 1000)[0]
-    stock_request_group = item.request_stock(250)
-    stock_request = stock_request_group.stock_requests.first()
-    assert stock_request.stock_request_logs.first().status == StockRequest.DRAFT
+    item.deposit_stock('Generic', 500, 1000)[0]
+    item_request = item.request(250, True)
+    assert item_request.status == ItemRequest.DRAFT
     
-    stock_request.for_approval()
-    assert stock_request.status == StockRequest.FOR_APPROVAL
+    item_request.for_approval()
+    assert item_request.status == ItemRequest.FOR_APPROVAL
     assert_status_choices(
-        stock_request.status_choices,
-        [StockRequest.APPROVED, StockRequest.DISAPPROVED, 
-            StockRequest.CANCELLED])
+        item_request.status_choices,
+        [ItemRequest.APPROVED, ItemRequest.DISAPPROVED, 
+            ItemRequest.CANCELLED])
 
-    stock_request.disapprove()
-    assert stock_request.status == StockRequest.DISAPPROVED
+    item_request.disapprove()
+    assert item_request.status == ItemRequest.DISAPPROVED
     assert_status_choices(
-        stock_request.status_choices,
-        [StockRequest.CANCELLED])
+        item_request.status_choices,
+        [ItemRequest.CANCELLED])
 
-    stock_request.cancel()
-    assert stock_request.status == StockRequest.CANCELLED
+    item_request.cancel()
+    assert item_request.status == ItemRequest.CANCELLED
     assert_status_choices(
-        stock_request.status_choices,
-        [StockRequest.DRAFT])
+        item_request.status_choices,
+        [ItemRequest.DRAFT])
 
-    stock_request.draft()
-    assert stock_request.status == StockRequest.DRAFT
+    item_request.draft()
+    assert item_request.status == ItemRequest.DRAFT
     assert_status_choices(
-        stock_request.status_choices,
-        [StockRequest.FOR_APPROVAL, StockRequest.CANCELLED])
+        item_request.status_choices,
+        [ItemRequest.FOR_APPROVAL, ItemRequest.CANCELLED])
 
-    stock_request.for_approval()
-    stock_request.approve()
-    assert stock_request.status == StockRequest.APPROVED
+    item_request.for_approval()
+    item_request.approve()
+    assert item_request.status == ItemRequest.APPROVED
     assert_status_choices(
-        stock_request.status_choices,
-        [StockRequest.FULFILLED, StockRequest.CANCELLED])
+        item_request.status_choices,
+        [ItemRequest.FULFILLED, ItemRequest.CANCELLED])
 
-    stock_request.fulfill()
-    assert stock_request.status == StockRequest.FULFILLED
-    assert len(stock_request.status_choices) == 0
+    item_request.fulfill()
+    assert item_request.status == ItemRequest.FULFILLED
+    assert len(item_request.status_choices) == 0
 
-    assert len(stock_request.stock_request_logs.all()) == 8
+    assert len(item_request.item_request_logs.all()) == 8
     
 
 def test_item__request_illegal(db, item: Item):
     stock = item.deposit_stock('Generic', 500, 1000)[0]
     item_request_group = ItemRequestGroup.objects.create()
-    item_request = item.request(250, True)
-    stock_requests = item_request.stock_requests.all()
+    item_request = item.request(250)
     item_request_group.item_requests.set([item_request])
 
     with pytest.raises(IllegalItemRequestGroupOperation):
@@ -277,12 +274,29 @@ def test_item__request_illegal(db, item: Item):
     with pytest.raises(IllegalItemRequestOperation):
         item_request.approve()
     with pytest.raises(IllegalItemRequestOperation):
+        item_request.partially_fulfill()
+    with pytest.raises(IllegalItemRequestOperation):
         item_request.fulfill()
     with pytest.raises(IllegalItemRequestOperation):
         item_request.disapprove()
 
     item_request.for_approval()
     item_request.approve()
+
+    with pytest.raises(IllegalItemRequestOperation):
+        item_request.partially_fulfill()
+
+    item_request.allocate_stocks([stock.request(100)])
+    item_request.partially_fulfill()
+    assert len(item_request.unfulfilled_stock_requests) == 1
+    assert item_request.missing_allocation == 150
+
+    with pytest.raises(IllegalItemRequestOperation):
+        item_request.fulfill()
+
+    item_request.allocate_stocks([stock.request(150)])
+    assert item_request.quantity_stocked == 250
+    assert item_request.is_fully_allocated == True
     item_request.fulfill()
 
     with pytest.raises(IllegalItemRequestOperation):
@@ -298,11 +312,10 @@ def test_item__request_illegal(db, item: Item):
 
 def test_item_return_stock(db, item: Item):
     stock = item.deposit_stock('Generic', 500, 1000)[0]
-    stock_request = item.request_stock(250).stock_requests.first()
-    stock_request.for_approval()
-    stock_request.approve()
-
-    item.withdraw_stock(stock_request.id)
+    item_request = item.request(250, True)
+    item_request.for_approval()
+    item_request.approve()
+    item_request.fulfill()
     item.return_stock(stock.id, 125)
     assert item.available_quantity == 375
     assert item.onhand_quantity == 375
@@ -328,11 +341,6 @@ def test_stock__price_per_quantity(db, stock: Stock):
     assert stock.price_per_quantity.amount == 1
 
 
-def test_stock__available_quantity(db, deposited_stock: Stock):
-    deposited_stock.request(100)
-    assert deposited_stock.available_quantity == 400
-
-
 def test_stock__deposit_too_big(db, stock: Stock):
     with pytest.raises(DepositTooBig):
         stock.deposit(501)
@@ -347,18 +355,6 @@ def test_stock__withdraw(db, deposited_stock: Stock):
 def test_stock__withdraw_insufficient_stock(db, deposited_stock: Stock):
     with pytest.raises(InsufficientStock):
         deposited_stock.withdraw(501)
-
-
-def test_stock__request(db, deposited_stock: Stock):
-    deposited_stock.request(100)
-    assert deposited_stock.available_quantity == 400
-    assert deposited_stock.onhand_quantity == 500
-
-
-def test_stock__request_insufficient_stock(db, deposited_stock: Stock):
-    deposited_stock.request(100)
-    with pytest.raises(InsufficientStock):
-        deposited_stock.request(500)
 
 
 def test_stock__return_too_big(db, deposited_stock: Stock):
@@ -398,12 +394,12 @@ def test_item_stock_unbounded__illegal_deposit(db, item: Item):
         deposited = item.deposit_stock('Generic', 500, 1, 5, True)
 
 
-def test_item_stock__illegal_withdraw(db, item: Item):
-    with pytest.raises(IllegalWithdrawal):
-        item.deposit_stock('Generic', 500, 1, 1, True)
-        stock_request = item.request_stock(10).stock_requests.first()
-        stock_request.cancel()
-        item.withdraw_stock(stock_request.id)
+#def test_item_stock__illegal_withdraw(db, item: Item):
+#    with pytest.raises(IllegalWithdrawal):
+#        item.deposit_stock('Generic', 500, 1, 1, True)
+#        item_request = item.request_stock(10, True)
+#        item_request.cancel()
+#        item.withdraw_stock(stock_request.id)
 
 
 def test_item__tape(db, item_factory):

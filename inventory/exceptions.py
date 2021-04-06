@@ -34,9 +34,12 @@ class IllegalWithdrawal(Exception):
 
 
 class IllegalItemRequestOperation(Exception):
-    def __init__(self, from_expected, from_actual, to):
-        self.message = 'Cannot change the status of stock request from %s to %s. Expected from status is %s.' % \
-            (from_actual, to, from_expected)
+    def __init__(self, from_expected=None, from_actual=None, to=None, message=None):
+        if message is not None:
+            self.message = message
+        else:
+            self.message = 'Cannot change the status of stock request from %s to %s. Expected from status is %s.' % \
+                (from_actual, to, from_expected)
         super().__init__(self.message)
 
 

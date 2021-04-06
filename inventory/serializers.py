@@ -295,7 +295,7 @@ class ItemRequestSerializer(serializers.ModelSerializer):
         model = ItemRequest
         fields = ['id', 'item_id', 'item_name', 'status', 'status_choices', 
             'quantity_needed', 'quantity_needed_formatted', 'quantity_stocked', 
-            'is_fully_allocated', 'created']
+            'is_fully_allocated', 'missing_allocation', 'allocation_rate', 'created']
 
     def get_item_id(self, obj):
         return obj.item.id

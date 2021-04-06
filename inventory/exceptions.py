@@ -25,12 +25,12 @@ class IllegalUnboundedDeposit(Exception):
             alt_quantity
         super().__init__(self.message)
 
-
-class IllegalWithdrawal(Exception):
-    def __init__(self, status):
-        self.message = 'Cannot fulfill stock request with status of %s. Expected status is Approved.' % \
-            status
-        super().__init__(self.message)
+# Might not be needed anymore
+#class IllegalWithdrawal(Exception):
+#    def __init__(self, status):
+#        self.message = 'Cannot fulfill stock request with status of %s. Expected status is Approved.' % \
+#            status
+#        super().__init__(self.message)
 
 
 class IllegalItemRequestOperation(Exception):

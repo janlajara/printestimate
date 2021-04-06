@@ -145,12 +145,10 @@ class ItemWithdrawStocksViewSet(viewsets.ViewSet):
             total_quantity = sum(stock_request.stock_unit.quantity 
                 for stock_request in stock_requests)
             item_request = item.request(total_quantity)
-            item_request.stock_requests.set(stock_requests)
-            item_request.save()
+            item_request.allocate_stocks(stock_requests)
 
             item_request_group = ItemRequestGroup.objects.create(reason=reason)
-            item_request_group.item_requests.set(item_request)
-            item_request_group.save()
+            item_request_group.item_requests.add(item_request)
 
             serialized = serializers.ItemRequestGroupSerializer(item_request_group)
             return Response(serialized.data) 

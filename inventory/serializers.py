@@ -283,19 +283,42 @@ class StockUnitSerializer(serializers.ModelSerializer):
         fields = ['id', 'quantity', 'quantity_formatted']
 
 
+class StockRequestSerializer(serializers.ModelSerializer):
+    stock_name = serializers.SerializerMethodField()
+    quantity = serializers.SerializerMethodField()
+    quantity_formatted = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StockRequest
+        fields = ['id', 'stock', 'stock_name', 'is_fulfilled', 
+            'quantity', 'quantity_formatted']
+
+    def get_stock_name(self, obj):
+        return obj.stock.brand_name
+    
+    def get_quantity(self, obj):
+        return obj.stock_unit.quantity
+    
+    def get_quantity_formatted(self, obj):
+        return obj.stock_unit.quantity_formatted
+
+
 class ItemRequestSerializer(serializers.ModelSerializer):
     item_id = serializers.SerializerMethodField()
     item_name = serializers.SerializerMethodField()
     status = serializers.CharField(source='get_status_display') 
     status_choices = serializers.SerializerMethodField()
-        
+    stock_requests = StockRequestSerializer(many=True)
     created = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
 
     class Meta:
         model = ItemRequest
         fields = ['id', 'item_id', 'item_name', 'status', 'status_choices', 
-            'quantity_needed', 'quantity_needed_formatted', 'quantity_stocked', 
-            'is_fully_allocated', 'missing_allocation', 'allocation_rate', 'created']
+            'quantity_needed', 'quantity_needed_formatted', 
+            'quantity_stocked', 'quantity_stocked_formatted',
+            'is_fully_allocated', 'allocation_rate',
+            'missing_allocation', 'missing_allocation_formatted', 
+            'stock_requests', 'created']
 
     def get_item_id(self, obj):
         return obj.item.id

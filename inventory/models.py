@@ -2,8 +2,8 @@ from django.db import models
 from django.db.models import Q, Sum, Avg, Count
 from djmoney.models.fields import MoneyField
 from .exceptions import DepositTooBig, InsufficientStock, \
-    InvalidExpireQuantity, IllegalUnboundedDeposit, IllegalWithdrawal, \
-    IllegalItemRequestOperation, IllegalItemRequestGroupOperation
+    InvalidExpireQuantity, IllegalUnboundedDeposit, \
+        IllegalItemRequestOperation, IllegalItemRequestGroupOperation
 import inflect
 
 _inflect = inflect.engine()
@@ -361,17 +361,21 @@ class ItemRequest(models.Model):
         return self._format_quantity(self.missing_allocation)
 
     @property
+    def stock_requests(self):
+        return StockRequest.objects.filter(item_request=self)
+
+    @property
     def unfulfilled_stock_requests(self):
         return StockRequest.objects.filter(item_request=self, is_fulfilled=False)
 
     @property
     def allocation_rate(self):
-        allocated = (self.quantity_needed_formatted - self.missing_allocation)
-        return allocated / self.quantity_needed_formatted
+        allocated = (self.quantity_needed - self.missing_allocation)
+        return allocated / self.quantity_needed
 
     @property
     def quantity_needed_formatted(self):
-        return self._format_quantity(self.quantity)
+        return self._format_quantity(self.quantity_needed)
 
     @property
     def quantity_stocked(self):

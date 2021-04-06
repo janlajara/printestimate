@@ -22,7 +22,7 @@ urlpatterns = [
           views.ItemWithdrawStocksViewSet.as_view({'post': 'create'})),
      path('api/items/<int:pk>/stocks/history',
           views.StockMovementViewSet.as_view({'get': 'list'})),
-     path('api/items/<int:pk>/stockrequests/list',
+     path('api/items/<int:pk>/itemrequestgroups/list',
           views.ItemRequestGroupItemDetailViewSet.as_view({'get': 'list'})),
 
      # ITEM PROPERTIES
@@ -32,11 +32,11 @@ urlpatterns = [
           views.ItemPropertiesViewSet.as_view(GETRETRIEVE_PUTUPDATE_POSTDESTROY)),
 
      # STOCKS REQUEST GROUP
-     path('api/stockrequestgroups/list',
+     path('api/itemrequestgroups/list',
           views.ItemRequestGroupViewSet.as_view({'get': 'list'})),
-     path('api/stockrequestgroups/<int:pk>/',
+     path('api/itemrequestgroups/<int:pk>/',
           views.ItemRequestGroupViewSet.as_view({'get': 'retrieve'})), 
-     path('api/stockrequestgroups/<int:pk>/update',
+     path('api/itemrequestgroups/<int:pk>/update',
           views.ItemRequestUpdateViewSet.as_view({'put': 'update'})),
 
      # STOCK UNIT OF MEASURES

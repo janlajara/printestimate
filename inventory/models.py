@@ -279,7 +279,22 @@ class ItemRequestGroup(models.Model):
     @property
     def status(self):
         status = ItemRequestGroup.OPEN
+        aggregate = self._get_item_request_aggregate()
+        if aggregate.get('closed') > 0 and aggregate.get('open') == 0:
+            status = ItemRequestGroup.CLOSED
 
+        return status
+
+    @property
+    def progress_rate(self):
+        aggregate = self._get_item_request_aggregate()
+        total = aggregate.get('open') + aggregate.get('closed')
+        if total > 0:
+            return aggregate.get('open') / total
+        else:
+            return 0
+
+    def _get_item_request_aggregate(self):
         aggregate = ItemRequest.objects.aggregate(
             open=Count('status', 
                 filter=Q(status__in=[ItemRequest.DRAFT, ItemRequest.FOR_APPROVAL,
@@ -291,10 +306,10 @@ class ItemRequestGroup(models.Model):
         )
         open = aggregate.get('open') or 0
         closed = aggregate.get('closed') or 0
-        if closed > 0 and open == 0:
-            status = ItemRequestGroup.CLOSED
-
-        return status
+        return {
+            "open": open, 
+            "closed": closed
+        }
 
     def finish(self):
         if self.status == ItemRequestGroup.CLOSED:

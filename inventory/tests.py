@@ -4,7 +4,7 @@ from .models import BaseStockUnit, AlternateStockUnit, Item, \
     Stock, StockRequest, ItemRequest, ItemRequestGroup, StockMovement
 from .properties.models import ItemProperties, Paper
 from .exceptions import DepositTooBig, InsufficientStock, InvalidExpireQuantity, \
-    IllegalUnboundedDeposit, IllegalWithdrawal, IllegalItemRequestOperation, \
+    IllegalUnboundedDeposit, IllegalItemRequestOperation, \
     IllegalItemRequestGroupOperation
 
 

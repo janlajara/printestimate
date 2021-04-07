@@ -306,6 +306,7 @@ class StockRequestSerializer(serializers.ModelSerializer):
 class ItemRequestSerializer(serializers.ModelSerializer):
     item_id = serializers.SerializerMethodField()
     item_name = serializers.SerializerMethodField()
+    item_base_uom = serializers.SerializerMethodField()
     status = serializers.CharField(source='get_status_display') 
     status_choices = serializers.SerializerMethodField()
     stock_requests = StockRequestSerializer(many=True)
@@ -313,7 +314,8 @@ class ItemRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ItemRequest
-        fields = ['id', 'item_id', 'item_name', 'status', 'status_choices', 
+        fields = ['id', 'item_id', 'item_name', 'item_base_uom', 
+            'status', 'status_choices', 
             'quantity_needed', 'quantity_needed_formatted', 
             'quantity_stocked', 'quantity_stocked_formatted',
             'is_fully_allocated', 'allocation_rate',
@@ -325,6 +327,10 @@ class ItemRequestSerializer(serializers.ModelSerializer):
 
     def get_item_name(self, obj):
         return '%s' % obj.item
+
+    def get_item_base_uom(self, obj):
+        serialized = BaseStockUnitSerializer(obj.item.base_uom)
+        return serialized.data
 
     def get_status_choices(self, obj):
         choices = []

@@ -133,33 +133,33 @@ export class ItemApi {
         return response.data
     }
 
-    static async listItemStockRequests(id, limit, offset, status=null) {
+    static async listItemRequestGroups(id, limit, offset, status=null) {
         const params = offset != null && limit != null? 
             {limit, offset, status} : {status};
-        const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}/stockrequests/list`,
+        const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}/itemrequestgroups/list`,
             null, null, null, params)
         return response.data
     }
 }
 
-export class StockRequestApi {
-    static uri = '/inventory/api/stockrequestgroups'
+export class ItemRequestGroupApi {
+    static uri = '/inventory/api/itemrequestgroups'
 
-    static async listStockRequestGroups(limit, offset, search=null, status=null) {
+    static async listItemRequestGroups(limit, offset, search=null, status=null) {
         const params = offset != null && limit != null? 
             {limit, offset, search, status} : {search, status};
-        const response = await AXIOS.execute(AXIOS.GET, StockRequestApi.uri + `/list`,
+        const response = await AXIOS.execute(AXIOS.GET, ItemRequestGroupApi.uri + `/list`,
             null, null, null, params)
         return response.data
     }
 
-    static async retrieveStockRequestGroup(id) {
-        const response = await AXIOS.execute(AXIOS.GET, StockRequestApi.uri + `/${id}/`)
+    static async retrieveItemRequestGroup(id) {
+        const response = await AXIOS.execute(AXIOS.GET, ItemRequestGroupApi.uri + `/${id}/`)
         return response.data
     }
 
-    static async updateStockRequest(id, params) {
-        const response = await AXIOS.execute(AXIOS.GET, StockRequestApi.uri + `/${id}/update`,
+    static async updateItemRequestGroup(id, params) {
+        const response = await AXIOS.execute(AXIOS.GET, ItemRequestGroupApi.uri + `/${id}/update`,
             null, null, null, params)
         return response.data
     }

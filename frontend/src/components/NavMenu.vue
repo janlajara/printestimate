@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import {ref, onMounted, computed, watch} from 'vue'
+import {ref, onMounted, computed, watch, onBeforeMount} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import NavLink from '@/components/NavLink.vue'
 import Icon from '@/components/Icon.vue'
@@ -50,6 +50,7 @@ export default {
         }
 
         watch(()=>route.name, emitSelected)
+        onBeforeMount(emitSelected)
         onMounted(()=> {
             height.value = navLinks.value.clientHeight
         })
@@ -57,6 +58,8 @@ export default {
         let group = []
         if (props.metaGroup) 
             group = routes.filter( r => {return props.metaGroup == r.meta.group})
+
+        console.log(group)
 
         return {
             group,

@@ -30,7 +30,7 @@ export const defaultIfNull = (object, defaultValue, property=null) => {
 }
 
 export const reference = {
-    stockRequestGroup: 'MRS',
+    mrs: 'MRS',
     stock: 'STK',
     formatId: (id, code)=> {
         if (id != null && code != null) {

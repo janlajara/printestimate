@@ -25,12 +25,13 @@
                         request.search = search;
                         populateRequestList(request.listLimit, 0);}"/>
             </div>
-            <Table :headers="['Request Id', 'Status', 'Reason', 'Date Created']"
-                :loader="request.isProcessing">
+            <Table :headers="['Request Id', 'Status', 'Num. of Requests', 
+                'Reason', 'Date Created']" :loader="request.isProcessing">
                 <Row v-for="(r, key) in request.list" :key="key" clickable
                     @click="()=> goToDetail(r.id)">
                     <Cell label="Request Id">{{formatId(r.id)}}</Cell>
                     <Cell label="Status">{{r.status}}</Cell>
+                    <Cell label="Num. of Requests">{{r.itemRequestCount}}</Cell>
                     <Cell label="Reason">{{r.reason}}</Cell>
                     <Cell label="Date Created">{{r.createdAt}}</Cell>
                 </Row>
@@ -57,7 +58,7 @@ import Button from '@/components/Button.vue';
 
 import {reactive, onBeforeMount} from 'vue';
 import {useRouter} from 'vue-router';
-import {StockRequestApi} from '@/utils/apis.js';
+import {ItemRequestGroupApi} from '@/utils/apis.js';
 import {reference} from '@/utils/format.js';
 
 export default {
@@ -84,13 +85,13 @@ export default {
 
         const populateRequestList = async (limit, offset)=> {
             request.isProcessing = true;
-            const response = await StockRequestApi.listStockRequestGroups(
+            const response = await ItemRequestGroupApi.listItemRequestGroups(
                 limit, offset, request.search, request.filter);
             if (response && response.results) {
                 request.listCount = response.count;
                 request.list = response.results.map( r=> ({
                     id: r.id, status: r.status,
-                    reason: r.reason, stockRequestCount: r.stock_requests_count,
+                    reason: r.reason, itemRequestCount: r.item_requests_count,
                     createdAt: r.created_at
                 }));
             }
@@ -108,7 +109,7 @@ export default {
 
         return {
             request, populateRequestList, goToDetail,
-            formatId: (id)=> reference.formatId(id, reference.stockRequestGroup)
+            formatId: (id)=> reference.formatId(id, reference.mrs)
         }
     }
 }

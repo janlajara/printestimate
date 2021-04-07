@@ -40,7 +40,7 @@ const routes = [
         path: 'inventory/stockrequests/:id',
         name: 'inventory-stockrequest-detail',
         props: true,
-        component: ()=>import('../views/pages/inventory/stockrequest/StockRequestGroupDetail.vue'),
+        component: ()=>import('../views/pages/inventory/stockrequest/StockRequestGroupDetail.vue')
       },
       {
         path: 'admin/inventory',

@@ -1,34 +1,36 @@
 <template>
     <teleport to="body">
         <transition name="slide-fade">
-            <div class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-30"
+            <div class="fixed overflow-y-auto inset-0 bg-gray-900 bg-opacity-30" 
                 v-if="$props.isOpen">
-                <div class="modal relative">
-                    <header class="modal-header">
-                        <h1 class="flex-grow">{{$props.heading}}</h1>
-                        <button>
-                            <Icon id="close" @click="close"/>
-                        </button>
-                    </header>
-                    <div class="modal-body pb-6 pb-12 overflow-y-auto h-full" 
-                        :style="styleHeight" ref="ref">
-                        <slot/>
+                <div class="flex overflow-y-auto items-center justify-center min-h-screen">
+                    <div class="modal">
+                        <header class="modal-header">
+                            <h1 class="flex-grow">{{$props.heading}}</h1>
+                            <button>
+                                <Icon id="close" @click="close"/>
+                            </button>
+                        </header>
+                        <div class="modal-body pb-6 pb-12" 
+                            :style="styleHeight" >
+                            <slot/>
+                        </div>
+                        <footer class="modal-footer border-gray-300 border-t justify-end flex-wrap">
+                            <Button v-for="(button, index) in $props.buttons" 
+                                :key="index" :type="button.type" 
+                                :color="button.color" :disabled="button.disabled"
+                                :icon="button.icon" :action="button.action" 
+                                class="modal-button">
+                                {{button.text}}
+                            </Button>
+                            <Button color="secondary" 
+                                icon="close" 
+                                class="modal-button"
+                                :action="close">
+                                Cancel
+                            </Button>
+                        </footer>
                     </div>
-                    <footer class="modal-footer border-gray-300 border-t justify-end flex-wrap">
-                        <Button v-for="(button, index) in $props.buttons" 
-                            :key="index" :type="button.type" 
-                            :color="button.color" :disabled="button.disabled"
-                            :icon="button.icon" :action="button.action" 
-                            class="modal-button">
-                            {{button.text}}
-                        </Button>
-                        <Button color="secondary" 
-                            icon="close" 
-                            class="modal-button"
-                            :action="close">
-                            Cancel
-                        </Button>
-                    </footer>
                 </div>
             </div>
         </transition>
@@ -36,7 +38,7 @@
 </template>
 
 <script>
-import {reactive, onMounted, onUnmounted, toRefs, watch, nextTick} from 'vue' 
+import {reactive, toRefs, watch, onMounted, onUnmounted, nextTick} from 'vue' 
 import Icon from '@/components/Icon.vue'
 import Button from '@/components/Button.vue'
 
@@ -61,7 +63,7 @@ export default {
             ref: {}, styleHeight: null, 
         });
         const resize = () => {
-            let h = window.innerHeight * 0.6;
+            let h = window.innerHeight * 0.8;
             if (modal.ref && modal.ref.clientHeight > h) {
                 modal.styleHeight = {height: h + 'px'};
             } else {

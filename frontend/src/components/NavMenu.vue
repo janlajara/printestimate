@@ -59,8 +59,6 @@ export default {
         if (props.metaGroup) 
             group = routes.filter( r => {return props.metaGroup == r.meta.group})
 
-        console.log(group)
-
         return {
             group,
             collapsed,

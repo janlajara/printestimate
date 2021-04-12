@@ -202,20 +202,27 @@ class ItemRequestGroupViewSet(viewsets.ModelViewSet):
         elif self.action in ['retrieve']:
             return serializers.ItemRequestGroupSerializer
         else:
-            return serializers.ItemRequestGroupSerializer
-    
+            return serializers.ItemRequestGroupSerializer    
 
 
-class ItemRequestUpdateViewSet(viewsets.ViewSet):
+class ItemRequestViewSet(viewsets.ViewSet):
+
+    def retrieve(self, request, pk=None):
+        item_request = ItemRequest.objects.get(pk=pk)
+
+        if item_request is not None:
+            serialized = serializers.ItemRequestDetailSerializer(item_request)
+            return Response(serialized.data)
+        else:
+            Response(
+                {"detail": "Item request could not be found"}, 
+                status=status.HTTP_404_NOT_FOUND)
 
     def update(self, request, pk=None):
         data = request.data
-        item_request_id = data.get('id', None)
 
-        if pk is not None and item_request_id is not None:
-            item_request = ItemRequest.objects.get(
-                pk=item_request_id,
-                item_request_group__pk=pk)
+        if pk is not None:
+            item_request = ItemRequest.objects.get(pk=pk)
             request_status = data.get('status', None)
             comments = data.get('comments', None)
 

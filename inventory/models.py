@@ -290,7 +290,7 @@ class ItemRequestGroup(models.Model):
         aggregate = self._get_item_request_aggregate()
         total = aggregate.get('open') + aggregate.get('closed')
         if total > 0:
-            return aggregate.get('open') / total
+            return aggregate.get('closed') / total
         else:
             return 0
 

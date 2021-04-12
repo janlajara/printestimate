@@ -303,11 +303,33 @@ class StockRequestSerializer(serializers.ModelSerializer):
         return obj.stock_unit.quantity_formatted
 
 
-class ItemRequestSerializer(serializers.ModelSerializer):
+class ItemRequestListSerializer(serializers.ModelSerializer):
     item_id = serializers.SerializerMethodField()
     item_name = serializers.SerializerMethodField()
     item_base_uom = serializers.SerializerMethodField()
     status = serializers.CharField(source='get_status_display') 
+
+    class Meta:
+        model = ItemRequest
+        fields = ['id', 'item_id', 'item_name', 'item_base_uom', 'status', 
+            'quantity_needed', 'quantity_needed_formatted', 
+            'quantity_stocked', 'quantity_stocked_formatted',
+            'is_fully_allocated', 'allocation_rate',
+            'missing_allocation', 'missing_allocation_formatted', 
+            'created']
+
+    def get_item_id(self, obj):
+        return obj.item.id
+
+    def get_item_name(self, obj):
+        return '%s' % obj.item
+
+    def get_item_base_uom(self, obj):
+        serialized = BaseStockUnitSerializer(obj.item.base_uom)
+        return serialized.data
+
+
+class ItemRequestDetailSerializer(ItemRequestListSerializer):
     status_choices = serializers.SerializerMethodField()
     stock_requests = StockRequestSerializer(many=True)
     created = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
@@ -322,16 +344,6 @@ class ItemRequestSerializer(serializers.ModelSerializer):
             'missing_allocation', 'missing_allocation_formatted', 
             'stock_requests', 'created']
 
-    def get_item_id(self, obj):
-        return obj.item.id
-
-    def get_item_name(self, obj):
-        return '%s' % obj.item
-
-    def get_item_base_uom(self, obj):
-        serialized = BaseStockUnitSerializer(obj.item.base_uom)
-        return serialized.data
-
     def get_status_choices(self, obj):
         choices = []
         for choice in obj.status_choices:
@@ -344,24 +356,22 @@ class ItemRequestSerializer(serializers.ModelSerializer):
 
 
 class ItemRequestGroupSerializer(serializers.ModelSerializer):
-    item_requests = ItemRequestSerializer(many=True, read_only=True)
+    item_requests = ItemRequestListSerializer(many=True, read_only=True)
     created_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
 
     class Meta:
         model = ItemRequestGroup
-        fields = ['id', 'status', 'finished', 'reason', 'item_requests', 'created_at']
+        fields = ['id', 'status', 'finished', 'progress_rate', 
+            'reason', 'item_requests', 'created_at']
 
 
 class ItemRequestGroupListSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
-    item_requests_count = serializers.SerializerMethodField()
 
     class Meta:
         model = ItemRequestGroup
-        fields = ['id', 'status', 'finished', 'reason', 'item_requests_count', 'created_at']
-
-    def get_item_requests_count(self, obj):
-        return len(obj.item_requests.all())
+        fields = ['id', 'status', 'finished', 'progress_rate', 'reason', 
+            'created_at']
 
 
 class StockMovementSerializer(serializers.ModelSerializer):

@@ -36,8 +36,10 @@ urlpatterns = [
           views.ItemRequestGroupViewSet.as_view({'get': 'list'})),
      path('api/itemrequestgroups/<int:pk>/',
           views.ItemRequestGroupViewSet.as_view({'get': 'retrieve'})), 
-     path('api/itemrequestgroups/<int:pk>/update',
-          views.ItemRequestUpdateViewSet.as_view({'put': 'update'})),
+     path('api/itemrequests/<int:pk>/',
+          views.ItemRequestViewSet.as_view({'get': 'retrieve'})),
+     path('api/itemrequests/<int:pk>/update',
+          views.ItemRequestViewSet.as_view({'put': 'update'})),
 
      # STOCK UNIT OF MEASURES
      path('api/basestockunit',

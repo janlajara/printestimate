@@ -25,13 +25,18 @@
                         request.search = search;
                         populateRequestList(request.listLimit, 0);}"/>
             </div>
-            <Table :headers="['Request Id', 'Status', 'Num. of Requests', 
+            <Table :headers="['Request Id', 'Status', 'Progress', 
                 'Reason', 'Date Created']" :loader="request.isProcessing">
                 <Row v-for="(r, key) in request.list" :key="key" clickable
                     @click="()=> goToDetail(r.id)">
                     <Cell label="Request Id">{{formatId(r.id)}}</Cell>
                     <Cell label="Status">{{r.status}}</Cell>
-                    <Cell label="Num. of Requests">{{r.itemRequestCount}}</Cell>
+                    <Cell label="Progress">
+                        <ProgressBar :percent="r.progressRate * 100" 
+                            color="variable" class="pt-1">
+                            <span class="w-full text-center text-xs">{{r.progressRate * 100}}%</span>
+                        </ProgressBar>
+                    </Cell>
                     <Cell label="Reason">{{r.reason}}</Cell>
                     <Cell label="Date Created">{{r.createdAt}}</Cell>
                 </Row>
@@ -55,6 +60,7 @@ import TablePaginator from '@/components/TablePaginator.vue';
 import SearchField from '@/components/SearchField.vue';
 import SearchFilter from '@/components/SearchFilter.vue';
 import Button from '@/components/Button.vue';
+import ProgressBar from '@/components/ProgressBar.vue';
 
 import {reactive, onBeforeMount} from 'vue';
 import {useRouter} from 'vue-router';
@@ -64,7 +70,7 @@ import {reference} from '@/utils/format.js';
 export default {
     components: {
         Page, Section, Table, Row, Cell, TablePaginator, 
-        SearchField, SearchFilter, Button, 
+        SearchField, SearchFilter, Button, ProgressBar 
     },
     setup() {
         const router = useRouter();
@@ -91,6 +97,7 @@ export default {
                 request.listCount = response.count;
                 request.list = response.results.map( r=> ({
                     id: r.id, status: r.status,
+                    progressRate: r.progress_rate,
                     reason: r.reason, itemRequestCount: r.item_requests_count,
                     createdAt: r.created_at
                 }));

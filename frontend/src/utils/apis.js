@@ -157,9 +157,19 @@ export class ItemRequestGroupApi {
         const response = await AXIOS.execute(AXIOS.GET, ItemRequestGroupApi.uri + `/${id}/`)
         return response.data
     }
+}
 
-    static async updateItemRequestGroup(id, params) {
-        const response = await AXIOS.execute(AXIOS.GET, ItemRequestGroupApi.uri + `/${id}/update`,
+export class ItemRequestApi {
+    static uri = '/inventory/api/itemrequests'
+
+    static async retrieveItemRequest(id) {
+        const response = await AXIOS.execute(AXIOS.GET, ItemRequestApi.uri + `/${id}/`,
+            null, null, null)
+        return response.data
+    }
+
+    static async updateItemRequest(id, params) {
+        const response = await AXIOS.execute(AXIOS.POST, ItemRequestApi.uri + `/${id}/update`,
             null, null, null, params)
         return response.data
     }

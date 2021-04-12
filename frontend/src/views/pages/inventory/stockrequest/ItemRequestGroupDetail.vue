@@ -7,7 +7,7 @@
         </div> 
         <Section>
             <DescriptionList class="grid-cols-2 md:grid-cols-4">
-                <DescriptionItem :loader="detail.isProcessing"
+                <DescriptionItem :loader="detail.isProcessing" 
                     name="Status" :value="detail.data.status"/>
                 <DescriptionItem :loader="detail.isProcessing"
                     name="Reason" :value="detail.data.reason"/>
@@ -15,10 +15,14 @@
                     name="Date Created" :value="detail.data.created"/>
             </DescriptionList>
         </Section>
-        <Section heading="Stock Request Details" class="mt-12">
+        <Section heading="Item Request List" class="mt-12">
+            <ItemRequestModal :is-open="detail.modal.isOpen"
+                :item-request-id="detail.modal.selected"
+                @toggle="detail.modal.toggle" />
             <Table :headers="['Item', 'Quantity Allocated', 'Status', 'Approved?']"
                 :loader="detail.isProcessing">
-                <Row v-for="(r, i) in detail.data.itemRequests" :key="i">
+                <Row v-for="(r, i) in detail.data.itemRequests" :key="i"
+                    clickable @click="()=> detail.modal.select(r.id)">
                     <Cell label="Item">{{r.itemName}}</Cell>
                     <Cell label="Quantity Allocated">
                         {{r.quantityStocked}} / {{r.quantityNeededFormatted}}
@@ -41,6 +45,7 @@ import Row from '@/components/Row.vue';
 import Cell from '@/components/Cell.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
+import ItemRequestModal from '@/views/pages/inventory/stockrequest/ItemRequestModal.vue';
 
 import {watch, reactive, onBeforeMount} from 'vue'
 import {useRoute} from 'vue-router'
@@ -49,7 +54,8 @@ import {reference} from '@/utils/format.js'
 
 export default {
     components: {
-        Page, Section, Button, Table, Row, Cell, DescriptionItem, DescriptionList
+        Page, Section, Button, Table, Row, Cell, 
+        DescriptionItem, DescriptionList, ItemRequestModal
     },
     emits: ['toggle'],
     setup() {
@@ -57,6 +63,15 @@ export default {
         const detail = reactive({
             id: route.params.id,
             data: {},
+            modal: {
+                selected: null,
+                isOpen: false,
+                toggle: value => detail.modal.isOpen = value,
+                select: id => {
+                    detail.modal.selected = id;
+                    detail.modal.toggle(true);
+                }
+            },
             isProcessing: false
         })
         const retrieveDetail = async ()=> {

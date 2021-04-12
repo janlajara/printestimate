@@ -19,13 +19,34 @@ createApp(App)
         beforeMount(el, binding) {
             el.clickOutsideEvent = function(event) {
                 if (!(el === event.target || el.contains(event.target))) {
-                binding.value(event, el);
+                    binding.value(event, el);
                 }
             };
             document.body.addEventListener('click', el.clickOutsideEvent);
         },
         unmounted(el) {
             document.body.removeEventListener('click', el.clickOutsideEvent);
+        }
+    })
+    .directive('number', {
+        beforeMount(el) {
+            el.inputEvent = function(event) {
+                const value = event.target.value
+                if (value != null) {
+                    let replaced = value.replace(/[^\d]/g, '');
+                    if (replaced != '') {
+                        replaced = parseInt(replaced)
+                        
+                        if (el.min != null && replaced < parseInt(el.min)) replaced = el.min;
+                        else if (el.max != null && replaced > parseInt(el.max)) replaced = el.max;
+                    }
+                    event.target.value = replaced;
+                }
+            }
+            document.body.addEventListener('input', el.inputEvent);
+        },
+        unmounted(el) {
+            document.body.removeEventListener('input', el.inputEvent);
         }
     })
     .provide('currency', {

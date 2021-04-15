@@ -29,9 +29,10 @@ createApp(App)
         }
     })
     .directive('number', {
-        beforeMount(el) {
+        beforeMount(el) { 
             el.inputEvent = function(event) {
-                const value = event.target.value
+                if (event.isCustom) return;
+                const value = event.target.value;
                 if (value != null) {
                     let replaced = value.replace(/[^\d]/g, '');
                     if (replaced != '') {
@@ -40,7 +41,11 @@ createApp(App)
                         if (el.min != null && replaced < parseInt(el.min)) replaced = el.min;
                         else if (el.max != null && replaced > parseInt(el.max)) replaced = el.max;
                     }
-                    event.target.value = replaced;
+                    event.target.value = replaced; 
+                    const ev = new CustomEvent('input', {
+                        isCustom: true,
+                        target: {value: replaced}});
+                    el.dispatchEvent(ev);
                 }
             }
             document.body.addEventListener('input', el.inputEvent);

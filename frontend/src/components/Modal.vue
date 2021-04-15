@@ -27,7 +27,7 @@
                                 icon="close" 
                                 class="modal-button"
                                 :action="close">
-                                Cancel
+                                Close
                             </Button>
                         </footer>
                     </div>

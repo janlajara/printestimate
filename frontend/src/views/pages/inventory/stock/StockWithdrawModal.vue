@@ -70,7 +70,7 @@ export default {
                             id: r.id, quantity: r.quantity    
                         }))};
                     stock.isProcessing = true;
-                    const response = await ItemApi.withdrawStocks(itemId, request);
+                    const response = await ItemApi.requestStocks(itemId, request);
                     if (response && !response.error) {
                         emit('toggle', false);
                         if (props.onAfterWithdraw) props.onAfterWithdraw();

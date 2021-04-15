@@ -66,7 +66,10 @@ export default {
             modal: {
                 selected: null,
                 isOpen: false,
-                toggle: value => detail.modal.isOpen = value,
+                toggle: value => {
+                    detail.modal.isOpen = value;
+                    if (!detail.modal.isOpen) retrieveDetail();
+                },
                 select: id => {
                     detail.modal.selected = id;
                     detail.modal.toggle(true);

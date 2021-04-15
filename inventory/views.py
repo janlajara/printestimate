@@ -1,10 +1,11 @@
-from inventory.models import Item, Stock, ItemRequest, \
+from inventory.models import Item, Stock, StockRequest, ItemRequest, \
     ItemRequestGroup, StockMovement, BaseStockUnit, AlternateStockUnit
 from inventory.properties.models import ItemProperties
 from inventory.exceptions import InsufficientStock
 from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from django.shortcuts import get_object_or_404
 from inventory import serializers
 
 
@@ -85,6 +86,8 @@ class ItemStockRetrieveViewSet(viewsets.ModelViewSet):
 
 class ItemStockListViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.StockReadOnlySerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['id', 'brand_name']
 
     def get_queryset(self):
         pk = self.kwargs.get('pk', None)
@@ -94,10 +97,10 @@ class ItemStockListViewSet(viewsets.ModelViewSet):
         if pk is not None:
             all = all.filter(item=pk).all()
         if available_only and available_only.lower() == 'true':
-            filtered = [stock for stock in all if stock.available_quantity > 0]
-            return filtered
-        else:
-            return all
+            filtered_ids = [stock.id for stock in all if stock.available_quantity > 0]
+            all = all.filter(pk__in=filtered_ids)
+       
+        return all
 
 
 class ItemDepositStockViewSet(viewsets.ViewSet):
@@ -125,6 +128,7 @@ class ItemWithdrawStocksViewSet(viewsets.ViewSet):
     def create(self, request, pk=None):
         item = Item.objects.get(pk=pk)
         stock_requests = []
+        item_request_id = request.data.get('item_request_id', None)
         reason = request.data.get('reason', None)
         stocks = request.data.get('stock_requests', [])
 
@@ -142,16 +146,25 @@ class ItemWithdrawStocksViewSet(viewsets.ViewSet):
                     pass
         
         if len(stock_requests) > 0:
-            total_quantity = sum(stock_request.stock_unit.quantity 
-                for stock_request in stock_requests)
-            item_request = item.request(total_quantity)
-            item_request.allocate_stocks(stock_requests)
+            if item_request_id is not None:
+                item_request = get_object_or_404(ItemRequest, pk=item_request_id)
+                item_request.allocate_stocks(stock_requests)
+                item_request_group = ItemRequestGroup.objects.get(
+                    item_requests__pk=item_request.pk)
+                    
+                serialized = serializers.ItemRequestGroupSerializer(item_request_group)
+                return Response(serialized.data) 
+            else:
+                total_quantity = sum(stock_request.stock_unit.quantity 
+                    for stock_request in stock_requests)
+                item_request = item.request(total_quantity)
+                item_request.allocate_stocks(stock_requests)
 
-            item_request_group = ItemRequestGroup.objects.create(reason=reason)
-            item_request_group.item_requests.add(item_request)
+                item_request_group = ItemRequestGroup.objects.create(reason=reason)
+                item_request_group.item_requests.add(item_request)
 
-            serialized = serializers.ItemRequestGroupSerializer(item_request_group)
-            return Response(serialized.data) 
+                serialized = serializers.ItemRequestGroupSerializer(item_request_group)
+                return Response(serialized.data) 
         else:
             return Response({"detail": "no available stocks to withdraw"},
                 status=status.HTTP_409_CONFLICT) 
@@ -249,6 +262,11 @@ class ItemRequestViewSet(viewsets.ViewSet):
             return Response(
                 {"error": "Missing stock request id"}, 
                 status=status.HTTP_400_BAD_REQUEST)
+
+
+class StockRequestViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.StockRequestSerializer
+    queryset = StockRequest.objects.all()
 
 
 class StockMovementViewSet(viewsets.ModelViewSet):

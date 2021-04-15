@@ -101,9 +101,9 @@ export class ItemApi {
         return response.data
     }
 
-    static async listItemStocks(id, limit, offset, availableOnly=false) {
+    static async listItemStocks(id, limit, offset, availableOnly=false, search=null) {
         const params = offset != null && limit != null? 
-            {limit, offset, "available-only": availableOnly} : null;
+            {limit, offset, "available-only": availableOnly, search} : {search};
         const response = await AXIOS.execute(AXIOS.GET, ItemApi.uri + `/${id}/stocks/list`,
             null, null, null, params)
         return response.data
@@ -115,12 +115,12 @@ export class ItemApi {
         return response.data
     }
 
-    static async withdrawStocks(id, requests) {
-        const response = await AXIOS.execute(AXIOS.POST, ItemApi.uri + `/${id}/stocks/withdraw`,
+    static async requestStocks(id, requests) {
+        const response = await AXIOS.execute(AXIOS.POST, ItemApi.uri + `/${id}/stocks/request`,
             null, 'Stock request failed. Please try again.', requests);
         if (response.data) {
-            const requestId = reference.formatId(response.data.id, reference.stockRequestGroup)
-            showToast("success", `Request ${requestId} has been created.`);
+            const requestId = reference.formatId(response.data.id, reference.mrs)
+            showToast("success", `Request ${requestId} has been saved.`);
         }
         return response.data
     }
@@ -172,6 +172,15 @@ export class ItemRequestApi {
         const response = await AXIOS.execute(AXIOS.POST, ItemRequestApi.uri + `/${id}/update`,
             null, null, null, params)
         return response.data
+    }
+}
+
+export class StockRequestApi {
+    static uri = '/inventory/api/stockrequests'
+
+    static async deleteStockRequest(id) {
+        await AXIOS.execute(AXIOS.DELETE, StockRequestApi.uri + `/${id}/`,
+            null, null, null);
     }
 }
 

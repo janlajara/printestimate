@@ -18,7 +18,7 @@ urlpatterns = [
           views.ItemStockListViewSet.as_view({'get': 'list'})),
      path('api/items/<int:pk>/stocks/deposit',
           views.ItemDepositStockViewSet.as_view({'post': 'create'})),
-     path('api/items/<int:pk>/stocks/withdraw',
+     path('api/items/<int:pk>/stocks/request',
           views.ItemWithdrawStocksViewSet.as_view({'post': 'create'})),
      path('api/items/<int:pk>/stocks/history',
           views.StockMovementViewSet.as_view({'get': 'list'})),
@@ -31,7 +31,7 @@ urlpatterns = [
      path('api/items/properties/<int:pk>/',
           views.ItemPropertiesViewSet.as_view(GETRETRIEVE_PUTUPDATE_POSTDESTROY)),
 
-     # STOCKS REQUEST GROUP
+     # ITEM REQUEST GROUP / ITEM REQUESTS
      path('api/itemrequestgroups/list',
           views.ItemRequestGroupViewSet.as_view({'get': 'list'})),
      path('api/itemrequestgroups/<int:pk>/',
@@ -40,6 +40,10 @@ urlpatterns = [
           views.ItemRequestViewSet.as_view({'get': 'retrieve'})),
      path('api/itemrequests/<int:pk>/update',
           views.ItemRequestViewSet.as_view({'put': 'update'})),
+
+     # STOCK REQUESTS
+     path('api/stockrequests/<int:pk>/',
+          views.StockRequestViewSet.as_view({'delete': 'destroy'})),
 
      # STOCK UNIT OF MEASURES
      path('api/basestockunit',

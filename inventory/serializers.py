@@ -356,7 +356,7 @@ class ItemRequestDetailSerializer(ItemRequestListSerializer):
 
 
 class ItemRequestGroupSerializer(serializers.ModelSerializer):
-    item_requests = ItemRequestListSerializer(many=True, read_only=True)
+    item_requests = ItemRequestDetailSerializer(many=True, read_only=True)
     created_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
 
     class Meta:

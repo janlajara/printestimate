@@ -1,13 +1,5 @@
 <template>
-    <div class="my-4 rounded-md overflow-hidden relative">
-        <div v-if="$props.loader"
-            class="absolute w-full h-full flex justify-center bg-white bg-opacity-30">
-            <div class="self-center">
-                <span class="material-icons animate-spin text-secondary-light">
-                    autorenew
-                </span>
-            </div>
-        </div>
+    <div class="my-4 rounded-md overflow-hidden">
         <table class="table-auto w-full">
             <thead class="hidden lg:table-header-group">
                 <tr class="flex flex-wrap lg:table-row row bg-primary-light bg-opacity-50">
@@ -23,9 +15,17 @@
                     </Cell>
                 </Row>
                 <slot v-if="$slots.default()[0].children.length > 0"/>
+                <Row v-else-if="$props.loader">
+                    <Cell :colspan="columnCount">
+                        <div class="w-full flex justify-center">
+                            <span class="material-icons animate-spin text-secondary-light">
+                                autorenew
+                            </span>
+                        </div>
+                    </Cell>
+                </Row>
             </tbody>
         </table>
-        {{$props.rows}}
     </div>
 </template>
 

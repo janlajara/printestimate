@@ -67,7 +67,7 @@ export default {
                 isOpen: false, 
             },
             isProcessing: false,
-            list: [{}],
+            list: [],
             listLimit: 5,
             listCount: 0
         });

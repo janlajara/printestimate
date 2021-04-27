@@ -1,15 +1,19 @@
 <template>
-    <div ref="base" v-click-outside="()=> state.toggle(false)">
-        <div class="cursor-pointer flex hover:text-secondary"
-            :class="$props.labelPosition == 'right' ? 'flex-row-reverse' : 'flex-row'"
+    <div v-click-outside="()=> state.toggle(false)">
+        <div ref="base" class="cursor-pointer hover:text-secondary inline"
             @click="()=> state.toggle()">
-            <span v-if="$props.label"
-                class="my-auto px-1 font-bold">
+            <span v-show="$props.label && 
+                ($props.labelPosition == null || $props.labelPosition == 'left')"
+                class="inline-block align-middle px-1 font-bold">
                 {{$props.label}}
             </span>
-            <span v-if="$props.icon"
-                class="my-auto px-1 material-icons">
+            <span v-show="$props.icon"
+                class="inline-block align-middle px-1 material-icons">
                 {{$props.icon}}
+            </span>
+            <span v-show="$props.label && $props.labelPosition == 'right'"
+                class="inline-block align-middle px-1 font-bold">
+                {{$props.label}}
             </span>
         </div>
         <div ref="dropdown" v-if="state.isRevealed" 

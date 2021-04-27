@@ -353,6 +353,15 @@ class ItemRequest(models.Model):
         (FULFILLED, 'Fulfilled'),
         (CANCELLED, 'Cancelled'),
     ]
+    STATUS_CHOICES = [
+        (DRAFT, 'Draft'),
+        (FOR_APPROVAL, 'For Approval'),
+        (APPROVED, 'Approve'),
+        (DISAPPROVED, 'Disapprove'),
+        (PARTIALLY_FULFILLED, 'Partially Fulfill'),
+        (FULFILLED, 'Fulfill'),
+        (CANCELLED, 'Cancel'),
+    ]
 
     objects = ItemRequestManager()
     item = models.ForeignKey(Item, on_delete=models.CASCADE, 
@@ -407,7 +416,8 @@ class ItemRequest(models.Model):
     @property
     def status_choices(self):
         def _get(status_codes):
-            return [status for status in ItemRequest.STATUS if status[0] in status_codes]
+            return [status for status in ItemRequest.STATUS_CHOICES 
+                if status[0] in status_codes]
         choices_map = {
             ItemRequest.DRAFT: 
                 _get([ItemRequest.FOR_APPROVAL, ItemRequest.CANCELLED]),

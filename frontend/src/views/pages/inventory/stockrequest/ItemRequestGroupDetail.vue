@@ -16,21 +16,42 @@
             </DescriptionList>
         </Section>
         <Section heading="Item Request List" class="mt-12">
-            <ItemRequestModal :is-open="detail.modal.isOpen"
+            <ItemRequestAllocateStockModal :is-open="detail.modal.isOpen"
                 :item-request-id="detail.modal.selected"
                 @toggle="detail.modal.toggle" />
-            <Table :headers="['Item', 'Quantity Allocated', 'Status', 'Approved?']"
+            <ItemRequestUpdateStatusDialog 
+                :data="detail.dialog.data"
+                :on-after-execute="retrieveDetail"
+                :is-open="detail.dialog.isOpen"
+                @toggle="detail.dialog.toggle"/>
+            <Table :headers="['Item', 'Status', 'Quantity', '']"
                 :loader="detail.isProcessing">
-                <Row v-for="(r, i) in detail.data.itemRequests" :key="i"
-                    clickable @click="()=> detail.modal.select(r.id)">
+                <Row v-for="(r, i) in detail.data.itemRequests" :key="i">
                     <Cell label="Item">{{r.itemName}}</Cell>
-                    <Cell label="Quantity Allocated">
+                    <Cell label="Status">
+                        <ButtonOptions icon="expand_more" :label="r.status"> 
+                            <ButtonOption class="border-b border-gray-400 border-opacity-30"
+                                v-if="r.status == 'Approved'"
+                                @click="()=>detail.modal.select(r.id)">
+                                Allocate Stocks
+                            </ButtonOption>
+                            <ButtonOption v-for="(choice, key) in r.statusChoices" :key="key"
+                                @click="()=>detail.dialog.select(r.id, choice)">
+                                {{choice.label}}
+                            </ButtonOption>
+                        </ButtonOptions>
+                    </Cell>
+                    <Cell label="Quantity">
                         {{r.quantityStocked}} / {{r.quantityNeededFormatted}}
                     </Cell>
-                    <Cell label="Status">
-                        {{r.status}}
+                    <Cell class="px-0">
+                        <div class="w-full flex justify-end">
+                            <Button class="my-auto" icon="edit"
+                                :disabled="['Approved', 'Fulfilled'].includes(r.status)"/>
+                            <Button class="my-auto" icon="delete"
+                                :disabled="['Approved', 'Fulfilled'].includes(r.status)"/>
+                        </div>
                     </Cell>
-                    <Cell label="Approved?"></Cell>
                 </Row>
             </Table>
         </Section>
@@ -40,12 +61,15 @@
 import Page from '@/components/Page.vue';
 import Section from '@/components/Section.vue';
 import Button from '@/components/Button.vue';
+import ButtonOptions from '@/components/ButtonOptions.vue';
+import ButtonOption from '@/components/ButtonOption.vue';
 import Table from '@/components/Table.vue';
 import Row from '@/components/Row.vue';
 import Cell from '@/components/Cell.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
-import ItemRequestModal from '@/views/pages/inventory/stockrequest/ItemRequestModal.vue';
+import ItemRequestAllocateStockModal from '@/views/pages/inventory/stockrequest/ItemRequestAllocateStockModal.vue';
+import ItemRequestUpdateStatusDialog from '@/views/pages/inventory/stockrequest/ItemRequestUpdateStatusDialog.vue';
 
 import {watch, reactive, onBeforeMount} from 'vue'
 import {useRoute} from 'vue-router'
@@ -54,8 +78,8 @@ import {reference} from '@/utils/format.js'
 
 export default {
     components: {
-        Page, Section, Button, Table, Row, Cell, 
-        DescriptionItem, DescriptionList, ItemRequestModal
+        Page, Section, Button, ButtonOptions, ButtonOption, Table, Row, Cell, 
+        DescriptionItem, DescriptionList, ItemRequestAllocateStockModal, ItemRequestUpdateStatusDialog
     },
     emits: ['toggle'],
     setup() {
@@ -75,6 +99,21 @@ export default {
                     detail.modal.toggle(true);
                 }
             },
+            dialog: {
+                data: {
+                    id: null,
+                    choice: null
+                },
+                isOpen: false,
+                toggle: value => {
+                    detail.dialog.isOpen = value;
+                },
+                select: (id, choice) => {
+                    detail.dialog.data = {
+                        id, choice};
+                    detail.dialog.toggle(true);
+                }
+            },
             isProcessing: false
         })
         const retrieveDetail = async ()=> {
@@ -92,6 +131,7 @@ export default {
                         itemRequests: response.item_requests.map(r => ({
                             id: r.id,
                             status: r.status,
+                            statusChoices: r.status_choices,
                             itemId: r.item_id,
                             itemName: r.item_name,
                             baseUom: r.item_base_uom,
@@ -105,7 +145,7 @@ export default {
                             quantityNeededFormatted: r.quantity_needed_formatted,
                             created: r.created
                         }))
-                    }
+                    };
                 } 
             }
             detail.isProcessing =false;
@@ -120,7 +160,7 @@ export default {
         });
 
         return {
-            detail
+            detail, retrieveDetail
         }
     }
 }

@@ -168,9 +168,9 @@ export class ItemRequestApi {
         return response.data
     }
 
-    static async updateItemRequest(id, params) {
-        const response = await AXIOS.execute(AXIOS.POST, ItemRequestApi.uri + `/${id}/update`,
-            null, null, null, params)
+    static async updateItemRequest(id, request) {
+        const response = await AXIOS.execute(AXIOS.PUT, ItemRequestApi.uri + `/${id}/update`,
+            'Status changed', 'Action failed. Please try again.', request)
         return response.data
     }
 }

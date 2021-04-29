@@ -96,7 +96,8 @@ export default {
                 Object.entries(modal.form.properties).forEach(entry => {
                     const key = entry[0]; 
                     const val = entry[1];
-                    const ref = modal.itemProperties.find(prop => prop.name==key);
+                    const ref = modal.itemProperties ?
+                        modal.itemProperties.find(prop => prop.name==key) : null;
                     if (ref && ref.required && 
                         (val == null || (isNaN(val) && val.trim() == ''))) 
                         errors.push(key.replaceAll('_', ' '));

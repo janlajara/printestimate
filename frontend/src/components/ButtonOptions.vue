@@ -51,7 +51,8 @@ export default {
                 x: computed(()=> {
                     if (base.value && dropdown.value) {
                         const baseRect = base.value.getBoundingClientRect();
-                        return baseRect.x - (dropdown.value.clientWidth - baseRect.width);
+                        const offset = dropdown.value.clientWidth - baseRect.width;
+                        return baseRect.x > offset? baseRect.x - offset : baseRect.x;
                     } else {
                         return 0;
                     }

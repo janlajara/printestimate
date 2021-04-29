@@ -1,7 +1,7 @@
-<template>
-    <Modal heading="Item Request" :is-open="$props.isOpen"
+<template> 
+    <Modal :heading="detail.data.itemName" :is-open="$props.isOpen"
         @toggle="(value)=> $emit('toggle', value)">
-        <Section heading="Details" class="grid md:grid-cols-4 md:gap-4">
+        <!--Section heading="Details" class="grid md:grid-cols-4 md:gap-4">
             <DescriptionList class="md:grid-cols-2 md:col-span-3">
                 <DescriptionItem :loader="detail.isProcessing"
                     name="Item Name" :value="detail.data.itemName"/>
@@ -14,10 +14,10 @@
                     name="Date Created" :value="detail.data.dateCreated"/>
             </DescriptionList>
         </Section>
-        <hr/>
+        <hr class="pb-2"/-->
         <Section heading="Allocated Stocks" class="grid md:grid-cols-4 md:gap-4">
-            <div class="md:col-span-3">
-                <p class="mt-3">Request has a total of 
+            <div class="mt-3 md:grid-cols-2 md:col-span-3">
+                <p>Request has a total of 
                     <span class="font-bold">{{detail.data.quantityStocked}}</span> 
                     allocated.</p>
                 <div class="bg-tertiary-light bg-opacity-70 rounded">
@@ -89,8 +89,8 @@
 <script>
 import Modal from '@/components/Modal.vue';
 import Section from '@/components/Section.vue';
-import DescriptionList from '@/components/DescriptionList.vue';
-import DescriptionItem from '@/components/DescriptionItem.vue';
+//import DescriptionList from '@/components/DescriptionList.vue';
+//import DescriptionItem from '@/components/DescriptionItem.vue';
 import Table from '@/components/Table.vue';
 import Row from '@/components/Row.vue';
 import Cell from '@/components/Cell.vue';
@@ -103,8 +103,8 @@ import {formatQuantity, reference} from '@/utils/format.js'
 
 export default {
     components: {
-        Modal, Section, DescriptionList, DescriptionItem,
-        Table, Row, Cell, Button, InputTextLookup
+        Modal, Section, //DescriptionList, DescriptionItem,
+        Table, Row, Cell, Button, InputTextLookup,
     },
     emits: ['toggle'],
     props: {
@@ -116,10 +116,14 @@ export default {
             id: props.itemRequestId,
             data: {
                 itemId: null,
+                itemName: '',
                 itemUom: {plural_abbrev: ''},
                 statusChoices: []
             },
             form: {
+                request: {
+                    status: null
+                },
                 stock: {
                     options: [],
                     selected: {

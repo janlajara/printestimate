@@ -30,17 +30,19 @@ class ItemProperties(PolymorphicModel):
             Item.TAPE: Tape,
             Item.LINE: Line,
             Item.PAPER: Paper,
-            #Item.PAPER_SHEET: Paper,
-            #Item.PAPER_ROLL: Paper,
             Item.PANEL: Panel,
             Item.LIQUID: Liquid,
-            Item.OTHER: None
+            Item.OTHER: Other
         }
         if mapping.get(item_type) is not None:
             return mapping[item_type]
 
     def __str__(self):
         return ''
+
+
+class Other(ItemProperties):
+    pass
 
 
 class Line(ItemProperties):

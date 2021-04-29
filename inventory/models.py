@@ -95,7 +95,7 @@ class Item(models.Model):
     PAPER = 'paper'
     PANEL = 'panel'
     LIQUID = 'liquid'
-    OTHER = 'others'
+    OTHER = 'other'
     TYPES = [
         (TAPE, 'Tape'),
         (LINE, 'Line'),

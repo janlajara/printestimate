@@ -252,7 +252,7 @@ class ItemRequestViewSet(viewsets.ViewSet):
                     item_request.disapprove(comments)
                 elif request_status == ItemRequest.CANCELLED:
                     item_request.cancel(comments)
-                serialized = serializers.ItemRequestSerializer(item_request)
+                serialized = serializers.ItemRequestDetailSerializer(item_request)
                 return Response(serialized.data)
             else:
                 return Response(

@@ -3,7 +3,7 @@ from rest_polymorphic.serializers import PolymorphicSerializer
 from djmoney.contrib.django_rest_framework import MoneyField
 from .models import Item, Stock, StockRequest, ItemRequestGroup, \
     ItemRequest, StockUnit, BaseStockUnit, AlternateStockUnit, StockMovement
-from .properties.models import ItemProperties, Line, Tape, Paper, Panel, Liquid
+from .properties.models import ItemProperties, Line, Tape, Paper, Panel, Liquid, Other
 
 
 class BaseStockUnitOptionSerializer(serializers.ModelSerializer):
@@ -167,6 +167,7 @@ class ItemPropertiesPolymorphicSerializer(PolymorphicSerializer):
         Paper: PaperSerializer,
         Panel: PanelSerializer,
         Liquid: LiquidSerializer,
+        Other: ItemPropertiesSerializer
     }
 
     def to_resource_type(self, model_or_instance):

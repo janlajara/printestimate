@@ -2,7 +2,8 @@
     <div class="input">
         <label class="input-label">{{$props.name}}</label>
         <div class="rounded-md shadow-sm">
-            <textarea class="rounded input-field w-full"></textarea>
+            <textarea class="rounded input-field w-full"
+              @input="event => $emit('input', event.target.value)"></textarea>
         </div>
     </div>
 </template>
@@ -11,7 +12,8 @@
 export default {
     props: {
         name: String
-    }
+    },
+    emits: ['input']
 }
 </script>
 

@@ -1,5 +1,5 @@
 <template>
-    <Section heading="Stock Management" class="mt-12">
+    <Section heading="Stock Management">
         <DescriptionList class="grid-cols-2 md:grid-cols-4">
             <DescriptionItem :loader="stock.isProcessing"
                 name="Available" :value="stock.data.availableQtyFormatted"/>

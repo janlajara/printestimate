@@ -11,7 +11,7 @@
                                 <Icon id="close" @click="close"/>
                             </button>
                         </header>
-                        <div class="modal-body pb-6 pb-12" 
+                        <div class="modal-body pb-6" 
                             :style="styleHeight" >
                             <slot/>
                         </div>

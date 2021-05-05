@@ -1,7 +1,8 @@
 <template>
     <div>
         <label v-if="$props.name" class="mt-2">
-            {{$props.name}}
+            <span class="text-sm font-medium">
+                {{$props.name}}</span>
             <span v-if="$props.required" 
                 class="text-secondary-light">*</span>
             <span v-if="$props.disabled" 
@@ -18,7 +19,7 @@
                         cursor-pointer text-gray-400 hover:text-red-400">
                         close</span>
                 </span>
-            </div>
+            </div> 
             <div v-else>
                 <input type="text" class="rounded border-0 bg-transparent w-full" 
                     :disabled="$props.disabled"
@@ -66,12 +67,14 @@ export default {
         placeholder: String,
         bg: {
             type: String,
+            default: 'regular',
             validator: (value) => {
                 return ['none', 'white', 'regular'].indexOf(value) !== -1
             }
         },
         size: {
             type: String,
+            default: 'regular',
             validator: (value) => {
                 return ['small', 'large', 'regular'].indexOf(value) !== -1
             }

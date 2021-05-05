@@ -50,7 +50,7 @@
                 </Section>
             </Modal>
         </Section>
-        <hr class="my-6"/>
+        <hr/>
         <Section heading="Alternate Stock Unit" 
             description="Grouped units of measure.">
             <Button color="secondary" :action="()=>asu.toggle(true)">Create</Button>

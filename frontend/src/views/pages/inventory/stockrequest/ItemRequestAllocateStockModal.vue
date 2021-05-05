@@ -21,19 +21,27 @@
                     <span class="font-bold">{{detail.data.quantityStocked}}</span> 
                     allocated.</p>
                 <div class="bg-tertiary-light bg-opacity-70 rounded">
-                    <Table :headers="['Stock Id', 'Brand Name', 'Quantity', 'Delete']">
-                        <Row v-for="(sr, i) in detail.data.stockRequests" :key="i">
+                    <Table :headers="['Stock Id', 'Brand Name', 'Quantity', '']">
+                        <Row v-for="(sr, i) in detail.data.stockRequests" :key="i"
+                            :class="sr.fulfilled ? 'text-gray-400' : ''">
                             <Cell label="Stock Id">{{sr.stockCode}}</Cell>
                             <Cell label="Brand Name">{{sr.stockName}}</Cell>
                             <Cell label="Quantity">{{sr.quantityFormatted}}</Cell>
                             <Cell class="flex justify-end flex-grow">
-                                <button @click="()=>deleteStockRequest(sr.id)"
-                                    class="material-icons text-sm px-6
-                                    text-black hover:text-secondary">
+                                <span v-if="sr.fulfilled" 
+                                    class="inline-block align-middle material-icons 
+                                        text-xs text-secondary">
+                                    check</span>
+                                <button v-else
+                                    :disabled="$props.readOnly || detail.isProcessing"
+                                    @click="()=>deleteStockRequest(sr.id)"
+                                    class="material-icons text-sm"
+                                    :class="$props.readOnly || detail.isProcessing ? 
+                                        'text-gray-400' : 'hover:text-secondary text-black'">
                                     delete</button>
                             </Cell>
                         </Row>
-                    </Table>    
+                    </Table>   
                     <div class="w-full flex space-y-2 flex-col sm:space-y-0 sm:space-x-2 
                         sm:flex-row flex-wrap p-4 -mt-4">
                         <InputTextLookup class="flex-grow"
@@ -53,8 +61,7 @@
                                 timestamp: option.createdAt
                             }))"
                             :value="detail.form.stock.search"
-                            :disabled="detail.data.isFullyAllocated ||
-                                detail.isProcessing"
+                            :disabled="detail.form.readOnly"
                             placeholder="Search Stock" 
                             bg="white" size="small"/>
                         <input type="text" v-number 
@@ -62,8 +69,7 @@
                                 detail.form.stock.quantity = event.target.value;
                             }"
                             :value="detail.form.stock.quantity"
-                            :disabled="detail.data.isFullyAllocated ||
-                                detail.isProcessing"
+                            :disabled="detail.form.readOnly"
                             :min="Math.min(detail.data.missingAllocation, 1)" 
                             :max="detail.form.stock.selected.quantity != null ? 
                                 Math.min(detail.form.stock.selected.quantity, 
@@ -74,8 +80,7 @@
                         <div class="flex justify-end">
                             <Button icon="add" 
                                 @click="detail.form.stock.add"
-                                :disabled="detail.data.isFullyAllocated || 
-                                    detail.isProcessing">
+                                :disabled="detail.form.readOnly">
                                 Add
                             </Button>
                         </div>
@@ -109,7 +114,8 @@ export default {
     emits: ['toggle'],
     props: {
         isOpen: Boolean,
-        itemRequestId: Number
+        itemRequestId: Number,
+        readOnly: Boolean
     },
     setup(props) {
         const detail = reactive({
@@ -121,9 +127,10 @@ export default {
                 statusChoices: []
             },
             form: {
-                request: {
-                    status: null
-                },
+                readOnly: computed(()=> {
+                    return (detail.data.isFullyAllocated || 
+                        detail.isProcessing) || props.readOnly
+                }),
                 stock: {
                     options: [],
                     selected: {
@@ -233,7 +240,7 @@ export default {
             }
             detail.isProcessing = false;
         }
-        watch(()=> props.itemRequestId, ()=> {
+        watch(()=> props.isOpen, ()=> {
             detail.id = props.itemRequestId;
             retrieveItemRequest();
         });

@@ -15,41 +15,55 @@
                     name="Date Created" :value="detail.data.created"/>
             </DescriptionList>
         </Section>
-        <Section heading="Item Request List" class="mt-12">
-            <ItemRequestAllocateStockModal :is-open="detail.modal.isOpen"
-                :item-request-id="detail.modal.selected"
-                @toggle="detail.modal.toggle" />
+        <Section heading="Item Request List">
+            <ItemRequestModal 
+                :is-open="detail.itemModal.isOpen"
+                :item-request-id="detail.itemModal.selected"
+                @toggle="detail.itemModal.toggle" />
+            <ItemRequestAllocateStockModal 
+                :is-open="detail.stockModal.isOpen"
+                :read-only="detail.stockModal.readOnly"
+                :item-request-id="detail.stockModal.selected"
+                @toggle="detail.stockModal.toggle" />
             <ItemRequestUpdateStatusDialog 
                 :data="detail.dialog.data"
                 :on-after-execute="retrieveDetail"
                 :is-open="detail.dialog.isOpen"
                 @toggle="detail.dialog.toggle"/>
+            <Button icon="add" color="tertiary"
+                :action="()=>detail.itemModal.toggle(true)">Add Item</Button>
             <Table :headers="['Item', 'Status', 'Quantity', '']"
                 :loader="detail.isProcessing">
                 <Row v-for="(r, i) in detail.data.itemRequests" :key="i">
                     <Cell label="Item">{{r.itemName}}</Cell>
                     <Cell label="Status">
-                        <ButtonOptions icon="expand_more" :label="r.status"> 
-                            <ButtonOption class="border-b border-gray-400 border-opacity-30"
-                                v-if="r.status == 'Approved'"
-                                @click="()=>detail.modal.select(r.id)">
-                                Allocate Stocks
-                            </ButtonOption>
+                        <ButtonOptions v-if="r.statusChoices.length > 0"
+                            icon="expand_more" :label="r.status"> 
                             <ButtonOption v-for="(choice, key) in r.statusChoices" :key="key"
                                 @click="()=>detail.dialog.select(r.id, choice)">
                                 {{choice.label}}
                             </ButtonOption>
                         </ButtonOptions>
+                        <span v-else class="font-bold">
+                            {{r.status}}
+                        </span>
                     </Cell>
                     <Cell label="Quantity">
-                        {{r.quantityStocked}} / {{r.quantityNeededFormatted}}
+                        <div class="cursor-pointer hover:text-secondary"
+                            @click="()=>detail.stockModal.select(r.id, r.status)">
+                            {{r.quantityStocked}} / {{r.quantityNeededFormatted}}
+                            <span class="material-icons text-sm px-2 inline-block align-middle">
+                                library_add</span>
+                        </div>
                     </Cell>
                     <Cell class="px-0">
                         <div class="w-full flex justify-end">
                             <Button class="my-auto" icon="edit"
-                                :disabled="['Approved', 'Fulfilled'].includes(r.status)"/>
+                                :disabled="['Approved', 'Partially Fulfilled', 'Fulfilled']
+                                    .includes(r.status)"/>
                             <Button class="my-auto" icon="delete"
-                                :disabled="['Approved', 'Fulfilled'].includes(r.status)"/>
+                                :disabled="['Approved', 'Partially Fulfilled', 'Fulfilled']
+                                    .includes(r.status)"/>
                         </div>
                     </Cell>
                 </Row>
@@ -70,6 +84,7 @@ import DescriptionItem from '@/components/DescriptionItem.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import ItemRequestAllocateStockModal from '@/views/pages/inventory/stockrequest/ItemRequestAllocateStockModal.vue';
 import ItemRequestUpdateStatusDialog from '@/views/pages/inventory/stockrequest/ItemRequestUpdateStatusDialog.vue';
+import ItemRequestModal from '@/views/pages/inventory/stockrequest/ItemRequestModal.vue';
 
 import {watch, reactive, onBeforeMount} from 'vue'
 import {useRoute} from 'vue-router'
@@ -79,7 +94,8 @@ import {reference} from '@/utils/format.js'
 export default {
     components: {
         Page, Section, Button, ButtonOptions, ButtonOption, Table, Row, Cell, 
-        DescriptionItem, DescriptionList, ItemRequestAllocateStockModal, ItemRequestUpdateStatusDialog
+        DescriptionItem, DescriptionList, ItemRequestAllocateStockModal, 
+        ItemRequestUpdateStatusDialog, ItemRequestModal
     },
     emits: ['toggle'],
     setup() {
@@ -87,16 +103,31 @@ export default {
         const detail = reactive({
             id: route.params.id,
             data: {},
-            modal: {
+            stockModal: {
+                selected: null,
+                isOpen: false,
+                readOnly: true,
+                toggle: value => {
+                    detail.stockModal.isOpen = value;
+                    if (!detail.stockModal.isOpen) retrieveDetail();
+                },
+                select: (id, status) => {
+                    detail.stockModal.selected = id;
+                    detail.stockModal.readOnly = 
+                        !['Approved', 'Partially Fulfilled'].includes(status)
+                    detail.stockModal.toggle(true);
+                }
+            },
+            itemModal: {
                 selected: null,
                 isOpen: false,
                 toggle: value => {
-                    detail.modal.isOpen = value;
-                    if (!detail.modal.isOpen) retrieveDetail();
+                    detail.itemModal.isOpen = value;
+                    //if (!detail.itemModal.isOpen) retrieveDetail();
                 },
-                select: id => {
-                    detail.modal.selected = id;
-                    detail.modal.toggle(true);
+                select: (id) => {
+                    detail.itemModal.selected = id;
+                    detail.itemModal.toggle(true);
                 }
             },
             dialog: {

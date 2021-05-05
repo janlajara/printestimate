@@ -3,13 +3,13 @@
         @toggle="(value)=> $emit('toggle', value)"
         :buttons="[{color: 'primary', icon:'upload', text:'Request',
                     action:()=>stock.withdraw(), disabled: stock.isProcessing},]">
-        <Section heading="Details" class="grid md:grid-cols-4">
+        <Section heading="Details" heading-position="side">
             <InputText type="text" name="Reason"
                         @input="(value)=>stock.data.reason = value"
                         :value="stock.data.reason"/>
         </Section>
-        <Section heading="Summary" class="grid md:grid-cols-4 md:gap-4">
-            <dd class="text-sm md:col-span-3 md:mt-3">
+        <Section heading="Summary" heading-position="side">
+            <dd class="text-sm md:mt-3">
                 <p class="text-sm">Would you like to withdraw
                     <span class="font-bold">
                         {{$props.data.total}}

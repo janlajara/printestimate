@@ -5,8 +5,8 @@
                     action:()=>modal.save(), disabled: modal.isProcessing},]">
         <div v-if="modal.error" 
             class="pt-4 text-sm text-red-600">*{{modal.error}}</div>
-        <Section heading="General Information" class="grid md:grid-cols-4 md:gap-4"> 
-            <div class="md:col-span-3 md:grid md:grid-cols-3 md:gap-4">
+        <Section heading="General Information" heading-position="side"> 
+            <div class="md:grid md:grid-cols-3 md:gap-4">
                 <InputText type="text" name="Name" required class="md:col-span-2"
                     @input="(value)=>modal.form.name = value"
                     :value="modal.form.name"/>
@@ -31,9 +31,9 @@
                     }))"/>
             </div>    
         </Section>
-        <Section heading="Properties" v-if="modal.itemProperties"
-            class="grid md:grid-cols-4 md:gap-4"> 
-            <div class="md:col-span-3 md:grid md:grid-cols-3 md:gap-4">
+        <Section heading="Properties" heading-position="side"
+            v-if="modal.itemProperties">
+            <div class="md:grid md:grid-cols-3 md:gap-4">
                 <component v-for="(itemProp, key) in modal.itemProperties" :key="key"
                     :is="itemProp.inputComponent" :required="itemProp.required"
                     :name="itemProp.label" :type="itemProp.inputType"

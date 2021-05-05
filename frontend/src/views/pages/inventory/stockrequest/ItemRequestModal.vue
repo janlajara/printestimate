@@ -2,12 +2,14 @@
      <Modal :heading="`${$props.action == 'create'?
             'Add' : 'Edit'} Item`" :is-open="$props.isOpen"
         @toggle="(value)=> $emit('toggle', value)">
-        <Section>
-            <div v-if="$props.action == 'create'">
-                <InputTextLookup name="Item"/>
-                <InputText name="Quantity" type="number"/>
-            </div>
-            <div v-else>
+        <Section heading="General Information" heading-position="side"> 
+            <div>
+                <div v-if="$props.action == 'create'">
+                    <InputTextLookup name="Item"/>
+                    <InputText name="Quantity" type="number"/>
+                </div>
+                <div v-else>
+                </div>
             </div>
         </Section>
     </Modal>

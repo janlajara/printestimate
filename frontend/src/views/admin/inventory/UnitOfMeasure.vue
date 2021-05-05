@@ -18,7 +18,8 @@
                     </Cell>
                 </Row>
             </Table>
-            <Modal heading="Base Stock Unit" :is-open="bsu.modal.IsOpen" @toggle="bsu.toggle"
+            <Modal :heading="`${(bsu.modal.isCreate)? 'Create Base Stock Unit' : 'Edit ' + bsu.selected.name}`"
+                :is-open="bsu.modal.IsOpen" @toggle="bsu.toggle"
                 :buttons="[
                     {color: 'primary', icon: 'save', text: 'Save', 
                         action: ()=>{bsu.save()}, disabled: bsu.isProcessing},
@@ -27,10 +28,9 @@
                     {color: 'secondary', icon: 'delete', text: 'Delete', 
                         action: ()=>{bsu.delete()}, 
                         disabled: (bsu.modal.isCreate)?  true : bsu.isProcessing}]">
-                <Section :heading="`${(bsu.modal.isCreate)? 'Create' : 'Edit'} 
-                    ${bsu.selected.name}`">
-                    <span v-if="bsu.error" class="text-sm text-red-600">*{{bsu.error}}</span>
-                    <div class="md:grid md:grid-cols-4 md:gap-4">
+                <div v-if="bsu.error" class="text-sm text-red-600">*{{bsu.error}}</div>
+                <Section heading="General Information" heading-position="side">
+                    <div class="md:grid md:grid-cols-3 md:gap-4">
                         <InputText name="Name" type="text" :value="bsu.selected.name" required
                             @input="(value)=>bsu.selected.name = value"/>
                         <InputText name="Abbreviation" type="text" :value="bsu.selected.abbrev" required
@@ -67,7 +67,8 @@
                     <Cell label="Parent Alternate Stock Units">{{unit.baseStockUnits}}</Cell>
                 </Row>
             </Table>
-            <Modal heading="Alternate Stock Unit" :is-open="asu.modal.IsOpen" @toggle="asu.toggle"
+            <Modal :heading="`${(asu.modal.isCreate)?  'Create Alternate Stock Unit' : 'Edit ' + asu.selected.name}`" 
+                :is-open="asu.modal.IsOpen" @toggle="asu.toggle"
                 :buttons="[{color: 'primary', icon: 'save', text: 'Save', 
                     action: ()=>{asu.save()}, disabled: asu.isProcessing},
                     {color: 'secondary', icon: 'save', text: 'Save and Close', 
@@ -75,10 +76,9 @@
                     {color: 'secondary', icon: 'delete', text: 'Delete', 
                         action: ()=>{asu.delete()}, 
                         disabled: (asu.modal.isCreate)?  true : asu.isProcessing}]">
-                <Section :heading="`${(asu.modal.isCreate)? 'Create' : 'Edit'} 
-                    ${asu.selected.name}`">
-                    <span v-if="asu.error" class="text-sm text-red-600">*{{asu.error}}</span>
-                    <div class="md:grid md:grid-cols-4 md:gap-4">
+                <div v-if="asu.error" class="text-sm text-red-600">*{{asu.error}}</div>
+                <Section heading="General Information" heading-position="side">
+                    <div class="md:grid md:grid-cols-3 md:gap-4">
                         <InputText name="Name" type="text" :value="asu.selected.name"
                             @input="(value)=>asu.selected.name = value"/>
                         <InputText name="Abbreviation" type="text" :value="asu.selected.abbrev"

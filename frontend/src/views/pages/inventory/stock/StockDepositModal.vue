@@ -3,8 +3,8 @@
         @toggle="(value)=> $emit('toggle', value)"
         :buttons="[{color: 'primary', icon:'download', text:'Deposit',
                     action:()=>stock.deposit(), disabled: stock.isProcessing},]">
-        <Section heading="Details" class="grid md:grid-cols-4 md:gap-4">
-            <div class="md:col-span-3 md:grid md:grid-cols-3 md:gap-4">
+        <Section heading="Details" heading-position="side">
+            <div class="md:grid md:grid-cols-3 md:gap-4">
                 <InputSelect name="Deposit By" required
                     @input="(value)=>stock.data.depositBy = value"
                     :options="Object.entries($props.data.units)
@@ -38,8 +38,8 @@
                     :value="stock.data.unbounded"/>
             </div>
         </Section>
-        <Section heading="Summary" class="grid md:grid-cols-4 md:gap-4">
-            <dd class="md:mt-2 md:col-span-3 text-sm">
+        <Section heading="Summary" heading-position="side">
+            <dd class="md:mt-2 text-sm">
                 <p class="my-2">
                     Note : This creates <span class="font-bold">{{stock.data.depositCount}} Stock 
                     {{stock.data.depositCount == 1 ? 'record' : 'records'}}</span>.</p>

@@ -415,30 +415,38 @@ class ItemRequest(models.Model):
 
     @property
     def status_choices(self):
-        def _get(status_codes):
+        def __get(status_codes):
             return [status for status in ItemRequest.STATUS_CHOICES 
                 if status[0] in status_codes]
+        def __get_partially_fulfilled_choices():
+            if self.is_fully_allocated:
+                return __get([ItemRequest.FULFILLED])
+            elif len(self.unfulfilled_stock_requests.all()) > 0:
+                return __get([ItemRequest.PARTIALLY_FULFILLED])
+            else:
+                return []
+        def __get_approved_choices():
+            if self.is_fully_allocated:
+                return __get([ItemRequest.FULFILLED, ItemRequest.CANCELLED])
+            elif self.missing_allocation > 0 and self.quantity_stocked > 0:
+                return __get([ItemRequest.PARTIALLY_FULFILLED, ItemRequest.CANCELLED])
+            else:
+                return __get([ItemRequest.CANCELLED])
+
         choices_map = {
             ItemRequest.DRAFT: 
-                _get([ItemRequest.FOR_APPROVAL, ItemRequest.CANCELLED]),
+                __get([ItemRequest.FOR_APPROVAL, ItemRequest.CANCELLED]),
             ItemRequest.FOR_APPROVAL: 
-                _get([ItemRequest.APPROVED, ItemRequest.DISAPPROVED, 
+                __get([ItemRequest.APPROVED, ItemRequest.DISAPPROVED, 
                     ItemRequest.CANCELLED]),
             ItemRequest.DISAPPROVED: 
-                _get([ItemRequest.CANCELLED]),
+                __get([ItemRequest.CANCELLED]),
             ItemRequest.CANCELLED: 
-                _get([ItemRequest.DRAFT]),
-            ItemRequest.PARTIALLY_FULFILLED:
-                _get([ItemRequest.FULFILLED]) if self.is_fully_allocated else
-                _get([ItemRequest.PARTIALLY_FULFILLED]),
+                __get([ItemRequest.DRAFT]),
             ItemRequest.FULFILLED: []
         }
-        if self.is_fully_allocated:
-            choices_map[ItemRequest.APPROVED] = _get([ItemRequest.FULFILLED, ItemRequest.CANCELLED])
-        elif self.missing_allocation > 0 and self.quantity_stocked > 0:
-            choices_map[ItemRequest.APPROVED] = _get([ItemRequest.PARTIALLY_FULFILLED, ItemRequest.CANCELLED])
-        else:
-            choices_map[ItemRequest.APPROVED] = _get([ItemRequest.CANCELLED])
+        choices_map[ItemRequest.PARTIALLY_FULFILLED] = __get_partially_fulfilled_choices()
+        choices_map[ItemRequest.APPROVED] = __get_approved_choices()
 
         return choices_map[self.status]
 
@@ -737,6 +745,7 @@ class StockRequest(StockLog):
             self.is_fulfilled = True
             quantity = self.stock_unit.quantity
             self.stock.withdraw(quantity)
+            self.save()
 
 
 class StockMovement(StockLog):

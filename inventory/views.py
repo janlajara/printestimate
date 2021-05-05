@@ -248,6 +248,8 @@ class ItemRequestViewSet(viewsets.ViewSet):
                     item_request.approve(comments)
                 elif request_status == ItemRequest.FULFILLED:
                     item_request.fulfill(comments)
+                elif request_status == ItemRequest.PARTIALLY_FULFILLED:
+                    item_request.partially_fulfill(comments)
                 elif request_status == ItemRequest.DISAPPROVED:
                     item_request.disapprove(comments)
                 elif request_status == ItemRequest.CANCELLED:

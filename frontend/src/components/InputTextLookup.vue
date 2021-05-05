@@ -1,6 +1,6 @@
 <template>
-    <div>
-        <label v-if="$props.name" class="mt-2">
+    <div :class="$props.name ? 'mt-2' : ''">
+        <label v-if="$props.name">
             <span class="text-sm font-medium">
                 {{$props.name}}</span>
             <span v-if="$props.required" 
@@ -8,10 +8,10 @@
             <span v-if="$props.disabled" 
                 class="material-icons text-sm text-secondary-light">lock</span>
         </label>
-        <div class="relative w-full h-full" :class="bgStyle" 
+        <div class="relative w-full " :class="bgStyle" 
             v-click-outside="()=> lookup.toggle(false)">
             <div v-if="lookup.selected"
-                class="flex h-8">
+                class="flex h-9">
                 <span class="flex my-auto mx-3 text-xs">
                     {{lookup.selected}}
                     <span @click="lookup.clearSelect" 
@@ -21,7 +21,7 @@
                 </span>
             </div> 
             <div v-else>
-                <input type="text" class="rounded border-0 bg-transparent w-full" 
+                <input type="text" class="rounded border-0 bg-transparent shadow-sm w-full" 
                     :disabled="$props.disabled"
                     @click="event => {
                         $emit('input', event.target.value);
@@ -41,11 +41,11 @@
                         @click="()=> lookup.select(option.value, option.title + ' : ' + option.subtitle)">
                         <dt class="text-sm flex justify-between">
                             <span class="font-bold">{{option.title}}</span>
-                            <span>{{option.figure}}</span>
+                            <span class="text-right">{{option.figure}}</span>
                         </dt>
                         <dd class="text-xs flex justify-between">
-                            <span class="text-gray-400">{{option.subtitle}}</span>
-                            <span class="text-gray-400">{{option.timestamp}}</span>
+                            <span class="text-gray-400 capitalize">{{option.subtitle}}</span>
+                            <span class="text-gray-400 text-right">{{option.timestamp}}</span>
                         </dd>
                     </div>
                 </div>

@@ -64,21 +64,23 @@
                             :disabled="detail.form.readOnly"
                             placeholder="Search Stock" 
                             bg="white" size="small"/>
-                        <input type="text" v-number 
-                            @input="event => {
-                                detail.form.stock.quantity = event.target.value;
-                            }"
-                            :value="detail.form.stock.quantity"
-                            :disabled="detail.form.readOnly"
-                            :min="Math.min(detail.data.missingAllocation, 1)" 
-                            :max="detail.form.stock.selected.quantity != null ? 
-                                Math.min(detail.form.stock.selected.quantity, 
-                                    detail.data.missingAllocation) : 
-                                detail.data.missingAllocation"
-                            class="text-xs border-0 rounded sm:w-28"
-                            :placeholder="`${detail.data.itemUom.name} Quantity`"/>
+                        <span class="flex">
+                            <input type="text" v-number 
+                                @input="event => {
+                                    detail.form.stock.quantity = event.target.value;
+                                }"
+                                :value="detail.form.stock.quantity"
+                                :disabled="detail.form.readOnly"
+                                :min="Math.min(detail.data.missingAllocation, 1)" 
+                                :max="detail.form.stock.selected.quantity != null ? 
+                                    Math.min(detail.form.stock.selected.quantity, 
+                                        detail.data.missingAllocation) : 
+                                    detail.data.missingAllocation"
+                                class="text-xs border-0 rounded sm:w-28 my-auto"
+                                :placeholder="`${detail.data.itemUom.name} Quantity`"/>
+                        </span>
                         <div class="flex justify-end">
-                            <Button icon="add" 
+                            <Button icon="add"  class="my-auto"
                                 @click="detail.form.stock.add"
                                 :disabled="detail.form.readOnly">
                                 Add

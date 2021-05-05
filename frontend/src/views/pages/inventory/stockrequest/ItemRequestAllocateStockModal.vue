@@ -15,8 +15,8 @@
             </DescriptionList>
         </Section>
         <hr class="pb-2"/-->
-        <Section heading="Allocated Stocks" class="grid md:grid-cols-4 md:gap-4">
-            <div class="mt-3 md:grid-cols-2 md:col-span-3">
+        <Section heading="Allocated Stocks" heading-position="side">
+            <div class="mt-3 md:grid-cols-2">
                 <p>Request has a total of 
                     <span class="font-bold">{{detail.data.quantityStocked}}</span> 
                     allocated.</p>

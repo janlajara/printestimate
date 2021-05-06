@@ -324,6 +324,14 @@ class ItemRequestGroup(models.Model):
         else:
             raise IllegalItemRequestGroupOperation(False, 
                 ItemRequestGroup.CLOSED)
+    
+    def add_item_request(self, item_id, quantity, auto_add=False):
+        item = Item.objects.get(pk=item_id)
+        if item is not None:
+            item_request = item.request(quantity, auto_add)
+            item_request.item_request_group = self
+            item_request.save()
+            return item_request
 
 
 class ItemRequestManager(models.Manager):

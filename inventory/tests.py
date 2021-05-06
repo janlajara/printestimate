@@ -195,9 +195,9 @@ def test_item__request_stock_lesser_quantity(db, item: Item):
 def test_item__request_and_fulfill(db, item: Item):
     stock = item.deposit_stock('Generic', 500, 1000)[0]
     item_request_group = ItemRequestGroup.objects.create()
-    item_request = item.request(250, True)
-    item_request_group.item_requests.set([item_request])
+    item_request = item_request_group.add_item_request(item.pk, 250, True) 
     assert item_request.is_fully_allocated == True
+    assert item_request_group == item_request.item_request_group
 
     item_request.for_approval()
     item_request.approve()
@@ -261,8 +261,7 @@ def test_item__request_approve_disapprove(db, item: Item):
 def test_item__request_illegal(db, item: Item):
     stock = item.deposit_stock('Generic', 500, 1000)[0]
     item_request_group = ItemRequestGroup.objects.create()
-    item_request = item.request(250)
-    item_request_group.item_requests.set([item_request])
+    item_request = item_request_group.add_item_request(item.pk, 250) 
 
     with pytest.raises(IllegalItemRequestGroupOperation):
         item_request_group.finish()
@@ -287,8 +286,8 @@ def test_item__request_illegal(db, item: Item):
         item_request.partially_fulfill()
 
     item_request.allocate_stocks([stock.request(100)])
-    item_request.partially_fulfill()
     assert len(item_request.unfulfilled_stock_requests) == 1
+    item_request.partially_fulfill()
     assert item_request.missing_allocation == 150
 
     with pytest.raises(IllegalItemRequestOperation):

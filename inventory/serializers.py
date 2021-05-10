@@ -331,8 +331,9 @@ class ItemRequestListSerializer(serializers.ModelSerializer):
 
 
 class ItemRequestDetailSerializer(ItemRequestListSerializer):
+    status = serializers.CharField(read_only=True, source='get_status_display')
     status_choices = serializers.SerializerMethodField()
-    stock_requests = StockRequestSerializer(many=True)
+    stock_requests = StockRequestSerializer(many=True, read_only=True)
     created = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
 
     class Meta:

@@ -4,10 +4,10 @@
         <ItemInputModal :is-open="detail.modal.isOpen" :is-create="false" 
             :on-after-save="()=>loadItem(detail.id)" :data="detail.data"
             @toggle="(value)=> detail.modal.isOpen = value"/>
-        <div class="flex">
+        <div class="flex gap-4">
             <Button color="secondary" icon="arrow_back"
                 :action="()=>$router.go(-1)">Go Back</Button>
-            <Button icon="mode_edit" class="mx-4" :action="detail.edit"/>
+            <Button icon="mode_edit" :action="detail.edit"/>
             <Button icon="delete" :action="()=>detail.delete(detail.id)"/>
         </div> 
         <Section>

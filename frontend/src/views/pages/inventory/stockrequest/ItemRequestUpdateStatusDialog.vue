@@ -1,20 +1,21 @@
 <template>
-    <Dialog
-        heading="Would you like to proceed with this action?"
+    <Dialog icon="contact_support"
+        :heading="`Confirm ${dialog.choice.label}`"
         @toggle="$emit('toggle', false)"
         :is-open="$props.isOpen">
         <Section>
+            <div>Would you like to update the status of this request?</div>
             <InputTextarea name="Comments"
                 @input="value => dialog.comments = value"/>
         </Section>
         <Button color="primary" class="w-full"
             @click="dialog.execute">
-            Confirm {{dialog.choice.label}}</Button>
+            Confirm</Button>
     </Dialog> 
 </template>
 
 <script>
-import {reactive, onUpdated} from 'vue';
+import {reactive, watch} from 'vue';
 import Dialog from '@/components/Dialog.vue';
 import Section from '@/components/Section.vue';
 import InputTextarea from '@/components/InputTextarea.vue';
@@ -46,7 +47,7 @@ export default {
                         status: dialog.choice.value,
                         comments: dialog.comments
                     };
-                    const response = await ItemRequestApi.updateItemRequest(dialog.id, request);
+                    const response = await ItemRequestApi.updateItemRequestStatus(dialog.id, request);
                     if (response) {
                         emit('toggle', false);
                         if (props.onAfterExecute) props.onAfterExecute();
@@ -54,8 +55,8 @@ export default {
                 }
             }
         });
-        onUpdated(()=> {
-            if (props.data) {
+        watch(()=> props.data, ()=> {
+            if (props.data && props.data.id) {
                 dialog.id = props.data.id;
                 if (props.data.choice) {
                     dialog.choice = {

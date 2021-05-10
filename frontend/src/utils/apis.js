@@ -157,6 +157,12 @@ export class ItemRequestGroupApi {
         const response = await AXIOS.execute(AXIOS.GET, ItemRequestGroupApi.uri + `/${id}/`)
         return response.data
     }
+
+    static async addItemRequest(id, request) {
+        const response = await AXIOS.execute(AXIOS.PUT, ItemRequestGroupApi.uri + `/${id}/itemrequest/add`,
+            'Item request added', 'Failed to add item request. Please try again.', request)
+        return response.data
+    }
 }
 
 export class ItemRequestApi {
@@ -169,7 +175,18 @@ export class ItemRequestApi {
     }
 
     static async updateItemRequest(id, request) {
-        const response = await AXIOS.execute(AXIOS.PUT, ItemRequestApi.uri + `/${id}/update`,
+        const response = await AXIOS.execute(AXIOS.PUT, ItemRequestApi.uri + `/${id}/`,
+            'Item Request updated', 'Update failed. Please try again.', request)
+        return response.data
+    }
+
+    static async deleteItemRequest(id) {
+        await AXIOS.execute(AXIOS.DELETE, ItemRequestApi.uri + `/${id}/`,
+            null, null, null)
+    }
+
+    static async updateItemRequestStatus(id, request) {
+        const response = await AXIOS.execute(AXIOS.PUT, ItemRequestApi.uri + `/${id}/status/update`,
             'Status changed', 'Action failed. Please try again.', request)
         return response.data
     }

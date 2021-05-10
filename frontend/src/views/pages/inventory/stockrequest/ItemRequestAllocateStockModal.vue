@@ -117,7 +117,8 @@ export default {
     props: {
         isOpen: Boolean,
         itemRequestId: Number,
-        readOnly: Boolean
+        readOnly: Boolean,
+        onAfterAdd: Function
     },
     setup(props) {
         const detail = reactive({
@@ -131,7 +132,8 @@ export default {
             form: {
                 readOnly: computed(()=> {
                     return (detail.data.isFullyAllocated || 
-                        detail.isProcessing) || props.readOnly
+                        detail.isProcessing) || 
+                        props.readOnly 
                 }),
                 stock: {
                     options: [],
@@ -167,7 +169,8 @@ export default {
                         detail.isProcessing = true;
                         const itemId = detail.data.itemId;
 
-                        if (detail.id && detail.form.stock.selected.id && itemId) {
+                        if (detail.id && detail.form.stock.selected.id && itemId &&
+                            detail.form.stock.quantity > 0) {
                             const request = {
                                 item_request_id: detail.id,
                                 stock_requests: [{
@@ -181,6 +184,7 @@ export default {
                                 detail.form.stock.search = null;
                                 detail.form.stock.quantity = null;
                                 detail.form.stock.selected.id = null;
+                                if (props.onAfterAdd) props.onAfterAdd();
                             }
                         }
                         detail.isProcessing = false;
@@ -212,6 +216,7 @@ export default {
             if (srId) {
                 await StockRequestApi.deleteStockRequest(srId);
                 retrieveItemRequest();
+                if (props.onAfterAdd) props.onAfterAdd();
             }
             detail.isProcessing = false;
         }

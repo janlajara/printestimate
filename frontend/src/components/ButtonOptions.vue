@@ -4,15 +4,15 @@
             @click="()=> state.toggle()">
             <span v-show="$props.label && 
                 ($props.labelPosition == null || $props.labelPosition == 'left')"
-                class="inline-block align-middle px-1 font-bold">
+                class="inline-block align-middle font-bold">
                 {{$props.label}}
             </span>
             <span v-show="$props.icon"
-                class="inline-block align-middle px-1 material-icons">
+                class="inline-block align-middle material-icons">
                 {{$props.icon}}
             </span>
             <span v-show="$props.label && $props.labelPosition == 'right'"
-                class="inline-block align-middle px-1 font-bold">
+                class="inline-block align-middle font-bold">
                 {{$props.label}}
             </span>
         </div>

@@ -36,10 +36,12 @@ urlpatterns = [
           views.ItemRequestGroupViewSet.as_view({'get': 'list'})),
      path('api/itemrequestgroups/<int:pk>/',
           views.ItemRequestGroupViewSet.as_view({'get': 'retrieve'})), 
+     path('api/itemrequestgroups/<int:pk>/itemrequest/add',
+          views.ItemRequestsGroupAddItemRequestViewSet.as_view({'put': 'update'})),
      path('api/itemrequests/<int:pk>/',
-          views.ItemRequestViewSet.as_view({'get': 'retrieve'})),
-     path('api/itemrequests/<int:pk>/update',
-          views.ItemRequestViewSet.as_view({'put': 'update'})),
+          views.ItemRequestViewSet.as_view(GETRETRIEVE_PUTUPDATE_POSTDESTROY)),
+     path('api/itemrequests/<int:pk>/status/update',
+          views.ItemRequestUpdateStatusViewSet.as_view({'put': 'update'})),
 
      # STOCK REQUESTS
      path('api/stockrequests/<int:pk>/',

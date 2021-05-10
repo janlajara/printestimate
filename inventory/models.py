@@ -743,7 +743,7 @@ class StockLog(models.Model):
 
 
 class StockRequest(StockLog):
-    item_request = models.ForeignKey(ItemRequest, on_delete=models.RESTRICT, 
+    item_request = models.ForeignKey(ItemRequest, on_delete=models.CASCADE, 
         blank=True, null=True, related_name='stock_requests')
     is_fulfilled = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)

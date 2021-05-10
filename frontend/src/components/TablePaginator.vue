@@ -80,7 +80,9 @@ export default {
             last: ()=> {
                 if (props.count && pagination.limit) {
                     const offset = props.count > pagination.limit?
-                        parseInt(props.count / pagination.limit) * pagination.limit :
+                        props.count % pagination.limit > 0 ?
+                            Math.floor(props.count / pagination.limit) * pagination.limit :
+                            ((props.count / pagination.limit) - 1) * pagination.limit :
                         0;
                     pagination.offset = offset; 
                     pagination.load();
@@ -94,9 +96,15 @@ export default {
                 emit('change-limit', parseInt(event.target.value));
             }
         });
-        watch(()=> props.limit, ()=> {
+        watch(()=>props.limit, ()=> {
             if (props.limit != null) {
                 pagination.limit = props.limit;
+                pagination.load();
+            }
+        })
+        watch(()=>props.count, ()=> {
+            if (props.count != null) {
+                pagination.offset = 0;
                 pagination.load();
             }
         })

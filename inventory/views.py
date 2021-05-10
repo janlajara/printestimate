@@ -218,18 +218,35 @@ class ItemRequestGroupViewSet(viewsets.ModelViewSet):
             return serializers.ItemRequestGroupSerializer    
 
 
-class ItemRequestViewSet(viewsets.ViewSet):
+class ItemRequestsGroupAddItemRequestViewSet(viewsets.ViewSet):
+    def update(self, request, pk=None):
+        data = request.data
 
-    def retrieve(self, request, pk=None):
-        item_request = ItemRequest.objects.get(pk=pk)
+        if pk is not None:
+            item_request_group = get_object_or_404(ItemRequestGroup, pk=pk)
+            quantity = data.get('quantity', None)
+            item_id = data.get('item_id', None)
 
-        if item_request is not None:
-            serialized = serializers.ItemRequestDetailSerializer(item_request)
-            return Response(serialized.data)
-        else:
-            Response(
-                {"detail": "Item request could not be found"}, 
-                status=status.HTTP_404_NOT_FOUND)
+            if quantity is not None and item_id is not None:
+                item = get_object_or_404(Item, pk=item_id)
+                item_request = item_request_group.add_item_request(item.pk, quantity)
+                serialized = serializers.ItemRequestGroupSerializer(item_request_group)
+                return Response(serialized.data)
+            else:
+                return Response(
+                    {"detail": "Missing properties 'quantity' and/or 'item_id'."},
+                        status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+                    {"detail": "Missing query parameter 'pk'."},
+                        status=status.HTTP_400_BAD_REQUEST)
+            
+
+class ItemRequestViewSet(viewsets.ModelViewSet):
+    queryset = ItemRequest.objects.all()
+    serializer_class = serializers.ItemRequestDetailSerializer
+
+
+class ItemRequestUpdateStatusViewSet(viewsets.ViewSet):
 
     def update(self, request, pk=None):
         data = request.data

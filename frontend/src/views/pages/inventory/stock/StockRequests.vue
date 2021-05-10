@@ -64,16 +64,21 @@ export default {
                     requests.list = response.results.map( requestGroup => ({
                         id: requestGroup.id,
                         totalQuantity: requestGroup.item_requests
+                            .filter(i => i.item_id == id)
                             .reduce((a, b)=> a + (b['quantity_needed'] || 0), 0),
                         baseUom: requestGroup.item_requests[0].item_base_uom,
                         reason: requestGroup.reason,
                         status: requestGroup.status,
-                        itemRequests: requestGroup.item_requests.map( request => ({
-                            status: request.status,
-                            createdAt: request.created
-                        })),
+                        itemRequests: requestGroup.item_requests
+                            .filter(i => i.item_id == id)
+                            .map( request => ({
+                                status: request.status,
+                                createdAt: request.created
+                            })),
                         dateCreated: requestGroup.created_at 
                     }));
+                    console.log(requests.list);
+                    console.log(response.results);
                 }
             }
             requests.isProcessing = false;

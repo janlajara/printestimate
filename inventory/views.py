@@ -184,7 +184,7 @@ class ItemRequestGroupItemDetailViewSet(viewsets.ModelViewSet):
         if pk is not None:
             if status is not None and status_map.get(status.lower()) is not None:
                 all = all.filter(item_requests__item__pk=pk,
-                    item_requests__status__in=status_map[status.lower()]).all()
+                    item_requests__status__in=status_map[status.lower()]).distinct()
             else:
                 all = all.filter(item_requests__item__pk=pk).all()
 

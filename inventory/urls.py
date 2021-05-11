@@ -35,7 +35,7 @@ urlpatterns = [
      path('api/itemrequestgroups/list',
           views.ItemRequestGroupViewSet.as_view({'get': 'list'})),
      path('api/itemrequestgroups/<int:pk>/',
-          views.ItemRequestGroupViewSet.as_view({'get': 'retrieve'})), 
+          views.ItemRequestGroupViewSet.as_view(GETRETRIEVE_PUTUPDATE_POSTDESTROY)), 
      path('api/itemrequestgroups/<int:pk>/itemrequest/add',
           views.ItemRequestsGroupAddItemRequestViewSet.as_view({'put': 'update'})),
      path('api/itemrequests/<int:pk>/',

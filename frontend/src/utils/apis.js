@@ -158,6 +158,12 @@ export class ItemRequestGroupApi {
         return response.data
     }
 
+    static async updateItemRequestGroup(id, request) {
+        const response = await AXIOS.execute(AXIOS.PUT, ItemRequestGroupApi.uri + `/${id}/`,
+            'MRS updated', 'Failed to update MRS. Please try again.', request)
+        return response.data
+    }
+
     static async addItemRequest(id, request) {
         const response = await AXIOS.execute(AXIOS.PUT, ItemRequestGroupApi.uri + `/${id}/itemrequest/add`,
             'Item request added', 'Failed to add item request. Please try again.', request)

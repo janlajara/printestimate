@@ -3,7 +3,9 @@
         <label class="input-label">{{$props.name}}</label>
         <div class="rounded-md shadow-sm">
             <textarea class="rounded input-field w-full"
-              @input="event => $emit('input', event.target.value)"></textarea>
+              v-model="textVal"
+              @input="event => $emit('input', event.target.value)">
+            </textarea>
         </div>
     </div>
 </template>
@@ -11,9 +13,15 @@
 <script>
 export default {
     props: {
-        name: String
+        name: String,
+        value: String
     },
-    emits: ['input']
+    emits: ['input'],
+    setup(props) {
+      return {
+        textVal: props.value
+      }
+    }
 }
 </script>
 

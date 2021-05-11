@@ -4,9 +4,11 @@
         @toggle="$emit('toggle', false)"
         :is-open="$props.isOpen">
         <Section>
-            <div>Would you like to update the status of this request?</div>
-            <InputTextarea name="Comments"
-                @input="value => dialog.comments = value"/>
+            <div class="grid gap-4">
+                <div>Would you like to update the status of this request?</div>
+                <InputTextarea name="Comments"
+                    @input="value => dialog.comments = value"/>
+            </div>
         </Section>
         <Button color="primary" class="w-full"
             @click="dialog.execute">

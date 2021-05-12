@@ -145,7 +145,7 @@ export class ItemApi {
 export class ItemRequestGroupApi {
     static uri = '/inventory/api/itemrequestgroups'
 
-    static async listItemRequestGroups(limit, offset, search=null, status='') {
+    static async listItemRequestGroups(limit, offset, search=null, status=null) {
         const params = offset != null && limit != null? 
             {limit, offset, search, status} : {search, status};
         const response = await AXIOS.execute(AXIOS.GET, ItemRequestGroupApi.uri + `/list`,

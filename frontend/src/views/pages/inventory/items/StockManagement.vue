@@ -39,8 +39,8 @@ import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import Tabs from '@/components/Tabs.vue';
 import Tab from '@/components/Tab.vue';
-import StocksAvailable from '@/views/pages/inventory/stock/StocksAvailable.vue';
-import StockRequests from '@/views/pages/inventory/stock/StockRequests.vue';
+import StocksAvailable from '@/views/pages/inventory/items/StocksAvailable.vue';
+import StockRequests from '@/views/pages/inventory/items/StockRequests.vue';
 //import StockHistory from '@/views/pages/inventory/stock/StockHistory.vue';
 
 import {reactive, computed, inject, onBeforeMount} from 'vue';

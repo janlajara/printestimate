@@ -82,8 +82,8 @@ import Row from '@/components/Row.vue'
 import Cell from '@/components/Cell.vue'
 import TablePaginator from '@/components/TablePaginator.vue'
 import Button from '@/components/Button.vue'
-import StockDepositModal from '@/views/pages/inventory/stock/StockDepositModal'
-import StockWithdrawModal from '@/views/pages/inventory/stock/StockWithdrawModal'
+import StockDepositModal from '@/views/pages/inventory/items/StockDepositModal'
+import StockWithdrawModal from '@/views/pages/inventory/items/StockWithdrawModal'
 
 import {reactive, inject, computed, onBeforeMount} from 'vue';
 import {formatMoney, formatQuantity, formatNumber} from '@/utils/format.js';

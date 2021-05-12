@@ -6,7 +6,7 @@
                 <Cell label="Request Id">
                     <Href @click="()=>
                         $router.push({ 
-                            name: 'inventory-stockrequest-detail', 
+                            name: 'inventory-itemrequest-detail', 
                             params: {id: request.id}})">
                         {{reference.formatId(
                             request.id, reference.mrs)}}
@@ -77,8 +77,6 @@ export default {
                             })),
                         dateCreated: requestGroup.created_at 
                     }));
-                    console.log(requests.list);
-                    console.log(response.results);
                 }
             }
             requests.isProcessing = false;

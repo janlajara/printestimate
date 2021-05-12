@@ -1,5 +1,5 @@
 <template>
-    <Page :title="detail.data.fullname">
+    <Page :title="'Item : ' + detail.data.fullname">
         <hr class="my-4"/>
         <ItemInputModal :is-open="detail.modal.isOpen" :is-create="false" 
             :on-after-save="()=>loadItem(detail.id)" :data="detail.data"
@@ -45,8 +45,8 @@ import Section from '@/components/Section.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import Button from '@/components/Button.vue';
-import ItemInputModal from '@/views/pages/inventory/stock/ItemInputModal.vue';
-import StockManagement from '@/views/pages/inventory/stock/StockManagement.vue';
+import ItemInputModal from '@/views/pages/inventory/items/ItemInputModal.vue';
+import StockManagement from '@/views/pages/inventory/items/StockManagement.vue';
 
 import {useRoute} from 'vue-router';
 import {watch, reactive, onBeforeMount} from 'vue';
@@ -67,7 +67,7 @@ export default {
             },
             data: {
                 id: null,
-                name: null, fullname: null,
+                name: null, fullname: '',
                 type: null, baseUom: {}, 
                 altUom: {}, properties: {}
             },

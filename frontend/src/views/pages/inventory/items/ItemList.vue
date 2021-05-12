@@ -1,5 +1,5 @@
 <template>
-    <Page title="Inventory : Stocks">
+    <Page title="Inventory : Items">
         <hr class="my-4"/>
         <ItemInputModal :is-open="item.create.isOpen" :is-create="true" 
             :on-after-save="()=> populateItemList(item.listLimit, 0)"
@@ -11,7 +11,9 @@
                         :action="()=>item.create.isOpen = true">
                     Create Item</Button>
                 </div>
-                <SearchField placeholder="Search" :disabled="item.isProcessing"
+                <SearchField 
+                    placeholder="Search by Item, Brand..." 
+                    :disabled="item.isProcessing"
                     @search="(search)=> {
                         populateItemList(item.listLimit, 0, search);
                     }"/>
@@ -46,7 +48,7 @@ import Table from '@/components/Table.vue';
 import Row from '@/components/Row.vue';
 import Cell from '@/components/Cell.vue';
 import TablePaginator from '@/components/TablePaginator.vue';
-import ItemInputModal from '@/views/pages/inventory/stock/ItemInputModal.vue';
+import ItemInputModal from '@/views/pages/inventory/items/ItemInputModal.vue';
 
 import {reactive, onBeforeMount, inject} from 'vue';
 import {useRouter} from 'vue-router';
@@ -97,7 +99,7 @@ export default {
             amount != null ? formatMoney(amount, currency) : '';
         const goToDetail = (id) => {
             router.push({
-                name: 'inventory-stock-detail',
+                name: 'inventory-item-detail',
                 params: {id}});
         }
 

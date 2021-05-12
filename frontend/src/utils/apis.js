@@ -145,7 +145,7 @@ export class ItemApi {
 export class ItemRequestGroupApi {
     static uri = '/inventory/api/itemrequestgroups'
 
-    static async listItemRequestGroups(limit, offset, search=null, status=null) {
+    static async listItemRequestGroups(limit, offset, search=null, status='') {
         const params = offset != null && limit != null? 
             {limit, offset, search, status} : {search, status};
         const response = await AXIOS.execute(AXIOS.GET, ItemRequestGroupApi.uri + `/list`,
@@ -161,6 +161,12 @@ export class ItemRequestGroupApi {
     static async updateItemRequestGroup(id, request) {
         const response = await AXIOS.execute(AXIOS.PUT, ItemRequestGroupApi.uri + `/${id}/`,
             'MRS updated', 'Failed to update MRS. Please try again.', request)
+        return response.data
+    }
+
+    static async deleteItemRequestGroup(id) {
+        const response = await AXIOS.execute(AXIOS.DELETE, ItemRequestGroupApi.uri + `/${id}/`,
+            'MRS deleted', 'Failed to delete MRS. Please try again.')
         return response.data
     }
 

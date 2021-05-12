@@ -1,11 +1,11 @@
 <template>
     <Dialog icon="warning_amber"
-        heading="Confirm Delete"
+        heading="Delete Item Request"
         @toggle="$emit('toggle', false)"
         :is-open="$props.isOpen">
         <Section>
-            <div class="grid gap-4">
-                <div>Would you like to delete this Item Request?</div>
+            <div class="grid gap-4 md:max-w-xs">
+                <div>Would you like to delete this record?</div>
                 <DescriptionList>
                     <DescriptionItem name="Item Request" 
                         :value="$props.data ? $props.data.item : null"/>

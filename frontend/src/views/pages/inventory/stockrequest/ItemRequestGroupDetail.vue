@@ -7,11 +7,18 @@
                 :is-open="detail.itemRequestGroup.editModal.isOpen" 
                 :on-after-save="retrieveDetail"
                 @toggle="detail.itemRequestGroup.editModal.toggle"/>
+            <ItemRequestGroupDeleteDialog
+                :data="detail.itemRequestGroup.deleteDialog.data"
+                :item-request-group-id="detail.id ? parseInt(detail.id) : null"
+                :on-after-execute="()=>$router.go(-1)"
+                :is-open="detail.itemRequestGroup.deleteDialog.isOpen"
+                @toggle="detail.itemRequestGroup.deleteDialog.toggle"/>
             <Button color="secondary" icon="arrow_back"
                 :action="()=>$router.go(-1)">Go Back</Button>
             <Button class="my-auto" icon="edit"
                 @click="detail.itemRequestGroup.editModal.edit"/>
-            <Button class="my-auto" icon="delete"/>
+            <Button class="my-auto" icon="delete"
+                @click="detail.itemRequestGroup.deleteDialog.delete"/>
         </div> 
         <Section>
             <DescriptionList class="grid-cols-2 md:grid-cols-4">
@@ -108,6 +115,7 @@ import ItemRequestUpdateStatusDialog from '@/views/pages/inventory/stockrequest/
 import ItemRequestModal from '@/views/pages/inventory/stockrequest/ItemRequestModal.vue';
 import ItemRequestDeleteDialog from '@/views/pages/inventory/stockrequest/ItemRequestDeleteDialog.vue';
 import ItemRequestGroupModal from '@/views/pages/inventory/stockrequest/ItemRequestGroupModal.vue';
+import ItemRequestGroupDeleteDialog from '@/views/pages/inventory/stockrequest/ItemRequestGroupDeleteDialog.vue';
 
 import {watch, reactive, onBeforeMount, computed} from 'vue'
 import {useRoute} from 'vue-router'
@@ -119,9 +127,8 @@ export default {
         Page, Section, Button, ButtonOptions, ButtonOption, Table, Row, Cell, 
         DescriptionItem, DescriptionList, ItemRequestAllocateStockModal, 
         ItemRequestUpdateStatusDialog, ItemRequestDeleteDialog, ItemRequestModal,
-        ItemRequestGroupModal
+        ItemRequestGroupModal, ItemRequestGroupDeleteDialog
     },
-    emits: ['toggle'],
     setup() {
         const route = useRoute()
         const detail = reactive({
@@ -146,6 +153,20 @@ export default {
                     toggle: value => detail.itemRequestGroup.editModal.isOpen = value,
                     edit: ()=> {
                         detail.itemRequestGroup.editModal.toggle(true);
+                    }
+                },
+                deleteDialog: {
+                    isOpen: false,
+                    data: computed(()=>{
+                        let data = null;
+                        if (detail.data.code) {
+                            data = {
+                                code: detail.data.code}}
+                        return data;
+                    }),
+                    toggle: value => detail.itemRequestGroup.deleteDialog.isOpen = value,
+                    delete: () => {
+                        detail.itemRequestGroup.deleteDialog.toggle(true);
                     }
                 }
             },

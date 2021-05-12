@@ -1,11 +1,12 @@
 <template>
     <Dialog icon="contact_support"
-        :heading="`Confirm ${dialog.choice.label}`"
+        :heading="`Change to '${dialog.choice.label}'`"
         @toggle="$emit('toggle', false)"
         :is-open="$props.isOpen">
         <Section>
-            <div class="grid gap-4">
-                <div>Would you like to update the status of this request?</div>
+            <div class="grid gap-4 md:max-w-xs">
+                <div>Would you like to update the status of this request to 
+                    <span class="font-bold">{{dialog.choice.label}}</span>?</div>
                 <InputTextarea name="Comments"
                     @input="value => dialog.comments = value"/>
             </div>

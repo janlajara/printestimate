@@ -19,29 +19,29 @@ const routes = [
         meta: {label: 'Dashboard', group: 'Inventory'}
       },
       {
-        path: 'inventory/stocks',
-        name: 'inventory-stocks',
-        component: ()=>import('../views/pages/inventory/stock/ItemList.vue'),
-        meta: {label: 'Stocks', group: 'Inventory'}
+        path: 'inventory/items',
+        name: 'inventory-items',
+        component: ()=>import('../views/pages/inventory/items/ItemList.vue'),
+        meta: {label: 'Items', group: 'Inventory'}
       },
       {
-        path: 'inventory/stocks/:id',
-        name: 'inventory-stock-detail',
+        path: 'inventory/items/:id',
+        name: 'inventory-item-detail',
         props: true,
-        component: ()=>import('../views/pages/inventory/stock/ItemDetail.vue'),
+        component: ()=>import('../views/pages/inventory/items/ItemDetail.vue'),
       },
       {
-        path: 'inventory/stockrequests',
-        name: 'inventory-stockrequests',
-        component: ()=>import('../views/pages/inventory/stockrequest/ItemRequestGroupList.vue'),
-        meta: {label: 'Stock Requests', group: 'Inventory'}
+        path: 'inventory/itemrequests',
+        name: 'inventory-itemrequests',
+        component: ()=>import('../views/pages/inventory/itemrequests/ItemRequestGroupList.vue'),
+        meta: {label: 'Item Requests', group: 'Inventory'}
       },
       {
-        path: 'inventory/stockrequests/:id',
-        name: 'inventory-stockrequest-detail',
+        path: 'inventory/itemrequests/:id',
+        name: 'inventory-itemrequest-detail',
         props: true,
-        component: ()=>import('../views/pages/inventory/stockrequest/ItemRequestGroupDetail.vue')
-      },
+        component: ()=>import('../views/pages/inventory/itemrequests/ItemRequestGroupDetail.vue')
+      }, 
       {
         path: 'admin/inventory',
         name: 'admin-inventory',

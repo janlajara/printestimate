@@ -80,7 +80,7 @@ export default {
             listLimit: 5,
             listCount: 0,
             search: null,
-            filter: null,
+            filter: '',
             create: {
                 isOpen: false,
                 toggle: (value)=> { 

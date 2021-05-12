@@ -1,5 +1,5 @@
 <template>
-    <Page :title="`Request : ${detail.data.code ? detail.data.code : ''}`">
+    <Page :title="`Item Request : ${detail.data.code ? detail.data.code : ''}`">
         <hr class="my-4"/>
         <div class="flex gap-4">
             <ItemRequestGroupModal 
@@ -16,8 +16,10 @@
             <Button color="secondary" icon="arrow_back"
                 :action="()=>$router.go(-1)">Go Back</Button>
             <Button class="my-auto" icon="edit"
+                :disabled="detail.readOnly"
                 @click="detail.itemRequestGroup.editModal.edit"/>
             <Button class="my-auto" icon="delete"
+                :disabled="detail.readOnly"
                 @click="detail.itemRequestGroup.deleteDialog.delete"/>
         </div> 
         <Section>
@@ -56,9 +58,11 @@
                 :is-open="detail.itemRequest.deleteDialog.isOpen"
                 @toggle="detail.itemRequest.deleteDialog.toggle"/>
             <Button icon="add" color="tertiary"
+                :disabled="detail.data.status == 'Closed'"
                 :action="detail.itemRequest.itemModal.add">Add Item</Button>
-            <Table :headers="['Item', 'Status', 'Quantity', '']"
-                :loader="detail.isProcessing">
+            <Table layout="fixed" :loader="detail.isProcessing"
+                :headers="['Item', 'Status', 'Quantity', '']"
+                :cols-width="['w-1/3', 'w-1/4', 'w-1/5', '']">
                 <Row v-for="(r, i) in detail.data.itemRequests" :key="i">
                     <Cell label="Item">{{r.itemName}}</Cell>
                     <Cell label="Status">
@@ -110,12 +114,12 @@ import Row from '@/components/Row.vue';
 import Cell from '@/components/Cell.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
-import ItemRequestAllocateStockModal from '@/views/pages/inventory/stockrequest/ItemRequestAllocateStockModal.vue';
-import ItemRequestUpdateStatusDialog from '@/views/pages/inventory/stockrequest/ItemRequestUpdateStatusDialog.vue';
-import ItemRequestModal from '@/views/pages/inventory/stockrequest/ItemRequestModal.vue';
-import ItemRequestDeleteDialog from '@/views/pages/inventory/stockrequest/ItemRequestDeleteDialog.vue';
-import ItemRequestGroupModal from '@/views/pages/inventory/stockrequest/ItemRequestGroupModal.vue';
-import ItemRequestGroupDeleteDialog from '@/views/pages/inventory/stockrequest/ItemRequestGroupDeleteDialog.vue';
+import ItemRequestAllocateStockModal from '@/views/pages/inventory/itemrequests/ItemRequestAllocateStockModal.vue';
+import ItemRequestUpdateStatusDialog from '@/views/pages/inventory/itemrequests/ItemRequestUpdateStatusDialog.vue';
+import ItemRequestModal from '@/views/pages/inventory/itemrequests/ItemRequestModal.vue';
+import ItemRequestDeleteDialog from '@/views/pages/inventory/itemrequests/ItemRequestDeleteDialog.vue';
+import ItemRequestGroupModal from '@/views/pages/inventory/itemrequests/ItemRequestGroupModal.vue';
+import ItemRequestGroupDeleteDialog from '@/views/pages/inventory/itemrequests/ItemRequestGroupDeleteDialog.vue';
 
 import {watch, reactive, onBeforeMount, computed} from 'vue'
 import {useRoute} from 'vue-router'
@@ -134,6 +138,15 @@ export default {
         const detail = reactive({
             id: route.params.id,
             data: {},
+            readOnly: computed(()=> {
+                let ro = false;
+                if (detail.data.itemRequests) {
+                    const found = detail.data.itemRequests.find(
+                        ir=>ir.status.includes('Fulfilled'));
+                    ro = found != null;
+                }
+                return ro;
+            }),
             itemRequestGroup: {
                 editModal: {
                     data: computed(()=> {

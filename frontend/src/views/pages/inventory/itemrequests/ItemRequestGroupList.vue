@@ -1,5 +1,5 @@
 <template>
-    <Page title="Inventory : Stock Requests">
+    <Page title="Inventory : Item Requests">
         <hr class="my-4"/>
         <Section>
             <div class="space-y-4 md:space-x-4 md:space-y-0 md:flex md:justify-between">
@@ -15,18 +15,23 @@
                             @filter="(value)=> {
                                 request.filter = value;
                                 populateRequestList(request.listLimit, 0);}"
-                            :options="[{label: 'All', value: ''}, 
+                            :options="[ 
                                 {label: 'Open', value: 'open'}, 
-                                {label: 'Closed', value: 'closed'}]"/>
+                                {label: 'Closed', value: 'closed'},
+                                {label: 'All', value: ''}]"/>
                     </div>
                 </div>
-                <SearchField placeholder="Search" :disabled="request.isProcessing"
+                <SearchField placeholder="Search by Id, Reason..." 
+                    :disabled="request.isProcessing"
                     @search="(search)=> {
                         request.search = search;
                         populateRequestList(request.listLimit, 0);}"/>
             </div>
-            <Table :headers="['Request Id', 'Status', 'Progress', 
-                'Reason', 'Date Created']" :loader="request.isProcessing">
+            <Table layout="fixed"
+                :headers="['Request Id', 'Status', 'Progress', 
+                    'Reason', 'Date Created']" 
+                :cols-width="['w-1/5', 'w-1/6', 'w-1/4', 'w-1/3', 'w-1/4']"
+                :loader="request.isProcessing">
                 <Row v-for="(r, key) in request.list" :key="key" clickable
                     @click="()=> goToDetail(r.id)">
                     <Cell label="Request Id">{{formatId(r.id)}}</Cell>
@@ -80,7 +85,7 @@ export default {
             listLimit: 5,
             listCount: 0,
             search: null,
-            filter: '',
+            filter: 'Open',
             create: {
                 isOpen: false,
                 toggle: (value)=> { 
@@ -110,7 +115,7 @@ export default {
 
         const goToDetail = (id)=> {
             router.push({ 
-                name: 'inventory-stockrequest-detail', 
+                name: 'inventory-itemrequest-detail', 
                 params: {id}});
         };
 

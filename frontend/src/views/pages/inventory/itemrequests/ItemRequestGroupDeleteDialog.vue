@@ -9,7 +9,7 @@
                     <span class="font-bold">
                         {{$props.data ? $props.data.code : ''}}</span>
                      would also delete all the associated item requests.</div>
-                <div>Would you still like to proceed?</div>
+                <div>Would you like to proceed?</div>
             </div>
         </Section>
         <Button color="primary" class="w-full"

@@ -6,8 +6,10 @@
                     disabled: modal.isProcessing}]"
         @toggle="$emit('toggle', value)">
         <Section heading="General Information" heading-position="side"> 
-            <div v-if="modal.isCreate" class="md:grid md:gap-4 md:grid-cols-3">
-
+            <div v-if="modal.isCreate">
+                <InputTextarea name="Reason" 
+                    :value="modal.form.reason"
+                    @input="value => modal.form.reason=value"/>
             </div>
             <div v-else class="md:grid md:gap-4">
                 <DescriptionList class="md:grid md:grid-cols-2">
@@ -33,6 +35,7 @@ import DescriptionItem from '@/components/DescriptionItem.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 
 import {reactive, computed, watch} from 'vue';
+import {useRouter} from 'vue-router';
 import {ItemRequestGroupApi} from '@/utils/apis.js';
 
 export default {
@@ -46,6 +49,7 @@ export default {
     },
     emits: ['toggle'],
     setup(props, {emit}) {
+        const router = useRouter()
         const modal = reactive({
             isCreate: computed(()=> props.data == null),
             isProcessing: false,
@@ -55,14 +59,31 @@ export default {
                 reason: null,
                 created: null
             },
-            add: ()=> {
-
+            add: async ()=> {
+                const response = await createItemRequestGroup();
+                if (response) {
+                    router.push({ 
+                        name: 'inventory-itemrequest-detail', 
+                        params: {id: response.id}});
+                }
             },
             update: async ()=> {
                 const response = await updateItemRequestGroup();
                 if (response) emit('toggle', false);
             }
         });
+
+        const createItemRequestGroup = async ()=> {
+            modal.isProcessing = true;
+            const request = {
+                reason: modal.form.reason};
+            const response = await ItemRequestGroupApi.createItemRequestGroup(
+                request);
+            modal.isProcessing = false;
+            if (response) {
+                return response;
+            }
+        }
 
         const updateItemRequestGroup = async ()=> {
             modal.isProcessing = true;

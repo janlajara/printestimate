@@ -5,6 +5,9 @@
             <div class="space-y-4 md:space-x-4 md:space-y-0 md:flex md:justify-between">
                 <div class="flex flex-grow">
                     <div class="my-auto">
+                        <ItemRequestGroupModal 
+                            :is-open="request.create.isOpen"
+                            @toggle="request.create.toggle"/>
                         <Button color="secondary" icon="add"
                             :action="()=>request.create.toggle(true)">
                             Create Request</Button>
@@ -66,6 +69,7 @@ import SearchField from '@/components/SearchField.vue';
 import SearchFilter from '@/components/SearchFilter.vue';
 import Button from '@/components/Button.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
+import ItemRequestGroupModal from '@/views/pages/inventory/itemrequests/ItemRequestGroupModal.vue';
 
 import {reactive, onBeforeMount} from 'vue';
 import {useRouter} from 'vue-router';
@@ -75,7 +79,8 @@ import {reference} from '@/utils/format.js';
 export default {
     components: {
         Page, Section, Table, Row, Cell, TablePaginator, 
-        SearchField, SearchFilter, Button, ProgressBar 
+        SearchField, SearchFilter, Button, ProgressBar,
+        ItemRequestGroupModal
     },
     setup() {
         const router = useRouter();
@@ -90,6 +95,9 @@ export default {
                 isOpen: false,
                 toggle: (value)=> { 
                     request.create.isOpen = value
+                },
+                open: ()=> {
+                    request.create.toggle(true); 
                 }
             }
         });

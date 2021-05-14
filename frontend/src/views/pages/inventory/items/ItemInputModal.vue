@@ -56,6 +56,7 @@ import InputSelect from '@/components/InputSelect.vue';
 import InputText from '@/components/InputText.vue';
 
 import {reactive, watch} from 'vue';
+import {useRouter} from 'vue-router';
 import {ItemApi, ItemPropertiesApi, BaseStockUnitApi} from '@/utils/apis.js';
 
 export default {
@@ -77,6 +78,7 @@ export default {
     },
     emits: ['toggle'],
     setup(props, {emit}){
+        const router = useRouter();
         const modal = reactive({
             isProcessing: false,
             form: {
@@ -128,6 +130,11 @@ export default {
                 
                 if (!response.error) { 
                     emit('toggle', false);
+                    if (props.isCreate) {
+                        router.push({
+                            name: 'inventory-item-detail',
+                            params: {id: response.data.id}});  
+                    }
                 } else {
                     modal.error = response.error;
                 }

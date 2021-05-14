@@ -61,7 +61,7 @@
                     <span>Price per {{stock.uom.base.name}} : </span>
                     <span class="font-bold">{{stock.data.pricePerBaseFormatted}}</span>
                     <span class="text-gray-400">
-                        {{` (${stock.data.baseFormatted} / ${stock.data.priceFormatted})`}}</span>
+                        {{` (${stock.data.priceFormatted} / ${stock.data.baseFormatted})`}}</span>
                 </p>
             </dd>
         </Section>
@@ -164,7 +164,7 @@ export default {
                 pricePerBase: computed(()=> {
                     const baseQty = stock.data.baseQuantity ? stock.data.baseQuantity : 0;
                     const price = stock.data.price ? stock.data.price : 0;
-                    return price > 0 ? baseQty / price : 0;
+                    return price > 0 ? price / baseQty : 0;
                 }),
                 pricePerBaseFormatted: computed(()=> {
                     return stock.data.pricePerBase > 0 ?

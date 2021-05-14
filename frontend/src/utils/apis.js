@@ -148,9 +148,15 @@ export class ItemRequestGroupApi {
     static async listItemRequestGroups(limit, offset, search=null, status=null) {
         const params = offset != null && limit != null? 
             {limit, offset, search, status} : {search, status};
-        const response = await AXIOS.execute(AXIOS.GET, ItemRequestGroupApi.uri + `/list`,
+        const response = await AXIOS.execute(AXIOS.GET, ItemRequestGroupApi.uri,
             null, null, null, params)
         return response.data
+    }
+
+    static async createItemRequestGroup(request) {
+        const response = await AXIOS.execute(AXIOS.POST, ItemRequestGroupApi.uri,
+            'MRS created', 'Failed to created MRS. Please try again.', request)
+        return response.data    
     }
 
     static async retrieveItemRequestGroup(id) {

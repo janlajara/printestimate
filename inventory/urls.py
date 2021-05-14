@@ -32,8 +32,8 @@ urlpatterns = [
           views.ItemPropertiesViewSet.as_view(GETRETRIEVE_PUTUPDATE_POSTDESTROY)),
 
      # ITEM REQUEST GROUP / ITEM REQUESTS
-     path('api/itemrequestgroups/list',
-          views.ItemRequestGroupViewSet.as_view({'get': 'list'})),
+     path('api/itemrequestgroups',
+          views.ItemRequestGroupViewSet.as_view(GETLIST_POSTCREATE)),
      path('api/itemrequestgroups/<int:pk>/',
           views.ItemRequestGroupViewSet.as_view(GETRETRIEVE_PUTUPDATE_POSTDESTROY)), 
      path('api/itemrequestgroups/<int:pk>/itemrequest/add',

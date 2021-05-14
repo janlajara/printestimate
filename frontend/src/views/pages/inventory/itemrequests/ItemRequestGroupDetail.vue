@@ -121,7 +121,7 @@ import ItemRequestDeleteDialog from '@/views/pages/inventory/itemrequests/ItemRe
 import ItemRequestGroupModal from '@/views/pages/inventory/itemrequests/ItemRequestGroupModal.vue';
 import ItemRequestGroupDeleteDialog from '@/views/pages/inventory/itemrequests/ItemRequestGroupDeleteDialog.vue';
 
-import {watch, reactive, onBeforeMount, computed} from 'vue'
+import {reactive, onBeforeMount, computed} from 'vue'
 import {useRoute} from 'vue-router'
 import {ItemRequestGroupApi} from '@/utils/apis.js'
 import {reference} from '@/utils/format.js'
@@ -287,8 +287,7 @@ export default {
             }
             detail.isProcessing =false;
         }
-        onBeforeMount(retrieveDetail);
-        watch(()=> route.params.id, ()=> {
+        onBeforeMount(()=> {
             const id = route.params.id;
             if (id != null && !isNaN(id)) {
                 detail.id = parseInt(id);

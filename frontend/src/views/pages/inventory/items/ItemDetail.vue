@@ -49,7 +49,7 @@ import ItemInputModal from '@/views/pages/inventory/items/ItemInputModal.vue';
 import StockManagement from '@/views/pages/inventory/items/StockManagement.vue';
 
 import {useRoute} from 'vue-router';
-import {watch, reactive, onBeforeMount} from 'vue';
+import {reactive, onBeforeMount} from 'vue';
 import {ItemApi, ItemPropertiesApi} from '@/utils/apis.js';
 
 export default {
@@ -85,7 +85,7 @@ export default {
             }
         });
         const loadItem = async (id) => { 
-            detail.isProcessing = true;
+            detail.isProcessing = true; 
             const response = await ItemApi.retrieveItem(id); 
             if (response) { 
                 const data = {
@@ -119,12 +119,11 @@ export default {
             }
         }
         onBeforeMount(()=> {
-            loadItem(detail.id);
-        })
-        watch(()=> route.params.id, ()=> {
             const id = route.params.id;
-            if (id != null && !isNaN(id))
+            if (id != null && !isNaN(id)) {
                 detail.id = parseInt(id);
+                loadItem(detail.id);
+            }
         })
         return {
             detail, loadItem

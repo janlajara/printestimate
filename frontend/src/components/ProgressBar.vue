@@ -2,10 +2,12 @@
     <div class="relative">
         <div class="bg-tertiary-light overflow-hidden h-3 flex rounded">
             <div :style="[{width: ($props.percent && $props.percent > 0 ? $props.percent : 3) + '%'}]" 
-                class="flex flex-col text-center whitespace-nowrap text-white justify-center"
+                class="flex flex-col text-center whitespace-nowrap justify-center"
                 :class="style.color">
+                <div class="absolute w-full text-center text-xs font-bold py-2"> 
+                    <slot/>
+                </div>
             </div>
-            <slot/>
         </div>
     </div>
 </template>

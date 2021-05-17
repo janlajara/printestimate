@@ -42,7 +42,7 @@
                     <Cell label="Progress">
                         <ProgressBar :percent="r.progressRate * 100" 
                             color="variable" class="pt-1">
-                            <span class="w-full text-center text-xs">{{r.progressRate * 100}}%</span>
+                            {{formatPercentage(r.progressRate)}}
                         </ProgressBar>
                     </Cell>
                     <Cell label="Reason">{{r.reason}}</Cell>
@@ -74,7 +74,7 @@ import ItemRequestGroupModal from '@/views/pages/inventory/itemrequests/ItemRequ
 import {reactive, onBeforeMount} from 'vue';
 import {useRouter} from 'vue-router';
 import {ItemRequestGroupApi} from '@/utils/apis.js';
-import {reference} from '@/utils/format.js';
+import {formatNumber, reference} from '@/utils/format.js';
 
 export default {
     components: {
@@ -129,7 +129,8 @@ export default {
 
         return {
             request, populateRequestList, goToDetail,
-            formatId: (id)=> reference.formatId(id, reference.mrs)
+            formatId: (id)=> reference.formatId(id, reference.mrs),
+            formatPercentage: (rate)=> `${formatNumber(rate * 100, 0)}%`
         }
     }
 }

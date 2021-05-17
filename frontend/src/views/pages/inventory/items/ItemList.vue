@@ -76,8 +76,6 @@ export default {
         
         const populateItemList = async(limit, offset, search=null) => {
             item.isProcessing = true;
-
-            console.log(limit, offset, search);
             const response = await ItemApi.listItems(limit, offset, search);
             if (response && response.results) {
                 item.listCount = response.count;

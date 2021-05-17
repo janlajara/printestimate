@@ -1,5 +1,5 @@
 <template>
-    <Modal :heading="modal.isCreate? 'Create MRS' : `Edit ${$props.data.code}`" 
+    <Modal :heading="modal.isCreate? 'Create Item Request' : `Edit ${$props.data.code}`" 
         :is-open="$props.isOpen"
         :buttons="[{color: 'primary', icon:'save', text:'Save', 
                     action: modal.isCreate ? modal.add : modal.update, 

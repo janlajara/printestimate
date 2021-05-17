@@ -178,7 +178,8 @@ class ItemRequestGroupItemDetailViewSet(viewsets.ModelViewSet):
         status = self.request.GET.get('status', 'Open')
         all = ItemRequestGroup.objects.all()
         status_map = {
-            'open': [ItemRequest.DRAFT, ItemRequest.FOR_APPROVAL, ItemRequest.APPROVED],
+            'open': [ItemRequest.DRAFT, ItemRequest.FOR_APPROVAL, 
+                ItemRequest.APPROVED, ItemRequest.PARTIALLY_FULFILLED],
             'closed': [ItemRequest.FULFILLED, ItemRequest.CANCELLED]
         }
         if pk is not None:
@@ -200,7 +201,8 @@ class ItemRequestGroupViewSet(viewsets.ModelViewSet):
         status = self.request.GET.get('status', 'Open')
         all = ItemRequestGroup.objects.all()
         status_map = {
-            'open': [ItemRequest.DRAFT, ItemRequest.FOR_APPROVAL, ItemRequest.APPROVED],
+            'open': [ItemRequest.DRAFT, ItemRequest.FOR_APPROVAL, 
+                ItemRequest.APPROVED, ItemRequest.PARTIALLY_FULFILLED],
             'closed': [ItemRequest.FULFILLED, ItemRequest.CANCELLED]
         }
         if pk is not None:

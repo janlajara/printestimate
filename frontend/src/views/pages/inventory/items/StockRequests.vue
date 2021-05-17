@@ -1,5 +1,16 @@
 <template>
     <Section>
+        <!--div class="grid w-full">
+            <SearchFilter 
+                label="Status Filter" 
+                @filter="(value)=> {
+                    requests.filter = value;
+                    listStockRequests(requests.listLimit, 0);}"
+                :options="[ 
+                    {label: 'Pending', value: 'open'}, 
+                    {label: 'Resolved', value: 'closed'},
+                    {label: 'All', value: ''}]"/>
+        </div-->
         <Table :loader="requests.isProcessing"
             :headers="['Request Id', 'Total Quantity', 'Status', 'Reason', 'Date Created']">
             <Row v-for="(request, key) in requests.list" :key="key">
@@ -35,6 +46,7 @@ import Row from '@/components/Row.vue'
 import Cell from '@/components/Cell.vue'
 import TablePaginator from '@/components/TablePaginator.vue'
 import Href from '@/components/Href.vue'
+//import SearchFilter from '@/components/SearchFilter.vue';
 
 import {reactive, watch, onBeforeMount} from 'vue'
 import {ItemApi} from '@/utils/apis.js'
@@ -42,7 +54,7 @@ import {formatQuantity, reference} from '@/utils/format.js'
 
 export default {
     components: {
-        Section, Table, Row, Cell, TablePaginator, Href
+        Section, Table, Row, Cell, TablePaginator, Href, //SearchFilter
     },
     props: {
         data: Object
@@ -52,13 +64,15 @@ export default {
             list: [],
             listLimit: 5,
             count: 0,
+            //filter: null,
             isProcessing: false,
         })
         const listStockRequests = async (limit, offset)=> {
             requests.isProcessing = true;
-            if (props.data && props.data.itemId) {
-                const id = props.data.itemId;
-                const response = await ItemApi.listItemRequestGroups(id, limit, offset);
+            if (props.data && props.data.itemId) { 
+                const id = props.data.itemId;  
+                const response = await ItemApi.listItemRequestGroups(
+                    id, limit, offset);
                 if (response && response.results) {
                     requests.count = response.count;
                     requests.list = response.results.map( requestGroup => ({

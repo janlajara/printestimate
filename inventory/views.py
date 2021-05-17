@@ -175,7 +175,7 @@ class ItemRequestGroupItemDetailViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         pk = self.kwargs.get('pk', None)
-        status = self.request.GET.get('status', 'Open')
+        status = self.request.GET.get('status', None)
         all = ItemRequestGroup.objects.all()
         status_map = {
             'open': [ItemRequest.DRAFT, ItemRequest.FOR_APPROVAL, 
@@ -186,7 +186,7 @@ class ItemRequestGroupItemDetailViewSet(viewsets.ModelViewSet):
             if status is not None and status_map.get(status.lower()) is not None:
                 all = all.filter(item_requests__item__pk=pk,
                     item_requests__status__in=status_map[status.lower()]).distinct()
-            else:
+            else: 
                 all = all.filter(item_requests__item__pk=pk).all()
 
         return all

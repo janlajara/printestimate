@@ -18,9 +18,9 @@
                         populateItemList(item.listLimit, 0, search);
                     }"/>
             </div>
-            <Table :headers="['Item', 'Type', 'Available Qty', 
-                    'On-hand Qty', 'Price per Unit']"
-                    :loader="item.isProcessing">
+            <Table :loader="item.isProcessing" layout="fixed"
+                :headers="['Item', 'Type', 'Available Qty', 'On-hand Qty', 'Price per Unit']"
+                :cols-width="['w-1/3', 'w-1/5', 'w-1/5', 'w-1/5', 'w-1/5']">
                 <Row v-for="(i, key) in item.list" :key="key" clickable
                     @click="()=>goToDetail(i.id)">
                     <Cell label="Item">{{i.name}}</Cell>
@@ -76,6 +76,8 @@ export default {
         
         const populateItemList = async(limit, offset, search=null) => {
             item.isProcessing = true;
+
+            console.log(limit, offset, search);
             const response = await ItemApi.listItems(limit, offset, search);
             if (response && response.results) {
                 item.listCount = response.count;

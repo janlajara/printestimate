@@ -105,7 +105,6 @@ export default {
         watch(()=>props.count, ()=> {
             if (props.count != null) {
                 pagination.offset = 0;
-                pagination.load();
             }
         })
         return {

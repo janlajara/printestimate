@@ -64,7 +64,14 @@
                 :headers="['Item', 'Status', 'Quantity', '']"
                 :cols-width="['w-1/3', 'w-1/4', 'w-1/5', '']">
                 <Row v-for="(r, i) in detail.data.itemRequests" :key="i">
-                    <Cell label="Item">{{r.itemName}}</Cell>
+                    <Cell label="Item">
+                        <Href @click="()=>
+                            $router.push({ 
+                                name: 'inventory-item-detail', 
+                                params: {id: r.itemId}})">
+                            {{r.itemName}}
+                        </Href>
+                    </Cell>
                     <Cell label="Status">
                         <ButtonOptions v-if="r.statusChoices.length > 0"
                             icon="expand_more" :label="r.status"> 
@@ -114,6 +121,7 @@ import Row from '@/components/Row.vue';
 import Cell from '@/components/Cell.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
+import Href from '@/components/Href.vue'
 import ItemRequestAllocateStockModal from '@/views/pages/inventory/itemrequests/ItemRequestAllocateStockModal.vue';
 import ItemRequestUpdateStatusDialog from '@/views/pages/inventory/itemrequests/ItemRequestUpdateStatusDialog.vue';
 import ItemRequestModal from '@/views/pages/inventory/itemrequests/ItemRequestModal.vue';
@@ -129,7 +137,7 @@ import {reference} from '@/utils/format.js'
 export default {
     components: {
         Page, Section, Button, ButtonOptions, ButtonOption, Table, Row, Cell, 
-        DescriptionItem, DescriptionList, ItemRequestAllocateStockModal, 
+        DescriptionItem, DescriptionList, Href, ItemRequestAllocateStockModal, 
         ItemRequestUpdateStatusDialog, ItemRequestDeleteDialog, ItemRequestModal,
         ItemRequestGroupModal, ItemRequestGroupDeleteDialog
     },

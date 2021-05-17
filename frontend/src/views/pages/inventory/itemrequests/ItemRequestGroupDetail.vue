@@ -237,9 +237,11 @@ export default {
                         if (id) {
                             const found = detail.data.itemRequests.find(
                                 i => i.id == id);
-                            data = {
-                                item: found.itemName,
-                                quantityNeeded: found.quantityNeededFormatted
+                            if (found) {
+                                data = {
+                                    item: found.itemName,
+                                    quantityNeeded: found.quantityNeededFormatted
+                                }
                             }
                         }
                         return data;
@@ -294,7 +296,6 @@ export default {
                 retrieveDetail();
             }
         });
-
         return {
             detail, retrieveDetail
         }

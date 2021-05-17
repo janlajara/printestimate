@@ -376,7 +376,7 @@ class ItemRequest(models.Model):
         null=False, related_name='item_request')
     status = models.CharField(max_length=3, choices=STATUS, default='DFT')
     item_request_group = models.ForeignKey(ItemRequestGroup, null=True, blank=True,
-        on_delete=models.RESTRICT, related_name='item_requests')
+        on_delete=models.CASCADE, related_name='item_requests')
     quantity_needed = models.IntegerField(null=False, blank=False)
     created = models.DateTimeField(auto_now_add=True)
 

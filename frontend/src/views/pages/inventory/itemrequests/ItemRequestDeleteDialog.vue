@@ -1,30 +1,22 @@
 <template>
-    <Dialog icon="warning_amber"
+    <DeleteRecordDialog 
         heading="Delete Item Request"
         @toggle="$emit('toggle', false)"
-        :is-open="$props.isOpen">
-        <Section>
-            <div class="grid gap-4 md:max-w-xs">
-                <div>Would you like to delete this record?</div>
-                <DescriptionList>
-                    <DescriptionItem name="Item Request" 
-                        :value="$props.data ? $props.data.item : null"/>
-                    <DescriptionItem name="Quantity Needed" 
-                        :value="$props.data ? $props.data.quantityNeeded : null"/>
-                </DescriptionList>
-            </div>
-        </Section>
-        <Button color="primary" class="w-full"
-            @click="dialog.execute">
-            Delete</Button>
-    </Dialog> 
+        :is-open="$props.isOpen"
+        :execute="deleteItemRequest"
+        :on-after-execute="$props.onAfterExecute">
+        <div>Would you like to delete this record?</div>
+        <DescriptionList>
+            <DescriptionItem name="Item Request" 
+                :value="$props.data ? $props.data.item : null"/>
+            <DescriptionItem name="Quantity Needed" 
+                :value="$props.data ? $props.data.quantityNeeded : null"/>
+        </DescriptionList>
+    </DeleteRecordDialog> 
 </template>
 
 <script>
-import {reactive} from 'vue';
-import Dialog from '@/components/Dialog.vue';
-import Section from '@/components/Section.vue';
-import Button from '@/components/Button.vue';
+import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 
@@ -32,7 +24,7 @@ import {ItemRequestApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Dialog, Section, Button, DescriptionList, DescriptionItem
+        DeleteRecordDialog, DescriptionList, DescriptionItem
     },
     props: {
         itemRequestId: Number,
@@ -43,19 +35,12 @@ export default {
             required: true
         }
     },
-    setup(props, {emit}) {
-        const dialog = reactive({
-            execute: ()=> {
-                const itemRequestId = props.itemRequestId;
-                if (itemRequestId) {
-                    ItemRequestApi.deleteItemRequest(itemRequestId);
-                    if (props.onAfterExecute) props.onAfterExecute();
-                    emit('toggle', false)
-                }
-            }
-        })
+    setup(props) {
         return {
-            dialog
+            deleteItemRequest: ()=> {
+                const itemRequestId = props.itemRequestId;
+                if (itemRequestId) ItemRequestApi.deleteItemRequest(itemRequestId);
+            }
         }
     }
 }

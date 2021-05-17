@@ -1,34 +1,25 @@
 <template>
-    <Dialog icon="warning_amber"
-        heading="Confirm Delete"
+    <DeleteRecordDialog 
+        :heading="`Delete ${$props.data ? $props.data.code: ''}`"
         @toggle="$emit('toggle', false)"
-        :is-open="$props.isOpen">
-        <Section>
-            <div class="grid gap-4 md:max-w-xs">
-                <div>Deleting 
-                    <span class="font-bold">
-                        {{$props.data ? $props.data.code : ''}}</span>
-                     would also delete all the associated item requests.</div>
-                <div>Would you like to proceed?</div>
-            </div>
-        </Section>
-        <Button color="primary" class="w-full"
-            @click="dialog.execute">
-            Delete</Button>
-    </Dialog> 
+        :is-open="$props.isOpen"
+        :execute="deleteItemRequestGroup"
+        :on-after-execute="$props.onAfterExecute">
+        <div>Deleting 
+            <span class="font-bold">
+                {{$props.data ? $props.data.code : ''}}</span>
+                would also delete all the associated item requests.</div>
+        <div>Would you like to proceed?</div>
+    </DeleteRecordDialog> 
 </template>
 
 <script>
-import {reactive} from 'vue';
-import Dialog from '@/components/Dialog.vue';
-import Section from '@/components/Section.vue';
-import Button from '@/components/Button.vue';
-
+import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import {ItemRequestGroupApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Dialog, Section, Button,
+        DeleteRecordDialog
     },
     props: {
         itemRequestGroupId: Number,
@@ -39,19 +30,13 @@ export default {
             required: true
         }
     },
-    setup(props, {emit}) {
-        const dialog = reactive({
-            execute: ()=> {
-                const itemRequestGroupId = props.itemRequestGroupId;
-                if (itemRequestGroupId) {
-                    ItemRequestGroupApi.deleteItemRequestGroup(itemRequestGroupId);
-                    if (props.onAfterExecute) props.onAfterExecute();
-                    emit('toggle', false)
-                }
-            }
-        })
+    setup(props) {
         return {
-            dialog
+            deleteItemRequestGroup: ()=> {
+                const itemRequestGroupId = props.itemRequestGroupId;
+                if (itemRequestGroupId) 
+                    ItemRequestGroupApi.deleteItemRequestGroup(itemRequestGroupId);
+            }
         }
     }
 }

@@ -1,14 +1,26 @@
 <template>
     <Page :title="'Item : ' + detail.data.fullname">
         <hr class="my-4"/>
-        <ItemInputModal :is-open="detail.modal.isOpen" :is-create="false" 
+        <ItemInputModal 
+            :is-open="detail.modal.isOpen" :is-create="false" 
             :on-after-save="()=>loadItem(detail.id)" :data="detail.data"
             @toggle="(value)=> detail.modal.isOpen = value"/>
+        <DeleteRecordDialog 
+            :heading="`Delete Item`"
+            :is-open="detail.deleteDialog.isOpen"
+            :execute="detail.delete"
+            :on-after-execute="()=>$router.go(-1)"
+            @toggle="detail.deleteDialog.toggle">
+            <div>
+                Are you sure you want to delete 
+                <span class="font-bold">{{detail.data.fullname}}</span>?
+            </div>
+        </DeleteRecordDialog>
         <div class="flex gap-4">
             <Button color="secondary" icon="arrow_back"
                 :action="()=>$router.go(-1)">Go Back</Button>
             <Button icon="mode_edit" :action="detail.edit"/>
-            <Button icon="delete" :action="()=>detail.delete(detail.id)"/>
+            <Button icon="delete" :action="detail.deleteDialog.open"/>
         </div> 
         <Section>
             <DescriptionList class="grid-cols-2 md:grid-cols-4">
@@ -45,6 +57,7 @@ import Section from '@/components/Section.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import Button from '@/components/Button.vue';
+import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import ItemInputModal from '@/views/pages/inventory/items/ItemInputModal.vue';
 import StockManagement from '@/views/pages/inventory/items/StockManagement.vue';
 
@@ -54,11 +67,10 @@ import {ItemApi, ItemPropertiesApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Page, Section, DescriptionList, DescriptionItem, Button, 
-        ItemInputModal, StockManagement
+        Page, Section, DescriptionList, DescriptionItem, Button,
+        DeleteRecordDialog, ItemInputModal, StockManagement
     },
-    emits: ['toggle'],
-    setup(props, {emit}) {
+    setup() {
         const route = useRoute()
         const detail = reactive({
             id: route.params.id,
@@ -71,17 +83,19 @@ export default {
                 type: null, baseUom: {}, 
                 altUom: {}, properties: {}
             },
+            deleteDialog: {
+                isOpen: false,
+                toggle: value => detail.deleteDialog.isOpen = value,
+                open: ()=> detail.deleteDialog.toggle(true)
+            },
             propertyLabels: {},
             isProcessing: false,
             edit: ()=> {   
                 detail.modal.isOpen = true;
             }, 
-            delete: async (itemId)=>{
-                if (itemId) {
-                    await ItemApi.deleteItem(itemId);
-                    if (props.onAfterDelete) props.onAfterDelete();
-                    emit('toggle', false);
-                }
+            delete: async ()=>{
+                const itemId = detail.id
+                if (itemId) await ItemApi.deleteItem(itemId);
             }
         });
         const loadItem = async (id) => { 

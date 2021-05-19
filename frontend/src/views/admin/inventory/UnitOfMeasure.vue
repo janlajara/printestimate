@@ -1,34 +1,50 @@
 <template>
     <div>
+        <DeleteRecordDialog 
+            :heading="`Delete ${deleteDialog.data.name}`"
+            :is-open="deleteDialog.isOpen"
+            @toggle="deleteDialog.toggle"
+            :execute="deleteDialog.data.executeFunc">
+            <div>
+                Are you sure you want to delete 
+                <span class="font-bold">
+                    {{deleteDialog.data.name}}</span>?
+            </div>
+        </DeleteRecordDialog>
         <Section heading="Base Stock Unit" 
             description="Individual units of measure.">
             <Button color="secondary" :action="()=>bsu.toggle(true)">Create</Button>
-            <Table :headers="['Unit name', 'Abbreviation', 'Plural', 
-                'Abbreviation (Pl.)', 'Parent Alternate Stock Units']">
-                <Row v-for="(unit, key) in bsu.units" :key="key" clickable
-                    :class="unit.isEditable? []: 'row-disabled'"
-                    @click="()=>{
-                        if (unit.isEditable) bsu.toggle(true, unit.id)}">
-                    <Cell label="Name">{{unit.name}}</Cell>
-                    <Cell label="Abbrev.">{{unit.abbrev}}</Cell>
-                    <Cell label="Plural Name">{{unit.pluralName}}</Cell>
-                    <Cell label="Plural Abbrev.">{{unit.pluralAbbrev}}</Cell>
+            <Table :headers="['Name', 'Abbreviation',  
+                'Parent Alternate Stock Units', '']">
+                <Row v-for="(unit, key) in bsu.units" :key="key"
+                    :class="unit.isEditable? []: 'row-disabled'">
+                    <Cell label="Name">{{unit.name}} ({{unit.pluralName}})</Cell>
+                    <Cell label="Abbrev.">{{unit.abbrev}} ({{unit.pluralAbbrev}})</Cell>
                     <Cell label="Parent Alternate Stock Units">
                         {{unit.altStockUnits}}
                     </Cell>
+                    <Cell class="flex-grow">
+                        <div class="flex justify-end">
+                            <Button class="my-auto" icon="edit"
+                                :disabled="!unit.isEditable"
+                                @click="()=>bsu.toggle(true, unit.id)"/>
+                            <Button class="my-auto" icon="delete"
+                                :disabled="!unit.isEditable"
+                                @click="deleteDialog.open(
+                                    unit.name, ()=>bsu.delete(unit.id))"/>
+                        </div>
+                    </Cell>
                 </Row>
             </Table>
-            <Modal :heading="`${(bsu.modal.isCreate)? 'Create Base Stock Unit' : 'Edit ' + bsu.selected.name}`"
+            <Modal :heading="bsu.modal.isCreate ? 'Create Base Stock Unit' : 
+                    'Edit ' + bsu.selected.name"
                 :is-open="bsu.modal.IsOpen" @toggle="bsu.toggle"
                 :buttons="[
                     {color: 'primary', icon: 'save', text: 'Save', 
                         action: ()=>{bsu.save()}, disabled: bsu.isProcessing},
                     {color: 'secondary', icon: 'save', text: 'Save and Close', 
-                        action: ()=>{bsu.save(true)}, disabled: bsu.isProcessing},
-                    {color: 'secondary', icon: 'delete', text: 'Delete', 
-                        action: ()=>{bsu.delete()}, 
-                        disabled: (bsu.modal.isCreate)?  true : bsu.isProcessing}]">
-                <div v-if="bsu.error" class="text-sm text-red-600">*{{bsu.error}}</div>
+                        action: ()=>{bsu.save(true)}, disabled: bsu.isProcessing}]">
+                <div v-if="bsu.error" class="text-sm pt-4 text-red-600">*{{bsu.error}}</div>
                 <Section heading="General Information" heading-position="side">
                     <div class="md:grid md:grid-cols-3 md:gap-4">
                         <InputText name="Name" type="text" :value="bsu.selected.name" required
@@ -54,17 +70,23 @@
         <Section heading="Alternate Stock Unit" 
             description="Grouped units of measure.">
             <Button color="secondary" :action="()=>asu.toggle(true)">Create</Button>
-            <Table :headers="['Unit name', 'Abbreviation', 'Plural', 
-                'Abbreviation (Pl.)', 'Child Base Stock Units']">
-                <Row v-for="(unit, key) in asu.units" :key="key" clickable
-                    :class="unit.isEditable? []: 'row-disabled'"
-                    @click="()=>{
-                        if (unit.isEditable) asu.toggle(true, unit.id)}">
-                    <Cell label="Name">{{unit.name}}</Cell>
-                    <Cell label="Abbrev.">{{unit.abbrev}}</Cell>
-                    <Cell label="Plural Name">{{unit.pluralName}}</Cell>
-                    <Cell label="Plural Abbrev.">{{unit.pluralAbbrev}}</Cell>
+            <Table :headers="['Name', 'Abbreviation', 'Child Base Stock Units', '']">
+                <Row v-for="(unit, key) in asu.units" :key="key"
+                    :class="unit.isEditable? []: 'row-disabled'">
+                    <Cell label="Name">{{unit.name}} ({{unit.pluralName}})</Cell>
+                    <Cell label="Abbrev.">{{unit.abbrev}} ({{unit.pluralAbbrev}})</Cell>
                     <Cell label="Parent Alternate Stock Units">{{unit.baseStockUnits}}</Cell>
+                    <Cell class="flex-grow">
+                        <div class="flex justify-end">
+                            <Button class="my-auto" icon="edit"
+                                :disabled="!unit.isEditable"
+                                @click="()=>asu.toggle(true, unit.id)"/>
+                           <Button class="my-auto" icon="delete"
+                                :disabled="!unit.isEditable"
+                                @click="deleteDialog.open(
+                                    unit.name, ()=>asu.delete(unit.id))"/>
+                        </div>
+                    </Cell>
                 </Row>
             </Table>
             <Modal :heading="`${(asu.modal.isCreate)?  'Create Alternate Stock Unit' : 'Edit ' + asu.selected.name}`" 
@@ -72,11 +94,8 @@
                 :buttons="[{color: 'primary', icon: 'save', text: 'Save', 
                     action: ()=>{asu.save()}, disabled: asu.isProcessing},
                     {color: 'secondary', icon: 'save', text: 'Save and Close', 
-                    action: ()=>{asu.save(true)}, disabled: asu.isProcessing},
-                    {color: 'secondary', icon: 'delete', text: 'Delete', 
-                        action: ()=>{asu.delete()}, 
-                        disabled: (asu.modal.isCreate)?  true : asu.isProcessing}]">
-                <div v-if="asu.error" class="text-sm text-red-600">*{{asu.error}}</div>
+                    action: ()=>{asu.save(true)}, disabled: asu.isProcessing}]">
+                <div v-if="asu.error" class="text-sm pt-4 text-red-600">*{{asu.error}}</div>
                 <Section heading="General Information" heading-position="side">
                     <div class="md:grid md:grid-cols-3 md:gap-4">
                         <InputText name="Name" type="text" :value="asu.selected.name"
@@ -109,6 +128,7 @@ import Cell from '@/components/Cell.vue'
 import Modal from '@/components/Modal.vue'
 import InputText from '@/components/InputText.vue'
 import InputSelect from '@/components/InputSelect.vue'
+import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 
 import {reactive, onBeforeMount} from 'vue';
 import {BaseStockUnitApi, AlternateStockUnitApi} from '@/utils/apis.js';
@@ -116,15 +136,30 @@ import {BaseStockUnitApi, AlternateStockUnitApi} from '@/utils/apis.js';
 export default {
     name: "UnitOfMeasure",
     components: {
-        Section, Button, Table, Row, Cell, Modal, InputText, InputSelect
+        Section, Button, Table, Row, Cell, Modal, 
+        InputText, InputSelect, DeleteRecordDialog
     },
     setup() {
+        const deleteDialog = reactive({
+            isOpen: false,
+            data: {
+                name: '', 
+                executeFunc: ()=>{}},
+            toggle: value => deleteDialog.isOpen = value,
+            open: (name, executeFunc) => {
+                deleteDialog.data={name, executeFunc};
+                deleteDialog.toggle(true);
+            }
+        });
         const bsu = reactive({
             modal: {
                 isOpen: false,
                 isCreate: false
             },
-            selected: {},
+            selected: {
+                id: null, name: '', 
+                abbrev: '', pluralName: null, 
+                pluralAbbrev: null, altStockUnitIds: []},
             units: [{}],
             isProcessing: false,
             error: '',
@@ -164,11 +199,10 @@ export default {
                 if (closeModalAfter) bsu.modal.IsOpen = false;
                 bsu.isProcessing = false; 
             },
-            delete: async ()=> {
+            delete: async (id)=> {
                 bsu.isProcessing = true; 
-                await deleteBaseUnit(bsu.selected.id);
+                await deleteBaseUnit(id);
                 loadTableData();
-                bsu.modal.IsOpen = false;
                 bsu.isProcessing = false;
             },
         })
@@ -177,7 +211,9 @@ export default {
                 isOpen: false,
                 isCreate: false
             },
-            selected: {},
+            selected: {id: null, name: '', 
+                abbrev: '', pluralName: null, 
+                pluralAbbrev: null, baseStockUnitIds: []},
             units: [{}],
             isProcessing: false,
             error: '',
@@ -218,11 +254,10 @@ export default {
                 if (closeModalAfter) asu.modal.IsOpen = false;
                 asu.isProcessing = false; 
             },
-            delete: async ()=> {
+            delete: async (id)=> {
                 asu.isProcessing = true; 
-                await deleteAlternateUnit(asu.selected.id);
+                await deleteAlternateUnit(id);
                 loadTableData();
-                asu.modal.IsOpen = false;
                 asu.isProcessing = false;
             },
         })
@@ -343,8 +378,9 @@ export default {
             const response = await AlternateStockUnitApi.deleteAlternateStockUnit(id);
             return response;
         }
+
         return {
-            bsu, asu
+            bsu, asu, deleteDialog
         }
     }
 }

@@ -25,7 +25,7 @@ def process_speed_factory(db):
 @pytest.fixture
 def process_factory(db):
     def create_process(**kwargs):
-        return Process.objects.create(**kwargs)
+        return Process.objects.create_process(**kwargs)
     return create_process
 
 
@@ -33,17 +33,15 @@ def process_factory(db):
 def process(db, process_factory:Process, process_speed: ProcessSpeed):
     return process_factory(name='HP Latex Cutter',
                            speed=process_speed,
-                           set_up=Time(hr=1),
-                           tear_down=Time(hr=1))
+                           set_up=1,
+                           tear_down=1)
 
 
 @pytest.fixture
 def process_offset_printing(db, process_speed_factory):
     speed = process_speed_factory(120, 'pc', 'min')
-    process = Process.objects.create(name='GTO Offset Printing',
-                                     speed=speed,
-                                     set_up=Time(hr=1),
-                                     tear_down=Time(hr=1))
+    process = Process.objects.create_process(name='GTO Offset Printing',
+                                     speed=speed, set_up=1, tear_down=1)
     process.add_expense('Labor', ProcessExpense.HOUR_BASED, 75)
     process.add_expense('Electricity', ProcessExpense.HOUR_BASED, 150)
     process.add_expense('Ink', ProcessExpense.MEASURE_BASED, 0.5)

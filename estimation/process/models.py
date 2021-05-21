@@ -36,7 +36,19 @@ class ProcessSpeed(models.Model):
         return rate
 
 
+class ProcessManager(models.Manager):
+    def create_process(self, name, speed, set_up, 
+            tear_down, machine=None):
+        process = Process.objects.create(
+            name=name, speed=speed,
+            set_up=Time(hr=set_up),
+            tear_down=Time(hr=tear_down),
+            machine=machine)
+        return process
+
+
 class Process(models.Model):
+    objects = ProcessManager()
     name = models.CharField(max_length=40)
     speed = models.OneToOneField(ProcessSpeed, on_delete=models.RESTRICT)
     set_up = MeasurementField(measurement=Time, null=True, blank=False)

@@ -10,7 +10,7 @@ from ..exceptions import MeasurementMismatch
 
 
 # Create your models here.
-class ProcessSpeed(models.Model):
+class ActivitySpeed(models.Model):
     measure_value = models.DecimalField(decimal_places=4, max_digits=12)
     measure_unit = models.CharField(max_length=20, choices=Measure.PRIMARY_UNITS)
     speed_unit = models.CharField(max_length=5, choices=Measure.TIME_UNITS)
@@ -36,21 +36,21 @@ class ProcessSpeed(models.Model):
         return rate
 
 
-class ProcessManager(models.Manager):
-    def create_process(self, name, speed, set_up, 
+class ActivityManager(models.Manager):
+    def create_activity(self, name, speed, set_up, 
             tear_down, machine=None):
-        process = Process.objects.create(
+        activity = Activity.objects.create(
             name=name, speed=speed,
             set_up=Time(hr=set_up),
             tear_down=Time(hr=tear_down),
             machine=machine)
-        return process
+        return activity
 
 
-class Process(models.Model):
-    objects = ProcessManager()
+class Activity(models.Model):
+    objects = ActivityManager()
     name = models.CharField(max_length=40)
-    speed = models.OneToOneField(ProcessSpeed, on_delete=models.RESTRICT)
+    speed = models.OneToOneField(ActivitySpeed, on_delete=models.RESTRICT)
     set_up = MeasurementField(measurement=Time, null=True, blank=False)
     tear_down = MeasurementField(measurement=Time, null=True, blank=False)
     machine = models.ForeignKey(Machine, null=True, blank=False, on_delete=models.SET_NULL)
@@ -65,17 +65,17 @@ class Process(models.Model):
 
     @property
     def flat_rate(self):
-        flat_rate = self._get_total_expenses(ProcessExpense.FLAT)
+        flat_rate = self._get_total_expenses(ActivityExpense.FLAT)
         return flat_rate
 
     @property
     def measure_rate(self):
-        measure_rate = self._get_total_expenses(ProcessExpense.MEASURE_BASED)
+        measure_rate = self._get_total_expenses(ActivityExpense.MEASURE_BASED)
         return measure_rate
 
     @property
     def hourly_rate(self):
-        hourly_rate = self._get_total_expenses(ProcessExpense.HOUR_BASED)
+        hourly_rate = self._get_total_expenses(ActivityExpense.HOUR_BASED)
         return hourly_rate
 
     def get_duration(self, measurement, contingency=0, hours_per_day=10):
@@ -126,7 +126,7 @@ class Process(models.Model):
         return round(cost, 2)
 
     def add_expense(self, name, expense_type, rate):
-        expense = ProcessExpense.objects.create(process=self,
+        expense = ActivityExpense.objects.create(activity=self,
                                                 name=name,
                                                 type=expense_type,
                                                 rate=rate)
@@ -148,13 +148,13 @@ class Process(models.Model):
 
     def _get_total_expenses(self, expense_type):
         total_rate = 0
-        expenses = ProcessExpense.objects.filter(process=self, type=expense_type)
+        expenses = ActivityExpense.objects.filter(activity=self, type=expense_type)
         for expense in expenses:
             total_rate += expense.rate
         return total_rate
 
 
-class ProcessExpense(models.Model):
+class ActivityExpense(models.Model):
     HOUR_BASED = 'hour'
     MEASURE_BASED = 'mesr'
     FLAT = 'flat'
@@ -164,6 +164,8 @@ class ProcessExpense(models.Model):
         (FLAT, 'Flat')
     ]
     name = models.CharField(max_length=40)
-    process = models.ForeignKey(Process, on_delete=models.CASCADE, related_name='process_expense')
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, 
+        related_name='activity_expenses')
     type = models.CharField(max_length=4, choices=TYPES)
-    rate = MoneyField(default=0, max_digits=14, decimal_places=2, default_currency='PHP')
+    rate = MoneyField(default=0, max_digits=14, decimal_places=2, 
+        default_currency='PHP')

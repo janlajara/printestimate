@@ -8,10 +8,10 @@ from measurement.measures import Distance, Area, Volume
 from measurement.utils import guess
 from inventory.models import Item
 from ..machine.models import SheetfedPress
-from ..process.models import Process
+from ..process.models import Activity
 from ..exceptions import InvalidProductMeasure, MismatchProductMeasure, UnrecognizedProductMeasure
 
-
+'''
 class Product(PolymorphicModel):
 
     measures = ['length', 'width', 'base_quantity', 'alternative_quantity', ]
@@ -22,7 +22,7 @@ class Product(PolymorphicModel):
     base_quantity = MeasurementField(measurement=Quantity, default=1)
     base_uom = models.CharField(max_length=15, choices=Measure.QUANTITY_UNITS)
     alternative_uom = models.CharField(max_length=15, choices=Measure.QUANTITY_UNITS)
-    processes = models.ManyToManyField(Process, related_name='products')
+    activities = models.ManyToManyField(Process, related_name='products')
 
     @property
     def finished_size(self):
@@ -300,3 +300,4 @@ class Form(Product):
 
 class FormPly(PackPrintSheet):
     order = models.IntegerField(default=1)
+'''

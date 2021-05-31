@@ -6,10 +6,10 @@ from core.utils.measures import Measure
 from ..models import Item
 
 
-class ItemProperties(PolymorphicModel):
-    item = models.OneToOneField(Item, on_delete=models.CASCADE, null=True, 
-        related_name='properties')
-
+class Shape(models.Model):
+    class Meta:
+        abstract = True
+    
     @classmethod
     def join(cls, arr):
         return " ".join([prop for prop in arr if prop is not None and prop != ''])
@@ -24,28 +24,8 @@ class ItemProperties(PolymorphicModel):
         num_fmt = int(num) if num.is_integer() else num
         return '%s%s' % (num_fmt, uom)
 
-    @staticmethod
-    def get_class(item_type):
-        mapping = {
-            Item.TAPE: Tape,
-            Item.LINE: Line,
-            Item.PAPER: Paper,
-            Item.PANEL: Panel,
-            Item.LIQUID: Liquid,
-            Item.OTHER: Other
-        }
-        if mapping.get(item_type) is not None:
-            return mapping[item_type]
 
-    def __str__(self):
-        return ''
-
-
-class Other(ItemProperties):
-    pass
-
-
-class Line(ItemProperties):
+class Line(Shape):
     length_value = models.FloatField(null=True, blank=True)
     length_uom = models.CharField(max_length=30, blank=True, null=True, 
                                   choices=Measure.UNITS[Measure.DISTANCE])
@@ -59,7 +39,7 @@ class Line(ItemProperties):
         name = ''
         if self.length is not None:
             length = self.length_value
-            name = '%s%s' % (ItemProperties.format(length),
+            name = '%s%s' % (super().format(length),
                              self.length_uom)
         return name
 
@@ -78,17 +58,20 @@ class Tape(Line):
         width_str = ''
         if self.width is not None:
             width = self.width_value
-            width_str = '%s%s' % (ItemProperties.format(width),
+            width_str = '%s%s' % (super().format(width),
                                   self.width_uom)
         arr = [super().__str__(), width_str]
         return super().join(arr)
 
 
-class Rectangle(ItemProperties):
+class Rectangle(Shape):
     length_value = models.FloatField(null=False, blank=False)
     width_value = models.FloatField(null=False, blank=False)
     size_uom = models.CharField(max_length=30, null=False, blank=False,
                                 choices=Measure.UNITS[Measure.DISTANCE])
+
+    class Meta:
+        abstract = True
 
     @property
     def length(self):
@@ -120,8 +103,8 @@ class Rectangle(ItemProperties):
         if self._is_not_none():
             width = self.width_value
             length = self.length_value
-            str_name = '%sx%s%s' % (ItemProperties.format(width),
-                                    ItemProperties.format(length),
+            str_name = '%sx%s%s' % (super().format(width),
+                                    super().format(length),
                                     self.size_uom)
         return str_name
 
@@ -161,13 +144,13 @@ class Panel(Rectangle):
         thickness_str = ''
         if self.thickness is not None:
             thickness = self.thickness_value
-            thickness_str = '%s%s' % (ItemProperties.format(thickness),
+            thickness_str = '%s%s' % (super().format(thickness),
                                       self.thickness_uom)
         arr = [super().__str__(), thickness_str]
         return super().join(arr)
 
 
-class Liquid(ItemProperties):
+class Liquid(Shape):
     volume_value = models.FloatField(null=True, blank=True)
     volume_uom = models.CharField(max_length=30, blank=True, null=True,
                                   choices=Measure.UNITS[Measure.VOLUME])
@@ -181,6 +164,47 @@ class Liquid(ItemProperties):
         name = ''
         if self.volume is not None:
             volume = self.volume_value
-            name = '%s%s' % (ItemProperties.format(volume),
+            name = '%s%s' % (super().format(volume),
                              self.volume_uom)
         return name
+
+
+class ItemProperties(PolymorphicModel, Shape):
+    properties_id = models.AutoField(primary_key=True)
+    item = models.OneToOneField(Item, on_delete=models.CASCADE, null=True, 
+        related_name='properties')
+
+    @staticmethod
+    def get_class(item_type):
+        mapping = {
+            Item.TAPE: TapeProperties,
+            Item.LINE: LineProperties,
+            Item.PAPER: PaperProperties,
+            Item.PANEL: PanelProperties,
+            Item.LIQUID: LiquidProperties,
+            Item.OTHER: ItemProperties
+        }
+        return mapping.get(item_type, ItemProperties)
+
+    def __str__(self):
+        return ''
+
+
+class TapeProperties(Tape, ItemProperties):
+    objects = ItemProperties.objects
+
+
+class LineProperties(Line, ItemProperties):
+    objects = ItemProperties.objects
+
+
+class PaperProperties(Paper, ItemProperties):
+    objects = ItemProperties.objects
+
+
+class PanelProperties(Panel, ItemProperties):
+    objects = ItemProperties.objects
+
+
+class LiquidProperties(Liquid, ItemProperties):
+    objects = ItemProperties.objects

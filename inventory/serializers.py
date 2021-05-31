@@ -3,7 +3,8 @@ from rest_polymorphic.serializers import PolymorphicSerializer
 from djmoney.contrib.django_rest_framework import MoneyField
 from .models import Item, Stock, StockRequest, ItemRequestGroup, \
     ItemRequest, StockUnit, BaseStockUnit, AlternateStockUnit, StockMovement
-from .properties.models import ItemProperties, Line, Tape, Paper, Panel, Liquid, Other
+from .properties.models import ItemProperties, LineProperties, TapeProperties, \
+    PaperProperties, PanelProperties, LiquidProperties
 
 
 class BaseStockUnitOptionSerializer(serializers.ModelSerializer):
@@ -97,7 +98,7 @@ class ItemPropertiesSerializer(serializers.ModelSerializer):
 
 class LineSerializer(ItemPropertiesSerializer):
     class Meta:
-        model = Line
+        model = LineProperties
         fields = ['id', 'length_value', 'length_uom']
 
     def validate(self, data):
@@ -111,7 +112,7 @@ class LineSerializer(ItemPropertiesSerializer):
 
 class TapeSerializer(ItemPropertiesSerializer):
     class Meta:
-        model = Tape
+        model = TapeProperties
         fields = ['id', 'length_value', 'length_uom', 'width_value', 'width_uom']
 
     def validate(self, data):
@@ -129,13 +130,13 @@ class TapeSerializer(ItemPropertiesSerializer):
 
 class PaperSerializer(ItemPropertiesSerializer):
     class Meta:
-        model = Paper
+        model = PaperProperties
         fields = ['id', 'width_value', 'length_value', 'size_uom', 'gsm', 'finish']
 
 
 class PanelSerializer(ItemPropertiesSerializer):
     class Meta:
-        model = Panel
+        model = PanelProperties
         fields = ['id', 'width_value', 'length_value', 'size_uom', 'thickness_value', 'thickness_uom']
 
     def validate(self, data):
@@ -147,7 +148,7 @@ class PanelSerializer(ItemPropertiesSerializer):
 
 class LiquidSerializer(ItemPropertiesSerializer):
     class Meta:
-        model = Liquid
+        model = LiquidProperties
         fields = ['id', 'volume_value', 'volume_uom']
 
     def validate(self, data):
@@ -162,16 +163,25 @@ class LiquidSerializer(ItemPropertiesSerializer):
 class ItemPropertiesPolymorphicSerializer(PolymorphicSerializer):
     model_serializer_mapping = {
         ItemProperties: ItemPropertiesSerializer,
-        Line: LineSerializer,
-        Tape: TapeSerializer,
-        Paper: PaperSerializer,
-        Panel: PanelSerializer,
-        Liquid: LiquidSerializer,
-        Other: ItemPropertiesSerializer
+        LineProperties: LineSerializer,
+        TapeProperties: TapeSerializer,
+        PaperProperties: PaperSerializer,
+        PanelProperties: PanelSerializer,
+        LiquidProperties: LiquidSerializer,
     }
 
     def to_resource_type(self, model_or_instance):
-        return model_or_instance._meta.object_name.lower()
+        mapping = {
+            LineProperties.__name__: Item.LINE,
+            TapeProperties.__name__: Item.TAPE,
+            PaperProperties.__name__: Item.PAPER,
+            PanelProperties.__name__: Item.PANEL,
+            LiquidProperties.__name__: Item.LIQUID,
+            ItemProperties.__name__: Item.OTHER
+        }
+        object_name = model_or_instance._meta.object_name
+        resource_type = mapping.get(object_name, 'other')
+        return resource_type
 
 
 class StockSerializer(serializers.ModelSerializer):

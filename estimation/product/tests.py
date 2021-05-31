@@ -3,13 +3,13 @@ from measurement.measures import Distance
 from inventory.models import BaseStockUnit, AlternateStockUnit, Item
 from inventory.properties.models import ItemProperties
 from core.utils.measures import Quantity
-from .models import Form, ProductProcessMapping
+#from .models import Form, ProductProcessMapping
 from ..machine.models import SheetfedPress
-from ..process.models import ProcessExpense
-from ..process.tests import process_factory, process_speed_factory
+from ..process.models import ActivityExpense
+from ..process.tests import activity_factory, activity_speed_factory
 from ..exceptions import InvalidProductMeasure, MismatchProductMeasure, UnrecognizedProductMeasure
 
-
+'''
 @pytest.fixture
 def base_unit__sheet(db):
     return BaseStockUnit.objects.create(name='sheet', abbrev='sht')
@@ -261,3 +261,4 @@ def test_formply__sheet_count(db, form_with_ply):
     assert ply.runsheet_per_parentsheet == 2
     assert ply.trimsheet_per_runsheet == 4
     assert ply.trimsheet_per_parentsheet == 4
+'''

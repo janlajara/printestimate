@@ -3,14 +3,42 @@ from decimal import Decimal
 from django.db import models
 from djmoney.models.fields import MoneyField
 from django_measurement.models import MeasurementField
-from measurement.measures import Time, Speed
+from measurement.measures import Time, Speed as MeasureSpeed
 from core.utils.measures import Measure, AreaSpeed, VolumeSpeed, QuantitySpeed
-from ..machine.models import Machine
-from ..exceptions import MeasurementMismatch
+from inventory.models import Item
+from ..exceptions import MeasurementMismatch, MaterialTypeMismatch
 
 
 # Create your models here.
-class ActivitySpeed(models.Model):
+class Process(models.Model):
+    name = models.CharField(max_length=40)
+
+
+class Workstation(models.Model):
+    name = models.CharField(max_length=50)
+
+    def add_operation(self, name, speed, prerequisite=None):
+        operation = Operation.objects.create(
+            workstation=self, name=name, speed=speed,
+            prerequisite=prerequisite)
+        return operation
+
+    def add_activity(self, name, set_up, tear_down, 
+            speed, include_presets=False):
+        activity = Activity.objects.create_activity(
+            name=name, set_up=set_up, tear_down=tear_down,
+            speed=speed, workstation=self)
+        if (include_presets):
+            activity.activity_expenses.set(self.activity_expenses.all())
+        return activity
+
+    def add_expense(self, name, type, rate):
+        expense = ActivityExpense.objects.create(
+            workstation=self, name=name, type=type, rate=rate)
+        return expense
+
+
+class Speed(models.Model):
     measure_value = models.DecimalField(decimal_places=4, max_digits=12)
     measure_unit = models.CharField(max_length=20, choices=Measure.PRIMARY_UNITS)
     speed_unit = models.CharField(max_length=5, choices=Measure.TIME_UNITS)
@@ -32,28 +60,107 @@ class ActivitySpeed(models.Model):
         elif self.measure == Measure.VOLUME:
             rate = VolumeSpeed(**data)
         else:
-            rate = Speed(**data)
+            rate = MeasureSpeed(**data)
         return rate
 
 
+class Operation(models.Model):
+    name = models.CharField(max_length=50)
+    process = models.ForeignKey(Process, on_delete=models.SET_NULL,
+        related_name='operations', blank=True, null=True)
+    workstation = models.ForeignKey(Workstation, on_delete=models.CASCADE,
+        related_name='operations')
+    prerequisite = models.ForeignKey('self', on_delete=models.SET_NULL,
+        blank=True, null=True)
+    speed = models.OneToOneField(Speed, on_delete=models.RESTRICT)
+    material_type = models.CharField(max_length=15, choices=Item.TYPES, 
+        default=Item.OTHER)
+
+    @property
+    def next_sequence(self):
+        count = OperationStep.objects.filter(operation=self).count() + 1
+        return count
+
+    def add_step(self, activity, notes=None, sequence=None):
+        temp = sequence if sequence is not None else self.next_sequence
+        if sequence is not None:
+            steps_to_move = self.operation_steps.filter(sequence__gte=sequence)
+            for step in steps_to_move:
+                step.sequence += 1
+                step.save()
+        
+        return OperationStep.objects.create(
+            operation=self, activity=activity, notes=notes,
+            sequence=temp)
+
+    def move_step(self, step_to_move, sequence):
+        if step_to_move.sequence < sequence:
+            steps_to_move = self.operation_steps.filter(
+                sequence__gt=step_to_move.sequence, 
+                sequence__lte=sequence)
+            for step in steps_to_move:
+                step.sequence -= 1
+                step.save()
+        else:
+            steps_to_move = self.operation_steps.filter(
+                sequence__gte=sequence,
+                sequence__lt=step_to_move.sequence)
+            for step in steps_to_move:
+                step.sequence += 1
+                step.save()
+        step_to_move.sequence = sequence
+        step_to_move.save()
+
+    def delete_step(self, step_to_delete):
+        steps_to_move = self.operation_steps.filter(
+            sequence__gt=step_to_delete.sequence)
+        for step in steps_to_move:
+            step.sequence -= 1
+            step.save()
+        step_to_delete.delete()
+
+    def get_measurement(self, material, item):
+        if self.material_type == material.type == item.type:
+            pass
+        else:
+            raise MaterialTypeMismatch(material.type, item.type, self.material_type)
+
+    def get_duration(self, measurement, contingency=0):
+        total_duration = 0
+        for step in self.operation_steps.all():
+            duration = step.activity.get_duration(
+                measurement=measurement, contingency=contingency)
+            total_duration += duration.hr
+        return Time(hr=total_duration)
+
+    def get_cost(self, measurement, contingency=0):
+        total_cost = 0
+        for step in self.operation_steps.all():
+            cost = step.activity.get_cost(
+                measurement=measurement, contingency=contingency)
+            total_cost += cost
+        return total_cost
+
+
 class ActivityManager(models.Manager):
-    def create_activity(self, name, speed, set_up, 
-            tear_down, machine=None):
+    def create_activity(self, name, 
+            set_up, tear_down, speed, workstation=None):
         activity = Activity.objects.create(
-            name=name, speed=speed,
+            name=name, workstation=workstation,
+            speed=speed,
             set_up=Time(hr=set_up),
-            tear_down=Time(hr=tear_down),
-            machine=machine)
+            tear_down=Time(hr=tear_down))
         return activity
 
 
 class Activity(models.Model):
     objects = ActivityManager()
     name = models.CharField(max_length=40)
-    speed = models.OneToOneField(ActivitySpeed, on_delete=models.RESTRICT)
+    workstation = models.ForeignKey(Workstation, on_delete=models.SET_NULL,
+        related_name='activities', blank=True, null=True)
+    speed = models.OneToOneField(Speed, on_delete=models.RESTRICT)
     set_up = MeasurementField(measurement=Time, null=True, blank=False)
     tear_down = MeasurementField(measurement=Time, null=True, blank=False)
-    machine = models.ForeignKey(Machine, null=True, blank=False, on_delete=models.SET_NULL)
 
     @property
     def measure(self):
@@ -126,10 +233,11 @@ class Activity(models.Model):
         return round(cost, 2)
 
     def add_expense(self, name, expense_type, rate):
-        expense = ActivityExpense.objects.create(activity=self,
-                                                name=name,
+        expense = ActivityExpense.objects.create(name=name,
                                                 type=expense_type,
                                                 rate=rate)
+        expense.activities.add(self)
+        expense.save()
         return expense
 
     def _validate_measurement(self, measurement):
@@ -148,7 +256,7 @@ class Activity(models.Model):
 
     def _get_total_expenses(self, expense_type):
         total_rate = 0
-        expenses = ActivityExpense.objects.filter(activity=self, type=expense_type)
+        expenses = ActivityExpense.objects.filter(activities=self, type=expense_type)
         for expense in expenses:
             total_rate += expense.rate
         return total_rate
@@ -156,7 +264,7 @@ class Activity(models.Model):
 
 class ActivityExpense(models.Model):
     HOUR_BASED = 'hour'
-    MEASURE_BASED = 'mesr'
+    MEASURE_BASED = 'measure'
     FLAT = 'flat'
     TYPES = [
         (HOUR_BASED, 'Hour-based'),
@@ -164,8 +272,19 @@ class ActivityExpense(models.Model):
         (FLAT, 'Flat')
     ]
     name = models.CharField(max_length=40)
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, 
-        related_name='activity_expenses')
-    type = models.CharField(max_length=4, choices=TYPES)
+    activities = models.ManyToManyField(Activity, 
+        related_name='activity_expenses', blank=True)
+    workstation = models.ForeignKey(Workstation, on_delete=models.SET_NULL,
+        related_name='activity_expenses', blank=True, null=True)
+    type = models.CharField(max_length=7, choices=TYPES)
     rate = MoneyField(default=0, max_digits=14, decimal_places=2, 
         default_currency='PHP')
+
+
+class OperationStep(models.Model):
+    sequence = models.IntegerField(default=0)
+    operation = models.ForeignKey(Operation, related_name='operation_steps',
+        on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, related_name='operation_steps',
+        on_delete=models.CASCADE)
+    notes = models.CharField(max_length=20, blank=True, null=True)

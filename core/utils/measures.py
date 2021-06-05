@@ -112,12 +112,6 @@ class VolumeSpeed(BidimensionalMeasure):
     REFERENCE_DIMENSION = Time
 
 
-class PaperSize(models.Model):
-    name = models.CharField(max_length=40)
-    width = MeasurementField(measurement=Distance)
-    length = MeasurementField(measurement=Distance)
-
-
 class MeasurementSerializerField(serializers.Field):
 
     def to_representation(self, value):

@@ -1,3 +1,4 @@
+import math
 from django.db import models
 from core.utils.measures import Measure
 from measurement.measures import Distance, Volume
@@ -22,16 +23,32 @@ class Shape(models.Model):
         num_fmt = int(num) if num.is_integer() else num
         return '%s%s' % (num_fmt, uom)
 
+    def _raise_type_error(self, expected, actual):
+        raise TypeError('Instance expected must of be type %s. Actual is %' % 
+            (expected.__class__, actual.__class__))
+
 
 class Line(Shape):
     length_value = models.FloatField(null=True, blank=True)
     length_uom = models.CharField(max_length=30, blank=True, null=True, 
                                   choices=Measure.UNITS[Measure.DISTANCE])
 
+    class Meta:
+        abstract = True
+
     @property
     def length(self):
         if self.length_value is not None and self.length_uom is not None:
             return Distance(**{self.length_uom: self.length_value})
+
+    def pack(self, line):
+        if isinstance(line, Line):
+            if 0 < line.length.mm <= self.length.mm:
+                return math.floor(self.length.mm / line.length.mm)
+            else:
+                return 0
+        else:
+            self._raise_type_error(self, line)
 
     def __str__(self):
         name = ''
@@ -46,6 +63,9 @@ class Tape(Line):
     width_value = models.FloatField(null=True, blank=True)
     width_uom = models.CharField(max_length=30, blank=True, null=True, 
                                  choices=Measure.UNITS[Measure.DISTANCE])
+
+    class Meta:
+        abstract = True
 
     @property
     def width(self):
@@ -93,6 +113,32 @@ class Rectangle(Shape):
         if self._is_not_none():
             return (self.length * 2) + (self.width * 2)
 
+    @property
+    def pack_width(self):
+        return self.width_value
+
+    @property
+    def pack_length(self):
+        return self.length_value
+
+    def pack(self, rectangle, rotate=True):
+        if isinstance(rectangle, Rectangle):
+            parent_dimensions = (self.pack_width, self.pack_length)
+            child_dimensions = (rectangle.pack_width, rectangle.pack_length)
+            params = parent_dimensions + child_dimensions
+            estimate_count = BinPacker.estimate_rectangles(*params)
+            child_rects = [child_dimensions] * estimate_count
+            parent_rect = [parent_dimensions]
+
+            if rotate:
+                packer1 = BinPacker.pack_rectangles(child_rects, parent_rect, True)[0]
+                packer2 = BinPacker.pack_rectangles(child_rects, parent_rect, False)[0]
+                return packer1 if len(packer1) > len(packer2) else packer2
+            else:
+                return BinPacker.pack_rectangles(child_rects, parent_rect, False)[0]
+        else:
+            self._raise_type_error(self, rectangle)
+
     def _is_not_none(self):
         return self.length is not None and self.width is not None
 
@@ -112,10 +158,22 @@ class Liquid(Shape):
     volume_uom = models.CharField(max_length=30, blank=True, null=True,
                                   choices=Measure.UNITS[Measure.VOLUME])
 
+    class Meta:
+        abstract = True
+        
     @property
     def volume(self):
         if self.volume_value is not None:
             return Volume(**{self.volume_uom: self.volume_value})
+
+    def pack(self, liquid):
+        if isinstance(liquid, Liquid):
+            if 0 < liquid.length.ml <= self.length.ml:
+                return math.floor(self.length.ml / liquid.length.ml)
+            else:
+                return 0
+        else:
+            self._raise_type_error(self, liquid)
 
     def __str__(self):
         name = ''
@@ -124,63 +182,3 @@ class Liquid(Shape):
             name = '%s%s' % (super().format(volume),
                              self.volume_uom)
         return name
-
-
-class Estimator:
-    class Rectangle:
-        def __init__(self, width, length, border=(0,0,0,0)):
-            self._width = width
-            self._length = length
-            self.border = border
-        
-        @property
-        def dimensions(self):
-            return (self.width, self.length)
-
-        @property
-        def width(self):
-            return self._width + self.border_x
-        
-        @property
-        def length(self):
-            return self._length + self.border_y
-
-        @property
-        def border(self):
-            return self._border
-
-        @border.setter
-        def border(self, value):
-            if value is not None and len(value) == 4:
-                self._border = value
-            else:
-                raise ValueError("Tuple must contain 4 numbers")
-
-        @property
-        def border_x(self):
-            if self._border is not None:
-                return self.border[1] + self.border[3]
-
-        @property
-        def border_y(self):
-            if self._border is not None:
-                return self.border[0] + self.border[2]       
-
-        @classmethod
-        def plot(cls, parent, child, rotate=True):
-            if isinstance(parent, cls) and isinstance(child, cls):
-                params = parent.dimensions + child.dimensions
-                estimate_count = BinPacker.estimate_rectangles(*params)
-                child_rects = [child.dimensions] * estimate_count
-                parent_rect = [parent.dimensions]
-
-                if rotate:
-                    packer1 = BinPacker.pack_rectangles(child_rects, parent_rect, True)[0]
-                    packer2 = BinPacker.pack_rectangles(child_rects, parent_rect, False)[0]
-                    return packer1 if len(packer1) > len(packer2) else packer2
-                else:
-                    return BinPacker.pack_rectangles(child_rects, parent_rect, False)[0]
-            else:
-                raise TypeError("Parent or child must be of type Rectangle")
-
-        

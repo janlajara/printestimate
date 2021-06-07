@@ -23,12 +23,19 @@ class Shape(models.Model):
         num_fmt = int(num) if num.is_integer() else num
         return '%s%s' % (num_fmt, uom)
 
+    def gte(self, obj):
+        pass
+
+    def _validate(self, obj):
+        pass
+
     def _raise_type_error(self, expected, actual):
         raise TypeError('Instance expected must of be type %s. Actual is %' % 
             (expected.__class__, actual.__class__))
 
 
 class Line(Shape):
+    measures = [Measure.DISTANCE]
     length_value = models.FloatField(null=True, blank=True)
     length_uom = models.CharField(max_length=30, blank=True, null=True, 
                                   choices=Measure.UNITS[Measure.DISTANCE])
@@ -42,12 +49,18 @@ class Line(Shape):
             return Distance(**{self.length_uom: self.length_value})
 
     def pack(self, line):
-        if isinstance(line, Line):
-            if 0 < line.length.mm <= self.length.mm:
-                return math.floor(self.length.mm / line.length.mm)
-            else:
-                return 0
+        self._validate(line)
+        if 0 < line.length.mm <= self.length.mm:
+            return math.floor(self.length.mm / line.length.mm)
         else:
+            return 0
+
+    def gte(self, line):
+        self._validate(line)
+        return self.length.mm >= line.length.mm
+
+    def _validate(self, line):
+        if not isinstance(line, Line):
             self._raise_type_error(self, line)
 
     def __str__(self):
@@ -83,6 +96,7 @@ class Tape(Line):
 
 
 class Rectangle(Shape):
+    measures = [Measure.DISTANCE, Measure.AREA]
     length_value = models.FloatField(null=False, blank=False)
     width_value = models.FloatField(null=False, blank=False)
     size_uom = models.CharField(max_length=30, null=False, blank=False,
@@ -122,21 +136,31 @@ class Rectangle(Shape):
         return self.length_value
 
     def pack(self, rectangle, rotate=True):
-        if isinstance(rectangle, Rectangle):
-            parent_dimensions = (self.pack_width, self.pack_length)
-            child_dimensions = (rectangle.pack_width, rectangle.pack_length)
-            params = parent_dimensions + child_dimensions
-            estimate_count = BinPacker.estimate_rectangles(*params)
-            child_rects = [child_dimensions] * estimate_count
-            parent_rect = [parent_dimensions]
+        return len(self.packer(rectangle, rotate))
 
-            if rotate:
-                packer1 = BinPacker.pack_rectangles(child_rects, parent_rect, True)[0]
-                packer2 = BinPacker.pack_rectangles(child_rects, parent_rect, False)[0]
-                return packer1 if len(packer1) > len(packer2) else packer2
-            else:
-                return BinPacker.pack_rectangles(child_rects, parent_rect, False)[0]
+    def packer(self, rectangle, rotate):
+        self._validate(rectangle)
+
+        parent_dimensions = (self.pack_width, self.pack_length)
+        child_dimensions = (rectangle.pack_width, rectangle.pack_length)
+        params = parent_dimensions + child_dimensions
+        estimate_count = BinPacker.estimate_rectangles(*params)
+        child_rects = [child_dimensions] * estimate_count
+        parent_rect = [parent_dimensions]
+
+        if rotate:
+            packer1 = BinPacker.pack_rectangles(child_rects, parent_rect, True)[0]
+            packer2 = BinPacker.pack_rectangles(child_rects, parent_rect, False)[0]
+            return packer1 if len(packer1) > len(packer2) else packer2
         else:
+            return BinPacker.pack_rectangles(child_rects, parent_rect, False)[0]
+
+    def gte(self, rectangle):
+        self._validate(rectangle)
+        return self.width.mm >= rectangle.width.mm and self.length.mm >= rectangle.length.mm
+
+    def _validate(self, rectangle):
+        if not isinstance(rectangle, Rectangle):
             self._raise_type_error(self, rectangle)
 
     def _is_not_none(self):
@@ -154,6 +178,7 @@ class Rectangle(Shape):
 
 
 class Liquid(Shape):
+    measures = [Measure.VOLUME]
     volume_value = models.FloatField(null=True, blank=True)
     volume_uom = models.CharField(max_length=30, blank=True, null=True,
                                   choices=Measure.UNITS[Measure.VOLUME])
@@ -167,12 +192,18 @@ class Liquid(Shape):
             return Volume(**{self.volume_uom: self.volume_value})
 
     def pack(self, liquid):
-        if isinstance(liquid, Liquid):
-            if 0 < liquid.length.ml <= self.length.ml:
-                return math.floor(self.length.ml / liquid.length.ml)
-            else:
-                return 0
+        self._validate(liquid)
+        if 0 < liquid.length.ml <= self.length.ml:
+            return math.floor(self.length.ml / liquid.length.ml)
         else:
+            return 0
+
+    def gte(self, liquid):
+        self._validate(liquid)
+        return self.volume.ml >= liquid.volume.ml
+
+    def _validate(self, liquid):
+        if not isinstance(liquid, Liquid):
             self._raise_type_error(self, liquid)
 
     def __str__(self):

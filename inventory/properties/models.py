@@ -3,7 +3,6 @@ from measurement.measures import Distance
 from polymorphic.models import PolymorphicModel
 from core.utils.measures import Measure
 from core.utils.shapes import Shape, Line, Tape, Rectangle, Liquid
-from ..models import Item
 
 
 class Paper(Rectangle):
@@ -49,18 +48,17 @@ class Panel(Rectangle):
 
 class ItemProperties(PolymorphicModel, Shape):
     properties_id = models.AutoField(primary_key=True)
-    item = models.OneToOneField(Item, on_delete=models.CASCADE, null=True, 
-        related_name='properties')
 
+    # TO DO, eliminate
     @staticmethod
     def get_class(item_type):
         mapping = {
-            Item.TAPE: TapeProperties,
-            Item.LINE: LineProperties,
-            Item.PAPER: PaperProperties,
-            Item.PANEL: PanelProperties,
-            Item.LIQUID: LiquidProperties,
-            Item.OTHER: ItemProperties
+            'tape': TapeProperties,
+            'line': LineProperties,
+            'paper': PaperProperties,
+            'panel': PanelProperties,
+            'liquid': LiquidProperties,
+            'other': ItemProperties
         }
         return mapping.get(item_type, ItemProperties)
 

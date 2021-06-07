@@ -23,16 +23,9 @@ def alt_unit__ream(db, base_unit__sheet):
 @pytest.fixture
 def item_factory(db, base_unit__sheet: BaseStockUnit, alt_unit__ream: AlternateStockUnit):
     def create_item(**data):
-        item = Item.objects.create(base_uom=base_unit__sheet,
+        item = Item.objects.create_item(base_uom=base_unit__sheet,
                                         alternate_uom=alt_unit__ream,
                                         **data)
-        type = data.get('type')
-        clazz = ItemProperties.get_class(data.get('type'))
-        args = {}
-        if (type == Item.PAPER or type == Item.PANEL):
-            args = {'length_value': 0, 'width_value': 0}
-        props = clazz.objects.create(**args)
-        item.properties = props
         return item
     return create_item
 

@@ -1,6 +1,8 @@
 from django.db import models
 from django.db.models import Q, Sum, Avg, Count
 from djmoney.models.fields import MoneyField
+from inventory.properties.models import TapeProperties, LineProperties, PaperProperties, \
+    PanelProperties, LiquidProperties, ItemProperties
 from .exceptions import DepositTooBig, InsufficientStock, \
     InvalidExpireQuantity, IllegalUnboundedDeposit, \
         IllegalItemRequestOperation, IllegalItemRequestGroupOperation
@@ -89,6 +91,26 @@ class AlternateStockUnit(StokUnit):
         self.base_stock_units.clear()
 
 
+class ItemManager(models.Manager):
+    def create_item(self, **kwargs):
+        mapping = {
+            Item.TAPE: TapeProperties,
+            Item.LINE: LineProperties,
+            Item.PAPER: PaperProperties,
+            Item.PANEL: PanelProperties,
+            Item.LIQUID: LiquidProperties,
+            Item.OTHER: ItemProperties
+        }
+        type = kwargs.get('type')
+        prop_clazz = mapping.get(type, ItemProperties) 
+        item = Item.objects.create(**kwargs)
+        kwargz = {}
+        if type == Item.PANEL or type == Item.PAPER:
+            kwargz = {'width_value': 0, 'length_value': 0} 
+        prop_clazz.objects.create(item=item, **kwargz)
+        return item
+
+
 class Item(models.Model):
     TAPE = 'tape'
     LINE = 'line'
@@ -104,9 +126,11 @@ class Item(models.Model):
         (LIQUID, 'Liquid'),
         (OTHER, 'Other')
     ]
-
+    objects = ItemManager()
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=15, choices=TYPES, null=False, blank=False)
+    properties = models.OneToOneField(ItemProperties, on_delete=models.CASCADE, null=True, 
+        related_name='item')
     override_price = MoneyField(null=True, max_digits=14, decimal_places=2, 
         default_currency='PHP')
     is_override_price = models.BooleanField(default=False)

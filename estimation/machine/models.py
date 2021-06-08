@@ -1,16 +1,24 @@
+import math
 from django.db import models
 from core.utils.shapes import Rectangle
-from core.utils.measures import Measure
+from core.utils.measures import Measure, Quantity
 from measurement.measures import Distance
+from estimation.product.models import Material
+from inventory.models import Item
+
+
+class Estimate:
+    def __init__(self, run_count, item_count):
+        self.run_count = run_count
+        self.item_count = item_count
 
 
 class MachineManager(models.Manager):
     def create_machine(self, **kwargs):
         mapping = {
-            Machine.PRESS : PressMachine,
-            Machine.OTHERS : Machine
+            Machine.PRESS : PressMachine
         }
-        type = kwargs.get('type', Machine.OTHERS)
+        type = kwargs.get('type', Machine.PRESS)
         clazz = mapping[type]
         machine = clazz.objects.create(**kwargs)
         return machine
@@ -18,27 +26,62 @@ class MachineManager(models.Manager):
 
 class Machine(models.Model):
     PRESS = 'press'
-    OTHERS = 'others'
     TYPES = [
         (PRESS, 'Press'),
-        (OTHERS, 'Others'),
     ]
+
     objects = MachineManager()
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=15, choices=TYPES, null=False, blank=False)
 
+    def estimate(self, **kwargs):
+        pass
+
 
 class PressMachine(Machine):
-    min_sheet_length = models.FloatField(blank=True, default=0)
-    max_sheet_length = models.FloatField(blank=True, default=0)
-    min_sheet_width = models.FloatField(blank=True, default=0)
-    max_sheet_width = models.FloatField(blank=True, default=0)
+    min_sheet_length = models.FloatField(default=0)
+    max_sheet_length = models.FloatField(default=0)
+    min_sheet_width = models.FloatField(default=0)
+    max_sheet_width = models.FloatField(default=0)
     uom = models.CharField(max_length=30, default='mm',
         choices=Measure.UNITS[Measure.DISTANCE])
 
+    def estimate(self, input:Item, output:Material, quantity):
+        if input.type == output.type == Item.PAPER:
+            child_sheets = (
+                ChildSheet.objects
+                    .filter(parent__machine=self)
+                    .order_by('width_value', 'length_value')
+            )
+            match = None
+
+            for child_sheet in child_sheets:
+                if child_sheet.gte(output) and input.properties.gte(child_sheet.parent):
+                    match = child_sheet
+                    break
+
+            if match is not None:
+                parent_sheet_per_item = input.properties.pack(match.parent)
+                child_sheet_per_parent = match.count
+                output_per_child = match.pack(output)
+                total_output_needed = output.quantity * quantity
+
+                output_per_item = parent_sheet_per_item * child_sheet_per_parent * output_per_child
+                items_needed = math.ceil(total_output_needed / output_per_item)
+                runs_needed = items_needed * parent_sheet_per_item
+
+                run_count = Quantity(sheet=runs_needed)
+                item_count = Quantity(sheet=items_needed)
+
+                return Estimate(
+                    run_count=run_count,
+                    item_count=item_count)
+            else:
+                return None
+
     def add_parent_sheet(self, width, length, size_uom, 
-        padding_top=None, padding_right=None,
-        padding_bottom=None, padding_left=None):
+        padding_top=0, padding_right=0,
+        padding_bottom=0, padding_left=0):
 
         parent = ParentSheet.objects.create(machine=self,
             width_value=width, length_value=length, size_uom=size_uom,
@@ -51,10 +94,10 @@ class PressMachine(Machine):
 class ParentSheet(Rectangle):
     machine = models.ForeignKey(PressMachine, on_delete=models.CASCADE, 
         related_name='parent_sheets')
-    padding_top = models.FloatField(null=True, blank=True, default=0)
-    padding_right = models.FloatField(null=True, blank=True, default=0)
-    padding_bottom = models.FloatField(null=True, blank=True, default=0)
-    padding_left = models.FloatField(null=True, blank=True, default=0)
+    padding_top = models.FloatField(default=0)
+    padding_right = models.FloatField(default=0)
+    padding_bottom = models.FloatField(default=0)
+    padding_left = models.FloatField(default=0)
 
     @property
     def pack_width(self):
@@ -78,8 +121,8 @@ class ParentSheet(Rectangle):
         return self.padding_top + self.padding_bottom
 
     def add_child_sheet(self, width, length, size_uom, 
-        margin_top=None, margin_right=None,
-        margin_bottom=None, margin_left=None):
+        margin_top=0, margin_right=0,
+        margin_bottom=0, margin_left=0):
 
         child = ChildSheet.objects.create(parent=self,
             width_value=width, length_value=length, size_uom=size_uom,
@@ -92,10 +135,10 @@ class ParentSheet(Rectangle):
 class ChildSheet(Rectangle):
     parent = models.ForeignKey(ParentSheet, on_delete=models.CASCADE,
         related_name='child_sheets')
-    margin_top = models.FloatField(blank=True, default=0)
-    margin_right = models.FloatField(blank=True, default=0)
-    margin_bottom = models.FloatField(blank=True, default=0)
-    margin_left = models.FloatField(blank=True, default=0)
+    margin_top = models.FloatField(default=0)
+    margin_right = models.FloatField(default=0)
+    margin_bottom = models.FloatField(default=0)
+    margin_left = models.FloatField(default=0)
 
     @property
     def pack_width(self):
@@ -119,12 +162,8 @@ class ChildSheet(Rectangle):
         return self.margin_top + self.margin_bottom
 
     @property
-    def packer(self):
-        return self.parent.pack(self)
-
-    @property
     def count(self):
-        return len(self.packer)
+        return self.parent.pack(self)
 
     @property
     def usage(self):

@@ -4,9 +4,11 @@ from django.db import models
 from djmoney.models.fields import MoneyField
 from django_measurement.models import MeasurementField
 from measurement.measures import Time, Speed as MeasureSpeed
-from core.utils.measures import Measure, AreaSpeed, VolumeSpeed, QuantitySpeed
+from core.utils.measures import Quantity, Measure, AreaSpeed, VolumeSpeed, QuantitySpeed
 from inventory.models import Item
-from ..exceptions import MeasurementMismatch, MaterialTypeMismatch
+from estimation.machine.models import Machine
+from estimation.product.models import Material
+from estimation.exceptions import MeasurementMismatch, MaterialTypeMismatch
 
 
 # Create your models here.
@@ -17,10 +19,12 @@ class Process(models.Model):
 class Workstation(models.Model):
     name = models.CharField(max_length=50)
 
-    def add_operation(self, name, speed, prerequisite=None):
+    def add_operation(self, name, material_type, prerequisite=None, machine=None):
         operation = Operation.objects.create(
-            workstation=self, name=name, speed=speed,
-            prerequisite=prerequisite)
+            workstation=self, name=name, 
+            material_type=material_type,
+            prerequisite=prerequisite,
+            machine=machine)
         return operation
 
     def add_activity(self, name, set_up, tear_down, 
@@ -38,33 +42,23 @@ class Workstation(models.Model):
         return expense
 
 
-class Speed(models.Model):
-    measure_value = models.DecimalField(decimal_places=4, max_digits=12)
-    measure_unit = models.CharField(max_length=20, choices=Measure.PRIMARY_UNITS)
-    speed_unit = models.CharField(max_length=5, choices=Measure.TIME_UNITS)
-
-    @property
-    def measure(self):
-        if self.measure_unit is not None:
-            return Measure.get_measure(self.measure_unit)
-
-    @property
-    def rate(self):
-        param = '%s__%s' % (self.measure_unit, self.speed_unit)
-        data = {param: self.measure_value}
-        rate = None
-        if self.measure == Measure.AREA:
-            rate = AreaSpeed(**data)
-        elif self.measure == Measure.QUANTITY:
-            rate = QuantitySpeed(**data)
-        elif self.measure == Measure.VOLUME:
-            rate = VolumeSpeed(**data)
-        else:
-            rate = MeasureSpeed(**data)
-        return rate
-
-
 class Operation(models.Model):
+    # TO DO: Reword these choices with more elegant code
+    class Dimension:
+        LENGTH = 'length'
+        AREA = 'area'
+        VOLUME = 'volume'
+        QUANTITY = 'quantity'
+        PERIMETER = 'perimeter'
+        TIME = 'time'
+        DIMENSIONS = [
+            (LENGTH, 'Length'),
+            (AREA, 'Area'),
+            (VOLUME, 'Volume'),
+            (QUANTITY, 'Quantity'),
+            (PERIMETER, 'Perimeter'),
+            (TIME, 'Time'),
+        ]
     name = models.CharField(max_length=50)
     process = models.ForeignKey(Process, on_delete=models.SET_NULL,
         related_name='operations', blank=True, null=True)
@@ -72,9 +66,23 @@ class Operation(models.Model):
         related_name='operations')
     prerequisite = models.ForeignKey('self', on_delete=models.SET_NULL,
         blank=True, null=True)
-    speed = models.OneToOneField(Speed, on_delete=models.RESTRICT)
+    dimension = models.CharField(max_length=15, choices=Dimension.DIMENSIONS, 
+        default=Dimension.QUANTITY)
     material_type = models.CharField(max_length=15, choices=Item.TYPES, 
         default=Item.OTHER)
+    machine = models.ForeignKey(Machine, on_delete=models.SET_NULL, 
+        related_name='operations', blank=True, null=True)
+
+    @property
+    def measure(self):
+        mapping = {
+            Operation.Dimension.LENGTH: Measure.DISTANCE,
+            Operation.Dimension.AREA: Measure.AREA,
+            Operation.Dimension.VOLUME: Measure.VOLUME,
+            Operation.Dimension.QUANTITY: Measure.QUANTITY,
+            Operation.Dimension.PERIMETER: Measure.DISTANCE,
+            Operation.Dimension.TIME: Measure.TIME}
+        return mapping.get(self.dimension, None)
 
     @property
     def next_sequence(self):
@@ -82,6 +90,9 @@ class Operation(models.Model):
         return count
 
     def add_step(self, activity, notes=None, sequence=None):
+        if activity.measure != self.measure:
+            raise MeasurementMismatch(activity.measure, self.measure)
+
         temp = sequence if sequence is not None else self.next_sequence
         if sequence is not None:
             steps_to_move = self.operation_steps.filter(sequence__gte=sequence)
@@ -119,11 +130,18 @@ class Operation(models.Model):
             step.save()
         step_to_delete.delete()
 
-    def get_measurement(self, material, item):
-        if self.material_type == material.type == item.type:
-            pass
+    def get_measurement(self, input:Item, output:Material, quantity):
+        if self.material_type == input.type == output.type:
+            
+            if self.machine is not None:
+                estimate = self.machine.estimate(input, output, quantity)
+                return estimate.run_count
+
+            materials_per_item = math.floor(input.properties.pack(output))
+            item_count_needed = output.quantity * quantity / materials_per_item
+            return Quantity(pc=item_count_needed)
         else:
-            raise MaterialTypeMismatch(material.type, item.type, self.material_type)
+            raise MaterialTypeMismatch(self.material.type, item.type, self.material_type)
 
     def get_duration(self, measurement, contingency=0):
         total_duration = 0
@@ -142,6 +160,32 @@ class Operation(models.Model):
         return total_cost
 
 
+class Speed(models.Model):
+    measure_value = models.DecimalField(decimal_places=4, max_digits=12)
+    measure_unit = models.CharField(max_length=20, choices=Measure.PRIMARY_UNITS)
+    speed_unit = models.CharField(max_length=5, choices=Measure.TIME_UNITS)
+
+    @property
+    def measure(self):
+        if self.measure_unit is not None:
+            return Measure.get_measure(self.measure_unit)
+
+    @property
+    def rate(self):
+        param = '%s__%s' % (self.measure_unit, self.speed_unit)
+        data = {param: self.measure_value}
+        rate = None
+        if self.measure == Measure.AREA:
+            rate = AreaSpeed(**data)
+        elif self.measure == Measure.QUANTITY:
+            rate = QuantitySpeed(**data)
+        elif self.measure == Measure.VOLUME:
+            rate = VolumeSpeed(**data)
+        else:
+            rate = MeasureSpeed(**data)
+        return rate
+
+
 class ActivityManager(models.Manager):
     def create_activity(self, name, 
             set_up, tear_down, speed, workstation=None):
@@ -158,7 +202,7 @@ class Activity(models.Model):
     name = models.CharField(max_length=40)
     workstation = models.ForeignKey(Workstation, on_delete=models.SET_NULL,
         related_name='activities', blank=True, null=True)
-    speed = models.OneToOneField(Speed, on_delete=models.RESTRICT)
+    speed = models.OneToOneField(Speed, on_delete=models.CASCADE)
     set_up = MeasurementField(measurement=Time, null=True, blank=False)
     tear_down = MeasurementField(measurement=Time, null=True, blank=False)
 

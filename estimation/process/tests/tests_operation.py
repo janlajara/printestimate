@@ -1,6 +1,29 @@
 import pytest
 from core.utils.measures import Quantity
+from estimation.machine.models import Machine
 from estimation.process.models import Workstation, Speed
+from estimation.product.models import Component
+from inventory.models import BaseStockUnit, AlternateStockUnit, Item
+
+
+@pytest.fixture
+def item_factory(db):
+    def create_item(**kwargs):
+        buom = BaseStockUnit.objects.create(name='sheet', abbrev='sht')
+        auom = AlternateStockUnit.objects.create(name='ream', abbrev='rm')
+        auom.base_stock_units.add(buom)
+        item = Item.objects.create_item(base_uom=buom,
+                                        alternate_uom=auom, 
+                                        **kwargs)
+        return item
+    return create_item
+
+
+@pytest.fixture
+def component_factory(db):
+    def create_component(**kwargs):
+        return Component.objects.create(**kwargs)
+    return create_component
 
 
 @pytest.fixture
@@ -21,8 +44,6 @@ def workstation_factory(db):
 
 @pytest.fixture
 def korse_workstation(db, workstation_factory, speed_factory):
-    speed = speed_factory(10000, 'sheet', 'hr')
-
     korse_ws = workstation_factory(name='Korse 1C')
     korse_ws.add_expense('Electricity', 'hour', 100)
     korse_ws.add_expense('Depreciation', 'hour', 200)
@@ -32,6 +53,11 @@ def korse_workstation(db, workstation_factory, speed_factory):
         speed_factory(10000, 'sheet', 'hr'), True)
     return korse_ws
 
+
+@pytest.fixture
+def korse_machine(db):
+    return Machine.objects.create_machine(name='KORSE Press', 
+        type=Machine.PRESS, uom='inch')
 
 def test_workstation__add_activity(db, workstation_factory, speed_factory):
     speed = speed_factory(10000, 'sheet', 'hr')
@@ -58,19 +84,18 @@ def test_workstation__add_activity_with_preset_expense(db, workstation_factory, 
     assert len(korse_ws.activities.all()) == 2
 
 
-def test_workstation__add_operation(db, workstation_factory, speed_factory):
+def test_workstation__add_operation(db, workstation_factory):
     korse_ws = workstation_factory(name='Korse 1C')
-    speed = speed_factory(10000, 'sheet', 'hr')
-
-    operation = korse_ws.add_operation('CMYK Printing', speed)
+    operation = korse_ws.add_operation(
+        name='CMYK Printing', material_type=Item.PAPER)
     assert operation.workstation == korse_ws
 
 
-def test_operation__add_delete_step(db, korse_workstation, speed_factory):
+def test_operation__add_delete_step(db, korse_workstation):
     spot_printing = korse_workstation.activities.get(name='Spot Color Printing')
 
-    speed = speed_factory(10000, 'sheet', 'hr')
-    operation = korse_workstation.add_operation('2-Color Printing', speed)
+    operation = korse_workstation.add_operation(
+        name='2-Color Printing', material_type=Item.PAPER) 
     step1 = operation.add_step(spot_printing, '1st color')
     step2 = operation.add_step(spot_printing, '2nd color')
 
@@ -84,11 +109,11 @@ def test_operation__add_delete_step(db, korse_workstation, speed_factory):
     assert step2.sequence == 1
 
 
-def test_operation__add_step_inbetween(db, korse_workstation, speed_factory):
+def test_operation__add_step_inbetween(db, korse_workstation):
     spot_printing = korse_workstation.activities.get(name='Spot Color Printing')
 
-    speed = speed_factory(10000, 'sheet', 'hr')
-    operation = korse_workstation.add_operation('3-Color Printing', speed)
+    operation = korse_workstation.add_operation(
+        name='3-Color Printing', material_type=Item.PAPER)
     step2 = operation.add_step(spot_printing, '2nd color')
     step3 = operation.add_step(spot_printing, '3rd color')
     assert step2.sequence == 1 and step3.sequence == 2
@@ -101,15 +126,15 @@ def test_operation__add_step_inbetween(db, korse_workstation, speed_factory):
     assert step3.sequence == 3
 
 
-def test_operation__move_step(db, korse_workstation, speed_factory):
+def test_operation__move_step(db, korse_workstation):
     def refresh_from_db(steps):
         for step in steps:
             step.refresh_from_db()
         
     spot_printing = korse_workstation.activities.get(name='Spot Color Printing')
 
-    speed = speed_factory(10000, 'sheet', 'hr')
-    operation = korse_workstation.add_operation('5-Color Printing', speed)
+    operation = korse_workstation.add_operation(
+        name='5-Color Printing', material_type=Item.PAPER)
     steps = []
     for num in range(5):
         step = operation.add_step(spot_printing, 'color ' + str(num+1))
@@ -126,10 +151,10 @@ def test_operation__move_step(db, korse_workstation, speed_factory):
         steps[3].sequence == 3 and steps[4].sequence == 4 and steps[1].sequence == 5
 
 
-def test_operation__get_duration_and_rate(db, korse_workstation, speed_factory):
+def test_operation__get_duration_and_rate(db, korse_workstation):
     spot_printing = korse_workstation.activities.get(name='Spot Color Printing')
-    speed = speed_factory(10000, 'sheet', 'hr')
-    operation = korse_workstation.add_operation('2-Color Printing', speed)
+    operation = korse_workstation.add_operation(
+        name='2-Color Printing', material_type=Item.PAPER)
     operation.add_step(spot_printing, '1st Color')
     operation.add_step(spot_printing, '2nd Color')
     
@@ -138,3 +163,33 @@ def test_operation__get_duration_and_rate(db, korse_workstation, speed_factory):
 
     cost = operation.get_cost(Quantity(sheet=10000))
     assert cost.amount == 1800
+
+
+def test_operation__get_measurement_machine_based(db, korse_workstation, korse_machine,
+        item_factory, component_factory):
+    item = item_factory(name='Carbonless White', type=Item.PAPER)
+    item.properties.length_value = 37
+    item.properties.width_value = 25.5
+    item.properties.size_uom = 'inch'
+    item.properties.save()
+    component = component_factory(
+        name='Form', type=Item.PAPER)
+    material = component.add_material(
+        name='ply', quantity=100,
+        width_value=8.25, length_value=5.875,
+        size_uom='inch')
+    
+    parent_sheet = korse_machine.add_parent_sheet(12.75, 18.5, 'inch')
+    child_sheet = parent_sheet.add_child_sheet(8.25, 11.75, 'inch', 0.5, 0.5, 0.5, 0.5)
+    estimate = korse_machine.estimate(item, material, 100)
+
+    assert estimate is not None
+    assert estimate.item_count.sheet == 625
+    assert estimate.run_count.sheet == 2500
+
+    operation = korse_workstation.add_operation(
+        name='2-Color Printing', material_type=Item.PAPER, 
+        machine=korse_machine)
+    measurement = operation.get_measurement(item, material, 100)
+
+    assert measurement.pc == 2500

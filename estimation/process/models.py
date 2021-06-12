@@ -43,15 +43,15 @@ class Workstation(models.Model):
 
 
 class Operation(models.Model):
-    # TO DO: Reword these choices with more elegant code
-    class Dimension:
+    # TO DO: Rework these choices with more elegant code
+    class CostingMeasure:
         LENGTH = 'length'
         AREA = 'area'
         VOLUME = 'volume'
         QUANTITY = 'quantity'
         PERIMETER = 'perimeter'
         TIME = 'time'
-        DIMENSIONS = [
+        TYPES = [
             (LENGTH, 'Length'),
             (AREA, 'Area'),
             (VOLUME, 'Volume'),
@@ -66,23 +66,51 @@ class Operation(models.Model):
         related_name='operations')
     prerequisite = models.ForeignKey('self', on_delete=models.SET_NULL,
         blank=True, null=True)
-    dimension = models.CharField(max_length=15, choices=Dimension.DIMENSIONS, 
-        default=Dimension.QUANTITY)
+    costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
+        default=CostingMeasure.QUANTITY)
     material_type = models.CharField(max_length=15, choices=Item.TYPES, 
         default=Item.OTHER)
     machine = models.ForeignKey(Machine, on_delete=models.SET_NULL, 
         related_name='operations', blank=True, null=True)
 
     @property
+    def costing_measure_choices(self):
+        def __get(costing_measures):
+            return [measure for measure in CostingMeasure.TYPES 
+                if measure[0] in costing_measures]
+        material_type = self.material_type
+        mapping = {
+            Item.TAPE: _get([
+                CostingMeasure.LENGTH, 
+                CostingMeasure.QUANTITY]),
+            Item.LINE: _get([
+                CostingMeasure.LENGTH, 
+                CostingMeasure.QUANTITY]),
+            Item.PAPER: _get([
+                CostingMeasure.AREA, 
+                CostingMeasure.PERIMETER, 
+                CostingMeasure.QUANTITY]),
+            Item.PANEL: _get([
+                CostingMeasure.AREA, 
+                CostingMeasure.PERIMETER, 
+                CostingMeasure.QUANTITY]),
+            Item.LIQUID: _get([
+                CostingMeasure.VOLUME, 
+                CostingMeasure.QUANTITY]),
+            Item.OTHER: _get([CostingMeasure.QUANTITY])
+        }
+        return mapping.get(self.material_type, Item.OTHER)
+
+    @property
     def measure(self):
         mapping = {
-            Operation.Dimension.LENGTH: Measure.DISTANCE,
-            Operation.Dimension.AREA: Measure.AREA,
-            Operation.Dimension.VOLUME: Measure.VOLUME,
-            Operation.Dimension.QUANTITY: Measure.QUANTITY,
-            Operation.Dimension.PERIMETER: Measure.DISTANCE,
-            Operation.Dimension.TIME: Measure.TIME}
-        return mapping.get(self.dimension, None)
+            Operation.CostingMeasure.LENGTH: Measure.DISTANCE,
+            Operation.CostingMeasure.AREA: Measure.AREA,
+            Operation.CostingMeasure.VOLUME: Measure.VOLUME,
+            Operation.CostingMeasure.QUANTITY: Measure.QUANTITY,
+            Operation.CostingMeasure.PERIMETER: Measure.DISTANCE,
+            Operation.CostingMeasure.TIME: Measure.TIME}
+        return mapping.get(self.costing_measure, None)
 
     @property
     def next_sequence(self):

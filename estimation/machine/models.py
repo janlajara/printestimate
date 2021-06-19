@@ -11,6 +11,10 @@ class Estimate:
     def __init__(self, run_count, item_count):
         self.run_count = run_count
         self.item_count = item_count
+        self.length = 0
+        self.area = 0
+        self.volume = 0
+        self.perimeter = 0
 
 
 class MachineManager(models.Manager):
@@ -72,10 +76,12 @@ class PressMachine(Machine):
 
                 run_count = Quantity(sheet=runs_needed)
                 item_count = Quantity(sheet=items_needed)
+                total_area = runs_needed * match.parent.area
 
-                return Estimate(
-                    run_count=run_count,
-                    item_count=item_count)
+                estimate = Estimate(run_count=run_count, item_count=item_count)
+                estimate.area = total_area
+                
+                return estimate
             else:
                 return None
 

@@ -209,7 +209,7 @@ export default {
             const response = await ItemPropertiesApi.getItemProperties(itemType);
             if (response && !response.error) {
                 const responseData = Object.entries(response)
-                    .filter(entry => entry[0] != 'id');
+                    .filter(entry => entry[0] != 'properties_id');
                 const itemProps = responseData.map(entry => {
                         const name = entry[0];
                         const meta = entry[1];  

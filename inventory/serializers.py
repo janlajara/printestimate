@@ -99,7 +99,7 @@ class ItemPropertiesSerializer(serializers.ModelSerializer):
 class LineSerializer(ItemPropertiesSerializer):
     class Meta:
         model = LineProperties
-        fields = ['id', 'length_value', 'length_uom']
+        fields = ['properties_id', 'length_value', 'length_uom']
 
     def validate(self, data):
         errors = {}
@@ -113,7 +113,7 @@ class LineSerializer(ItemPropertiesSerializer):
 class TapeSerializer(ItemPropertiesSerializer):
     class Meta:
         model = TapeProperties
-        fields = ['id', 'length_value', 'length_uom', 'width_value', 'width_uom']
+        fields = ['properties_id', 'length_value', 'length_uom', 'width_value', 'width_uom']
 
     def validate(self, data):
         errors = {}
@@ -131,13 +131,13 @@ class TapeSerializer(ItemPropertiesSerializer):
 class PaperSerializer(ItemPropertiesSerializer):
     class Meta:
         model = PaperProperties
-        fields = ['id', 'width_value', 'length_value', 'size_uom', 'gsm', 'finish']
+        fields = ['properties_id', 'width_value', 'length_value', 'size_uom', 'gsm', 'finish']
 
 
 class PanelSerializer(ItemPropertiesSerializer):
     class Meta:
         model = PanelProperties
-        fields = ['id', 'width_value', 'length_value', 'size_uom', 'thickness_value', 'thickness_uom']
+        fields = ['properties_id', 'width_value', 'length_value', 'size_uom', 'thickness_value', 'thickness_uom']
 
     def validate(self, data):
         if data.get('thickness_value', None) is not None and data.get('thickness_uom', None) is None:
@@ -149,7 +149,7 @@ class PanelSerializer(ItemPropertiesSerializer):
 class LiquidSerializer(ItemPropertiesSerializer):
     class Meta:
         model = LiquidProperties
-        fields = ['id', 'volume_value', 'volume_uom']
+        fields = ['properties_id', 'volume_value', 'volume_uom']
 
     def validate(self, data):
         errors = {}
@@ -252,12 +252,13 @@ class ItemCreateUpdateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         props = validated_data.pop('properties')
-        item = Item.objects.create(**validated_data)
+        itemprops = None
         if (props is not None):
             type_key = props.pop('resourcetype')
             clazz = ItemProperties.get_class(type_key)
             props = {k: v for k, v in props.items() if v is not None}
-            itemprops = clazz.objects.create(item=item, **props)
+            itemprops = clazz.objects.create(**props)
+        item = Item.objects.create(properties=itemprops, **validated_data)
         return item 
 
 

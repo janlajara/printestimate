@@ -1,7 +1,7 @@
-import pytest
+import pytest, math
 from core.utils.measures import Quantity
 from estimation.machine.models import Machine
-from estimation.process.models import Workstation, Speed
+from estimation.process.models import Workstation, Operation, Speed
 from estimation.product.models import Component
 from inventory.models import BaseStockUnit, AlternateStockUnit, Item
 
@@ -186,6 +186,7 @@ def test_operation__get_measurement_machine_based(db, korse_workstation, korse_m
     assert estimate is not None
     assert estimate.item_count.sheet == 625
     assert estimate.run_count.sheet == 2500
+    assert math.floor(estimate.area.sq_inch) == 589687
 
     operation = korse_workstation.add_operation(
         name='2-Color Printing', material_type=Item.PAPER, 
@@ -193,3 +194,60 @@ def test_operation__get_measurement_machine_based(db, korse_workstation, korse_m
     measurement = operation.get_measurement(item, material, 100)
 
     assert measurement.pc == 2500
+
+
+def test_operation__get_costing_measure_choices(db, korse_workstation):
+    def __validate(actual, expected):
+        expected_choices = [measure[0] for measure in expected]
+        
+        if not len(actual) == len(expected_choices):
+            return False
+
+        for measure in actual:
+            if not measure in expected_choices:
+                return False
+        return True
+
+    operation = korse_workstation.add_operation(
+        name='3-Color Printing', material_type=Item.PAPER)
+    assert __validate(
+        [Operation.CostingMeasure.AREA,
+        Operation.CostingMeasure.PERIMETER,
+        Operation.CostingMeasure.QUANTITY],
+        operation.costing_measure_choices) == True
+
+    operation.material_type = Item.PANEL
+    operation.save()
+    assert __validate(
+        [Operation.CostingMeasure.AREA,
+        Operation.CostingMeasure.PERIMETER,
+        Operation.CostingMeasure.QUANTITY],
+        operation.costing_measure_choices) == True
+
+    operation.material_type = Item.TAPE
+    operation.save()
+    assert __validate(
+        [Operation.CostingMeasure.LENGTH,
+        Operation.CostingMeasure.QUANTITY],
+        operation.costing_measure_choices) == True
+
+    operation.material_type = Item.LINE
+    operation.save()
+    assert __validate(
+        [Operation.CostingMeasure.LENGTH,
+        Operation.CostingMeasure.QUANTITY],
+        operation.costing_measure_choices) == True
+
+    operation.material_type = Item.LIQUID
+    operation.save()
+    assert __validate(
+        [Operation.CostingMeasure.VOLUME,
+        Operation.CostingMeasure.QUANTITY],
+        operation.costing_measure_choices) == True
+    
+
+    operation.material_type = Item.OTHER
+    operation.save()
+    assert __validate(
+        [Operation.CostingMeasure.QUANTITY],
+        operation.costing_measure_choices) == True

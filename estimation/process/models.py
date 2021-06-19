@@ -43,21 +43,18 @@ class Workstation(models.Model):
 
 
 class Operation(models.Model):
-    # TO DO: Rework these choices with more elegant code
     class CostingMeasure:
         LENGTH = 'length'
         AREA = 'area'
         VOLUME = 'volume'
         QUANTITY = 'quantity'
         PERIMETER = 'perimeter'
-        TIME = 'time'
         TYPES = [
             (LENGTH, 'Length'),
             (AREA, 'Area'),
             (VOLUME, 'Volume'),
             (QUANTITY, 'Quantity'),
             (PERIMETER, 'Perimeter'),
-            (TIME, 'Time'),
         ]
     name = models.CharField(max_length=50)
     process = models.ForeignKey(Process, on_delete=models.SET_NULL,
@@ -73,33 +70,36 @@ class Operation(models.Model):
     machine = models.ForeignKey(Machine, on_delete=models.SET_NULL, 
         related_name='operations', blank=True, null=True)
 
+    @classmethod
+    def get_costing_measure_choices(cls, itemType):
+        def __get(costing_measures):
+            return [measure for measure in Operation.CostingMeasure.TYPES 
+                if measure[0] in costing_measures]
+        mapping = {
+            Item.TAPE: __get([
+                Operation.CostingMeasure.LENGTH, 
+                Operation.CostingMeasure.QUANTITY]),
+            Item.LINE: __get([
+                Operation.CostingMeasure.LENGTH, 
+                Operation.CostingMeasure.QUANTITY]),
+            Item.PAPER: __get([
+                Operation.CostingMeasure.AREA, 
+                Operation.CostingMeasure.PERIMETER, 
+                Operation.CostingMeasure.QUANTITY]),
+            Item.PANEL: __get([
+                Operation.CostingMeasure.AREA, 
+                Operation.CostingMeasure.PERIMETER, 
+                Operation.CostingMeasure.QUANTITY]),
+            Item.LIQUID: __get([
+                Operation.CostingMeasure.VOLUME, 
+                Operation.CostingMeasure.QUANTITY]),
+            Item.OTHER: __get([Operation.CostingMeasure.QUANTITY])
+        }
+        return mapping.get(itemType, Item.OTHER)
+
     @property
     def costing_measure_choices(self):
-        def __get(costing_measures):
-            return [measure for measure in CostingMeasure.TYPES 
-                if measure[0] in costing_measures]
-        material_type = self.material_type
-        mapping = {
-            Item.TAPE: _get([
-                CostingMeasure.LENGTH, 
-                CostingMeasure.QUANTITY]),
-            Item.LINE: _get([
-                CostingMeasure.LENGTH, 
-                CostingMeasure.QUANTITY]),
-            Item.PAPER: _get([
-                CostingMeasure.AREA, 
-                CostingMeasure.PERIMETER, 
-                CostingMeasure.QUANTITY]),
-            Item.PANEL: _get([
-                CostingMeasure.AREA, 
-                CostingMeasure.PERIMETER, 
-                CostingMeasure.QUANTITY]),
-            Item.LIQUID: _get([
-                CostingMeasure.VOLUME, 
-                CostingMeasure.QUANTITY]),
-            Item.OTHER: _get([CostingMeasure.QUANTITY])
-        }
-        return mapping.get(self.material_type, Item.OTHER)
+        return Operation.get_costing_measure_choices(self.material_type)
 
     @property
     def measure(self):
@@ -108,8 +108,7 @@ class Operation(models.Model):
             Operation.CostingMeasure.AREA: Measure.AREA,
             Operation.CostingMeasure.VOLUME: Measure.VOLUME,
             Operation.CostingMeasure.QUANTITY: Measure.QUANTITY,
-            Operation.CostingMeasure.PERIMETER: Measure.DISTANCE,
-            Operation.CostingMeasure.TIME: Measure.TIME}
+            Operation.CostingMeasure.PERIMETER: Measure.DISTANCE}
         return mapping.get(self.costing_measure, None)
 
     @property
@@ -163,7 +162,13 @@ class Operation(models.Model):
             
             if self.machine is not None:
                 estimate = self.machine.estimate(input, output, quantity)
-                return estimate.run_count
+                mapping = {
+                    Operation.CostingMeasure.LENGTH: estimate.length,
+                    Operation.CostingMeasure.AREA: estimate.area,
+                    Operation.CostingMeasure.VOLUME: estimate.volume,
+                    Operation.CostingMeasure.QUANTITY: estimate.run_count,
+                    Operation.CostingMeasure.PERIMETER: estimate.perimeter}
+                return mapping.get(self.costing_measure, None)
 
             materials_per_item = math.floor(input.properties.pack(output))
             item_count_needed = output.quantity * quantity / materials_per_item

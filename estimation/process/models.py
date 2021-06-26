@@ -235,7 +235,7 @@ class Activity(models.Model):
     name = models.CharField(max_length=40)
     workstation = models.ForeignKey(Workstation, on_delete=models.SET_NULL,
         related_name='activities', blank=True, null=True)
-    speed = models.OneToOneField(Speed, on_delete=models.CASCADE)
+    speed = models.OneToOneField(Speed, on_delete=models.CASCADE, related_name='activity')
     set_up = MeasurementField(measurement=Time, null=True, blank=False)
     tear_down = MeasurementField(measurement=Time, null=True, blank=False)
 

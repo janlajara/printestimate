@@ -122,6 +122,7 @@ class MeasurementSerializerField(serializers.Field):
         if len(split) == 2:
             value = split[0]
             unit = split[1]
-            return guess(value, unit)
+            measurement = guess(value, unit)
+            return measurement
         else:
             raise ValueError('Incorrect format for MeasurementSerializerField: %s' % data)

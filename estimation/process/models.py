@@ -41,6 +41,9 @@ class Workstation(models.Model):
             workstation=self, name=name, type=type, rate=rate)
         return expense
 
+    def __str__(self):
+        return self.name
+
 
 class Operation(models.Model):
     class CostingMeasure:
@@ -112,17 +115,30 @@ class Operation(models.Model):
         return mapping.get(self.costing_measure, None)
 
     @property
+    def steps_count(self):
+        return OperationStep.objects.filter(operation=self).count()
+
+    @property
     def next_sequence(self):
-        count = OperationStep.objects.filter(operation=self).count() + 1
+        count = self.steps_count + 1
         return count
 
     def add_step(self, activity, notes=None, sequence=None):
         if activity.measure != self.measure:
             raise MeasurementMismatch(activity.measure, self.measure)
 
-        temp = sequence if sequence is not None else self.next_sequence
+        temp = self.next_sequence
         if sequence is not None:
-            steps_to_move = self.operation_steps.filter(sequence__gte=sequence)
+            # Ensure input sequence stays within limit
+            if sequence > self.next_sequence:
+                temp = self.next_sequence 
+            elif sequence <= 0:
+                temp = 1
+            else:
+                temp = sequence
+            
+            # Steps following the input sequence shall be moved
+            steps_to_move = self.operation_steps.filter(sequence__gte=temp)
             for step in steps_to_move:
                 step.sequence += 1
                 step.save()
@@ -132,6 +148,12 @@ class Operation(models.Model):
             sequence=temp)
 
     def move_step(self, step_to_move, sequence):
+        # Ensure input sequence stays within limit
+        if sequence > self.steps_count:
+            sequence = self.steps_count 
+        elif sequence <= 0:
+            sequence = 1
+            
         if step_to_move.sequence < sequence:
             steps_to_move = self.operation_steps.filter(
                 sequence__gt=step_to_move.sequence, 
@@ -191,6 +213,9 @@ class Operation(models.Model):
                 measurement=measurement, contingency=contingency)
             total_cost += cost
         return total_cost
+
+    def __str__(self):
+        return self.name
 
 
 class Speed(models.Model):
@@ -309,9 +334,9 @@ class Activity(models.Model):
         cost = self.flat_rate + time_cost + measure_cost
         return round(cost, 2)
 
-    def add_expense(self, name, expense_type, rate):
+    def add_expense(self, name, type, rate):
         expense = ActivityExpense.objects.create(name=name,
-                                                type=expense_type,
+                                                type=type,
                                                 rate=rate)
         expense.activities.add(self)
         expense.save()
@@ -337,6 +362,12 @@ class Activity(models.Model):
         for expense in expenses:
             total_rate += expense.rate
         return total_rate
+
+    def __str__(self):
+        string = self.name
+        if self.workstation is not None:
+            string = self.workstation.name + ' : ' + self.name
+        return string
 
 
 class ActivityExpense(models.Model):
@@ -365,3 +396,12 @@ class OperationStep(models.Model):
     activity = models.ForeignKey(Activity, related_name='operation_steps',
         on_delete=models.CASCADE)
     notes = models.CharField(max_length=20, blank=True, null=True)
+
+    def move_step(self, sequence):
+        self.operation.move_step(self, sequence)
+
+    def delete_step(self):
+        self.operation.delete_step(self)
+
+    def __str__(self):
+        return 'Step %s : %s' % (self.sequence, self.activity)

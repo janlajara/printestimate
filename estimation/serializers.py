@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
+from measurement.measures import Time
 from core.utils.measures import MeasurementSerializerField
 from djmoney.contrib.django_rest_framework import MoneyField
 from estimation.models import Workstation, ActivityExpense, \
@@ -27,10 +28,17 @@ class SpeedSerializer(serializers.ModelSerializer):
 
 class ActivityExpenseSerializer(serializers.ModelSerializer):
     rate = MoneyField(max_digits=14, decimal_places=2)
+    rate_formatted = serializers.SerializerMethodField()
 
     class Meta:
         model = ActivityExpense
-        fields = ['id', 'name', 'type', 'rate'] 
+        fields = ['id', 'name', 'type', 'rate', 'rate_formatted']
+
+    def get_rate_formatted(self, obj):
+        formatted = '%s / %s' % (obj.rate, obj.type)
+        if obj.type == ActivityExpense.FLAT:
+            formatted = '%s %s' % (obj.rate, obj.type)
+        return formatted
 
 
 class ActivitySerializer(serializers.ModelSerializer):
@@ -38,23 +46,60 @@ class ActivitySerializer(serializers.ModelSerializer):
     set_up = MeasurementSerializerField()
     tear_down = MeasurementSerializerField()
     activity_expenses = ActivityExpenseSerializer(many=True, read_only=True)
+    flat_rate = MoneyField(max_digits=14, decimal_places=2, read_only=True)
+    measure_rate = MoneyField(max_digits=14, decimal_places=2, read_only=True)
+    hourly_rate = MoneyField(max_digits=14, decimal_places=2, read_only=True)
+    flat_rate_formatted = serializers.SerializerMethodField()
+    measure_rate_formatted = serializers.SerializerMethodField()
+    hourly_rate_formatted = serializers.SerializerMethodField()
 
     class Meta:
         model = Activity
-        fields = ['id', 'name', 'speed', 'set_up', 'tear_down', 'activity_expenses',
-            'measure', 'measure_unit', 'flat_rate', 'measure_rate']
+        fields = ['id', 'name', 'speed', 'set_up', 'tear_down', 
+            'activity_expenses', 'measure', 'measure_unit', 
+            'flat_rate', 'flat_rate_formatted', 
+            'measure_rate', 'measure_rate_formatted', 
+            'hourly_rate', 'hourly_rate_formatted']
+    
+    def get_flat_rate_formatted(self, obj):
+        return str(obj.flat_rate)
+    
+    def get_measure_rate_formatted(self, obj):
+        return str(obj.measure_rate)
+    
+    def get_hourly_rate_formatted(self, obj):
+        return str(obj.hourly_rate)
+
+class ActivityCreateSerializer(serializers.ModelSerializer):
+    speed = SpeedSerializer()
+    set_up = MeasurementSerializerField(required=False, default=Time(hr=0))
+    tear_down = MeasurementSerializerField(required=False, default=Time(hr=0))
+    include_presets = serializers.BooleanField(default=False)
+
+    class Meta:
+        model = Activity
+        fields = ['id', 'name', 'speed', 'set_up', 'tear_down', 
+            'measure', 'measure_unit', 'flat_rate', 'measure_rate', 'include_presets']
 
 
 class OperationStepSerializer(serializers.ModelSerializer):
+    sequence = serializers.IntegerField(required=False)
+    notes = serializers.CharField(required=False)
+
     class Meta:
         model = OperationStep
-        fields = ['id', 'activity', 'sequence', 'notes']
+        fields = ['sequence', 'id', 'activity', 'notes']
+
+
+class OperationStepListSerializer(OperationStepSerializer):
+    #activity = ActivitySerializer(read_only=True)
+    pass
 
 
 class OperationSerializer(serializers.ModelSerializer):
-    operation_steps = OperationStepSerializer(many=True)
+    prerequisite = serializers.PrimaryKeyRelatedField(
+        required=False, queryset=Operation.objects.all())
 
     class Meta:
         model = Operation
-        fields = ['id', 'name', 'costing_measure', 
-            'material_type', 'operation_steps']
+        fields = ['id', 'name', 'material_type', 'prerequisite']

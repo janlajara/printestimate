@@ -92,8 +92,7 @@ class OperationStepSerializer(serializers.ModelSerializer):
 
 
 class OperationStepListSerializer(OperationStepSerializer):
-    #activity = ActivitySerializer(read_only=True)
-    pass
+    activity = ActivitySerializer(read_only=True)
 
 
 class OperationSerializer(serializers.ModelSerializer):

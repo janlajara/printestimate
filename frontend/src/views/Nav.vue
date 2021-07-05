@@ -24,6 +24,12 @@
                 @selected="select" 
                 :selected="selected" class="nav-link">
                 Estimation</NavLink>
+            <NavMenu
+                icon="precision_manufacturing"
+                @selected="select" 
+                :selected="selected"
+                meta-group="Production Admin" class="nav-link">
+                Production</NavMenu>
         </NavGroup>
     </nav>
 </template>

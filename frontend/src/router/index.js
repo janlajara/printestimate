@@ -52,6 +52,18 @@ const routes = [
         name: 'admin-estimation',
         component: ()=>import('../views/admin/Estimation.vue')
       },
+      {
+        path: 'admin/production/workstations',
+        name: 'admin-production-workstations',
+        component: ()=>import('../views/admin/production/workstations/WorkstationList.vue'),
+        meta: {label: 'Workstations', group: 'Production Admin'}
+      },
+      {
+        path: 'admin/production/machines',
+        name: 'admin-production-machines',
+        component: ()=>import('../views/admin/production/machines/MachineList.vue'),
+        meta: {label: 'Machines', group: 'Production Admin'}
+      }
     ]
   },
   {

@@ -292,3 +292,45 @@ export class AlternateStockUnitApi {
         if (response) return response.data;
     }
 }
+
+
+export class WorkstationApi {
+    static uri = '/estimation/api/workstations'
+
+    static async listWorkstations() {
+        const response = await AXIOS.execute(AXIOS.GET, WorkstationApi.uri);
+        if (response) return response.data;
+    }
+
+    static async retrieveWorkstation(id) {
+        const response = await AXIOS.execute(AXIOS.GET, WorkstationApi.uri + `/${id}`)
+        return response.data
+    }
+
+    static async retrieveWorkstationActivityExpenses(id) {
+        const response = await AXIOS.execute(AXIOS.GET, WorkstationApi.uri + `/${id}/activityexpenses`)
+        return response.data
+    }
+
+    static async retrieveWorkstationActivities(id) {
+        const response = await AXIOS.execute(AXIOS.GET, WorkstationApi.uri + `/${id}/activities`)
+        return response.data
+    }
+
+    static async retrieveWorkstationOperations(id) {
+        const response = await AXIOS.execute(AXIOS.GET, WorkstationApi.uri + `/${id}/operations`)
+        return response.data
+    }
+
+    static async updateWorkstation(id, workstation) {
+        const response = await AXIOS.execute(AXIOS.PUT, WorkstationApi.uri + `/${id}/`, 
+            'Workstation updated successfully.', 'Update failed. Please try again.', workstation
+        )
+        if (response) return response.data;
+    }
+
+    static async deleteWorkstation(id) {
+        await AXIOS.execute(AXIOS.DELETE, WorkstationApi.uri + `/${id}/`, 
+            'Workstation deleted successfully.', 'Delete failed. Please try again.');
+    }
+}

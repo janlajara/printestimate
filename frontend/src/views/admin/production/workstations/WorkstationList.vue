@@ -15,7 +15,7 @@
             <Table :headers="['Name']" :loader="state.isProcessing">
                 <Row v-for="(s, key) in state.list" :key="key" clickable
                     @click="()=> goToDetail(s.id)">
-                    <Cell label="Status">{{s.name}}</Cell>
+                    <Cell label="Name">{{s.name}}</Cell>
                 </Row>
             </Table>
         </Section>

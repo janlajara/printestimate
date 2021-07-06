@@ -31,6 +31,15 @@
                     name="Name" :value="state.workstation.validatedData.name"/>
             </DescriptionList>
         </Section>
+        <Section heading="Configuration">
+            <Tabs>
+                <Tab title="Activity Expenses">
+                    <ActivityExpenseList :workstation-id="state.id"/>
+                </Tab>
+                <Tab title="Activities"/>
+                <Tab title="Operations"/>
+            </Tabs>
+        </Section>
     </Page>
 </template>
 
@@ -41,7 +50,11 @@ import Section from '@/components/Section.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
+import Tabs from '@/components/Tabs.vue';
+import Tab from '@/components/Tab.vue';
+
 import WorkstationModal from '@/views/admin/production/workstations/WorkstationModal.vue';
+import ActivityExpenseList from '@/views/admin/production/workstations/activityexpenses/ActivityExpenseList.vue';
 
 import {useRoute} from 'vue-router';
 import {reactive, computed, onBeforeMount} from 'vue';
@@ -49,7 +62,8 @@ import {WorkstationApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Page, Button, Section, DescriptionList, DescriptionItem, WorkstationModal, DeleteRecordDialog
+        Page, Button, Section, DescriptionList, DescriptionItem, DeleteRecordDialog,
+        Tabs, Tab, WorkstationModal, ActivityExpenseList
     },
     setup() {
         const route = useRoute();

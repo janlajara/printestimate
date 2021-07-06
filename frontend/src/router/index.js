@@ -59,6 +59,12 @@ const routes = [
         meta: {label: 'Workstations', group: 'Production Admin'}
       },
       {
+        path: 'admin/production/:id',
+        name: 'admin-production-workstation-detail',
+        props: true,
+        component: ()=>import('../views/admin/production/workstations/WorkstationDetail.vue')
+      }, 
+      {
         path: 'admin/production/machines',
         name: 'admin-production-machines',
         component: ()=>import('../views/admin/production/machines/MachineList.vue'),

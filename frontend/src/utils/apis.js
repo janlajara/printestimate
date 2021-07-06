@@ -302,6 +302,12 @@ export class WorkstationApi {
         if (response) return response.data;
     }
 
+    static async createWorkstation(workstation) {
+        const response = await AXIOS.execute(AXIOS.POST, WorkstationApi.uri, 
+            'Workstation created successfully.', 'Create failed. Please try again.', workstation);
+        return response;
+    }
+
     static async retrieveWorkstation(id) {
         const response = await AXIOS.execute(AXIOS.GET, WorkstationApi.uri + `/${id}`)
         return response.data

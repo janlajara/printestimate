@@ -345,8 +345,9 @@ export class WorkstationApi {
 export class ActivityExpenseApi {
     static uri = '/estimation/api/activityexpenses'
 
-    static async retrieveActivityExpense(id) {
-        const response = await AXIOS.execute(AXIOS.GET, ActivityExpenseApi.uri + `/${id}`)
+    static async retrieveActivityExpense(id, getOptions=false) {
+        const action = (getOptions)? AXIOS.OPTIONS : AXIOS.GET;
+        const response = await AXIOS.execute(action, ActivityExpenseApi.uri + `/${id}`)
         return response.data
     }
 

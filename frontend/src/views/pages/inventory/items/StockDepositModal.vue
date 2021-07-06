@@ -28,7 +28,7 @@
                     :name="`${stock.uom.alternate.name} Quantity`" 
                     @input="(value)=>stock.data.alternateQuantity = value"
                     :value="stock.data.alternateQuantity"/> 
-                <InputText type="decimal" required
+                <InputText type="money" required
                         :prefix="currency.symbol"
                         :name="`Price per ${stock.uom.target.name}`" 
                         @input="(value)=>stock.data.price = value"

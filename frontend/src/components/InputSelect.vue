@@ -6,7 +6,7 @@
                 class="material-icons text-sm text-secondary-light">lock</span>
         </label>
         <div class="rounded-md shadow-sm" v-click-outside="()=>toggleDropdown(false)">
-            <div class="relative">
+            <div class="relative"> 
               <input type="text" class="rounded input-field cursor-pointer"
                 :class="($props.disabled)? 'text-gray-400' : ''"
                 :value="selectedJoined" :disabled="$props.disabled"
@@ -19,11 +19,18 @@
                 <div v-for="option in state.options" :key="option.value"
                   class="p-2 hover:bg-secondary-light hover:bg-opacity-20 text-sm cursor-pointer"
                   @click="select(option)">
-                  <input v-if="$props.multiple" type="checkbox" 
-                    class="input-checkbox mr-4" disabled 
-                    :name="name" :checked="option.isSelected"/> 
-                    <span :class="(option.value == null)? 'text-gray-400 italic' : ''">
-                      {{(option.value == null)?  'None': option.label}}</span>
+                  <div class="flex w-full">
+                    <input v-if="$props.multiple" type="checkbox" 
+                      class="input-checkbox mr-4 my-auto" disabled 
+                      :name="name" :checked="option.isSelected"/> 
+                    <div class="flex justify-between w-full align-middle">
+                      <span :class="(option.value == null)? 'text-gray-400 italic' : ''">
+                        {{(option.value == null)?  'None': option.label}}</span>
+                      <span v-if="option.description" class="text-gray-400">
+                        {{option.description}}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -43,7 +50,7 @@ export default {
         options: {
             type: Array 
             //Array of Objects 
-            //{label:String, value:number, isSelected:Boolean}
+            //{label:String, value:number, description:String, isSelected:Boolean}
         },
     },
     setup(props, {emit}) {  

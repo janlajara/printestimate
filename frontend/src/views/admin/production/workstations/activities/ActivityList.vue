@@ -8,15 +8,13 @@
             :is-open="state.createEditModal.isOpen"
             @toggle="state.createEditModal.toggle" 
             :on-after-save="populateActivities"/>
-        <Table :headers="['Name', 'Speed', 'Cost', '']" :loader="state.isProcessing">
+        <Table :headers="['Name', 'Speed', 'Hourly Rate', 'Measure Rate', 'Flat Rate', '']" :loader="state.isProcessing">
             <Row v-for="(s, key) in state.list" :key="key" clickable>
                 <Cell label="Name">{{s.name}}</Cell>
                 <Cell label="Speed">{{s.speed.rate}}</Cell>
-                <Cell label="Cost">
-                    {{s.flatRate}}
-                    {{s.measureRate}}
-                    {{s.hourlyRate}}
-                </Cell>
+                <Cell label="Hourly Rate">{{s.hourlyRate}}</Cell>
+                <Cell label="Measure Rate">{{s.measureRate}}</Cell>
+                <Cell label="Flat Rate">{{s.flatRate}}</Cell>
                 <Cell>
                     <div class="w-full flex justify-end">
                         <Button class="my-auto" icon="edit"

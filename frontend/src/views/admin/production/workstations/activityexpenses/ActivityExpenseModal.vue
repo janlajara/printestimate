@@ -108,14 +108,14 @@ export default {
             }
         }
 
-        const saveActivityExpense = (activityExpense) => {
+        const saveActivityExpense = async (activityExpense) => {
             state.isProcessing = true;
             let response = null;
             if (state.isCreate) {
-                response = WorkstationApi.createWorkstationActivityExpense(
+                response = await WorkstationApi.createWorkstationActivityExpense(
                     state.workstationId, activityExpense);
             } else {
-                response = ActivityExpenseApi.updateActivityExpense(
+                response = await ActivityExpenseApi.updateActivityExpense(
                     state.id, activityExpense);
             }
             if (response) {

@@ -46,7 +46,15 @@
             </div>
         </Section>
         <hr/>
-        <Section heading="Expenses" heading-position="side"> 
+        <Section heading="Costing" heading-position="side"> 
+            <div class="md:grid md:gap-4 md:grid-cols-3">
+                <InputSelect name="Activity Expenses" multiple class="col-span-3" 
+                    @input="(value)=>state.data.expenses = value"
+                    :options="state.meta.activityExpenseChoices.map(c=> ({
+                        label: c.label, value: c.value, description: c.description,
+                        isSelected: state.data.expenses.includes(c.value)
+                    }))"/>
+            </div>
         </Section>
     </Modal>
 </template>
@@ -89,11 +97,13 @@ export default {
                 setUp: {
                     value: 0, unit: 'hr'},
                 tearDown: {
-                    value: 0, unit: 'hr'}
+                    value: 0, unit: 'hr'},
+                expenses: []
             },
             meta: {
                 measureUnitChoices: [],
                 speedUnitChoices: [],
+                activityExpenseChoices: []
             },
             clearData: ()=> {
                 state.data = {
@@ -106,7 +116,8 @@ export default {
                     setUp: {
                         value: 0, unit: 'hr'},
                     tearDown: {
-                        value: 0, unit: 'hr'}
+                        value: 0, unit: 'hr'},
+                    expenses: []
                 }
             },
             validate: ()=> {
@@ -131,7 +142,8 @@ export default {
                         speed_unit: state.data.speed.speedUnit
                     },
                     set_up: `${state.data.setUp.value} ${state.data.setUp.unit}`,
-                    tear_down: `${state.data.tearDown.value} ${state.data.tearDown.unit}`
+                    tear_down: `${state.data.tearDown.value} ${state.data.tearDown.unit}`,
+                    activity_expenses: state.data.expenses
                 }
                 saveActivity(request);
             }
@@ -149,7 +161,8 @@ export default {
                         speed: {
                             measureValue: response.speed.measure_value,
                             measureUnit: response.speed.measure_unit,
-                            speedUnit: response.speed.speed_unit}
+                            speedUnit: response.speed.speed_unit},
+                        expenses: response.activity_expenses
                     }
                     if (setupSplit != null && setupSplit.length == 2) {
                         state.data.setUp = {
@@ -168,7 +181,7 @@ export default {
             state.isProcessing = false;
         }
 
-        const retrieveMetaData = async () => {
+        const retrieveActivityMetaData = async () => {
             if (state.workstationId) {
                 const response = await WorkstationApi.retrieveWorkstationActivities(
                     state.workstationId, true);
@@ -183,32 +196,47 @@ export default {
             }
         }
 
-        const saveActivity = (activity) => {
+        const retrieveActivityExpenses = async ()=> {
+            state.isProcessing = true;
+            if (state.workstationId) {
+                const response = await WorkstationApi.retrieveWorkstationActivityExpenses(state.workstationId);
+                if (response) {
+                    state.meta.activityExpenseChoices = response.map(obj=> ({
+                        value: obj.id, label: obj.name,
+                        description: obj.rate_formatted
+                    }));
+                }
+            }
+            state.isProcessing = false;
+        }
+
+        const saveActivity = async (activity) => {
             state.isProcessing = true;
             let response = null;
             if (state.isCreate) {
-                response = WorkstationApi.createWorkstationActivity(
+                response = await WorkstationApi.createWorkstationActivity(
                     state.workstationId, activity);
             } else {
-                response = ActivityApi.updateActivity(
+                response = await ActivityApi.updateActivity(
                     state.id, activity);
             }
             if (response) {
                 if (props.onAfterSave) props.onAfterSave();
-                emit('toggle', false)
+                emit('toggle', false);
             }
             state.isProcessing = false;
         }
 
         watch(()=> [props.isOpen], ()=> {
             if (props.isOpen) {
+                retrieveActivityExpenses();
                 if (!state.isCreate) retrieveActivity(state.id);
                 else state.clearData();
                 state.error = '';
             }
         })
         onBeforeMount(()=> {
-            retrieveMetaData();
+            retrieveActivityMetaData();
         })
 
         return {

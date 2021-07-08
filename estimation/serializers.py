@@ -45,7 +45,6 @@ class ActivitySerializer(serializers.ModelSerializer):
     speed = SpeedSerializer()
     set_up = MeasurementSerializerField(display_unit='hr')
     tear_down = MeasurementSerializerField(display_unit='hr')
-    activity_expenses = ActivityExpenseSerializer(many=True, read_only=True)
     flat_rate = MoneyField(max_digits=14, decimal_places=2, read_only=True)
     measure_rate = MoneyField(max_digits=14, decimal_places=2, read_only=True)
     hourly_rate = MoneyField(max_digits=14, decimal_places=2, read_only=True)
@@ -65,10 +64,10 @@ class ActivitySerializer(serializers.ModelSerializer):
         return str(obj.flat_rate)
     
     def get_measure_rate_formatted(self, obj):
-        return str(obj.measure_rate)
+        return '%s / %s' % (str(obj.measure_rate), obj.measure_unit)
     
     def get_hourly_rate_formatted(self, obj):
-        return str(obj.hourly_rate)
+        return '%s / hr' % str(obj.hourly_rate)
 
     def create(self, validated_data):
         speed_data = validated_data.pop('speed')

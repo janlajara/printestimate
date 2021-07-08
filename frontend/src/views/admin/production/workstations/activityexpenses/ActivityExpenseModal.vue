@@ -31,8 +31,8 @@ import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
 import InputSelect from '@/components/InputSelect.vue';
 
-import {reactive, computed, watch, inject} from 'vue';
-import {ActivityExpenseApi} from '@/utils/apis.js';
+import {reactive, computed, watch, inject, onBeforeMount} from 'vue';
+import {WorkstationApi, ActivityExpenseApi} from '@/utils/apis.js';
 
 export default {
     components: {
@@ -41,13 +41,15 @@ export default {
     props: {
         isOpen: Boolean,
         activityExpenseId: Number,
+        workstationId: Number,
         onAfterSave: Function
     },
     emits: ['toggle'],
-    setup(props) {
-        const currency = inject('currency')
+    setup(props, {emit}) { 
+        const currency = inject('currency');
         const state = reactive({
-            id: props.activityExpenseId,
+            id: computed(()=>props.activityExpenseId),
+            workstationId: computed(()=>props.workstationId),
             isCreate: computed(()=> state.id == null),
             isProcessing: false,
             error: '',
@@ -57,14 +59,34 @@ export default {
             meta: {
                 typeChoices: []
             },
-            validate: ()=> {},
-            save: ()=> {}
+            clearData: ()=> {
+                state.data = {name: '', type: '', rate: ''};
+            },
+            validate: ()=> {
+                let errors = [];
+                if (state.data.name == '' || state.data.name == null) errors.push('name');
+                if (state.data.type == '' || state.data.type == null) errors.push('type');
+                if (state.data.rate == '' || state.data.rate == null) errors.push('rate');
+                if (errors.length > 0)
+                    state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
+                else state.error = '';
+                return errors.length > 0;
+            },
+            save: ()=> {
+                if (state.validate()) return;
+                const request = {
+                    name: state.data.name,
+                    type: state.data.type,
+                    rate: state.data.rate
+                }
+                saveActivityExpense(request);
+            }
         })
 
-        const retrieveActivityExpense = (id) => {
+        const retrieveActivityExpense = async (id) => {
             state.isProcessing = true;
             if (id) {
-                const response = ActivityExpenseApi.retrieveActivityExpense(id);
+                const response = await ActivityExpenseApi.retrieveActivityExpense(id);
                 if (response) {
                     state.data = {
                         name: response.name, 
@@ -76,18 +98,41 @@ export default {
             state.isProcessing = false;
         }
 
-        const retrieveMetaData = () => {  
-            if (state.id) {
-                const response = ActivityExpenseApi.retrieveActivityExpense(state.id, true);
-                console.log(response);
-                state.meta.typeChoices = response.actions.PUT.type.choices.map(c=> ({
+        const retrieveMetaData = async () => {
+            if (state.workstationId) {
+                const response = await WorkstationApi.retrieveWorkstationActivityExpenses(
+                    state.workstationId, true);
+                state.meta.typeChoices = response.actions.POST.type.choices.map(c=> ({
                     value: c.value, label: c.display_name
                 }));
             }
         }
 
-        watch(()=> props.isOpen, ()=> {
-            if (!state.isCreate) retrieveActivityExpense(state.id);
+        const saveActivityExpense = (activityExpense) => {
+            state.isProcessing = true;
+            let response = null;
+            if (state.isCreate) {
+                response = WorkstationApi.createWorkstationActivityExpense(
+                    state.workstationId, activityExpense);
+            } else {
+                response = ActivityExpenseApi.updateActivityExpense(
+                    state.id, activityExpense);
+            }
+            if (response) {
+                if (props.onAfterSave) props.onAfterSave();
+                emit('toggle', false)
+            }
+            state.isProcessing = false;
+        }
+
+        watch(()=> [props.isOpen], ()=> {
+            if (props.isOpen) {
+                if (!state.isCreate) retrieveActivityExpense(state.id);
+                else state.clearData();
+                state.error = '';
+            }
+        })
+        onBeforeMount(()=> {
             retrieveMetaData();
         })
 

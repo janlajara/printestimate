@@ -114,11 +114,18 @@ class VolumeSpeed(BidimensionalMeasure):
 
 class MeasurementSerializerField(serializers.Field):
 
+    def __init__(self, display_unit=None, **kwargs):
+        super().__init__(**kwargs)
+        self.display_unit = display_unit
+
     def to_representation(self, value):
-        return '%s %s' % (value.value, value.unit)
+        rep = '%s %s' % (value.value, value.unit)
+        if self.display_unit is not None:
+            rep = '%s %s' % (getattr(value, self.display_unit), self.display_unit)
+        return rep
 
     def to_internal_value(self, data):
-        split = data.split(' ')
+        split = data.split(' ') 
         if len(split) == 2:
             value = split[0]
             unit = split[1]

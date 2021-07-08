@@ -23,7 +23,7 @@ class SpeedSerializer(serializers.ModelSerializer):
             'measure', 'rate']
 
     def get_rate(self, obj):
-        return str(obj.rate)
+        return obj.rate_formatted
 
 
 class ActivityExpenseSerializer(serializers.ModelSerializer):
@@ -43,8 +43,8 @@ class ActivityExpenseSerializer(serializers.ModelSerializer):
 
 class ActivitySerializer(serializers.ModelSerializer):
     speed = SpeedSerializer()
-    set_up = MeasurementSerializerField()
-    tear_down = MeasurementSerializerField()
+    set_up = MeasurementSerializerField(display_unit='hr')
+    tear_down = MeasurementSerializerField(display_unit='hr')
     activity_expenses = ActivityExpenseSerializer(many=True, read_only=True)
     flat_rate = MoneyField(max_digits=14, decimal_places=2, read_only=True)
     measure_rate = MoneyField(max_digits=14, decimal_places=2, read_only=True)
@@ -69,6 +69,19 @@ class ActivitySerializer(serializers.ModelSerializer):
     
     def get_hourly_rate_formatted(self, obj):
         return str(obj.hourly_rate)
+
+    def create(self, validated_data):
+        speed_data = validated_data.pop('speed')
+        speed = Speed.objects.create(**speed_data)
+        return Activity.objects.create(speed=speed, **validated_data)
+
+    def update(self, instance, validated_data):
+        speed = validated_data.pop('speed')
+        if speed is not None:
+            Speed.objects.filter(pk=instance.speed.id).update(**speed)
+        super().update(instance, validated_data)
+        return Activity.objects.get(pk=instance.id)
+
 
 class ActivityCreateSerializer(serializers.ModelSerializer):
     speed = SpeedSerializer()

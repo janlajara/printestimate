@@ -9,7 +9,9 @@ from inventory.models import Item
 from estimation.machine.models import Machine
 from estimation.product.models import Material
 from estimation.exceptions import MeasurementMismatch, MaterialTypeMismatch
+import inflect
 
+_inflect = inflect.engine()
 
 # Create your models here.
 class Process(models.Model):
@@ -242,6 +244,13 @@ class Speed(models.Model):
         else:
             rate = MeasureSpeed(**data)
         return rate
+
+    @property
+    def rate_formatted(self):
+        value = self.measure_value
+        measure_unit = self.measure_unit if value == 1 else _inflect.plural(self.measure_unit)
+        speed_unit = self.speed_unit
+        return '%.2f %s/%s' % (value, measure_unit, speed_unit)
 
 
 class ActivityManager(models.Manager):

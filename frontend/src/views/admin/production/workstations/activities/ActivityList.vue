@@ -1,17 +1,22 @@
 <template>
     <div>
-        <Button icon="add" color="tertiary"
-            @click="()=>state.createEditModal.open()">Add Expense</Button>
-        <ActivityExpenseModal 
+        <Button icon="add" color="tertiary" :disabled="state.isProcessing"
+            @click="()=>state.createEditModal.open()">Add Activity</Button>
+        <ActivityModal 
             :workstation-id="state.id"
-            :activity-expense-id="state.createEditModal.data.id"
+            :activity-id="state.createEditModal.data.id"
             :is-open="state.createEditModal.isOpen"
             @toggle="state.createEditModal.toggle" 
-            :on-after-save="populateActivityExpenses"/>
-        <Table :headers="['Name', 'Rate', '']" :loader="state.isProcessing">
+            :on-after-save="populateActivities"/>
+        <Table :headers="['Name', 'Speed', 'Cost', '']" :loader="state.isProcessing">
             <Row v-for="(s, key) in state.list" :key="key" clickable>
                 <Cell label="Name">{{s.name}}</Cell>
-                <Cell label="Rate">{{s.rateFormatted}}</Cell>
+                <Cell label="Speed">{{s.speed.rate}}</Cell>
+                <Cell label="Cost">
+                    {{s.flatRate}}
+                    {{s.measureRate}}
+                    {{s.hourlyRate}}
+                </Cell>
                 <Cell>
                     <div class="w-full flex justify-end">
                         <Button class="my-auto" icon="edit"
@@ -23,10 +28,10 @@
             </Row>
         </Table>
         <DeleteRecordDialog 
-            heading="Delete Expense"
+            heading="Delete Activity"
             :is-open="state.deleteDialog.isOpen"
             :execute="state.deleteDialog.delete"
-            :on-after-execute="populateActivityExpenses"
+            :on-after-execute="populateActivities"
             @toggle="state.deleteDialog.toggle">
             <div>
                 Are you sure you want to delete 
@@ -43,14 +48,14 @@ import Row from '@/components/Row.vue';
 import Cell from '@/components/Cell.vue';
 import Button from '@/components/Button.vue';
 import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
-import ActivityExpenseModal from '@/views/admin/production/workstations/activityexpenses/ActivityExpenseModal.vue';
+import ActivityModal from '@/views/admin/production/workstations/activities/ActivityModal.vue';
 
 import {reactive, onBeforeMount} from 'vue';
-import {WorkstationApi, ActivityExpenseApi} from '@/utils/apis.js';
+import {WorkstationApi, ActivityApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Table, Row, Cell, Button, DeleteRecordDialog, ActivityExpenseModal
+        Table, Row, Cell, Button, DeleteRecordDialog, ActivityModal
     },
     props: {
         workstationId: Number
@@ -82,38 +87,43 @@ export default {
                     state.deleteDialog.toggle(true);
                 },
                 delete: () => {
-                    deleteActivityExpense(state.deleteDialog.data.id);
+                    deleteActivity(state.deleteDialog.data.id);
                 }
             }
-        })
+        });
 
-        const populateActivityExpenses = async ()=> {
+        const populateActivities = async ()=> {
             state.isProcessing = true;
             if (state.id) {
-                const response = await WorkstationApi.retrieveWorkstationActivityExpenses(state.id);
+                const response = await WorkstationApi.retrieveWorkstationActivities(state.id);
                 if (response) {
                     state.list = response.map(obj=> ({
                         id: obj.id,
                         name: obj.name,
-                        type: obj.type,
-                        rate: obj.rate,
-                        rateFormatted: obj.rate_formatted
+                        speed: {
+                            id: obj.speed.id,
+                            rate: obj.speed.rate
+                        },
+                        measureUnit: obj.ream,
+                        flatRate: obj.flat_rate_formatted,
+                        measureRate: obj.measure_rate_formatted,
+                        hourlyRate: obj.hourly_rate_formatted
                     }));
                 }
             }
             state.isProcessing = false;
         }
 
-        const deleteActivityExpense = async (id) => {
+        const deleteActivity = async (id) => {
             state.isProcessing = true;
-            if (id)  ActivityExpenseApi.deleteActivityExpense(id);
+            if (id)  ActivityApi.deleteActivity(id);
             state.isProcessing = false;
         }
 
-        onBeforeMount(populateActivityExpenses);
+        onBeforeMount(populateActivities);
 
         return {
-            state, populateActivityExpenses, deleteActivityExpense
+            state, populateActivities, deleteActivity
         }
     }
 }

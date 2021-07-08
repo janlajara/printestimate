@@ -313,19 +313,40 @@ export class WorkstationApi {
         return response.data
     }
 
-    static async retrieveWorkstationActivityExpenses(id) {
-        const response = await AXIOS.execute(AXIOS.GET, WorkstationApi.uri + `/${id}/activityexpenses`)
+    static async retrieveWorkstationActivityExpenses(id, getOptions=false) {
+        const action = (getOptions)? AXIOS.OPTIONS : AXIOS.GET;
+        const response = await AXIOS.execute(action, WorkstationApi.uri + `/${id}/activityexpenses`)
         return response.data
     }
 
-    static async retrieveWorkstationActivities(id) {
-        const response = await AXIOS.execute(AXIOS.GET, WorkstationApi.uri + `/${id}/activities`)
+    static async createWorkstationActivityExpense(id, activityExpense) {
+        const response = await AXIOS.execute(AXIOS.POST, WorkstationApi.uri + `/${id}/activityexpenses`,
+            'Expense created successfully.', 'Create failed. Please try again.', activityExpense);
+        return response.data;
+    }
+
+    static async retrieveWorkstationActivities(id, getOptions=false) {
+        const action = (getOptions)? AXIOS.OPTIONS : AXIOS.GET;
+        const response = await AXIOS.execute(action, WorkstationApi.uri + `/${id}/activities`)
         return response.data
     }
 
-    static async retrieveWorkstationOperations(id) {
-        const response = await AXIOS.execute(AXIOS.GET, WorkstationApi.uri + `/${id}/operations`)
+    static async createWorkstationActivity(id, activity) {
+        const response = await AXIOS.execute(AXIOS.POST, WorkstationApi.uri + `/${id}/activities`,
+            'Activity created successfully.', 'Create failed. Please try again.', activity);
+        return response.data;
+    }
+
+    static async retrieveWorkstationOperations(id, getOptions=false) {
+        const action = (getOptions)? AXIOS.OPTIONS : AXIOS.GET;
+        const response = await AXIOS.execute(action, WorkstationApi.uri + `/${id}/operations`)
         return response.data
+    }
+
+    static async createWorkstationOperation(id, operation) {
+        const response = await AXIOS.execute(AXIOS.POST, WorkstationApi.uri + `/${id}/operations`,
+            'Operation created successfully.', 'Create failed. Please try again.', operation);
+        return response.data;
     }
 
     static async updateWorkstation(id, workstation) {
@@ -345,9 +366,8 @@ export class WorkstationApi {
 export class ActivityExpenseApi {
     static uri = '/estimation/api/activityexpenses'
 
-    static async retrieveActivityExpense(id, getOptions=false) {
-        const action = (getOptions)? AXIOS.OPTIONS : AXIOS.GET;
-        const response = await AXIOS.execute(action, ActivityExpenseApi.uri + `/${id}`)
+    static async retrieveActivityExpense(id) {
+        const response = await AXIOS.execute(AXIOS.GET, ActivityExpenseApi.uri + `/${id}`)
         return response.data
     }
 

@@ -397,6 +397,9 @@ class ActivityExpense(models.Model):
     rate = MoneyField(default=0, max_digits=14, decimal_places=2, 
         default_currency='PHP')
 
+    def __str__(self):
+        return self.name
+
 
 class OperationStep(models.Model):
     sequence = models.IntegerField(default=0)

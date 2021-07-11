@@ -21,10 +21,18 @@ class Process(models.Model):
 class Workstation(models.Model):
     name = models.CharField(max_length=50)
 
-    def add_operation(self, name, material_type, prerequisite=None, machine=None):
+    def get_activities(self, measure=None):
+        if measure is not None:
+            return [activity for activity in self.activities.all() if activity.measure == measure]
+        else:
+            return self.activities
+
+    def add_operation(self, name, material_type, prerequisite=None, 
+            machine=None, costing_measure='quantity'):
         operation = Operation.objects.create(
             workstation=self, name=name, 
             material_type=material_type,
+            costing_measure=costing_measure,
             prerequisite=prerequisite,
             machine=machine)
         return operation
@@ -76,7 +84,7 @@ class Operation(models.Model):
         related_name='operations', blank=True, null=True)
 
     @classmethod
-    def get_costing_measure_choices(cls, itemType):
+    def get_costing_measure_choices(cls, itemType=None):
         def __get(costing_measures):
             return [measure for measure in Operation.CostingMeasure.TYPES 
                 if measure[0] in costing_measures]
@@ -100,11 +108,18 @@ class Operation(models.Model):
                 Operation.CostingMeasure.QUANTITY]),
             Item.OTHER: __get([Operation.CostingMeasure.QUANTITY])
         }
-        return mapping.get(itemType, Item.OTHER)
+        if itemType is not None:
+            return mapping.get(itemType, Item.OTHER)
+        else:
+            return mapping
 
     @property
     def costing_measure_choices(self):
         return Operation.get_costing_measure_choices(self.material_type)
+
+    @property
+    def activity_choices(self):
+        return self.workstation.get_activities(self.measure)
 
     @property
     def measure(self):

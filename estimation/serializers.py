@@ -110,7 +110,9 @@ class OperationStepListSerializer(OperationStepSerializer):
 class OperationSerializer(serializers.ModelSerializer):
     prerequisite = serializers.PrimaryKeyRelatedField(
         required=False, queryset=Operation.objects.all())
+    activity_choices = ActivitySerializer(many=True, read_only=True)
 
     class Meta:
         model = Operation
-        fields = ['id', 'name', 'material_type', 'prerequisite']
+        fields = ['id', 'name', 'material_type', 'prerequisite', 
+            'costing_measure', 'activity_choices']

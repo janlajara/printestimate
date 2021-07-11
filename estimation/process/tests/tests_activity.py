@@ -50,6 +50,42 @@ def activity_offset_printing(db, activity_speed_factory):
     return activity
 
 
+@pytest.fixture
+def speed_factory(db):
+    def create(measure_value, measure_unit, speed_unit):
+        return Speed.objects.create(
+            measure_value=measure_value, measure_unit=measure_unit,
+            speed_unit=speed_unit)
+    return create
+
+
+@pytest.fixture
+def workstation_factory(db):
+    def create(name):
+        return Workstation.objects.create(name=name)
+    return create
+
+
+@pytest.fixture
+def korse_workstation(db, workstation_factory, speed_factory):
+    korse_ws = workstation_factory(name='Korse 1C')
+    korse_ws.add_expense('Electricity', 'hour', 100)
+    korse_ws.add_expense('Depreciation', 'hour', 200)
+    korse_ws.add_activity('Spot Color Printing', 1, 1, 
+        speed_factory(10000, 'sheet', 'hr'), True)
+    korse_ws.add_activity('Numbering', 1, 1, 
+        speed_factory(10000, 'sheet', 'hr'), True)
+    return korse_ws
+
+
+def test_workstation__get_activities(db, korse_workstation):
+    activities = korse_workstation.get_activities('Distance')
+    assert len(activities) == 0
+
+    activities = korse_workstation.get_activities('Quantity')
+    assert len(activities) == 2
+
+
 def test_activity_speed__get_distance_rate(db, activity_speed_factory):
     activity_speed = activity_speed_factory(0.5, 'm', 'min')
     assert activity_speed.rate is not None

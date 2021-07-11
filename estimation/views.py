@@ -218,3 +218,19 @@ class OperationStepViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
 
         operation_step.delete_step()
         return Response(serialized.data)
+
+
+class OperationCostingMeasureView(viewsets.ViewSet):
+    def list(self, request):
+        def map_values(obj):
+            return {
+                "material": obj[0], 
+                "measure_choices": list(
+                    map(lambda x: {
+                        "value": x[0],
+                        "display": x[1]
+                    }, obj[1]))
+            }
+        measure_choices = Operation.get_costing_measure_choices()
+        mapped = list(map(map_values, measure_choices.items()))
+        return Response(mapped)

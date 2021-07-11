@@ -59,6 +59,7 @@ def korse_machine(db):
     return Machine.objects.create_machine(name='KORSE Press', 
         type=Machine.PRESS, uom='inch')
 
+
 def test_workstation__add_activity(db, workstation_factory, speed_factory):
     speed = speed_factory(10000, 'sheet', 'hr')
     korse_ws = workstation_factory(name='Korse 1C')
@@ -98,6 +99,9 @@ def test_operation__add_delete_step(db, korse_workstation):
         name='2-Color Printing', material_type=Item.PAPER) 
     step1 = operation.add_step(spot_printing, '1st color')
     step2 = operation.add_step(spot_printing, '2nd color')
+
+    activity_choices = operation.activity_choices()
+    assert len(activity_choices) == 1
 
     assert len(operation.operation_steps.all()) == 2
     assert step1.sequence == 1

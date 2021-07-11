@@ -3,7 +3,7 @@
         <label class="input-label">{{$props.name}}</label>
         <div class="rounded-md shadow-sm">
             <textarea class="rounded input-field w-full"
-              v-model="textVal"
+              v-model="textVal" :placeholder="$props.placeholder"
               @input="event => $emit('input', event.target.value)">
             </textarea>
         </div>
@@ -14,7 +14,8 @@
 export default {
     props: {
         name: String,
-        value: String
+        value: String,
+        placeholder: String
     },
     emits: ['input'],
     setup(props) {

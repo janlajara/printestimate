@@ -39,7 +39,9 @@
                 <Tab title="Activities">
                     <ActivityList :workstation-id="parseInt(state.id)"/>
                 </Tab>
-                <Tab title="Operations"/>
+                <Tab title="Operations">
+                    <OperationList :workstation-id="parseInt(state.id)"/>
+                </Tab>
             </Tabs>
         </Section>
     </Page>
@@ -58,6 +60,7 @@ import Tab from '@/components/Tab.vue';
 import WorkstationModal from '@/views/admin/production/workstations/WorkstationModal.vue';
 import ActivityExpenseList from '@/views/admin/production/workstations/activityexpenses/ActivityExpenseList.vue';
 import ActivityList from '@/views/admin/production/workstations/activities/ActivityList.vue'; 
+import OperationList from '@/views/admin/production/workstations/operations/OperationList.vue'; 
 
 import {useRoute} from 'vue-router';
 import {reactive, computed, onBeforeMount} from 'vue';
@@ -66,7 +69,7 @@ import {WorkstationApi} from '@/utils/apis.js';
 export default {
     components: {
         Page, Button, Section, DescriptionList, DescriptionItem, DeleteRecordDialog,
-        Tabs, Tab, WorkstationModal, ActivityExpenseList, ActivityList
+        Tabs, Tab, WorkstationModal, ActivityExpenseList, ActivityList, OperationList
     },
     setup() {
         const route = useRoute();

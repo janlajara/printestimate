@@ -408,6 +408,11 @@ export class ActivityApi {
 export class OperationApi {
     static uri = '/estimation/api/operations'
 
+    static async listOperationCostingMeasures() {
+        const response = await AXIOS.execute(AXIOS.GET, OperationApi.uri + `/costingmeasures`)
+        return response.data
+    }
+
     static async retrieveOperation(id) {
         const response = await AXIOS.execute(AXIOS.GET, OperationApi.uri + `/${id}`)
         return response.data
@@ -416,6 +421,12 @@ export class OperationApi {
     static async retrieveOperationSteps(id) {
         const response = await AXIOS.execute(AXIOS.GET, OperationApi.uri + `/${id}/steps`)
         return response.data
+    }
+
+    static async createOperationStep(id, operationStep) {
+        const response = await AXIOS.execute(AXIOS.POST, OperationApi.uri + `/${id}/steps`,
+            'Operation step created successfully.', 'Create failed. Please try again.', operationStep);
+        return response.data;
     }
 
     static async updateOperation(id, operation) {

@@ -181,10 +181,9 @@ export default {
             state.isProcessing = false;
         }
 
-        const retrieveActivityMetaData = async () => {
-            if (state.workstationId) {
-                const response = await WorkstationApi.retrieveWorkstationActivities(
-                    state.workstationId, true);
+        const retrieveActivityMetaData = async (id) => {
+            if (id) {
+                const response = await WorkstationApi.retrieveWorkstationActivities(id, true);
                 state.meta.measureUnitChoices = 
                     response.actions.POST.speed.children.measure_unit.choices.map(c=> ({
                         value: c.value, label: c.display_name
@@ -196,10 +195,10 @@ export default {
             }
         }
 
-        const retrieveActivityExpenses = async ()=> {
+        const retrieveActivityExpenses = async (id)=> {
             state.isProcessing = true;
-            if (state.workstationId) {
-                const response = await WorkstationApi.retrieveWorkstationActivityExpenses(state.workstationId);
+            if (id) {
+                const response = await WorkstationApi.retrieveWorkstationActivityExpenses(id);
                 if (response) {
                     state.meta.activityExpenseChoices = response.map(obj=> ({
                         value: obj.id, label: obj.name,
@@ -229,14 +228,14 @@ export default {
 
         watch(()=> [props.isOpen], ()=> {
             if (props.isOpen) {
-                retrieveActivityExpenses();
+                retrieveActivityExpenses(state.workstationId);
                 if (!state.isCreate) retrieveActivity(state.id);
                 else state.clearData();
                 state.error = '';
             }
         })
         onBeforeMount(()=> {
-            retrieveActivityMetaData();
+            retrieveActivityMetaData(state.workstationId);
         })
 
         return {

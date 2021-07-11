@@ -1,20 +1,16 @@
 <template>
     <div>
         <Button icon="add" color="tertiary" :disabled="state.isProcessing"
-            @click="()=>state.createEditModal.open()">Add Activity</Button>
-        <ActivityModal 
+            @click="()=>state.createEditModal.open()">Add Operation</Button>
+        <OperationModal 
             :workstation-id="state.id"
-            :activity-id="state.createEditModal.data.id"
+            :operation-id="state.createEditModal.data.id"
             :is-open="state.createEditModal.isOpen"
             @toggle="state.createEditModal.toggle" 
-            :on-after-save="populateActivities"/>
-        <Table :headers="['Name', 'Speed', 'Hourly Rate', 'Measure Rate', 'Flat Rate', '']" :loader="state.isProcessing">
+            :on-after-save="populateOperations"/>
+        <Table :headers="['Name', '']" :loader="state.isProcessing">
             <Row v-for="(s, key) in state.list" :key="key" clickable>
                 <Cell label="Name">{{s.name}}</Cell>
-                <Cell label="Speed">{{s.speed.rate}}</Cell>
-                <Cell label="Hourly Rate">{{s.hourlyRate}}</Cell>
-                <Cell label="Measure Rate">{{s.measureRate}}</Cell>
-                <Cell label="Flat Rate">{{s.flatRate}}</Cell>
                 <Cell>
                     <div class="w-full flex justify-end">
                         <Button class="my-auto" icon="edit"
@@ -26,10 +22,10 @@
             </Row>
         </Table>
         <DeleteRecordDialog 
-            heading="Delete Activity"
+            heading="Delete Operation"
             :is-open="state.deleteDialog.isOpen"
             :execute="state.deleteDialog.delete"
-            :on-after-execute="populateActivities"
+            :on-after-execute="populateOperations"
             @toggle="state.deleteDialog.toggle">
             <div>
                 Are you sure you want to delete 
@@ -46,14 +42,14 @@ import Row from '@/components/Row.vue';
 import Cell from '@/components/Cell.vue';
 import Button from '@/components/Button.vue';
 import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
-import ActivityModal from '@/views/admin/production/workstations/activities/ActivityModal.vue';
+import OperationModal from '@/views/admin/production/workstations/operations/OperationModal.vue';
 
 import {reactive, onBeforeMount} from 'vue';
-import {WorkstationApi, ActivityApi} from '@/utils/apis.js';
+import {WorkstationApi, OperationApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Table, Row, Cell, Button, DeleteRecordDialog, ActivityModal
+        Table, Row, Cell, Button, DeleteRecordDialog, OperationModal
     },
     props: {
         workstationId: Number
@@ -85,43 +81,35 @@ export default {
                     state.deleteDialog.toggle(true);
                 },
                 delete: () => {
-                    deleteActivity(state.deleteDialog.data.id);
+                    deleteOperation(state.deleteDialog.data.id);
                 }
             }
         });
 
-        const populateActivities = async ()=> {
+        const populateOperations = async ()=> {
             state.isProcessing = true;
             if (state.id) {
-                const response = await WorkstationApi.retrieveWorkstationActivities(state.id);
+                const response = await WorkstationApi.retrieveWorkstationOperations(state.id);
                 if (response) {
                     state.list = response.map(obj=> ({
                         id: obj.id,
-                        name: obj.name,
-                        speed: {
-                            id: obj.speed.id,
-                            rate: obj.speed.rate
-                        },
-                        measureUnit: obj.ream,
-                        flatRate: obj.flat_rate_formatted,
-                        measureRate: obj.measure_rate_formatted,
-                        hourlyRate: obj.hourly_rate_formatted
+                        name: obj.name
                     }));
                 }
             }
             state.isProcessing = false;
         }
 
-        const deleteActivity = async (id) => {
+        const deleteOperation = async (id) => {
             state.isProcessing = true;
-            if (id)  await ActivityApi.deleteActivity(id);
+            if (id)  await OperationApi.deleteOperation(id);
             state.isProcessing = false;
         }
 
-        onBeforeMount(populateActivities);
+        onBeforeMount(populateOperations);
 
         return {
-            state, populateActivities, deleteActivity
+            state, populateOperations, deleteOperation
         }
     }
 }

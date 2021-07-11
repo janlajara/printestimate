@@ -153,12 +153,16 @@ export default {
                     search: null,
                     quantity: null,
                     select: (stockId)=> {
-                        detail.form.stock.selected.id = stockId;
-                        if (detail.data.missingAllocation > 0 && 
-                            detail.form.stock.selected.quantity != null) {
-                            detail.form.stock.quantity = Math.min(
-                                detail.form.stock.selected.quantity,
-                                detail.data.missingAllocation)
+                        if (stockId && stockId != '') {
+                            detail.form.stock.selected.id = stockId;
+                            if (detail.data.missingAllocation > 0 && 
+                                detail.form.stock.selected.quantity != null) {
+                                detail.form.stock.quantity = Math.min(
+                                    detail.form.stock.selected.quantity,
+                                    detail.data.missingAllocation)
+                            }
+                        } else {
+                            detail.form.stock.selected.id = null;
                         }
                     },
                     add: async ()=> {

@@ -105,6 +105,7 @@ export default {
             },
             clearSelect: ()=> {
                 lookup.selected = null;
+                emit('select', '');
             }
         })
         watch(()=> props.value, 

@@ -11,14 +11,15 @@
                         {{header}}</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <slot v-if="$props.noBody"/>
+            <tbody v-else class="bg-white divide-y divide-gray-200">
                 <Row v-for="(row, key1) in $props.rows" :key="key1">
                     <Cell  v-for="(col, key2) in row.splice(0, columnCount)" 
                         :key="key2" :label="$props.headers[key2]">
                         {{col}}
                     </Cell>
                 </Row>
-                <slot v-if="$slots.default()[0].children.length > 0"/>
+                <slot v-if="$slots.default && $slots.default()[0].children.length > 0"/>
                 <Row v-else-if="$props.loader">
                     <Cell :colspan="columnCount">
                         <div class="w-full flex justify-center">
@@ -54,9 +55,13 @@ export default {
         },
         colsWidth: Array,
         rows: Array,
-        loader: Boolean
+        loader: Boolean,
+        noBody: {
+            type: Boolean,
+            default: false
+        }
     },
-    setup(props) {
+    setup(props) { 
         const columnCount = computed(()=> (props.headers? props.headers.length: 0));
         return {
             columnCount,

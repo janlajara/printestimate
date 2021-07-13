@@ -38,9 +38,9 @@ export default {
     },
     setup(props, {emit}) {
         const dialog = reactive({
-            execute: ()=> {
+            execute: async ()=> {
                 if (props.execute) {
-                    props.execute()
+                    await props.execute()
                     if (props.onAfterExecute) props.onAfterExecute();
                     emit('toggle', false)
                 }

@@ -18,7 +18,7 @@
                 <InputText name="Value"  placeholder="Value"
                     type="decimal" :value="state.data.speed.measureValue" required
                     @input="value => state.data.speed.measureValue = value"/>
-                <InputSelect name="Measure" required
+                <InputSelect name="Measure" required :disabled="!state.isCreate"
                     @input="(value)=>state.data.speed.measureUnit = value"
                     :options="state.meta.measureUnitChoices.map(c=>({
                         value: c.value, label: c.label,

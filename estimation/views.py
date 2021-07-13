@@ -84,6 +84,7 @@ class WorkstationActivityExpensesViewSet(mixins.ListModelMixin,
 class WorkstationOperationsViewSet(mixins.ListModelMixin,
                             mixins.CreateModelMixin,
                             viewsets.GenericViewSet):
+
     serializer_class = serializers.OperationSerializer
 
     def get_queryset(self):
@@ -100,7 +101,22 @@ class WorkstationOperationsViewSet(mixins.ListModelMixin,
 
             if deserialized.is_valid():
                 validated_data = deserialized.validated_data
-                operation = workstation.add_operation(**validated_data)
+                operation_steps = validated_data.pop('operation_steps')
+                operation = Operation.objects.create(
+                    workstation=workstation, **validated_data)
+
+                # sort by sequence
+                operation_steps.sort(key=lambda x: x.get('sequence'))
+
+                # create or update steps based on input data
+                for index, step_data in enumerate(operation_steps):
+                    step_data.pop('id')
+                    step_data.pop('sequence')
+                    sequence = index + 1
+                    OperationStep.objects.create(operation=operation, 
+                        sequence=sequence, **step_data)
+
+                operation = Operation.objects.get(pk=operation.id)
                 serialized = serializers.OperationSerializer(operation)
                 return Response(serialized.data)
             else:
@@ -152,7 +168,54 @@ class ActivityRelatedExpensesViewSet(mixins.ListModelMixin,
 class OperationsViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
                         mixins.DestroyModelMixin, viewsets.GenericViewSet):
     queryset = Operation.objects.all()
-    serializer_class = serializers.OperationSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'update':
+            return serializers.OperationSerializer
+        else:
+            return serializers.OperationListSerializer
+    
+    def update(self, request, pk=None):
+        if pk is not None:
+            operation = get_object_or_404(Operation, pk=pk)
+            deserialized = serializers.OperationSerializer(data=request.data)
+
+            if deserialized.is_valid():
+                validated_data = deserialized.validated_data
+                operation_steps = validated_data.pop('operation_steps')
+
+                # sort by sequence
+                operation_steps.sort(key=lambda x: x.get('sequence'))
+
+                # delete steps not present in input data
+                existing_steps = [o.get('id') for o in operation_steps \
+                    if o.get('id') is not None]
+                steps_to_delete = [o.id for o in operation.operation_steps.all() \
+                    if o.id not in existing_steps]
+                OperationStep.objects.filter(pk__in=steps_to_delete).delete()
+
+                # create or update steps based on input data
+                for index, step_data in enumerate(operation_steps):
+                    step_id = step_data.pop('id') if 'id' in step_data else None
+                    step_data.pop('sequence')
+                    sequence = index + 1
+
+                    if step_id is not None:
+                        OperationStep.objects.filter(pk=step_id).update(
+                            sequence=sequence, **step_data)
+                    else:
+                        OperationStep.objects.create(operation=operation, 
+                            sequence=sequence, **step_data)
+
+                # Update the rest of Operation fields
+                Operation.objects.filter(pk=pk).update(**validated_data)
+                operation = Operation.objects.get(pk=pk)
+                serialized = serializers.OperationSerializer(operation)
+                return Response(serialized.data)
+            else:
+                return Response(deserialized.errors)
+        else:
+            return Response({'error': 'missing operation pk'})
 
 
 class OperationRelatedStepsViewSet(mixins.ListModelMixin,
@@ -228,7 +291,8 @@ class OperationCostingMeasureView(viewsets.ViewSet):
                 "measure_choices": list(
                     map(lambda x: {
                         "value": x[0],
-                        "display": x[1]
+                        "display": x[1],
+                        "base_measure": Operation.CostingMeasure.get_base_measure(x[0])
                     }, obj[1]))
             }
         measure_choices = Operation.get_costing_measure_choices()

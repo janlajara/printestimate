@@ -69,6 +69,17 @@ class Operation(models.Model):
             (QUANTITY, 'Quantity'),
             (PERIMETER, 'Perimeter'),
         ]
+        
+        @classmethod
+        def get_base_measure(cls, costing_measure):
+            mapping = {
+                cls.LENGTH: Measure.DISTANCE,
+                cls.AREA: Measure.AREA,
+                cls.VOLUME: Measure.VOLUME,
+                cls.QUANTITY: Measure.QUANTITY,
+                cls.PERIMETER: Measure.DISTANCE}
+            return mapping.get(costing_measure)
+
     name = models.CharField(max_length=50)
     process = models.ForeignKey(Process, on_delete=models.SET_NULL,
         related_name='operations', blank=True, null=True)
@@ -90,11 +101,9 @@ class Operation(models.Model):
                 if measure[0] in costing_measures]
         mapping = {
             Item.TAPE: __get([
-                Operation.CostingMeasure.LENGTH, 
-                Operation.CostingMeasure.QUANTITY]),
+                Operation.CostingMeasure.LENGTH]),
             Item.LINE: __get([
-                Operation.CostingMeasure.LENGTH, 
-                Operation.CostingMeasure.QUANTITY]),
+                Operation.CostingMeasure.LENGTH]),
             Item.PAPER: __get([
                 Operation.CostingMeasure.AREA, 
                 Operation.CostingMeasure.PERIMETER, 
@@ -104,8 +113,7 @@ class Operation(models.Model):
                 Operation.CostingMeasure.PERIMETER, 
                 Operation.CostingMeasure.QUANTITY]),
             Item.LIQUID: __get([
-                Operation.CostingMeasure.VOLUME, 
-                Operation.CostingMeasure.QUANTITY]),
+                Operation.CostingMeasure.VOLUME]),
             Item.OTHER: __get([Operation.CostingMeasure.QUANTITY])
         }
         if itemType is not None:
@@ -116,10 +124,6 @@ class Operation(models.Model):
     @property
     def costing_measure_choices(self):
         return Operation.get_costing_measure_choices(self.material_type)
-
-    @property
-    def activity_choices(self):
-        return self.workstation.get_activities(self.measure)
 
     @property
     def measure(self):

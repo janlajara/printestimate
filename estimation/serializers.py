@@ -59,7 +59,7 @@ class ActivitySerializer(serializers.ModelSerializer):
             'flat_rate', 'flat_rate_formatted', 
             'measure_rate', 'measure_rate_formatted', 
             'hourly_rate', 'hourly_rate_formatted']
-    
+
     def get_flat_rate_formatted(self, obj):
         return str(obj.flat_rate)
     
@@ -95,8 +95,9 @@ class ActivityCreateSerializer(serializers.ModelSerializer):
 
 
 class OperationStepSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False, allow_null=True)
     sequence = serializers.IntegerField(required=False)
-    notes = serializers.CharField(required=False)
+    notes = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = OperationStep
@@ -110,9 +111,24 @@ class OperationStepListSerializer(OperationStepSerializer):
 class OperationSerializer(serializers.ModelSerializer):
     prerequisite = serializers.PrimaryKeyRelatedField(
         required=False, queryset=Operation.objects.all())
-    activity_choices = ActivitySerializer(many=True, read_only=True)
+    operation_steps = OperationStepSerializer(many=True)
 
     class Meta:
         model = Operation
         fields = ['id', 'name', 'material_type', 'prerequisite', 
-            'costing_measure', 'activity_choices']
+            'costing_measure', 'operation_steps']
+
+
+class OperationListSerializer(serializers.ModelSerializer):
+    prerequisite = serializers.PrimaryKeyRelatedField(
+        required=False, queryset=Operation.objects.all())
+    operation_steps = serializers.SerializerMethodField() 
+
+    class Meta:
+        model = Operation
+        fields = ['id', 'name', 'material_type', 'prerequisite', 
+            'costing_measure', 'operation_steps']
+
+    def get_operation_steps(self, instance):
+        steps = instance.operation_steps.all().order_by('sequence')
+        return OperationStepSerializer(steps, many=True).data

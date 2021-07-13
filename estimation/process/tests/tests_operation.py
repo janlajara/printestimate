@@ -100,9 +100,6 @@ def test_operation__add_delete_step(db, korse_workstation):
     step1 = operation.add_step(spot_printing, '1st color')
     step2 = operation.add_step(spot_printing, '2nd color')
 
-    activity_choices = operation.activity_choices()
-    assert len(activity_choices) == 1
-
     assert len(operation.operation_steps.all()) == 2
     assert step1.sequence == 1
     assert step2.sequence == 2
@@ -231,22 +228,19 @@ def test_operation__get_costing_measure_choices(db, korse_workstation):
     operation.material_type = Item.TAPE
     operation.save()
     assert __validate(
-        [Operation.CostingMeasure.LENGTH,
-        Operation.CostingMeasure.QUANTITY],
+        [Operation.CostingMeasure.LENGTH],
         operation.costing_measure_choices) == True
 
     operation.material_type = Item.LINE
     operation.save()
     assert __validate(
-        [Operation.CostingMeasure.LENGTH,
-        Operation.CostingMeasure.QUANTITY],
+        [Operation.CostingMeasure.LENGTH],
         operation.costing_measure_choices) == True
 
     operation.material_type = Item.LIQUID
     operation.save()
     assert __validate(
-        [Operation.CostingMeasure.VOLUME,
-        Operation.CostingMeasure.QUANTITY],
+        [Operation.CostingMeasure.VOLUME],
         operation.costing_measure_choices) == True
     
 

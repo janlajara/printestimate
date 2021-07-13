@@ -91,7 +91,8 @@ class ActivityCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Activity
         fields = ['id', 'name', 'speed', 'set_up', 'tear_down', 
-            'measure', 'measure_unit', 'flat_rate', 'measure_rate', 'include_presets']
+            'measure', 'measure_unit', 'flat_rate', 'measure_rate', 
+            'include_presets', 'activity_expenses']
 
 
 class OperationStepSerializer(serializers.ModelSerializer):

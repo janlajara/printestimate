@@ -38,10 +38,10 @@ class Workstation(models.Model):
         return operation
 
     def add_activity(self, name, set_up, tear_down, 
-            speed, include_presets=False):
+            speed, include_presets=False, activity_expenses=None):
         activity = Activity.objects.create_activity(
             name=name, set_up=set_up, tear_down=tear_down,
-            speed=speed, workstation=self)
+            speed=speed, workstation=self, activity_expenses=activity_expenses)
         if (include_presets):
             activity.activity_expenses.set(self.activity_expenses.all())
         return activity
@@ -69,7 +69,7 @@ class Operation(models.Model):
             (QUANTITY, 'Quantity'),
             (PERIMETER, 'Perimeter'),
         ]
-        
+
         @classmethod
         def get_base_measure(cls, costing_measure):
             mapping = {
@@ -274,12 +274,14 @@ class Speed(models.Model):
 
 class ActivityManager(models.Manager):
     def create_activity(self, name, 
-            set_up, tear_down, speed, workstation=None):
+            set_up, tear_down, speed, workstation=None, activity_expenses=None):
         activity = Activity.objects.create(
             name=name, workstation=workstation,
             speed=speed,
             set_up=Time(hr=set_up),
             tear_down=Time(hr=tear_down))
+        if activity_expenses is not None:
+            activity.activity_expenses.set(activity_expenses)
         return activity
 
 

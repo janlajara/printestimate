@@ -41,7 +41,7 @@ class WorkstationActivitiesViewSet(mixins.ListModelMixin,
 
                 set_up = validated_data.pop('set_up')
                 tear_down = validated_data.pop('tear_down')
-
+                print(validated_data)
                 activity = workstation.add_activity(
                     speed=speed, set_up=set_up.hr, tear_down=tear_down.hr,
                     **validated_data)

@@ -8,9 +8,11 @@
             :is-open="state.createEditModal.isOpen"
             @toggle="state.createEditModal.toggle" 
             :on-after-save="populateOperations"/>
-        <Table :headers="['Name', '']" :loader="state.isProcessing">
+        <Table :headers="['Name', 'Material Type', 'Costing Measure', '']" :loader="state.isProcessing">
             <Row v-for="(s, key) in state.list" :key="key" clickable>
                 <Cell label="Name">{{s.name}}</Cell>
+                <Cell label="Material Type" class="capitalize">{{s.materialType}}</Cell>
+                <Cell label="Costing Measure" class="capitalize">{{s.costingMeasure}}</Cell>
                 <Cell>
                     <div class="w-full flex justify-end">
                         <Button class="my-auto" icon="edit"
@@ -80,8 +82,8 @@ export default {
                     state.deleteDialog.data = {id, name};
                     state.deleteDialog.toggle(true);
                 },
-                delete: () => {
-                    deleteOperation(state.deleteDialog.data.id);
+                delete: async () => {
+                    await deleteOperation(state.deleteDialog.data.id);
                 }
             }
         });
@@ -93,7 +95,9 @@ export default {
                 if (response) {
                     state.list = response.map(obj=> ({
                         id: obj.id,
-                        name: obj.name
+                        name: obj.name,
+                        materialType: obj.material_type,
+                        costingMeasure: obj.costing_measure
                     }));
                 }
             }

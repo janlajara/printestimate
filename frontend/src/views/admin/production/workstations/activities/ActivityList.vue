@@ -84,8 +84,8 @@ export default {
                     state.deleteDialog.data = {id, name};
                     state.deleteDialog.toggle(true);
                 },
-                delete: () => {
-                    deleteActivity(state.deleteDialog.data.id);
+                delete: async () => {
+                    await deleteActivity(state.deleteDialog.data.id);
                 }
             }
         });

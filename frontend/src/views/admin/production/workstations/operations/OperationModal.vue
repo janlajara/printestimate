@@ -10,37 +10,48 @@
                 <InputText name="Name"  placeholder="Name"
                     type="text" :value="state.data.name" required
                     @input="value => state.data.name = value"/>
-                <InputSelect name="Material Type" required :disabled="!state.isCreate"
+                <InputSelect name="Material Type" required 
+                    :disabled="state.data.operationSteps.length > 0"
                     @input="(value)=> {
                         state.data.materialType = value;
                         state.data.costingMeasure = '';
+                        state.clearOperationStepForm();
                     }"
                     :options="state.meta.materialTypeChoices.map(c=>({
                         value: c.value, label: c.label,
                         isSelected: state.data.materialType == c.value
                     }))"/>
-                 <InputSelect name="Costing Measure" required :disabled="!state.isCreate"
-                    @input="(value)=>state.data.costingMeasure = value"
+                 <InputSelect name="Costing Measure" required 
+                    :disabled="state.data.operationSteps.length > 0"
+                    @input="(value)=>{
+                        state.data.costingMeasure = value;
+                        state.clearOperationStepForm();
+                    }"
                     :options="state.meta.costingMeasureChoices.map(c=>({
                         value: c.value, label: c.label,
                         isSelected: state.data.costingMeasure == c.value
                     }))"/>
             </div>
         </Section>
-        <div v-if="!state.isCreate">
+        <div>
             <Section heading="Operaton Steps" heading-position="side"> 
-                <Table :headers="['#', 'Activity', 'Notes', '']" 
-                    :rows="state.data.operationSteps" :no-body="true">
-                    <draggable v-model="state.data.operationSteps" tag="tbody" item-key="id"
-                         class="bg-white divide-y divide-gray-200">
+                <Table :headers="['Step #', 'Activity', 'Notes', '']" :no-body="true">
+                    <draggable v-model="state.data.operationSteps" tag="tbody" 
+                        item-key="id" handle=".drag" @change="state.updateOperationSteps"
+                        class="bg-white divide-y divide-gray-200">
                         <template #item="{element}">
-                            <Row>
-                                <Cell>{{element.sequence}}</Cell>
-                                <Cell>{{element.activity}} : {{element.rate}}</Cell>
-                                <Cell>{{element.notes}}</Cell>
+                            <Row class="drag cursor-move">
+                                <Cell label="Step #">
+                                    <div class="grid grid-cols-2 gap-x-2">
+                                        <span class="material-icons text-xs my-auto">drag_indicator</span>
+                                        <span>{{element.sequence}}</span>
+                                    </div>
+                                </Cell>
+                                <Cell label="Activity">{{element.activityName}}</Cell>
+                                <Cell label="Notes">{{element.notes}}</Cell>
                                 <Cell>
-                                    <Button class="my-auto" icon="delete"
-                                        @click="()=>{}"/>
+                                    <Button class="my-auto" icon="clear" 
+                                        @click="()=>state.deleteOperationStep(element.sequence)"/>
                                 </Cell>
                             </Row>
                         </template>
@@ -60,7 +71,10 @@
                     <InputTextarea placeholder="Notes" 
                         :value="`${state.data.add.notes}`"
                         @input="value => state.data.add.notes = value"/>
-                    <div class="flex justify-end mt-2">
+                    <div class="flex justify-between mt-2">
+                        <span class="my-auto  text-xs">
+                            Activity choices: {{state.meta.activityChoices.length}} records found
+                        </span>
                         <Button icon="add" class="my-auto"
                             @click="state.addOperationStep">Add</Button>
                     </div>
@@ -119,7 +133,19 @@ export default {
             },
             meta: {
                 materialTypeChoices: [],
-                activityChoices: [],
+                activities: [],
+                activityChoices: computed(()=> {
+                    if (state.meta.costingMeasureChoice) {
+                        const filtered = state.meta.activities.filter(
+                            x => x.measure == state.meta.costingMeasureChoice.base_measure);
+                        return filtered.map(obj=> ({
+                            value: obj.id,
+                            title: obj.name,
+                            subtitle: obj.rate,
+                            figure: obj.measure,
+                        }));
+                    } else return [];
+                }),
                 costingMeasureChoicesMapping: [],
                 costingMeasureChoices: computed(()=> {
                     const mapping =  state.meta.costingMeasureChoicesMapping.filter(
@@ -130,6 +156,16 @@ export default {
                         }));
                     } else return [];
                 }),
+                costingMeasureChoice: computed(()=> {
+                    const a = state.meta.costingMeasureChoicesMapping.find(
+                        x => x.key == state.data.materialType);
+                    if (a) return a.value.find(y => y.value == state.data.costingMeasure);
+                    else return null;
+                }),
+                getActivityById: id => {
+                    const activity = state.meta.activityChoices.find(c=> c.value == id);
+                    return (activity)? activity.title : '';
+                }
             },
             clearData: ()=> {
                 state.data = {
@@ -154,32 +190,53 @@ export default {
                 else state.error = '';
                 return errors.length > 0;
             },
-            save: ()=> {
+            save: async ()=> {
                 if (state.validate()) return;
                 const request = {
                     name: state.data.name,
                     material_type: state.data.materialType,
-                    costing_measure: state.data.costingMeasure
+                    costing_measure: state.data.costingMeasure,
+                    operation_steps: state.data.operationSteps.map(o=>({
+                        sequence: o.sequence,
+                        id: o.id, activity: o.activityId, notes: o.notes
+                    }))
                 }
-                saveOperation(request);
+                const response = await saveOperation(request);
+                if (response) {
+                    if (props.onAfterSave) props.onAfterSave();
+                    emit('toggle', false);
+                }
+            },
+            clearOperationStepForm: ()=> {
+                state.data.add = {activity: null, activityLookupText: null, notes: ''};
             },
             validateAddOperationStep: ()=> {
                 let errors = [];
                 if (state.data.add.activity == '') errors.push('activity');
-                if (state.data.add.notes == '') errors.push('notes');
                 if (errors.length > 0)
                     state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
                 else state.error = '';
                 return errors.length > 0;
             },
-            addOperationStep: async ()=> {
+            addOperationStep: ()=> {
                 if (state.validateAddOperationStep()) return;
-                const request = {
-                    activity: state.data.add.activity,
-                    notes: state.data.add.notes
-                }
-                const response = await createOperationStep(state.id, request);
-                if (response) retrieveOperationSteps(state.id)
+                const next_sequence = state.data.operationSteps.length + 1;
+                state.data.operationSteps.push({
+                    id: null, sequence: next_sequence, activityId: state.data.add.activity, 
+                    activityName: state.meta.getActivityById(state.data.add.activity),
+                    rate: null, notes: state.data.add.notes
+                });
+                state.clearOperationStepForm();
+            },
+            deleteOperationStep: (sequence)=> {
+                state.data.operationSteps = state.data.operationSteps.filter(
+                    s => s.sequence != sequence);
+                state.updateOperationSteps();
+            },
+            updateOperationSteps: () => {
+                state.data.operationSteps.forEach((step, key)=> {
+                    state.data.operationSteps[key].sequence = key+1;
+                })
             }
         })
 
@@ -191,12 +248,6 @@ export default {
                     state.data.name = response.name; 
                     state.data.materialType = response.material_type;
                     state.data.costingMeasure = response.costing_measure;
-                    state.meta.activityChoices = response.activity_choices.map(obj=> ({
-                        value: obj.id,
-                        title: obj.name,
-                        subtitle: obj.speed.rate,
-                        figure: obj.measure,
-                    }));
                 }
             }
             state.isProcessing = false;
@@ -217,6 +268,14 @@ export default {
                     response2.actions.POST.material_type.choices.map(c=> ({
                         value: c.value, label: c.display_name
                     }));
+
+                const response3 = await WorkstationApi.retrieveWorkstationActivities(id);
+                if (response3) {
+                    state.meta.activities = response3.map(obj => ({
+                        id: obj.id, name: obj.name, 
+                        measure: obj.measure, rate: obj.speed.rate
+                    }));
+                }
             }
         }
 
@@ -226,8 +285,8 @@ export default {
                 const response = await OperationApi.retrieveOperationSteps(id);
                 if (response) {
                     state.data.operationSteps = response.map(obj=> ({
-                        id: obj.id, sequence: obj.sequence,
-                        activity: obj.activity.name, rate: obj.activity.speed.rate,
+                        id: obj.id, sequence: obj.sequence, activityId: obj.activity.id,
+                        activityName: obj.activity.name, rate: obj.activity.speed.rate,
                         notes: obj.notes
                     }));
                 }
@@ -245,21 +304,8 @@ export default {
                 response = await OperationApi.updateOperation(
                     state.id, operation);
             }
-            if (response) {
-                if (props.onAfterSave) props.onAfterSave();
-                emit('toggle', false);
-            }
             state.isProcessing = false;
-        }
-
-        const createOperationStep = async (id, operationStep)=> {
-            state.isProcessing = true;
-            if (id && operationStep) {
-                const response = await OperationApi.createOperationStep(id, operationStep);
-                state.isProcessing = false;
-                return response;
-            }
-            state.isProcessing = false;
+            return response;
         }
 
         watch(()=> [props.isOpen], ()=> {

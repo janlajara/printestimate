@@ -3,7 +3,7 @@
         <label class="input-label">{{$props.name}}</label>
         <div class="rounded-md shadow-sm">
             <textarea class="rounded input-field w-full"
-              :value="$props.value" :placeholder="$props.placeholder"
+              :value="$props.value" :placeholder="$props.placeholder" 
               @input="event => $emit('input', event.target.value)">
             </textarea>
         </div>

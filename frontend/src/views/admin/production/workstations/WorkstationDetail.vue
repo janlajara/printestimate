@@ -26,9 +26,11 @@
             </DeleteRecordDialog>
         </div>
         <Section>
-            <DescriptionList class="grid-cols-2 md:grid-cols-4">
+            <DescriptionList class="md:grid-cols-4">
                 <DescriptionItem :loader="state.isProcessing" 
                     name="Name" :value="state.workstation.validatedData.name"/>
+                <DescriptionItem :loader="state.isProcessing" 
+                    name="Description" :value="state.workstation.validatedData.description"/>
             </DescriptionList>
         </Section>
         <Section heading="Configuration">
@@ -81,7 +83,8 @@ export default {
                 validatedData: {
                     id: computed(()=>state.workstation.rawData.id),
                     name: computed(()=>state.workstation.rawData.name? 
-                        state.workstation.rawData.name : '')
+                        state.workstation.rawData.name : ''),
+                    description: computed(()=>state.workstation.rawData.description)
                 },
                 editModal: {
                     isOpen: false,
@@ -103,7 +106,8 @@ export default {
             if (response) {
                 state.workstation.rawData = {
                     id: response.id,
-                    name: response.name
+                    name: response.name,
+                    description: response.description
                 }
             }
             state.isProcessing = false;

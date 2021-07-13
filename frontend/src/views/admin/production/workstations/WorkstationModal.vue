@@ -10,6 +10,9 @@
                 <InputText name="Name"  placeholder="Name"
                     type="text" :value="state.data.name" required
                     @input="value => state.data.name = value"/>
+                <InputText name="Name"  placeholder="Description"  class="col-span-2"
+                    type="text" :value="state.data.description" required
+                    @input="value => state.data.description = value"/>
             </div>
         </Section>
     </Modal>
@@ -40,7 +43,7 @@ export default {
             isProcessing: false,
             error: '',
             data: {
-                name: ''
+                name: '', description: ''
             },
             validate: ()=> {
                 let errors = [];
@@ -52,7 +55,8 @@ export default {
             },
             save: ()=> {
                 if (state.validate()) return;
-                const workstation = {name: state.data.name}
+                const workstation = {
+                    name: state.data.name, description: state.data.description}
                 saveWorkstation(workstation);
             }
         });
@@ -62,7 +66,7 @@ export default {
             const response = await WorkstationApi.retrieveWorkstation(id);
             if (response) {
                 state.data = {
-                    name: response.name
+                    name: response.name, description: response.description
                 }
             }
             state.isProcessing = false;

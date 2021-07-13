@@ -10,7 +10,7 @@ from estimation.models import Workstation, ActivityExpense, \
 class WorkstationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Workstation
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'description']
 
 
 class SpeedSerializer(serializers.ModelSerializer):

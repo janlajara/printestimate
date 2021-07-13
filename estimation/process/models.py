@@ -20,6 +20,7 @@ class Process(models.Model):
 
 class Workstation(models.Model):
     name = models.CharField(max_length=50)
+    description = models.CharField(max_length=200)
 
     def get_activities(self, measure=None):
         if measure is not None:

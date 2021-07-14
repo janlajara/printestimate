@@ -201,11 +201,11 @@ class Operation(models.Model):
             step.save()
         step_to_delete.delete()
 
-    def get_measurement(self, input:Item, output:Material, quantity):
+    def get_measurement(self, input:Item, output:Material, quantity, **kwargs):
         if self.material_type == input.type == output.type:
             
             if self.machine is not None:
-                estimate = self.machine.estimate(input, output, quantity)
+                estimate = self.machine.estimate(input, output, quantity, **kwargs)
                 mapping = {
                     Operation.CostingMeasure.LENGTH: estimate.length,
                     Operation.CostingMeasure.AREA: estimate.area,

@@ -52,7 +52,7 @@ class PressMachine(Machine):
     uom = models.CharField(max_length=30, default='mm',
         choices=Measure.UNITS[Measure.DISTANCE])
 
-    def estimate(self, input:Item, output:Material, quantity):
+    def estimate(self, input:Item, output:Material, quantity, bleed=False):
         if input.type == output.type == Item.PAPER:
             child_sheets = (
                 ChildSheet.objects
@@ -62,7 +62,8 @@ class PressMachine(Machine):
             match = None
 
             for child_sheet in child_sheets:
-                if child_sheet.gte(output) and input.properties.gte(child_sheet.parent):
+                if child_sheet.has_bleed == bleed and child_sheet.gte(output) \
+                        and input.properties.gte(child_sheet.parent):
                     match = child_sheet
                     break
 
@@ -147,6 +148,11 @@ class ChildSheet(Rectangle):
     margin_right = models.FloatField(default=0)
     margin_bottom = models.FloatField(default=0)
     margin_left = models.FloatField(default=0)
+
+    @property
+    def has_bleed(self):
+        return self.margin_top + self.margin_right + \
+            self.margin_bottom + self.margin_left > 0
 
     @property
     def pack_width(self):

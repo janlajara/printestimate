@@ -85,7 +85,11 @@ class WorkstationOperationsViewSet(mixins.ListModelMixin,
                             mixins.CreateModelMixin,
                             viewsets.GenericViewSet):
 
-    serializer_class = serializers.OperationSerializer
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return serializers.OperationSerializer
+        else:
+            return serializers.OperationListSerializer
 
     def get_queryset(self):
         pk = self.kwargs.get('pk', None)

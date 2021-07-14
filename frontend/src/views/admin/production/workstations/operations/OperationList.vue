@@ -8,17 +8,24 @@
             :is-open="state.createEditModal.isOpen"
             @toggle="state.createEditModal.toggle" 
             :on-after-save="populateOperations"/>
-        <Table :headers="['Name', 'Material Type', 'Costing Measure', '']" :loader="state.isProcessing">
-            <Row v-for="(s, key) in state.list" :key="key" clickable>
-                <Cell label="Name">{{s.name}}</Cell>
-                <Cell label="Material Type" class="capitalize">{{s.materialType}}</Cell>
-                <Cell label="Costing Measure" class="capitalize">{{s.costingMeasure}}</Cell>
+        <Table :headers="['Name', 'Material Type', 'Costing Measure', 'Steps', '']" :loader="state.isProcessing">
+            <Row v-for="(x, key) in state.list" :key="key" clickable>
+                <Cell label="Name">{{x.name}}</Cell>
+                <Cell label="Material Type" class="capitalize">{{x.materialType}}</Cell>
+                <Cell label="Costing Measure" class="capitalize">{{x.costingMeasure}}</Cell>
+                <Cell label="Steps">
+                    <ul>
+                        <li v-for="(y, key2) in x.operationSteps" :key="key2">
+                            {{y.sequence}} - {{y.activity.name}} : {{y.notes}}
+                        </li>
+                    </ul>
+                </Cell>
                 <Cell>
                     <div class="w-full flex justify-end">
                         <Button class="my-auto" icon="edit"
-                            @click="()=>state.createEditModal.open(s.id)"/>
+                            @click="()=>state.createEditModal.open(x.id)"/>
                         <Button class="my-auto" icon="delete"
-                            @click="()=>state.deleteDialog.open(s.id, s.name)"/>
+                            @click="()=>state.deleteDialog.open(x.id, x.name)"/>
                     </div>
                 </Cell>
             </Row>
@@ -97,7 +104,8 @@ export default {
                         id: obj.id,
                         name: obj.name,
                         materialType: obj.material_type,
-                        costingMeasure: obj.costing_measure
+                        costingMeasure: obj.costing_measure,
+                        operationSteps: obj.operation_steps
                     }));
                 }
             }

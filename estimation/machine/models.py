@@ -3,6 +3,8 @@ from django.db import models
 from core.utils.shapes import Rectangle
 from core.utils.measures import Measure, Quantity
 from measurement.measures import Distance
+from polymorphic.models import PolymorphicModel
+from polymorphic.managers import PolymorphicManager
 from estimation.product.models import Material
 from inventory.models import Item
 
@@ -17,7 +19,7 @@ class Estimate:
         self.perimeter = 0
 
 
-class MachineManager(models.Manager):
+class MachineManager(PolymorphicManager):
     def create_machine(self, **kwargs):
         mapping = {
             Machine.PRESS : PressMachine
@@ -28,7 +30,7 @@ class MachineManager(models.Manager):
         return machine
 
 
-class Machine(models.Model):
+class Machine(PolymorphicModel):
     PRESS = 'press'
     TYPES = [
         (PRESS, 'Press'),

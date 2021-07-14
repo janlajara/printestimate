@@ -132,4 +132,4 @@ class OperationListSerializer(serializers.ModelSerializer):
 
     def get_operation_steps(self, instance):
         steps = instance.operation_steps.all().order_by('sequence')
-        return OperationStepSerializer(steps, many=True).data
+        return OperationStepListSerializer(steps, many=True).data

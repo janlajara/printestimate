@@ -395,10 +395,7 @@ class Activity(models.Model):
         return total_rate
 
     def __str__(self):
-        string = self.name
-        if self.workstation is not None:
-            string = self.workstation.name + ' : ' + self.name
-        return string
+        return self.name
 
 
 class ActivityExpense(models.Model):

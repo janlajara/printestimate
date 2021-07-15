@@ -159,6 +159,11 @@ class Rectangle(Shape):
         self._validate(rectangle)
         return self.width.mm >= rectangle.width.mm and self.length.mm >= rectangle.length.mm
 
+    def within_bounds(self, width, length, unit):
+        w = Distance(**{unit: width})
+        l = Distance(**{unit: length})
+        return (self.width >= w and self.length >= l) or (self.width >= l and self.length >= w)
+
     def _validate(self, rectangle):
         if not isinstance(rectangle, Rectangle):
             self._raise_type_error(self, rectangle)

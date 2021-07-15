@@ -7,7 +7,9 @@ from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
 from estimation.product.models import Material
 from inventory.models import Item
+import inflect
 
+_inflect = inflect.engine()
 
 class Estimate:
     def __init__(self, run_count, item_count):
@@ -91,24 +93,23 @@ class SheetFedPressMachine(Machine):
             else:
                 return None
 
-    def add_parent_sheet(self, width, length, size_uom, 
-        padding_top=0, padding_right=0,
-        padding_bottom=0, padding_left=0):
+    def add_parent_sheet(self, width_value, length_value, size_uom, 
+        padding_top=0, padding_right=0, padding_bottom=0, padding_left=0):
 
         def within_bounds(a_val, a_unit, min_val, max_val, unit):
             return to_distance(min_val, unit) <= to_distance(a_val, a_unit) <= to_distance(max_val, unit)
         def to_distance(value, uom):
             return Distance(**{uom: value})
 
-        if not within_bounds(width, size_uom, self.min_sheet_width, self.max_sheet_width, self.uom):
-            raise ValueError("width must be within the range: %s - %s %s",
-                self.min_sheet_width, self.max_sheet_width, self.uom)
-        if not within_bounds(length, size_uom, self.min_sheet_length, self.max_sheet_length, self.uom):
-            raise ValueError("length must be within the range: %s - %s %s",
-                self.min_sheet_width, self.max_sheet_width, self.uom)
+        if not within_bounds(width_value, size_uom, self.min_sheet_width, self.max_sheet_width, self.uom):
+            raise ValueError("width must be within the range: %s - %s %s" %
+                (self.min_sheet_width, self.max_sheet_width, self.uom))
+        if not within_bounds(length_value, size_uom, self.min_sheet_length, self.max_sheet_length, self.uom):
+            raise ValueError("length must be within the range: %s - %s %s" %
+                (self.min_sheet_width, self.max_sheet_width, self.uom))
 
         parent = ParentSheet.objects.create(machine=self,
-            width_value=width, length_value=length, size_uom=size_uom,
+            width_value=width_value, length_value=length_value, size_uom=size_uom,
             padding_top=padding_top, padding_right=padding_right,
             padding_bottom=padding_bottom, padding_left=padding_left)
 
@@ -144,26 +145,30 @@ class ParentSheet(Rectangle):
     def padding_y(self):
         return self.padding_top + self.padding_bottom
 
-    def add_child_sheet(self, width, length, size_uom, 
+    def add_child_sheet(self, width_value, length_value, size_uom, 
         margin_top=0, margin_right=0,
         margin_bottom=0, margin_left=0):
 
-        if not self.within_bounds(width + margin_left + margin_right, 
-                length + margin_top + margin_bottom, size_uom):
-            raise ValueError("size must be within bounds: %s x %s %s",
-                self.width_value, self.length_value, self.size_uom)
+        if not self.within_bounds(width_value + margin_left + margin_right, 
+                length_value + margin_top + margin_bottom, size_uom):
+            raise ValueError("size must be within bounds: %s x %s %s" % 
+                (self.width_value, self.length_value, self.size_uom))
 
         child = ChildSheet.objects.create(parent=self,
-            width_value=width, length_value=length, size_uom=size_uom,
+            width_value=width_value, length_value=length_value, size_uom=size_uom,
             margin_top=margin_top, margin_right=margin_right,
             margin_bottom=margin_bottom, margin_left=margin_left)
             
         return child
 
+    def __str__(self):
+        unit = _inflect.plural(self.size_uom)
+        return '%g x %g %s' % (self.width_value, self.length_value, unit)
+
 
 class ChildSheet(Rectangle):
-    parent = models.ForeignKey(ParentSheet, on_delete=models.CASCADE,
-        related_name='child_sheets')
+    parent = models.ForeignKey(ParentSheet, 
+        on_delete=models.CASCADE, related_name='child_sheets')
     margin_top = models.FloatField(default=0)
     margin_right = models.FloatField(default=0)
     margin_bottom = models.FloatField(default=0)
@@ -208,3 +213,7 @@ class ChildSheet(Rectangle):
     @property
     def wastage(self):
         return 1 - self.usage
+
+    def __str__(self):
+        unit = _inflect.plural(self.size_uom)
+        return '%g x %g %s' % (self.width_value, self.length_value, unit)

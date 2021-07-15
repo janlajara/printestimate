@@ -7,7 +7,7 @@ from inventory.models import Item
 @pytest.fixture
 def gto_machine(db):
     return Machine.objects.create_machine(name='GTO Press', 
-        type=Machine.PRESS, uom='inch')
+        type=Machine.SHEET_FED_PRESS, uom='inch')
 
 def test_machine__add_parent_sheet(db, gto_machine):
     parent_sheet = gto_machine.add_parent_sheet(17, 22, 'inch', 1, 1, 1, 1)

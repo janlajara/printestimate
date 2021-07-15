@@ -22,29 +22,29 @@ class Estimate:
 class MachineManager(PolymorphicManager):
     def create_machine(self, **kwargs):
         mapping = {
-            Machine.PRESS : PressMachine
+            Machine.SHEET_FED_PRESS : SheetFedPressMachine
         }
-        type = kwargs.get('type', Machine.PRESS)
+        type = kwargs.pop('type', Machine.SHEET_FED_PRESS)
         clazz = mapping[type]
         machine = clazz.objects.create(**kwargs)
         return machine
 
 
 class Machine(PolymorphicModel):
-    PRESS = 'press'
+    SHEET_FED_PRESS = 'SheetFedPressMachine'
     TYPES = [
-        (PRESS, 'Press'),
+        (SHEET_FED_PRESS, 'Sheet-fed Press'),
     ]
 
     objects = MachineManager()
     name = models.CharField(max_length=100)
-    type = models.CharField(max_length=15, choices=TYPES, null=False, blank=False)
+    type = models.CharField(max_length=30, choices=TYPES, null=False, blank=False)
 
     def estimate(self, **kwargs):
         pass
 
 
-class PressMachine(Machine):
+class SheetFedPressMachine(Machine):
     min_sheet_length = models.FloatField(default=0)
     max_sheet_length = models.FloatField(default=0)
     min_sheet_width = models.FloatField(default=0)
@@ -101,8 +101,8 @@ class PressMachine(Machine):
 
 
 class ParentSheet(Rectangle):
-    machine = models.ForeignKey(PressMachine, on_delete=models.CASCADE, 
-        related_name='parent_sheets')
+    machine = models.ForeignKey(SheetFedPressMachine, on_delete=models.CASCADE, 
+        related_name='parent_sheets') 
     padding_top = models.FloatField(default=0)
     padding_right = models.FloatField(default=0)
     padding_bottom = models.FloatField(default=0)

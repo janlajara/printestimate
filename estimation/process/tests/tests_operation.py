@@ -57,7 +57,7 @@ def korse_workstation(db, workstation_factory, speed_factory):
 @pytest.fixture
 def korse_machine(db):
     return Machine.objects.create_machine(name='KORSE Press', 
-        type=Machine.PRESS, uom='inch')
+        type=Machine.SHEET_FED_PRESS, uom='inch')
 
 
 def test_workstation__add_activity(db, workstation_factory, speed_factory):

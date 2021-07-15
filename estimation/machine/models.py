@@ -148,8 +148,9 @@ class ParentSheet(Rectangle):
         margin_top=0, margin_right=0,
         margin_bottom=0, margin_left=0):
 
-        if not self.within_bounds(width, length, size_uom):
-            ValueError("size must be within bounds: %s x %s %s",
+        if not self.within_bounds(width + margin_left + margin_right, 
+                length + margin_top + margin_bottom, size_uom):
+            raise ValueError("size must be within bounds: %s x %s %s",
                 self.width_value, self.length_value, self.size_uom)
 
         child = ChildSheet.objects.create(parent=self,

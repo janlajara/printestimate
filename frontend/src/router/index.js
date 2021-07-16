@@ -74,7 +74,7 @@ const routes = [
         path: 'admin/production/machines/:id',
         name: 'admin-production-sheetfedpressmachine-detail',
         props: true,
-        component: ()=>import('../views/admin/production/machines/sheetfedpress/SheetFedPressMachineList.vue')
+        component: ()=>import('../views/admin/production/machines/sheetfedpress/SheetFedPressMachineDetail.vue')
       }, 
     ]
   },

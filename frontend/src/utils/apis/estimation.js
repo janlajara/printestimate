@@ -184,8 +184,9 @@ export class MachineApi {
 export class SheetFedPressMachineApi {
     static uri = '/estimation/api/machines'
 
-    static async listSheetFedPressMachines() {
-        const response = await AXIOS.execute(AXIOS.GET, 
+    static async listSheetFedPressMachines(getOptions=false) {
+        const action = (getOptions)? AXIOS.OPTIONS : AXIOS.GET;
+        const response = await AXIOS.execute(action, 
             SheetFedPressMachineApi.uri + '/sheetfedpress');
         if (response) return response.data;
     }
@@ -201,6 +202,19 @@ export class SheetFedPressMachineApi {
         const response = await AXIOS.execute(AXIOS.GET, 
             SheetFedPressMachineApi.uri + `/sheetfedpress/${id}`)
         return response.data
+    }
+
+    static async updateSheetFedPressMachine(id, machine) {
+        const response = await AXIOS.execute(AXIOS.PUT, 
+            SheetFedPressMachineApi.uri + `/sheetfedpress/${id}/`, 
+            'Machine updated successfully.', 'Update failed. Please try again.', machine
+        )
+        if (response) return response.data;
+    }
+
+    static async deleteSheetFedPressMachine(id) {
+        await AXIOS.execute(AXIOS.DELETE, SheetFedPressMachineApi.uri + `/${id}/`, 
+            'Machine deleted successfully.', 'Delete failed. Please try again.');
     }
 
     static async retrieveSheetFedPressMachineParentSheets(id) {

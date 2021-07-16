@@ -10,7 +10,7 @@
                 <InputText name="Name"  placeholder="Name"
                     type="text" :value="state.data.name" required
                     @input="value => state.data.name = value"/>
-                <InputText name="Name"  placeholder="Description"  class="col-span-2"
+                <InputText name="Description"  placeholder="Description"  class="col-span-2"
                     type="text" :value="state.data.description" required
                     @input="value => state.data.description = value"/>
             </div>

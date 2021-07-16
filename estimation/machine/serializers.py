@@ -2,6 +2,9 @@ from rest_framework import serializers
 #from rest_polymorphic.serializers import PolymorphicSerializer
 from estimation.models import Machine, SheetFedPressMachine, ParentSheet, ChildSheet
 from django.shortcuts import get_object_or_404
+import inflect
+
+_inflect = inflect.engine()
 
 class MachineSerializer(serializers.ModelSerializer):
     class Meta:
@@ -10,10 +13,14 @@ class MachineSerializer(serializers.ModelSerializer):
 
 
 class SheetFedPressMachineSerializer(serializers.ModelSerializer):
+    length_range = serializers.SerializerMethodField()
+    width_range = serializers.SerializerMethodField()
+
     class Meta:
         model = SheetFedPressMachine
         fields = ['id', 'name', 'process_type', 'description', 'min_sheet_length', 
-            'max_sheet_length', 'min_sheet_width', 'max_sheet_width', 'uom']
+            'max_sheet_length', 'min_sheet_width', 'max_sheet_width', 'uom', 
+            'length_range', 'width_range']
     
     def validate(self, data):
         errors = {}
@@ -27,6 +34,14 @@ class SheetFedPressMachineSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(errors)
 
         return super().validate(data)
+
+    def get_length_range(self, obj):
+        return '%g - %g %s' % (obj.min_sheet_length, 
+            obj.max_sheet_length, _inflect.plural(obj.uom))
+
+    def get_width_range(self, obj):
+        return '%g - %g %s' % (obj.min_sheet_width, 
+            obj.max_sheet_width, _inflect.plural(obj.uom))
 
 
 #class MachinePolymorphicSerializer(PolymorphicSerializer):

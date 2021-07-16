@@ -5,7 +5,7 @@
             <div class="my-auto">
                 <Button color="secondary" icon="add"
                     :action="state.createModal.open">
-                    Create Workstation</Button>
+                    Add Workstation</Button>
                 <WorkstationModal :is-open="state.createModal.isOpen"
                     @toggle="state.createModal.toggle" 
                     :on-after-save="populateWorkstationList"/>
@@ -16,7 +16,7 @@
                 <Row v-for="(s, key) in state.list" :key="key" clickable
                     @click="()=> goToDetail(s.id)">
                     <Cell label="Name">{{s.name}}</Cell>
-                    <Cell label="Name">{{s.description}}</Cell>
+                    <Cell label="Description">{{s.description}}</Cell>
                 </Row>
             </Table>
         </Section>

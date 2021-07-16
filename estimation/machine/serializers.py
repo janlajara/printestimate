@@ -6,14 +6,14 @@ from django.shortcuts import get_object_or_404
 class MachineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Machine
-        fields = ['id', 'name', 'type']
+        fields = ['id', 'name', 'type', 'description']
 
 
 class SheetFedPressMachineSerializer(serializers.ModelSerializer):
     class Meta:
         model = SheetFedPressMachine
-        fields = ['id', 'name', 'min_sheet_length', 'max_sheet_length',
-            'min_sheet_width', 'max_sheet_width', 'uom']
+        fields = ['id', 'name', 'process_type', 'description', 'min_sheet_length', 
+            'max_sheet_length', 'min_sheet_width', 'max_sheet_width', 'uom']
     
     def validate(self, data):
         errors = {}

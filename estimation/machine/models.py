@@ -40,6 +40,7 @@ class Machine(PolymorphicModel):
 
     objects = MachineManager()
     name = models.CharField(max_length=100)
+    description = models.CharField(max_length=100, null=True, blank=True)
     type = models.CharField(max_length=30, choices=TYPES, null=False, blank=False)
 
     def estimate(self, **kwargs):
@@ -49,7 +50,20 @@ class Machine(PolymorphicModel):
         return self.name
 
 
-class SheetFedPressMachine(Machine):
+class PressMachine(Machine):
+    OFFSET = 'Offset'
+    DIGITAL = 'Digital'
+    LETTERPRESS = 'Letterpress'
+    PROCESS_TYPES = [
+        (OFFSET, 'Offset'),
+        (DIGITAL, 'Digital'),
+        (LETTERPRESS, 'Letterpress')
+    ]
+    process_type = models.CharField(max_length=15, choices=PROCESS_TYPES, 
+        null=False, blank=False)
+
+
+class SheetFedPressMachine(PressMachine):
     min_sheet_length = models.FloatField(default=0)
     max_sheet_length = models.FloatField(default=0)
     min_sheet_width = models.FloatField(default=0)

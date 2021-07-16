@@ -59,7 +59,7 @@ const routes = [
         meta: {label: 'Workstations', group: 'Production Admin'}
       },
       {
-        path: 'admin/production/:id',
+        path: 'admin/production/workstations/:id',
         name: 'admin-production-workstation-detail',
         props: true,
         component: ()=>import('../views/admin/production/workstations/WorkstationDetail.vue')
@@ -69,7 +69,13 @@ const routes = [
         name: 'admin-production-machines',
         component: ()=>import('../views/admin/production/machines/MachineList.vue'),
         meta: {label: 'Machines', group: 'Production Admin'}
-      }
+      },
+      {
+        path: 'admin/production/machines/:id',
+        name: 'admin-production-sheetfedpressmachine-detail',
+        props: true,
+        component: ()=>import('../views/admin/production/machines/sheetfedpress/SheetFedPressMachineList.vue')
+      }, 
     ]
   },
   {

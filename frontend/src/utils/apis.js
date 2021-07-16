@@ -3,4 +3,5 @@ export {ItemApi, ItemRequestGroupApi, ItemRequestApi,
     AlternateStockUnitApi} from '@/utils/apis/inventory.js'
 
 export {WorkstationApi, ActivityExpenseApi, ActivityApi,
-    OperationApi, OperationStepApi} from '@/utils/apis/estimation.js'
+    OperationApi, OperationStepApi, 
+    MachineApi, SheetFedPressMachineApi} from '@/utils/apis/estimation.js'

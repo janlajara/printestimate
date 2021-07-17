@@ -51,19 +51,6 @@ class SheetFedPressMachineSerializer(serializers.ModelSerializer):
 #    }
 
 
-class ParentSheetSerializer(serializers.ModelSerializer):
-    label = serializers.SerializerMethodField()
-
-    class Meta:
-        model = ParentSheet
-        fields = ['id', 'label', 'width_value', 'length_value', 'size_uom',
-            'padding_top', 'padding_right', 'padding_bottom', 'padding_left',
-            'pack_width', 'pack_length']
-
-    def get_label(self, obj):
-        return str(obj)
-
-
 class ChildSheetSerializer(serializers.ModelSerializer):
     label = serializers.SerializerMethodField()
 
@@ -85,3 +72,21 @@ class ChildSheetListSerializer(ChildSheetSerializer):
         fields = ['id', 'parent', 'width_value', 'length_value', 'size_uom',
             'margin_top', 'margin_right', 'margin_bottom', 'margin_left',
             'pack_width', 'pack_length', 'usage', 'wastage']
+
+
+class ParentSheetSerializer(serializers.ModelSerializer):
+    size = serializers.SerializerMethodField()
+    label = serializers.SerializerMethodField()
+    child_sheets = ChildSheetSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = ParentSheet
+        fields = ['id', 'size', 'label', 'width_value', 'length_value', 'size_uom',
+            'padding_top', 'padding_right', 'padding_bottom', 'padding_left',
+            'pack_width', 'pack_length', 'child_sheets']
+
+    def get_size(self, obj):
+        return str(obj)
+
+    def get_label(self, obj):
+        return obj.label if obj.label is not None else str(obj)

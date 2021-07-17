@@ -133,6 +133,7 @@ class SheetFedPressMachine(PressMachine):
 class ParentSheet(Rectangle):
     machine = models.ForeignKey(SheetFedPressMachine, on_delete=models.CASCADE, 
         related_name='parent_sheets') 
+    label = models.CharField(max_length=30, blank=True, null=True)
     padding_top = models.FloatField(default=0)
     padding_right = models.FloatField(default=0)
     padding_bottom = models.FloatField(default=0)

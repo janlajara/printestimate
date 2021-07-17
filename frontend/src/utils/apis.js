@@ -4,4 +4,5 @@ export {ItemApi, ItemRequestGroupApi, ItemRequestApi,
 
 export {WorkstationApi, ActivityExpenseApi, ActivityApi,
     OperationApi, OperationStepApi, 
-    MachineApi, SheetFedPressMachineApi} from '@/utils/apis/estimation.js'
+    MachineApi, SheetFedPressMachineApi,
+    ParentSheetApi, ChildSheetApi} from '@/utils/apis/estimation.js'

@@ -35,7 +35,7 @@
                     name="Description" :value="state.machine.data.description"/>
             </DescriptionList>
         </Section>
-        <Section heading="Sheet Configuration">
+        <Section heading="Sheet Settings">
             <DescriptionList class="md:grid-cols-4">
                 <DescriptionItem :loader="state.isProcessing" 
                     name="Min~max Width" :value="state.machine.data.widthRange"/>
@@ -46,8 +46,10 @@
         <Section heading="Press Sheets">
             <Tabs>
                 <Tab title="Parent Sheets">
+                    <ParentSheetList :machine-id="state.id"/>
                 </Tab>
                 <Tab title="Child Sheets">
+                    <ChildSheetList :machine-id="state.id"/>
                 </Tab>
             </Tabs>
         </Section>
@@ -65,6 +67,8 @@ import Tabs from '@/components/Tabs.vue';
 import Tab from '@/components/Tab.vue';
 
 import SheetFedPressMachineModal from '@/views/admin/production/machines/sheetfedpress/SheetFedPressMachineModal.vue';
+import ParentSheetList from '@/views/admin/production/machines/sheetfedpress/parentsheets/ParentSheetList.vue';
+import ChildSheetList from '@/views/admin/production/machines/sheetfedpress/childsheets/ChildSheetList.vue';
 
 import {useRoute} from 'vue-router';
 import {reactive, onBeforeMount} from 'vue';
@@ -73,7 +77,7 @@ import {SheetFedPressMachineApi} from '@/utils/apis.js';
 export default {
     components: {
         Page, Button, Section, DescriptionList, DescriptionItem, DeleteRecordDialog,
-        Tabs, Tab, SheetFedPressMachineModal
+        Tabs, Tab, SheetFedPressMachineModal, ParentSheetList, ChildSheetList
     },
     setup() {
         const route = useRoute();

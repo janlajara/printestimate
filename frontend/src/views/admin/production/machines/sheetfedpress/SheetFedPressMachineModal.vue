@@ -29,7 +29,7 @@
                 <InputText name="Max"  placeholder="Max" :postfix="state.data.uom"
                     type="decimal" :value="state.data.maxLength" required
                     @input="value => state.data.maxLength = value"/>
-                <InputSelect name="Unit" required 
+                <InputSelect name="Unit" required :disabled="!state.isCreate"
                     @input="(value)=>state.data.uom = value"
                     :options="state.meta.uoms.map(c=>({
                         value: c.value, label: c.label,

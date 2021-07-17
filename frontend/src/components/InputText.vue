@@ -9,9 +9,10 @@
         <div class="flex rounded-md shadow-sm">
             <span v-if="$props.prefix"
                 class="input-field-part rounded-l-md">
-                {{$props.prefix}}
+                {{$props.prefix}} 
             </span>
-            <input :type="($props.type == 'password')? 'password': 'text'" 
+            <input
+                :type="($props.type == 'password')? 'password': 'text'" 
                 :placeholder="$props.placeholder"
                 class="input-field w-full" :value="$props.value"
                 :class="[inputStyle, $props.disabled ? 'text-gray-400' : '']" 
@@ -45,6 +46,14 @@ export default {
                 return ['text', 'number', 'decimal', 'money', 'password'].indexOf(value) !== -1
             }
         },
+        min: {
+            type: Number,
+            required: false
+        },
+        max: {
+            type: Number,
+            required: false
+        },
         required: Boolean,
         disabled: Boolean,
         readonly: Boolean,
@@ -74,7 +83,12 @@ export default {
                     pattern = /[^\d.]/g;
                 } 
                 input = input.replace(pattern, "");
-                if (input.trim() == "") input = null;
+                if (input.trim() == "") {
+                    input = null
+                } else {
+                    if (props.min && props.min > parseFloat(input)) input = props.min;
+                    if (props.max && props.max < parseFloat(input)) input = props.max;
+                }
             }
             emit('input', input);
             event.target.value = input;

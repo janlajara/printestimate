@@ -15,12 +15,15 @@ class MachineSerializer(serializers.ModelSerializer):
 class SheetFedPressMachineSerializer(serializers.ModelSerializer):
     length_range = serializers.SerializerMethodField()
     width_range = serializers.SerializerMethodField()
+    min_parent_sheet_length = serializers.SerializerMethodField()
+    min_parent_sheet_width = serializers.SerializerMethodField()
 
     class Meta:
         model = SheetFedPressMachine
         fields = ['id', 'name', 'process_type', 'description', 'min_sheet_length', 
             'max_sheet_length', 'min_sheet_width', 'max_sheet_width', 'uom', 
-            'length_range', 'width_range']
+            'length_range', 'width_range', 
+            'min_parent_sheet_length', 'min_parent_sheet_width']
     
     def validate(self, data):
         errors = {}
@@ -43,6 +46,13 @@ class SheetFedPressMachineSerializer(serializers.ModelSerializer):
         return '%g - %g %s' % (obj.min_sheet_width, 
             obj.max_sheet_width, _inflect.plural(obj.uom))
 
+    def get_min_parent_sheet_length(self, obj):
+        min_length_obj = obj.parent_sheets.order_by('length_value').first()
+        return min_length_obj.length_value if min_length_obj else None
+
+    def get_min_parent_sheet_width(self, obj):
+        min_width_obj = obj.parent_sheets.order_by('width_value').first()
+        return min_width_obj.width_value if min_width_obj else None
 
 #class MachinePolymorphicSerializer(PolymorphicSerializer):
 #    model_serializer_mapping = {

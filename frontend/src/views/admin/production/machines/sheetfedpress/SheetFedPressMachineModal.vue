@@ -23,12 +23,14 @@
         </Section>
         <Section heading="Sheet Length" heading-position="side"> 
             <div class="md:grid md:gap-4 md:grid-cols-3">
-                <InputText name="Min"  placeholder="Min" :postfix="state.data.uom"
+                <InputText name="Min"  
+                    placeholder="Min" :postfix="state.data.uom"
                     type="decimal" :value="state.data.minLength" required
-                    @input="value => state.data.minLength = value"/>
-                <InputText name="Max"  placeholder="Max" :postfix="state.data.uom"
+                    @input="value => state.data.minLength = parseFloat(value)"/>
+                <InputText name="Max"  
+                    placeholder="Max" :postfix="state.data.uom"
                     type="decimal" :value="state.data.maxLength" required
-                    @input="value => state.data.maxLength = value"/>
+                    @input="value => state.data.maxLength = parseFloat(value)"/>
                 <InputSelect name="Unit" required :disabled="!state.isCreate"
                     @input="(value)=>state.data.uom = value"
                     :options="state.meta.uoms.map(c=>({
@@ -82,7 +84,9 @@ export default {
             },
             meta: {
                 machineTypes: [],
-                uoms: []
+                uoms: [],
+                minParentSheetLength: null,
+                minParentSheetWidth: null
             },
             clear: ()=> {
                 state.data = {
@@ -93,12 +97,25 @@ export default {
             },
             validate: ()=> {
                 let errors = [];
+                state.error = '';
                 if (state.data.name == '') errors.push('name');
                 if (state.data.type == '') errors.push('type');
-                if (errors.length > 0)
+                if (errors.length > 0) {
                     state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
-                else state.error = '';
-                return errors.length > 0;
+                    return true;
+                }
+                if (state.data.minLength > state.data.maxLength || 
+                        state.data.minWidth > state.data.maxWidth) {
+                    state.error = 'Minimum size must not be greater than the maximum size.';
+                    return true;
+                }
+                if (state.meta.minParentSheetLength && state.meta.minParentSheetWidth && 
+                        (state.data.maxLength < state.meta.minParentSheetLength ||
+                        state.data.maxWidth < state.meta.minParentSheetWidth)) {
+                    state.error = `Sheet sizes must not be smaller than the smallest parent sheet: ` +
+                        `${state.meta.minParentSheetWidth} x ${state.meta.minParentSheetWidth} ${state.data.uom}`;
+                    return true;
+                }
             },
             save: ()=> {
                 if (state.validate()) return;
@@ -122,6 +139,8 @@ export default {
                     type: response.process_type, uom: response.uom,
                     minLength: response.min_sheet_length, maxLength: response.max_sheet_length, 
                     minWidth: response.min_sheet_width, maxWidth: response.max_sheet_width}
+                state.meta.minParentSheetLength = response.min_parent_sheet_length
+                state.meta.minParentSheetWidth = response.min_parent_sheet_width
             }
             state.isProcessing = false;
         }

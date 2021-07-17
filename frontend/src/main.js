@@ -36,10 +36,9 @@ createApp(App)
                 if (value != null) {
                     let replaced = value.replace(/[^\d]/g, '');
                     if (replaced != '') {
-                        replaced = parseInt(replaced)
-                        
-                        if (el.min != null && replaced < parseInt(el.min)) replaced = el.min;
-                        else if (el.max != null && replaced > parseInt(el.max)) replaced = el.max;
+                        replaced = parseFloat(replaced)
+                        if (el.min != null && replaced < parseFloat(el.min)) replaced = el.min;
+                        else if (el.max != null && replaced > parseFloat(el.max)) replaced = el.max;
                     }
                     event.target.value = replaced; 
                     const ev = new CustomEvent('input', {

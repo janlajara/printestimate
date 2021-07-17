@@ -76,7 +76,6 @@ class ChildSheetListSerializer(ChildSheetSerializer):
 
 class ParentSheetSerializer(serializers.ModelSerializer):
     size = serializers.SerializerMethodField()
-    label = serializers.SerializerMethodField()
     child_sheets = ChildSheetSerializer(read_only=True, many=True)
 
     class Meta:
@@ -87,6 +86,3 @@ class ParentSheetSerializer(serializers.ModelSerializer):
 
     def get_size(self, obj):
         return str(obj)
-
-    def get_label(self, obj):
-        return obj.label if obj.label is not None else str(obj)

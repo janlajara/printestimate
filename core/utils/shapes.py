@@ -141,8 +141,13 @@ class Rectangle(Shape):
     def packer(self, rectangle, rotate):
         self._validate(rectangle)
 
-        parent_dimensions = (self.pack_width, self.pack_length)
-        child_dimensions = (rectangle.pack_width, rectangle.pack_length)
+        parent_width = Distance(**{self.size_uom: self.pack_width})
+        parent_length = Distance(**{self.size_uom: self.pack_length})
+        child_width = Distance(**{rectangle.size_uom: rectangle.pack_width})
+        child_length = Distance(**{rectangle.size_uom: rectangle.pack_length})
+
+        parent_dimensions = (parent_width.mm, parent_length.mm)
+        child_dimensions = (child_width.mm, child_length.mm)
         params = parent_dimensions + child_dimensions
         estimate_count = BinPacker.estimate_rectangles(*params)
         child_rects = [child_dimensions] * estimate_count

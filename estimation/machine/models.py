@@ -108,7 +108,7 @@ class SheetFedPressMachine(PressMachine):
                 return None
 
     def add_parent_sheet(self, width_value, length_value, size_uom, 
-        padding_top=0, padding_right=0, padding_bottom=0, padding_left=0):
+        padding_top=0, padding_right=0, padding_bottom=0, padding_left=0, **kwargs):
 
         def within_bounds(a_val, a_unit, min_val, max_val, unit):
             return to_distance(min_val, unit) <= to_distance(a_val, a_unit) <= to_distance(max_val, unit)
@@ -125,7 +125,7 @@ class SheetFedPressMachine(PressMachine):
         parent = ParentSheet.objects.create(machine=self,
             width_value=width_value, length_value=length_value, size_uom=size_uom,
             padding_top=padding_top, padding_right=padding_right,
-            padding_bottom=padding_bottom, padding_left=padding_left)
+            padding_bottom=padding_bottom, padding_left=padding_left, **kwargs)
 
         return parent
 
@@ -161,8 +161,7 @@ class ParentSheet(Rectangle):
         return self.padding_top + self.padding_bottom
 
     def add_child_sheet(self, width_value, length_value, size_uom, 
-        margin_top=0, margin_right=0,
-        margin_bottom=0, margin_left=0):
+        margin_top=0, margin_right=0, margin_bottom=0, margin_left=0, **kwargs):
 
         if not self.within_bounds(width_value + margin_left + margin_right, 
                 length_value + margin_top + margin_bottom, size_uom):
@@ -172,7 +171,7 @@ class ParentSheet(Rectangle):
         child = ChildSheet.objects.create(parent=self,
             width_value=width_value, length_value=length_value, size_uom=size_uom,
             margin_top=margin_top, margin_right=margin_right,
-            margin_bottom=margin_bottom, margin_left=margin_left)
+            margin_bottom=margin_bottom, margin_left=margin_left, **kwargs)
             
         return child
 
@@ -221,8 +220,13 @@ class ChildSheet(Rectangle):
 
     @property
     def usage(self):
-        used_area = self.pack_width * self.pack_length * self.count
-        total_area = self.parent.pack_width * self.parent.pack_length
+        self_width = Distance(**{self.size_uom: self.pack_width})
+        self_length = Distance(**{self.size_uom: self.pack_length})
+        parent_width = Distance(**{self.size_uom: self.parent.pack_width})
+        parent_length = Distance(**{self.size_uom: self.parent.pack_length})
+
+        used_area = self_width.mm * self_length.mm * self.count
+        total_area = parent_width.mm * parent_length.mm
         return (used_area / total_area)
 
     @property

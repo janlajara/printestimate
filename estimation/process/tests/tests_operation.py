@@ -57,7 +57,9 @@ def korse_workstation(db, workstation_factory, speed_factory):
 @pytest.fixture
 def korse_machine(db):
     return Machine.objects.create_machine(name='KORSE Press', 
-        type=Machine.SHEET_FED_PRESS, uom='inch')
+        type=Machine.SHEET_FED_PRESS, uom='inch', 
+        min_sheet_width=1, max_sheet_width=40,
+        min_sheet_length=1, max_sheet_length=40)
 
 
 def test_workstation__add_activity(db, workstation_factory, speed_factory):
@@ -182,7 +184,7 @@ def test_operation__get_measurement_machine_based(db, korse_workstation, korse_m
     
     parent_sheet = korse_machine.add_parent_sheet(12.75, 18.5, 'inch')
     child_sheet = parent_sheet.add_child_sheet(8.25, 11.75, 'inch', 0.5, 0.5, 0.5, 0.5)
-    estimate = korse_machine.estimate(item, material, 100)
+    estimate = korse_machine.estimate(item, material, 100, True)
 
     assert estimate is not None
     assert estimate.item_count.sheet == 625
@@ -192,7 +194,7 @@ def test_operation__get_measurement_machine_based(db, korse_workstation, korse_m
     operation = korse_workstation.add_operation(
         name='2-Color Printing', material_type=Item.PAPER, 
         machine=korse_machine)
-    measurement = operation.get_measurement(item, material, 100)
+    measurement = operation.get_measurement(item, material, 100, bleed=True)
 
     assert measurement.pc == 2500
 

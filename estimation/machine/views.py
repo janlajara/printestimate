@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
 from estimation.models import Machine, SheetFedPressMachine, ParentSheet, ChildSheet
 from estimation import serializers
@@ -27,7 +27,7 @@ class SheetFedPressMachineViewSet(viewsets.ModelViewSet):
             serialized = serializers.SheetFedPressMachineSerializer(machine)
             return Response(serialized.data)
         else:
-            return Response(deserialized.errors)
+            return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
 
 
 class SheetFedPressMachineParentSheetViewSet(mixins.ListModelMixin,
@@ -53,11 +53,11 @@ class SheetFedPressMachineParentSheetViewSet(mixins.ListModelMixin,
                     serialized = serializers.ParentSheetSerializer(parent_sheet)
                     return Response(serialized.data)
                 except ValueError as ve:
-                    return Response({'error': str(ve)})
+                    return Response({'error': str(ve)}, status.HTTP_400_BAD_REQUEST)
             else:
-                return Response(deserialized.errors)
+                return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': "missing machine pk"})
+            return Response({'error': "missing machine pk"}, status.HTTP_400_BAD_REQUEST)
 
 
 class SheetFedPressMachineChildSheetViewSet(mixins.ListModelMixin,
@@ -84,17 +84,17 @@ class SheetFedPressMachineChildSheetViewSet(mixins.ListModelMixin,
                 try:
                     validated_data = deserialized.validated_data
                     parent_sheet = validated_data.pop('parent')
-                    if parent_sheet.machine.pk != pk:
+                    if parent_sheet.machine.pk != int(pk):
                         raise ValueError('machine with id: %s is not related to provided parent sheet' % pk)
                     child_sheet = parent_sheet.add_child_sheet(**validated_data)
                     serialized = serializers.ChildSheetSerializer(child_sheet)
                     return Response(serialized.data)
                 except ValueError as ve:
-                    return Response({'error': str(ve)})
+                    return Response({'error': str(ve)}, status.HTTP_400_BAD_REQUEST)
             else:
-                return Response(deserialized.errors)
+                return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': "missing machine pk"})
+            return Response({'error': "missing machine pk"}, status.HTTP_400_BAD_REQUEST)
 
 
 class ParentSheetViewSet(viewsets.ModelViewSet):

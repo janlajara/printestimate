@@ -17,7 +17,7 @@
                 class="input-field w-full" :value="$props.value"
                 :class="[inputStyle, $props.disabled ? 'text-gray-400' : '']" 
                 :disabled="$props.disabled"
-                @input="(event)=>emitInput(event)"
+                @blur="(event)=>emitInput(event)"
                 :readonly="$props.readonly"/>
             <span v-if="$props.postfix"
                 class="input-field-part rounded-r-md">

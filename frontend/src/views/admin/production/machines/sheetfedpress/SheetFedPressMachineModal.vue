@@ -23,11 +23,13 @@
         </Section>
         <Section heading="Sheet Length" heading-position="side"> 
             <div class="md:grid md:gap-4 md:grid-cols-3">
-                <InputText name="Min"  
+                <InputText name="Min" 
+                    :max="state.data.maxLength"
                     placeholder="Min" :postfix="state.data.uom"
                     type="decimal" :value="state.data.minLength" required
                     @input="value => state.data.minLength = parseFloat(value)"/>
                 <InputText name="Max"  
+                    :min="state.data.minLength"
                     placeholder="Max" :postfix="state.data.uom"
                     type="decimal" :value="state.data.maxLength" required
                     @input="value => state.data.maxLength = parseFloat(value)"/>
@@ -41,10 +43,14 @@
         </Section>
         <Section heading="Sheet Width" heading-position="side"> 
             <div class="md:grid md:gap-4 md:grid-cols-3">
-                <InputText name="Min"  placeholder="Min" :postfix="state.data.uom"
+                <InputText name="Min"  
+                    :max="state.data.maxWidth"
+                    placeholder="Min" :postfix="state.data.uom"
                     type="decimal" :value="state.data.minWidth" required
                     @input="value => state.data.minWidth = value"/>
-                <InputText name="Max"  placeholder="Max" :postfix="state.data.uom"
+                <InputText name="Max" 
+                    :min="state.data.minWidth"
+                    placeholder="Max" :postfix="state.data.uom"
                     type="decimal" :value="state.data.maxWidth" required
                     @input="value => state.data.maxWidth = value"/>
             </div>
@@ -102,11 +108,6 @@ export default {
                 if (state.data.type == '') errors.push('type');
                 if (errors.length > 0) {
                     state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
-                    return true;
-                }
-                if (state.data.minLength > state.data.maxLength || 
-                        state.data.minWidth > state.data.maxWidth) {
-                    state.error = 'Minimum size must not be greater than the maximum size.';
                     return true;
                 }
                 if (state.meta.minParentSheetLength && state.meta.minParentSheetWidth && 
@@ -183,6 +184,7 @@ export default {
                 retrieveMachine(id);
             }
             if (!props.isOpen) state.clear();
+            else state.error = '';
         })
 
         onBeforeMount(retrieveMetaData);

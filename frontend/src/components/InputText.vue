@@ -86,8 +86,8 @@ export default {
                 if (input.trim() == "") {
                     input = null
                 } else {
-                    if (props.min && props.min > parseFloat(input)) input = props.min;
-                    if (props.max && props.max < parseFloat(input)) input = props.max;
+                    if (props.min != null && props.min > parseFloat(input)) input = props.min;
+                    if (props.max != null && props.max < parseFloat(input)) input = props.max;
                 }
             }
             emit('input', input);

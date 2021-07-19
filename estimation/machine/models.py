@@ -183,6 +183,7 @@ class ParentSheet(Rectangle):
 class ChildSheet(Rectangle):
     parent = models.ForeignKey(ParentSheet, 
         on_delete=models.CASCADE, related_name='child_sheets')
+    label = models.CharField(max_length=30, blank=True, null=True)
     margin_top = models.FloatField(default=0)
     margin_right = models.FloatField(default=0)
     margin_bottom = models.FloatField(default=0)
@@ -218,6 +219,7 @@ class ChildSheet(Rectangle):
     def count(self):
         return self.parent.pack(self)
 
+    # To do: Revise, wrong formula
     @property
     def usage(self):
         self_width = Distance(**{self.size_uom: self.pack_width})

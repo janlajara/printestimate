@@ -1,34 +1,31 @@
 <template>
-    <div>
-        <svg :id="`rect-${state.id}`"></svg>
-    </div>
+    <rect 
+        :x="$props.x" :y="$props.y" 
+        :width="$props.width" :height="$props.height" 
+        :style="state.style" />
 </template>
 <script>
-import Snap from 'snapsvg-cjs';
-import {v4 as uuid} from 'uuid';
-import {reactive, onMounted} from 'vue';
+import {reactive, computed} from 'vue';
 
 export default {
-    setup(){
+    props: {
+        x: {type: Number, default: 0}, 
+        y: {type: Number, default: 0},
+        width: {type: Number, default: 0}, 
+        height: {type: Number, default: 0},
+        fill: {type: String, default: "transparent"},
+        stroke: {type: String, default: "none"},
+        strokeWidth: {type: Number, default: 1},
+    },
+    setup(props){
         const state = reactive({
-            id: uuid()
+            style: computed(()=> ({
+                fill: props.fill,
+                stroke: props.stroke,
+                strokeWidth: props.strokeWidth || 1,
+                'vector-effect': 'non-scaling-stroke'
+            }))
         });
-        console.log(state.id);
-
-        onMounted(()=> {
-            const elementId = `#rect-${state.id}`;
-            const snap = Snap(elementId);
-
-            if (snap) {
-                const circle = snap.circle(150, 150, 100);
-                circle.attr({
-                    fill: "#bada55",
-                    stroke: "#000",
-                    strokeWidth: 5
-                });
-            }
-        })
-
         return {
             state
         }

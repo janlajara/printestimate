@@ -8,8 +8,26 @@
             :is-open="state.createEditModal.isOpen"
             @toggle="state.createEditModal.toggle" 
             :on-after-save="()=>populateParentSheets(state.id)"/>
-        <Table :headers="['Size', '']" :loader="state.isProcessing">
+        <Table layout="fixed" :loader="state.isProcessing"
+            :cols-width="['w-1/6', 'w-1/2', 'w-1/4']"
+            :headers="['Lay-out', 'Size', '']">
             <Row v-for="(s, key) in state.list" :key="key" clickable>
+                <Cell label="Lay-out" class="bg-gray-100">
+                    <Svg :svg-height="50" 
+                        :view-box-width="s.widthValue" 
+                        :view-box-height="s.lengthValue"
+                        class="bg-gray">
+                        <ParentSheetShape
+                            :width="s.widthValue"
+                            :length="s.lengthValue"
+                            :padding-top="s.paddingTop"
+                            :padding-right="s.paddingRight"
+                            :padding-bottom="s.paddingBottom"
+                            :padding-left="s.paddingLeft"/>
+                    </Svg>
+                    <div class="text-xs flex justify-center">
+                        {{s.size}}</div>
+                </Cell>
                 <Cell label="Size">
                     <span v-if="s.label">
                         {{s.label}} ({{s.size}})
@@ -50,13 +68,16 @@ import Cell from '@/components/Cell.vue';
 import Button from '@/components/Button.vue';
 import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import ParentSheetModal from '@/views/admin/production/machines/sheetfedpress/parentsheets/ParentSheetModal.vue';
+import Svg from '@/utils/svg/Svg.vue';
+import ParentSheetShape from '@/views/admin/production/machines/sheetfedpress/parentsheets/ParentSheetShape.vue';
 
 import {reactive, onBeforeMount} from 'vue';
 import {SheetFedPressMachineApi, ParentSheetApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Table, Row, Cell, Button, DeleteRecordDialog, ParentSheetModal
+        Table, Row, Cell, Button, DeleteRecordDialog, 
+        ParentSheetModal, Svg, ParentSheetShape
     },
     props: {
         machineId: String

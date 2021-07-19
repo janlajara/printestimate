@@ -1,6 +1,7 @@
 <template>
     <Modal :heading="`${state.isCreate ? 'Add' : 'Edit'} Sheet`" 
-        :is-open="$props.isOpen" @toggle="(value)=> $emit('toggle', value)"
+        :is-open="$props.isOpen" 
+        @toggle="(value)=> $emit('toggle', value)"
         :buttons="[{color: 'primary', icon:'save', text:'Save', 
             action: state.save, disabled: state.isProcessing},]">
         <div v-if="state.error" 
@@ -12,13 +13,15 @@
                     :max="state.meta.sizeRestrictions.maxWidth"
                     :postfix="state.meta.uom" type="decimal" 
                     :value="state.data.width" required
-                    @input="value => state.data.width = value"/>
+                    @input="value => state.data.width = 
+                        value? parseFloat(value) : 0"/>
                 <InputText name="Length" 
                     :min="state.meta.sizeRestrictions.minLength"
                     :max="state.meta.sizeRestrictions.maxLength"
                     :postfix="state.meta.uom" type="decimal" 
                     :value="state.data.length" required
-                    @input="value => state.data.length = value"/>
+                    @input="value => state.data.length = 
+                        value? parseFloat(value) : 0"/>
                 <InputText name="Size Name"  placeholder="Size Name" 
                     type="text" :value="state.data.label"
                     @input="value => state.data.label = value"
@@ -31,22 +34,37 @@
                     :max="state.meta.sizeRestrictions.maxPadTop"
                     :postfix="state.meta.uom" type="decimal" 
                     :value="state.data.paddingTop" 
-                    @input="value => state.data.paddingTop = value"/>
+                    @input="value => state.data.paddingTop = value? parseFloat(value) : 0"/>
                 <InputText name="Right" :disabled="!state.meta.sizeValid"
                     :max="state.meta.sizeRestrictions.maxPadRight"
                     :postfix="state.meta.uom" type="decimal" 
                     :value="state.data.paddingRight" 
-                    @input="value => state.data.paddingRight = value"/>
+                    @input="value => state.data.paddingRight = value? parseFloat(value) : 0"/>
                 <InputText name="Bottom" :disabled="!state.meta.sizeValid" 
                     :max="state.meta.sizeRestrictions.maxPadBottom"
                     :postfix="state.meta.uom" type="decimal" 
                     :value="state.data.paddingBottom" 
-                    @input="value => state.data.paddingBottom = value"/>
+                    @input="value => state.data.paddingBottom = value? parseFloat(value) : 0"/>
                 <InputText name="Left" :disabled="!state.meta.sizeValid"  
                     :max="state.meta.sizeRestrictions.maxPadLeft"
                     :postfix="state.meta.uom" type="decimal" 
                     :value="state.data.paddingLeft" 
-                    @input="value => state.data.paddingLeft = value"/>
+                    @input="value => state.data.paddingLeft = value? parseFloat(value) : 0"/>
+            </div>
+        </Section>
+        <Section heading="Layout" heading-position="side">
+            <div class="mt-2 bg-gray-200 px-4 py-4 rounded-md">
+                <Svg :svg-height="200"
+                    :view-box-width="state.data.width" 
+                    :view-box-height="state.data.length">
+                    <ParentSheetShape
+                        :width="state.data.width"
+                        :length="state.data.length"
+                        :padding-top="state.data.paddingTop"
+                        :padding-right="state.data.paddingRight"
+                        :padding-bottom="state.data.paddingBottom"
+                        :padding-left="state.data.paddingLeft"/>
+                </Svg>
             </div>
         </Section>
     </Modal>
@@ -56,13 +74,15 @@
 import Modal from '@/components/Modal.vue';
 import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
+import Svg from '@/utils/svg/Svg.vue';
+import ParentSheetShape from '@/views/admin/production/machines/sheetfedpress/parentsheets/ParentSheetShape.vue';
 
 import {reactive, computed, watch} from 'vue';
 import {ParentSheetApi, SheetFedPressMachineApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Modal, Section, InputText
+        Modal, Section, InputText, Svg, ParentSheetShape
     },
     props: {
         isOpen: Boolean,
@@ -104,7 +124,7 @@ export default {
             },
             clearData: ()=> {
                 state.data = {
-                    label: '', width: '', length: '', uom: '',
+                    label: '', width: 0, length: 0, uom: '',
                     paddingTop: 0, paddingRight: 0, 
                     paddingBottom: 0, paddingLeft: 0};
             },
@@ -188,10 +208,10 @@ export default {
         }
 
         watch(()=> [props.isOpen], async ()=> {
+            state.clearData()
             if (props.isOpen) {
-                retrieveSheetFedMachine(state.machineId);
-                if (!state.isCreate) retrieveParentSheet(state.id);
-                else state.clearData();
+                await retrieveSheetFedMachine(state.machineId);
+                if (!state.isCreate) await retrieveParentSheet(state.id);
                 state.error = '';
             }
         })

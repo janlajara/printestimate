@@ -47,7 +47,7 @@
             </Row>
         </Table>
         <DeleteRecordDialog 
-            heading="Delete Expense"
+            heading="Delete Sheet"
             :is-open="state.deleteDialog.isOpen"
             :execute="state.deleteDialog.delete"
             :on-after-execute="()=>populateParentSheets(state.id)"

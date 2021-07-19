@@ -6,7 +6,7 @@
             action: state.save, disabled: state.isProcessing},]">
         <div v-if="state.error" 
             class="pt-4 text-sm text-red-600">*{{state.error}}</div>
-        <Section heading="Sheet Settings" heading-position="side"> 
+        <Section heading="Sheet Size" heading-position="side"> 
             <div class="md:grid md:gap-4 md:grid-cols-3">
                 <InputText name="Width" 
                     :min="state.meta.sizeRestrictions.minWidth"

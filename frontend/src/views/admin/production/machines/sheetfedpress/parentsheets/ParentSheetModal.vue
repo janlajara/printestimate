@@ -54,10 +54,11 @@
         </Section>
         <Section heading="Layout" heading-position="side">
             <div class="mt-2 bg-gray-200 px-4 py-4 rounded-md">
-                <Svg :svg-height="200"
+                <Svg :svg-height="250"
                     :view-box-width="state.data.width" 
                     :view-box-height="state.data.length">
                     <ParentSheetShape
+                        :display-label="true"
                         :width="state.data.width"
                         :length="state.data.length"
                         :padding-top="state.data.paddingTop"

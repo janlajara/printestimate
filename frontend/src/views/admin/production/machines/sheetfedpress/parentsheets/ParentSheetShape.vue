@@ -5,19 +5,23 @@
                 :width="$props.width"
                 :height="$props.length"
                 stroke="lightgray" fill="white"/>
-            <Line :stroke="state.paddingStroke" 
+            <Line v-if="$props.paddingTop > 0" 
+                :stroke="state.paddingStroke" 
                 :stroke-width="state.paddingStrokeWidth" dashed
                 :x1="0" :y1="$props.paddingTop"
                 :x2="$props.width" :y2="$props.paddingTop"/>
-            <Line :stroke="state.paddingStroke" 
+            <Line v-if="$props.paddingLeft"
+                :stroke="state.paddingStroke" 
                 :stroke-width="state.paddingStrokeWidth" dashed
                 :x1="$props.paddingLeft" :y1="0"
                 :x2="$props.paddingLeft" :y2="$props.length"/>
-            <Line :stroke="state.paddingStroke" 
+            <Line v-if="$props.paddingBottom"
+                :stroke="state.paddingStroke" 
                 :stroke-width="state.paddingStrokeWidth" dashed
                 :x1="0" :y1="$props.length - $props.paddingBottom"
                 :x2="$props.width" :y2="$props.length - $props.paddingBottom"/>
-            <Line :stroke="state.paddingStroke" 
+            <Line v-if="$props.paddingRight"
+                :stroke="state.paddingStroke" 
                 :stroke-width="state.paddingStrokeWidth" dashed
                 :x1="$props.width - $props.paddingRight" :y1="0"
                 :x2="$props.width - $props.paddingRight" :y2="$props.length"/>

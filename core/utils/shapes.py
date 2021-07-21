@@ -139,16 +139,25 @@ class Rectangle(Shape):
         return len(self.packer(rectangle, rotate))
 
     def packer(self, rectangle, rotate):
+        self._validate(rectangle)
+        return Rectangle.binpacker(
+            self.pack_width, self.pack_length, self.size_uom,
+            rectangle.pack_width, rectangle.pack_length, rectangle.size_uom, 
+            rotate)
+
+    @classmethod
+    def binpacker(cls, 
+            parent_width, parent_length, parent_uom,
+            child_width, child_length, child_uom, rotate):
+
         def __get_size__(unit, distance):
             d = Distance(**{unit: distance})
-            return distance if unit == self.size_uom else getattr(d, self.size_uom)
-
-        self._validate(rectangle)
-
-        parent_width = __get_size__(self.size_uom, self.pack_width)
-        parent_length = __get_size__(self.size_uom, self.pack_length) 
-        child_width = __get_size__(rectangle.size_uom, rectangle.pack_width)  
-        child_length = __get_size__(rectangle.size_uom, rectangle.pack_length) 
+            return distance if unit == parent_uom else getattr(d, parent_uom)
+        
+        parent_width = __get_size__(parent_uom, parent_width)
+        parent_length = __get_size__(parent_uom, parent_length) 
+        child_width = __get_size__(child_uom, child_width)  
+        child_length = __get_size__(child_uom, child_length) 
 
         parent_dimensions = (parent_width, parent_length)
         child_dimensions = (child_width, child_length)

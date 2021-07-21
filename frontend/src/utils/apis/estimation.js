@@ -286,4 +286,10 @@ export class ChildSheetApi {
         await AXIOS.execute(AXIOS.DELETE, ChildSheetApi.uri + `/${id}/`, 
             'Child Sheet deleted successfully.', 'Delete failed. Please try again.');
     }
+
+    static async retrieveChildSheetLayout(sheet) {
+        const response = await AXIOS.execute(AXIOS.POST, 
+            ChildSheetApi.uri + `/layout`,null, null, sheet);
+        return response.data
+    }
 }

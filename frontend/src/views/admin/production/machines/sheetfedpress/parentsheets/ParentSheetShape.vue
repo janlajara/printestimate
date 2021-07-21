@@ -25,6 +25,7 @@
                 :stroke-width="state.paddingStrokeWidth" dashed
                 :x1="$props.width - $props.paddingRight" :y1="0"
                 :x2="$props.width - $props.paddingRight" :y2="$props.length"/>
+            <slot/>
         </svg>
         <template v-if="$props.displayLabel">
             <LineMeasure stroke="gray" 

@@ -15,6 +15,8 @@
                         value: c.id, label: c.label,
                         isSelected: state.data.parent == c.id
                     }))"/>
+                <DescriptionItem 
+                    name="Useable Area" :value="state.meta.parentPackSize || 0"/>
             </div>
         </Section>
         <Section heading="Sheet Size" heading-position="side"> 
@@ -65,10 +67,22 @@
         </Section>
         <Section heading="Layout" heading-position="side">
             <div class="mt-2 bg-gray-200 px-4 py-4 rounded-md">
-                <Svg :svg-height="200"
-                    :view-box-width="state.data.width" 
-                    :view-box-height="state.data.length">
-                </Svg>
+                <ChildSheetLayout v-if="state.meta.parentSheet"
+                    :parent-width="state.meta.parentSheet.width"
+                    :parent-length="state.meta.parentSheet.length"
+                    :parent-uom="state.meta.parentSheet.uom"
+                    :parent-padding-top="state.meta.parentSheet.paddingTop"
+                    :parent-padding-right="state.meta.parentSheet.paddingRight"
+                    :parent-padding-bottom="state.meta.parentSheet.paddingBottom"
+                    :parent-padding-left="state.meta.parentSheet.paddingLeft"
+                    :child-width="state.data.width"
+                    :child-length="state.data.length"
+                    :child-uom="state.data.uom"
+                    :child-margin-top="state.data.marginTop"
+                    :child-margin-right="state.data.marginRight"
+                    :child-margin-bottom="state.data.marginBottom"
+                    :child-margin-left="state.data.marginLeft"
+                />
             </div>
         </Section>
     </Modal>
@@ -79,14 +93,15 @@ import Modal from '@/components/Modal.vue';
 import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
 import InputSelect from '@/components/InputSelect.vue';
-import Svg from '@/utils/svg/Svg.vue';
+import DescriptionItem from '@/components/DescriptionItem.vue';
+import ChildSheetLayout from './ChildSheetLayout.vue';
 
 import {reactive, computed, watch} from 'vue';
 import {ChildSheetApi, SheetFedPressMachineApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Modal, Section, InputText, InputSelect, Svg
+        Modal, Section, InputText, InputSelect, DescriptionItem, ChildSheetLayout
     },
     props: {
         isOpen: Boolean,
@@ -112,13 +127,15 @@ export default {
                 parentSheet: computed(()=> 
                     state.meta.parentSheets.find(x=>x.id == state.data.parent)),
                 parentSheets: [],
+                parentPackSize: computed(()=> (state.meta.parentSheet)? 
+                    state.meta.parentSheet.packSize : ''),
                 uom: computed(()=> (state.meta.parentSheet)? state.meta.parentSheet.uom : ''),
                 sizeValid: computed(()=> state.data.length != '' && state.data.width != ''),
                 sizeRestrictions: computed(()=> {
-                    const parentSheetLength = state.meta.parentSheet?
-                        state.meta.parentSheet.length : 0;
-                    const parentSheetWidth = state.meta.parentSheet?
-                        state.meta.parentSheet.width : 0;
+                    const parentSheetLength = (state.meta.parentSheet)? 
+                        state.meta.parentSheet.packLength : 0;
+                    const parentSheetWidth = (state.meta.parentSheet)? 
+                        state.meta.parentSheet.packWidth : 0;
                     const parentChildLengthDiff = parentSheetLength - state.data.length;
                     const parentChildWidthDiff = parentSheetWidth - state.data.width;
                     return {
@@ -133,7 +150,8 @@ export default {
                         maxMarginLeft: (parentChildWidthDiff > state.data.marginRight)? 
                             parentChildWidthDiff - state.data.marginRight : 0,
                     }
-                })           
+                }),
+                layout: null        
             },
             clearData: ()=> {
                 state.data = {
@@ -221,7 +239,14 @@ export default {
                         uom: obj.size_uom,
                         width: obj.width_value,
                         length: obj.length_value,
+                        packWidth: obj.pack_width,
+                        packLength: obj.pack_length,
+                        paddingTop: obj.padding_top,
+                        paddingRight: obj.padding_right,
+                        paddingBottom: obj.padding_bottom,
+                        paddingLeft: obj.padding_left,
                         size: obj.size,
+                        packSize: obj.pack_size,
                         label: obj.label?
                             `${obj.label} (${obj.size})`: obj.size
                     }));
@@ -234,7 +259,9 @@ export default {
             state.clearData()
             if (props.isOpen) {
                 await retrieveParentSheets(state.machineId);
-                if (!state.isCreate) await retrieveChildSheet(state.id);
+                if (!state.isCreate) {
+                    await retrieveChildSheet(state.id);
+                }
                 state.error = '';
             }
         })

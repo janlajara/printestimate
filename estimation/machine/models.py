@@ -148,6 +148,11 @@ class ParentSheet(Rectangle):
         return self.length_value - self.padding_y
 
     @property
+    def pack_size(self):
+        unit = _inflect.plural(self.size_uom)
+        return '%g x %g %s' % (self.pack_width, self.pack_length, unit)
+
+    @property
     def padding(self):
         return (self.padding_top, self.padding_right, 
             self.padding_bottom, self.padding_left)
@@ -217,15 +222,12 @@ class ChildSheet(Rectangle):
 
     @property
     def count(self):
-        return self.parent.pack(self)
+        return self.parent.pack(self) 
 
     # To do: Revise, wrong formula
     @property
     def usage(self):
-        self_width = Distance(**{self.size_uom: self.pack_width})
-        self_length = Distance(**{self.size_uom: self.pack_length})
-        parent_width = Distance(**{self.size_uom: self.parent.pack_width})
-        parent_length = Distance(**{self.size_uom: self.parent.pack_length})
+        
 
         used_area = self_width.mm * self_length.mm * self.count
         total_area = parent_width.mm * parent_length.mm
@@ -234,6 +236,23 @@ class ChildSheet(Rectangle):
     @property
     def wastage(self):
         return 1 - self.usage
+
+    def get_layout(self, rotate=False):
+        def __get_usage__(count):
+            self_width = Distance(**{self.size_uom: self.pack_width})
+            self_length = Distance(**{self.size_uom: self.pack_length})
+            parent_width = Distance(**{self.size_uom: self.parent.pack_width})
+            parent_length = Distance(**{self.size_uom: self.parent.pack_length})
+            self_area = self_width.mm * self_length.mm * count
+            parent_area = parent_width.mm * parent_length.mm
+            return (self_area / parent_area)
+
+        layout = self.parent.packer(self, rotate)
+        count = len(layout) if layout is not None else 0
+        usage = round(__get_usage__(count), 2) if layout is not None else 0
+        wastage = 1 - usage
+        
+        return layout, count, usage, wastage
 
     def __str__(self):
         unit = _inflect.plural(self.size_uom)

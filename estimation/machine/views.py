@@ -105,3 +105,45 @@ class ParentSheetViewSet(viewsets.ModelViewSet):
 class ChildSheetViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ChildSheetListSerializer
     queryset = ChildSheet.objects.all()
+
+
+class ChildSheetLayoutView(viewsets.ViewSet):
+
+    def get_layouts(self, pk, rotate):
+        child_sheet = get_object_or_404(ChildSheet, pk=pk)
+        print(child_sheet)
+        packer, count, usage, wastage = child_sheet.get_layout(rotate)
+        layouts = []
+        
+        for key, rect in enumerate(packer.rect_list()):
+            x, y, width, length, rid = rect
+            layout = serializers.PackRectangle(key + 1, x, y, width, length)
+            layouts.append(layout) 
+
+        return layouts, count, usage, wastage
+
+    def retrieve(self, request, pk=None):
+        if pk is not None:
+            rotate_layouts, rotate_count, rotate_usage, rotate_wastage = self.get_layouts(pk, True)
+            no_rotate_layouts, no_rotate_count, no_rotate_usage, no_rotate_wastage = self.get_layouts(pk, False)
+
+            rotate_serialized = serializers.PackRectangleSerializer(rotate_layouts, many=True)
+            no_rotate_serialized = serializers.PackRectangleSerializer(no_rotate_layouts, many=True)
+
+            return Response({
+                "allowRotate": {
+                    "count:": rotate_count,
+                    "usage": rotate_usage,
+                    "wastage": rotate_wastage,
+                    "rects": rotate_serialized.data,
+                },
+                "noRotate": {
+                    "count": no_rotate_count,
+                    "usage": no_rotate_usage,
+                    "wastage": no_rotate_wastage,
+                    "rects": no_rotate_serialized.data
+                }
+            })
+        else:
+            return Response({'error': "missing child sheet pk"}, 
+                status.HTTP_400_BAD_REQUEST)

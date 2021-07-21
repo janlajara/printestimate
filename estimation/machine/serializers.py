@@ -97,7 +97,38 @@ class ParentSheetSerializer(serializers.ModelSerializer):
         model = ParentSheet
         fields = ['id', 'size', 'label', 'width_value', 'length_value', 'size_uom',
             'padding_top', 'padding_right', 'padding_bottom', 'padding_left',
-            'pack_width', 'pack_length', 'child_sheets']
+            'pack_width', 'pack_length', 'pack_size', 'child_sheets']
 
     def get_size(self, obj):
         return str(obj)
+
+
+class PackRectangle:
+    def __init__(self, i=0, x=0, y=0, width=0, length=0):
+        self.i = i
+        self.x = x 
+        self.y = y 
+        self.width = width
+        self.length = length
+    
+    def area(self):
+        return self.width * self.length
+
+
+class PackRectangleSerializer(serializers.Serializer):
+    i = serializers.IntegerField()
+    x = serializers.FloatField()
+    y = serializers.FloatField()
+    width = serializers.FloatField()
+    length = serializers.FloatField()
+
+    def update(self, instance, validated_data):
+        instance.b = validated_data.get('i', instance.b)
+        instance.x = validated_data.get('x', instance.x)
+        instance.y = validated_data.get('y', instance.y)
+        instance.width = validated_data.get('width', instance.width)
+        instance.length = validated_data.get('length', instance.length)
+        return instance
+
+    def create(self, validated_data):
+        return PackRectangle(**validated_data)

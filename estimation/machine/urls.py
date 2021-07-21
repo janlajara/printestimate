@@ -20,5 +20,6 @@ urlpatterns = [
     # ChildSheet Viewsets
     path('api/childsheets/<pk>/',
         views.ChildSheetViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
-
+    path('api/childsheets/<pk>/layout',
+        views.ChildSheetLayoutView.as_view({'get': 'retrieve'}))
 ]

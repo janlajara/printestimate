@@ -28,7 +28,7 @@ export default {
         strokeWidth: {type: Number, default: 1},
         dashed: Boolean,
         textSize: {type: Number, default: 1},
-        text: String
+        text: {type: [Number, String]}
     },
     setup(props){
         const state = reactive({

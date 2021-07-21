@@ -139,15 +139,20 @@ class Rectangle(Shape):
         return len(self.packer(rectangle, rotate))
 
     def packer(self, rectangle, rotate):
+        def __get_size__(unit, distance):
+            d = Distance(**{unit: distance})
+            return distance if unit == self.size_uom else getattr(d, self.size_uom)
+
         self._validate(rectangle)
 
-        parent_width = Distance(**{self.size_uom: self.pack_width})
-        parent_length = Distance(**{self.size_uom: self.pack_length})
-        child_width = Distance(**{rectangle.size_uom: rectangle.pack_width})
-        child_length = Distance(**{rectangle.size_uom: rectangle.pack_length})
+        parent_width = __get_size__(self.size_uom, self.pack_width)
+        parent_length = __get_size__(self.size_uom, self.pack_length) 
+        child_width = __get_size__(rectangle.size_uom, rectangle.pack_width)  
+        child_length = __get_size__(rectangle.size_uom, rectangle.pack_length) 
 
-        parent_dimensions = (parent_width.mm, parent_length.mm)
-        child_dimensions = (child_width.mm, child_length.mm)
+        parent_dimensions = (parent_width, parent_length)
+        child_dimensions = (child_width, child_length)
+
         params = parent_dimensions + child_dimensions
         estimate_count = BinPacker.estimate_rectangles(*params)
         child_rects = [child_dimensions] * estimate_count
@@ -158,7 +163,8 @@ class Rectangle(Shape):
             packer2 = BinPacker.pack_rectangles(child_rects, parent_rect, False)[0]
             return packer1 if len(packer1) > len(packer2) else packer2
         else:
-            return BinPacker.pack_rectangles(child_rects, parent_rect, False)[0]
+            x = BinPacker.pack_rectangles(child_rects, parent_rect, False)
+            return x[0] if len(x) > 0 else None
 
     def gte(self, rectangle):
         self._validate(rectangle)

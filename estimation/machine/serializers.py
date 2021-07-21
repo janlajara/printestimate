@@ -69,7 +69,6 @@ class ChildSheetSerializer(serializers.ModelSerializer):
             'pack_width', 'pack_length']
 
 
-
 class ChildSheetListSerializer(ChildSheetSerializer):
     size = serializers.SerializerMethodField()
     parent_size = serializers.SerializerMethodField()
@@ -103,13 +102,32 @@ class ParentSheetSerializer(serializers.ModelSerializer):
         return str(obj)
 
 
+class ParentSheetLayoutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ParentSheet
+        fields = ['width_value', 'length_value', 'size_uom',
+            'padding_top', 'padding_right', 'padding_bottom', 'padding_left',
+            'pack_width', 'pack_length']
+
+
+class ChildSheetLayoutSerializer(serializers.ModelSerializer):
+    parent = ParentSheetLayoutSerializer()
+
+    class Meta:
+        model = ChildSheet
+        fields = ['parent', 'width_value', 'length_value', 'size_uom',
+            'margin_top', 'margin_right', 'margin_bottom', 'margin_left',
+            'pack_width', 'pack_length']
+
+
 class PackRectangle:
-    def __init__(self, i=0, x=0, y=0, width=0, length=0):
+    def __init__(self, i=0, x=0, y=0, width=0, length=0, is_rotated=False):
         self.i = i
         self.x = x 
         self.y = y 
         self.width = width
         self.length = length
+        self.is_rotated = is_rotated
     
     def area(self):
         return self.width * self.length
@@ -121,6 +139,7 @@ class PackRectangleSerializer(serializers.Serializer):
     y = serializers.FloatField()
     width = serializers.FloatField()
     length = serializers.FloatField()
+    is_rotated = serializers.BooleanField()
 
     def update(self, instance, validated_data):
         instance.b = validated_data.get('i', instance.b)
@@ -128,6 +147,7 @@ class PackRectangleSerializer(serializers.Serializer):
         instance.y = validated_data.get('y', instance.y)
         instance.width = validated_data.get('width', instance.width)
         instance.length = validated_data.get('length', instance.length)
+        instance.is_rotated = validated_data.get('is_rotated', instance.is_rotated)
         return instance
 
     def create(self, validated_data):

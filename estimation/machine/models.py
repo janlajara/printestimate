@@ -224,35 +224,40 @@ class ChildSheet(Rectangle):
     def count(self):
         return self.parent.pack(self) 
 
-    # To do: Revise, wrong formula
-    @property
-    def usage(self):
-        
+    @classmethod
+    def get_layout(cls, 
+            parent_width, parent_length, parent_uom, 
+            parent_padding_top, parent_padding_bottom,
+            parent_padding_right, parent_padding_left,
+            child_width, child_length, child_uom, 
+            child_margin_top, child_margin_bottom,
+            child_margin_right, child_margin_left,
+            rotate=False):
 
-        used_area = self_width.mm * self_length.mm * self.count
-        total_area = parent_width.mm * parent_length.mm
-        return (used_area / total_area)
+        def __get_usage__(pw, pl, pu, cw, cl, cu, count):
+            d_cw = Distance(**{cu: cw})
+            d_cl = Distance(**{cu: cl})
+            d_pw = Distance(**{pu: pw})
+            d_pl = Distance(**{pu: pl})
+            ca = d_cw.mm * d_cl.mm * count
+            pa = d_pw.mm * d_pl.mm
+            return (ca / pa)
 
-    @property
-    def wastage(self):
-        return 1 - self.usage
+        ppackw = parent_width - (parent_padding_left + parent_padding_right)
+        ppackl = parent_length - (parent_padding_top + parent_padding_bottom)
+        cpackw = child_width + (child_margin_left + child_margin_right)
+        cpackl = child_length + (child_margin_top + child_margin_bottom)
 
-    def get_layout(self, rotate=False):
-        def __get_usage__(count):
-            self_width = Distance(**{self.size_uom: self.pack_width})
-            self_length = Distance(**{self.size_uom: self.pack_length})
-            parent_width = Distance(**{self.size_uom: self.parent.pack_width})
-            parent_length = Distance(**{self.size_uom: self.parent.pack_length})
-            self_area = self_width.mm * self_length.mm * count
-            parent_area = parent_width.mm * parent_length.mm
-            return (self_area / parent_area)
+        layout = Rectangle.binpacker(
+            ppackw, ppackl, parent_uom,
+            cpackw, cpackl, child_uom, rotate)
 
-        layout = self.parent.packer(self, rotate)
         count = len(layout) if layout is not None else 0
-        usage = round(__get_usage__(count), 2) if layout is not None else 0
+        usage = __get_usage__(ppackw, ppackl, parent_uom, 
+            cpackw, cpackl, child_uom, count) if layout is not None else 0
         wastage = 1 - usage
         
-        return layout, count, usage, wastage
+        return layout, count, round(usage, 2), round(wastage, 2)
 
     def __str__(self):
         unit = _inflect.plural(self.size_uom)

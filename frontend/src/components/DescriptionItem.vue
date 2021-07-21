@@ -1,7 +1,7 @@
 <template>
-    <div>
-        <dt class="text-sm font-bold text-gray-500">{{$props.name}}</dt>
-        <dd class="mt-1 relative" 
+    <div class="mt-2">
+        <label class="text-sm font-medium text-gray-500">{{$props.name}}</label>
+        <div class="mt-1 relative" 
             :class="($props.value == null)? 'text-black text-opacity-30 italic': ''">
             <div v-if="$props.loader" :class="loaderWidth"
                 class="absolute bg-tertiary-light bg-opacity-50 rounded animate-pulse">
@@ -9,7 +9,7 @@
             </div>
             <span v-else>{{($props.value == null)? 'None' : $props.value}}</span>
             <span v-if="$props.loader">&nbsp;</span>
-        </dd>
+        </div>
     </div>
 </template>
 

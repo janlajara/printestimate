@@ -164,7 +164,7 @@ class ChildSheetLayoutView(mixins.CreateModelMixin, viewsets.GenericViewSet):
 
                 return Response({
                     "allow_rotate": {
-                        "count:": rotate_count,
+                        "count": rotate_count,
                         "usage": rotate_usage,
                         "wastage": rotate_wastage,
                         "rects": rotate_serialized.data,

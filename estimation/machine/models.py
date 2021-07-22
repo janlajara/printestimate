@@ -257,7 +257,7 @@ class ChildSheet(Rectangle):
             cpackw, cpackl, child_uom, count) if layout is not None else 0
         wastage = 1 - usage
         
-        return layout, count, round(usage, 2), round(wastage, 2)
+        return layout, count, round(usage * 100, 2), round(wastage * 100, 2)
 
     def __str__(self):
         unit = _inflect.plural(self.size_uom)

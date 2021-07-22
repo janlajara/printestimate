@@ -53,11 +53,13 @@ export default {
         childMarginBottom: {type: Number, default: 0},
         childMarginLeft: {type: Number, default: 0},
         childUom: {type: String, default: 'inch'},
+        allowRotate: {type: Boolean, default: true}
     },
     components: {
         Svg, ParentSheetShape, ChildSheetShape
     },
-    setup(props) {
+    emits: ['loaded'],
+    setup(props, {emit}) {
         const state = reactive({
             childSheet: computed(()=> ({
                 parent: {
@@ -79,8 +81,15 @@ export default {
             })),
             childSheetLayoutRotate: null,
             childSheetLayoutNoRotate: null,
-            rects: computed(()=> state.childSheetLayoutRotate ?
-                state.childSheetLayoutRotate.rects : [])
+            rects: computed(()=> {
+                let rects = [];
+                if (props.allowRotate && state.childSheetLayoutRotate) {
+                    rects = state.childSheetLayoutRotate.rects;
+                } else if (state.childSheetLayoutNoRotate) {
+                    rects = state.childSheetLayoutNoRotate.rects;
+                }
+                return rects;
+            })
         })
 
         const retrieveChildSheetLayout = async (sheet) => {
@@ -93,8 +102,20 @@ export default {
             }
         }
 
-        onMounted(()=> retrieveChildSheetLayout(state.childSheet));
-        onUpdated(()=> retrieveChildSheetLayout(state.childSheet));
+        const emitLoadLayout = ()=> {
+            let e = state.childSheetLayoutNoRotate;
+            if (props.allowRotate) e = state.childSheetLayoutRotate;
+            emit('loaded', e);
+        }
+
+        onMounted(async ()=> {
+            await retrieveChildSheetLayout(state.childSheet);
+            emitLoadLayout();
+        });
+        onUpdated(async ()=> {
+            await retrieveChildSheetLayout(state.childSheet);
+            emitLoadLayout();
+        });
 
         return {
             state

@@ -41,7 +41,7 @@
                     class="col-span-1"/>
             </div>
         </Section>
-        <Section heading="Margin" heading-position="side"> 
+        <Section heading="Bleed" heading-position="side"> 
             <div class="md:grid md:gap-4 md:grid-cols-4">
                 <InputText name="Top" :disabled="!state.meta.sizeValid"
                     :max="state.meta.sizeRestrictions.maxMarginTop"
@@ -67,7 +67,8 @@
         </Section>
         <Section heading="Layout" heading-position="side">
             <div class="mt-2 bg-gray-200 px-4 py-4 rounded-md">
-                <ChildSheetLayout v-if="state.meta.parentSheet"
+                <ChildSheetLayout 
+                    v-if="state.meta.parentSheet"
                     :parent-width="state.meta.parentSheet.width"
                     :parent-length="state.meta.parentSheet.length"
                     :parent-uom="state.meta.parentSheet.uom"
@@ -82,8 +83,19 @@
                     :child-margin-right="state.data.marginRight"
                     :child-margin-bottom="state.data.marginBottom"
                     :child-margin-left="state.data.marginLeft"
-                />
+                    :allow-rotate="state.meta.layoutRotate"
+                    @loaded="layout => state.meta.layout = layout"/>
             </div>
+            <DescriptionList v-if="state.meta.layout">
+                <div class="flex justify-between">
+                    <DescriptionItem name="Count" 
+                        :value="`${state.meta.layout.count} sheets`"/>
+                    <DescriptionItem name="Usage" 
+                        :value="`${state.meta.layout.usage}%`"/>
+                    <DescriptionItem name="Wastage" 
+                        :value="`${state.meta.layout.wastage}%`"/>
+                </div>
+            </DescriptionList>
         </Section>
     </Modal>
 </template>
@@ -93,6 +105,7 @@ import Modal from '@/components/Modal.vue';
 import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
 import InputSelect from '@/components/InputSelect.vue';
+import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import ChildSheetLayout from './ChildSheetLayout.vue';
 
@@ -101,7 +114,8 @@ import {ChildSheetApi, SheetFedPressMachineApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Modal, Section, InputText, InputSelect, DescriptionItem, ChildSheetLayout
+        Modal, Section, InputText, InputSelect, 
+        DescriptionList, DescriptionItem, ChildSheetLayout
     },
     props: {
         isOpen: Boolean,
@@ -151,7 +165,8 @@ export default {
                             parentChildWidthDiff - state.data.marginRight : 0,
                     }
                 }),
-                layout: null        
+                layout: null,
+                layoutRotate: true    
             },
             clearData: ()=> {
                 state.data = {

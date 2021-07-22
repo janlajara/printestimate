@@ -4,27 +4,34 @@
             <Rectangle 
                 :width="$props.width"
                 :height="$props.length"
-                stroke="lightgray" fill="white"/>
-            <Line v-if="$props.paddingTop > 0" 
                 :stroke="state.paddingStroke" 
-                :stroke-width="state.paddingStrokeWidth" dashed
-                :x1="0" :y1="$props.paddingTop"
-                :x2="$props.width" :y2="$props.paddingTop"/>
-            <Line v-if="$props.paddingLeft"
-                :stroke="state.paddingStroke" 
-                :stroke-width="state.paddingStrokeWidth" dashed
-                :x1="$props.paddingLeft" :y1="0"
-                :x2="$props.paddingLeft" :y2="$props.length"/>
-            <Line v-if="$props.paddingBottom"
-                :stroke="state.paddingStroke" 
-                :stroke-width="state.paddingStrokeWidth" dashed
-                :x1="0" :y1="$props.length - $props.paddingBottom"
-                :x2="$props.width" :y2="$props.length - $props.paddingBottom"/>
-            <Line v-if="$props.paddingRight"
-                :stroke="state.paddingStroke" 
-                :stroke-width="state.paddingStrokeWidth" dashed
-                :x1="$props.width - $props.paddingRight" :y1="0"
-                :x2="$props.width - $props.paddingRight" :y2="$props.length"/>
+                :stroke-width="1"
+                :fill="$props.fill"/>
+            <svg>    
+                <Rectangle v-if="$props.paddingTop > 0" 
+                    :width="$props.width" 
+                    :height="$props.paddingTop"
+                    :stroke="state.paddingStroke"
+                    pattern="diagonal-hatch"/>
+                <Rectangle v-if="$props.paddingLeft"
+                    :x="0" :y="0"
+                    :width="$props.paddingLeft" 
+                    :height="$props.length"
+                    :stroke="state.paddingStroke"
+                    pattern="diagonal-hatch"/>
+                <Rectangle v-if="$props.paddingBottom"
+                    :x="0" :y="$props.length - $props.paddingBottom"
+                    :width="$props.width" 
+                    :height="$props.paddingBottom"
+                    :stroke="state.paddingStroke"
+                    pattern="diagonal-hatch"/>
+                <Rectangle v-if="$props.paddingRight"
+                    :x="$props.width - $props.paddingRight" :y="0"
+                    :width="$props.paddingRight" 
+                    :height="$props.length"
+                    :stroke="state.paddingStroke"
+                    pattern="diagonal-hatch"/>
+            </svg>
             <slot/>
         </svg>
         <template v-if="$props.displayLabel">
@@ -49,7 +56,6 @@
 </template>
 <script>
 import Rectangle from '@/utils/svg/Rectangle.vue';
-import Line from '@/utils/svg/Line.vue';
 import LineMeasure from '@/utils/svg/LineMeasure.vue';
 
 import {reactive, computed} from 'vue';
@@ -63,10 +69,11 @@ export default {
         paddingRight: {type: Number, default: 0},
         paddingBottom: {type: Number, default: 0},
         paddingLeft: {type: Number, default: 0},
-        displayLabel: Boolean
+        displayLabel: Boolean,
+        fill: {type: String, default: 'white'}
     },
     components: {
-        Rectangle, Line, LineMeasure
+        Rectangle, LineMeasure
     },
     setup(props) {
         const state = reactive({

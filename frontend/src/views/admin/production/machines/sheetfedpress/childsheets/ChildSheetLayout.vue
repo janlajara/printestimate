@@ -1,10 +1,11 @@
 <template>
-    <Svg :svg-height="200"
+    <Svg :svg-height="250"
         :view-box-width="$props.parentWidth" 
         :view-box-height="$props.parentLength">
         <ParentSheetShape 
             :width="$props.parentWidth"
             :length="$props.parentLength"
+            fill="#ffeded"
             :padding-top="$props.parentPaddingTop"
             :padding-right="$props.parentPaddingRight"
             :padding-bottom="$props.parentPaddingBottom"
@@ -13,8 +14,8 @@
         <template v-if="state.rects.length > 0">
             <ChildSheetShape 
                 :key="key" v-for="(rect, key) in state.rects"
-                :x="rect.x + $props.parentPaddingRight" 
-                :y="rect.y + $props.parentPaddingTop"
+                :x="-(rect.x + $props.parentPaddingRight)" 
+                :y="-(rect.y + $props.parentPaddingTop)"
                 :text="rect.i"
                 :width="rect.width"
                 :length="rect.length"

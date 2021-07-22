@@ -47,12 +47,12 @@
                     :max="state.data.maxWidth"
                     placeholder="Min" :postfix="state.data.uom"
                     type="decimal" :value="state.data.minWidth" required
-                    @input="value => state.data.minWidth = value"/>
+                    @input="value => state.data.minWidth = parseFloat(value)"/>
                 <InputText name="Max" 
                     :min="state.data.minWidth"
                     placeholder="Max" :postfix="state.data.uom"
                     type="decimal" :value="state.data.maxWidth" required
-                    @input="value => state.data.maxWidth = value"/>
+                    @input="value => state.data.maxWidth = parseFloat(value)"/>
             </div>
         </Section>
     </Modal>

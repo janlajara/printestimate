@@ -17,6 +17,15 @@
                         :view-box-width="s.widthValue" 
                         :view-box-height="s.lengthValue"
                         class="bg-gray">
+                        <ChildSheetShape 
+                            :width="s.widthValue"
+                            :length="s.lengthValue"
+                            :margin-top="s.marginTop"
+                            :margin-right="s.marginRight"
+                            :margin-bottom="s.marginBottom"
+                            :margin-left="s.marginLeft"
+                            :view-box-width="s.widthValue"
+                            :view-box-length="s.lengthValue"/>
                     </Svg>
                     <div class="text-xs flex justify-center">
                         {{s.size}}</div>
@@ -64,6 +73,7 @@ import Cell from '@/components/Cell.vue';
 import Button from '@/components/Button.vue';
 import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import ChildSheetModal from '@/views/admin/production/machines/sheetfedpress/childsheets/ChildSheetModal.vue';
+import ChildSheetShape from '@/views/admin/production/machines/sheetfedpress/childsheets/ChildSheetShape.vue';
 import Svg from '@/utils/svg/Svg.vue';
 
 import {reactive, onBeforeMount} from 'vue';
@@ -72,7 +82,7 @@ import {SheetFedPressMachineApi, ChildSheetApi} from '@/utils/apis.js';
 export default {
     components: {
         Table, Row, Cell, Button, DeleteRecordDialog, 
-        ChildSheetModal, Svg
+        ChildSheetModal, ChildSheetShape, Svg
     },
     props: {
         machineId: String

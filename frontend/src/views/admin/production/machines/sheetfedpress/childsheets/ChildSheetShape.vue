@@ -1,9 +1,11 @@
 <template>
-    <svg :viewBox="`-${$props.x} -${$props.y} ${state.viewBoxWidth} ${state.viewBoxLength}`">
+    <svg :viewBox="`${$props.x} ${$props.y} ${state.viewBoxWidth} ${state.viewBoxLength}`">
         <Rectangle 
             :width="$props.width"
             :height="$props.length"
-            stroke="lightgray" fill="white"/>
+            stroke="darkgray" 
+            :stroke-width="1"
+            fill="white"/>
         <Line v-if="$props.marginTop > 0" 
             :stroke="state.marginStroke" 
             :stroke-width="state.marginStrokeWidth" dashed
@@ -24,18 +26,24 @@
             :stroke-width="state.marginStrokeWidth" dashed
             :x1="$props.width - $props.marginRight" :y1="0"
             :x2="$props.width - $props.marginRight" :y2="$props.length"/>
-        <text :x="(($props.width) / 2) - ($props.width * 0.25 / 4)" 
-            :y="($props.length) / 2 + ($props.length * 0.25 / 4)"
-            :font-size="$props.length * 0.25">
-            {{$props.text}}
-        </text>
+        <svg :width="$props.width" :height="$props.length"
+                :viewBox="`0 0 ${$props.width} ${$props.length}`">
+            <text :id="state.text.id" v-if="$props.text"
+                    :x="state.text.x" :y="state.text.y"
+                    :font-size="state.text.size"
+                    fill="#7e7e7e"
+                    font-weight="bold">
+                {{$props.text}}
+            </text>
+        </svg>
     </svg>
 </template>
 <script>
 import Rectangle from '@/utils/svg/Rectangle.vue';
 import Line from '@/utils/svg/Line.vue';
 
-import {reactive, computed} from 'vue';
+import {reactive, computed, onMounted} from 'vue';
+import { v4 as uuid } from 'uuid';
 
 export default {
     props: {
@@ -49,7 +57,8 @@ export default {
         marginLeft: {type: Number, default: 0},
         viewBoxWidth: {type: Number, default: null},
         viewBoxLength: {type: Number, default: null},
-        text: [String, Number]
+        text: [String, Number],
+        textSize: {type: Number, default: 1.5}
     },
     components: {
         Rectangle, Line
@@ -57,12 +66,34 @@ export default {
     setup(props) {
         const state = reactive({
             marginStroke: 'pink',
-            marginStrokeWidth: 2,
+            marginStrokeWidth: 1,
             offsetX: props.displayLabel? 2: 0,
             offsetY: props.displayLabel? 2: 0,
             viewBoxWidth: computed(()=>  props.viewBoxWidth || props.width),
-            viewBoxLength: computed(()=> props.viewBoxLength || props.length)
+            viewBoxLength: computed(()=> props.viewBoxLength || props.length),
+            text: {
+                id: `text-${uuid()}`, 
+                size: props.textSize,
+                offsetX: 0,
+                offsetY: 0,
+                x: computed(()=> {
+                    return (props.width / 2) - state.text.offsetX
+                }), 
+                y: computed(()=> {
+                    return (props.length / 2) + state.text.offsetY
+                }),
+            }
         });
+
+        onMounted(()=> {
+            let textElem = document.getElementById(state.text.id);
+            if (textElem) {
+                let textBbox = textElem.getBBox();
+                state.text.offsetX = textBbox.width / 2;
+                state.text.offsetY = textBbox.height / 4;
+            }
+        })
+
         return {
             state
         }

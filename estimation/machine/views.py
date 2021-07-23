@@ -132,7 +132,7 @@ class ChildSheetLayoutView(mixins.CreateModelMixin, viewsets.GenericViewSet):
         if parent_width == 0 + parent_length == 0 or child_width + child_length == 0:
             raise ValueError('size must be greater than zero')
 
-        packer, count, usage, wastage = ChildSheet.get_layout(
+        packer, count, usage, wastage, rotated_idx = ChildSheet.get_layout(
             parent_width, parent_length, parent_uom,
             parent_padding_top, parent_padding_bottom,
             parent_padding_right, parent_padding_left,
@@ -144,7 +144,7 @@ class ChildSheetLayoutView(mixins.CreateModelMixin, viewsets.GenericViewSet):
         
         for key, rect in enumerate(packer.rect_list()):
             x, y, width, length, rid = rect
-            is_rotated = rotate and not(width == child_width and length == child_length)
+            is_rotated = key in rotated_idx
             layout = serializers.PackRectangle(key + 1, x, y, width, length, is_rotated)
             layouts.append(layout) 
 

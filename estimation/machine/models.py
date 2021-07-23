@@ -256,8 +256,10 @@ class ChildSheet(Rectangle):
         usage = __get_usage__(ppackw, ppackl, parent_uom, 
             cpackw, cpackl, child_uom, count) if layout is not None else 0
         wastage = 1 - usage
-        
-        return layout, count, round(usage * 100, 2), round(wastage * 100, 2)
+        rotated = [i for i, x in enumerate(layout) if x.width != cpackw and x.height != cpackl] if \
+            layout is not None and rotate else []
+
+        return layout, count, round(usage * 100, 2), round(wastage * 100, 2), rotated
 
     def __str__(self):
         unit = _inflect.plural(self.size_uom)

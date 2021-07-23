@@ -168,9 +168,14 @@ class Rectangle(Shape):
         parent_rect = [parent_dimensions]
 
         if rotate:
-            packer1 = BinPacker.pack_rectangles(child_rects, parent_rect, True)[0]
-            packer2 = BinPacker.pack_rectangles(child_rects, parent_rect, False)[0]
-            return packer1 if len(packer1) > len(packer2) else packer2
+            packer1 = BinPacker.pack_rectangles(child_rects, parent_rect, True)
+            packer2 = BinPacker.pack_rectangles(child_rects, parent_rect, False)
+            if len(packer1) > 0 or len(packer2) > 0:
+                p1 = packer1[0]
+                p2 = packer2[0]
+                return p1 if len(p1) > len(p2) else p2
+            else:
+                None
         else:
             x = BinPacker.pack_rectangles(child_rects, parent_rect, False)
             return x[0] if len(x) > 0 else None

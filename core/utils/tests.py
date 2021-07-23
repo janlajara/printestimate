@@ -1,4 +1,5 @@
 from .measures import Measure
+from .binpacker import BinPacker
 
 
 # Create your tests here.
@@ -20,3 +21,12 @@ def test_measure__get_measure_quantity(db):
 def test_measure__get_units(db):
     units = Measure.get_units(Measure.DISTANCE)
     assert len(units) == 5
+
+
+def test_binpacker__pack_rectangles(db):
+    rects = [(14, 8)] * 7
+    bin = [(36, 24)]
+
+    packer = BinPacker.pack_rectangles(rects, bin, True)
+
+    assert len(packer[0]) == 7

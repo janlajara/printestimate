@@ -19,12 +19,13 @@
                 :text="rect.i"
                 :width="rect.width"
                 :length="rect.length"
-                :margin-top="$props.childMarginTop"
-                :margin-right="$props.childMarginRight"
-                :margin-bottom="$props.childMarginBottom"
-                :margin-left="$props.childMarginLeft"
+                :margin-top="rect.is_rotated ? $props.childMarginRight: $props.childMarginTop"
+                :margin-right="rect.is_rotated ? $props.childMarginBottom : $props.childMarginRight"
+                :margin-bottom="rect.is_rotated ? $props.childMarginLeft : $props.childMarginBottom"
+                :margin-left="rect.is_rotated ? $props.childMarginTop : $props.childMarginLeft"
                 :view-box-width="$props.parentWidth"
                 :view-box-length="$props.parentLength"/>
+            {{state.rects}}
         </template>
     </Svg>
 </template>
@@ -34,7 +35,7 @@ import Svg from '@/utils/svg/Svg.vue';
 import ParentSheetShape from '@/views/admin/production/machines/sheetfedpress/parentsheets/ParentSheetShape.vue';
 import ChildSheetShape from '@/views/admin/production/machines/sheetfedpress/childsheets/ChildSheetShape.vue';
 
-import {reactive, computed, onMounted, onUpdated} from 'vue';
+import {reactive, computed, onMounted, watch} from 'vue';
 import {ChildSheetApi} from '@/utils/apis.js'
 
 export default {
@@ -93,7 +94,7 @@ export default {
         })
 
         const retrieveChildSheetLayout = async (sheet) => {
-            if (sheet) {
+            if (sheet && sheet.width_value > 0 && sheet.length_value > 0) {
                 const response = await ChildSheetApi.retrieveChildSheetLayout(sheet);
                 if (response) {
                     state.childSheetLayoutRotate = response.allow_rotate;
@@ -112,10 +113,15 @@ export default {
             await retrieveChildSheetLayout(state.childSheet);
             emitLoadLayout();
         });
-        onUpdated(async ()=> {
-            await retrieveChildSheetLayout(state.childSheet);
-            emitLoadLayout();
-        });
+        watch(()=> {
+                const allProps = Object.keys(props);
+                allProps.pop('allowRotate');
+                return allProps.map(k => props[k]);},
+            async ()=> {
+                await retrieveChildSheetLayout(state.childSheet);
+                emitLoadLayout();}
+        );
+        watch(()=>props.allowRotate, emitLoadLayout);
 
         return {
             state

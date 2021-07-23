@@ -5,7 +5,7 @@
             :height="$props.length"
             stroke="darkgray" 
             :stroke-width="1"
-            fill="white"/>
+            :fill="$props.fill"/>
         <Line v-if="$props.marginTop > 0" 
             :stroke="state.marginStroke" 
             :stroke-width="state.marginStrokeWidth" dashed
@@ -58,7 +58,8 @@ export default {
         viewBoxWidth: {type: Number, default: null},
         viewBoxLength: {type: Number, default: null},
         text: [String, Number],
-        textSize: {type: Number, default: 1.5}
+        textSize: {type: Number, default: 1.5},
+        fill: {type: String, default: 'white'}
     },
     components: {
         Rectangle, Line

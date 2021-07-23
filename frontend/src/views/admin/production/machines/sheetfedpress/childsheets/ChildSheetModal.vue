@@ -41,7 +41,7 @@
                     class="col-span-1"/>
             </div>
         </Section>
-        <Section heading="Bleed" heading-position="side"> 
+        <Section heading="Margin" heading-position="side"> 
             <div class="md:grid md:gap-4 md:grid-cols-4">
                 <InputText name="Top" :disabled="!state.meta.sizeValid"
                     :max="state.meta.sizeRestrictions.maxMarginTop"
@@ -66,6 +66,17 @@
             </div>
         </Section>
         <Section heading="Layout" heading-position="side">
+            <ul class="my-3 flex gap-6">
+                <li v-for="(tab, index) in ['Any Direction', 'Fixed Direction']" :key="index"
+                    @click="()=> state.meta.layoutRotate = tab == 'Any Direction'"
+                    class="tab cursor-pointer" 
+                    :class="!state.meta.layoutRotate && tab == 'Fixed Direction' || 
+                            state.meta.layoutRotate && tab == 'Any Direction' ? 
+                        'text-primary border-primary font-bold border-b-4' : 
+                        ''">
+                    {{tab}}
+                </li>
+            </ul>
             <div class="mt-2 bg-gray-200 px-4 py-4 rounded-md">
                 <ChildSheetLayout 
                     v-if="state.meta.parentSheet"
@@ -78,7 +89,7 @@
                     :parent-padding-left="state.meta.parentSheet.paddingLeft"
                     :child-width="state.data.width"
                     :child-length="state.data.length"
-                    :child-uom="state.data.uom"
+                    :child-uom="state.meta.uom"
                     :child-margin-top="state.data.marginTop"
                     :child-margin-right="state.data.marginRight"
                     :child-margin-bottom="state.data.marginBottom"
@@ -183,10 +194,10 @@ export default {
             },
             validate: ()=> {
                 let errors = [];
-                if (state.data.width == '') errors.push('width');
-                if (state.data.length == '') errors.push('length');
+                if (state.data.width == '' || state.data.width <= 0) errors.push('width');
+                if (state.data.length == '' || state.data.length <= 0) errors.push('length');
                 if (errors.length > 0)
-                    state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
+                    state.error = `The following fields must not be empty and non-zero: ${errors.join(', ')}.`;
                 else state.error = '';
                 return errors.length > 0;
             },

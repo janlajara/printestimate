@@ -164,8 +164,15 @@ class Operation(models.Model):
         step_to_delete.delete()
 
     def get_measurement(self, input:Item, output:Material, quantity, **kwargs):
-        if self.material_type == input.type == output.type:
+        # Provide quantity based estimation only, if either input or output is empty
+        if self.costing_measure == CostingMeasure.QUANTITY and input is None:
+            qty = quantity
+            if output is not None:
+                qty = output.quantity * quantity
+            return Quantity(pc=qty)          
 
+        # Estimate via machine algorithm (if provided) or shape packing algorithm
+        if self.material_type == input.type == output.type:
             if self.machine is not None:
                 estimate = self.machine.estimate(input, output, quantity, **kwargs)
             else:

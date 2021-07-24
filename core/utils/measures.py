@@ -1,5 +1,5 @@
 from django.db import models
-from rest_framework import serializers
+from rest_framework import serializers  
 from measurement.utils import guess
 from measurement.base import MeasureBase, BidimensionalMeasure
 from measurement.measures import Area, Time, Volume, Distance
@@ -76,6 +76,32 @@ class Measure:
                     measure = key
                     break
         return measure
+
+
+
+class CostingMeasure:
+    LENGTH = 'length'
+    AREA = 'area'
+    VOLUME = 'volume'
+    QUANTITY = 'quantity'
+    PERIMETER = 'perimeter'
+    TYPES = [
+        (LENGTH, 'Length'),
+        (AREA, 'Area'),
+        (VOLUME, 'Volume'),
+        (QUANTITY, 'Quantity'),
+        (PERIMETER, 'Perimeter'),
+    ]
+
+    @classmethod
+    def get_base_measure(cls, costing_measure):
+        mapping = {
+            cls.LENGTH: Measure.DISTANCE,
+            cls.AREA: Measure.AREA,
+            cls.VOLUME: Measure.VOLUME,
+            cls.QUANTITY: Measure.QUANTITY,
+            cls.PERIMETER: Measure.DISTANCE}
+        return mapping.get(costing_measure)
 
 
 class Quantity(MeasureBase):

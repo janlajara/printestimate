@@ -1,6 +1,6 @@
 import math
 from django.db import models
-from core.utils.measures import Measure
+from core.utils.measures import Measure, CostingMeasure
 from measurement.measures import Distance, Volume
 from .binpacker import BinPacker
 
@@ -23,6 +23,12 @@ class Shape(models.Model):
         num_fmt = int(num) if num.is_integer() else num
         return '%s%s' % (num_fmt, uom)
 
+    def pack(self):
+        pass
+
+    def estimate(self, obj, quantity):
+        pass
+
     def gte(self, obj):
         pass
 
@@ -35,7 +41,7 @@ class Shape(models.Model):
 
 
 class Line(Shape):
-    measures = [Measure.DISTANCE]
+    costing_measures = [CostingMeasure.LENGTH]
     length_value = models.FloatField(null=True, blank=True)
     length_uom = models.CharField(max_length=30, blank=True, null=True, 
                                   choices=Measure.UNITS[Measure.DISTANCE])
@@ -54,6 +60,13 @@ class Line(Shape):
             return math.floor(self.length.mm / line.length.mm)
         else:
             return 0
+
+    def estimate(self, line, quantity):
+        outs = self.pack(line)
+        estimate = quantity / outs
+        return {
+            Measure.DISTANCE: self.length * estimate
+        }
 
     def gte(self, line):
         self._validate(line)
@@ -96,7 +109,7 @@ class Tape(Line):
 
 
 class Rectangle(Shape):
-    measures = [Measure.DISTANCE, Measure.AREA]
+    costing_measures = [CostingMeasure.AREA, CostingMeasure.PERIMETER, CostingMeasure.QUANTITY]
     length_value = models.FloatField(null=False, blank=False)
     width_value = models.FloatField(null=False, blank=False)
     size_uom = models.CharField(max_length=30, null=False, blank=False,
@@ -144,6 +157,15 @@ class Rectangle(Shape):
             self.pack_width, self.pack_length, self.size_uom,
             rectangle.pack_width, rectangle.pack_length, rectangle.size_uom, 
             rotate)
+
+    def estimate(self, rectangle, quantity):
+        outs = self.pack(rectangle)
+        estimate = quantity / outs
+        return {
+            CostingMeasure.AREA: self.area * estimate, 
+            CostingMeasure.PERIMETER: self.perimeter * estimate, 
+            CostingMeasure.QUANTITY: Quantity(pc=estimate)
+        }
 
     @classmethod
     def binpacker(cls, 
@@ -208,7 +230,7 @@ class Rectangle(Shape):
 
 
 class Liquid(Shape):
-    measures = [Measure.VOLUME]
+    costing_measures = [CostingMeasure.VOLUME]
     volume_value = models.FloatField(null=True, blank=True)
     volume_uom = models.CharField(max_length=30, blank=True, null=True,
                                   choices=Measure.UNITS[Measure.VOLUME])
@@ -227,6 +249,13 @@ class Liquid(Shape):
             return math.floor(self.length.ml / liquid.length.ml)
         else:
             return 0
+
+    def estimate(self, liquid, quantity):
+        outs = self.pack(liquid)
+        estimate = quantity / outs
+        return {
+            CostingMeasure.VOLUME: self.volume * estimate, 
+        }
 
     def gte(self, liquid):
         self._validate(liquid)

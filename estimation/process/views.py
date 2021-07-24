@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, mixins
 from rest_framework.response import Response
+from core.utils.measures import CostingMeasure
 from estimation.models import Workstation, Activity, ActivityExpense, Speed, Operation, OperationStep
 from estimation import serializers
 
@@ -41,7 +42,7 @@ class WorkstationActivitiesViewSet(mixins.ListModelMixin,
 
                 set_up = validated_data.pop('set_up')
                 tear_down = validated_data.pop('tear_down')
-                print(validated_data)
+                
                 activity = workstation.add_activity(
                     speed=speed, set_up=set_up.hr, tear_down=tear_down.hr,
                     **validated_data)
@@ -287,7 +288,7 @@ class OperationStepViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
         return Response(serialized.data)
 
 
-class OperationCostingMeasureView(viewsets.ViewSet):
+class CostingMeasureView(viewsets.ViewSet):
     def list(self, request):
         def map_values(obj):
             return {
@@ -296,7 +297,7 @@ class OperationCostingMeasureView(viewsets.ViewSet):
                     map(lambda x: {
                         "value": x[0],
                         "display": x[1],
-                        "base_measure": Operation.CostingMeasure.get_base_measure(x[0])
+                        "base_measure": CostingMeasure.get_base_measure(x[0])
                     }, obj[1]))
             }
         measure_choices = Operation.get_costing_measure_choices()

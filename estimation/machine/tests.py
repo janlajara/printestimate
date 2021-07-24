@@ -34,8 +34,6 @@ def test_parent_sheet__add_child_sheet(db, gto_machine):
     assert child_sheet.length.inch == 11
     assert child_sheet.margin == (0.5, 0.5, 0.5, 0.5)
     assert child_sheet.count == 4
-    assert child_sheet.usage == 1
-    assert child_sheet.wastage == 0
 
 
 def test_parent_sheet__add_child_sheet_value_error(db, gto_machine):

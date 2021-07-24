@@ -26,7 +26,7 @@ urlpatterns = [
     
     # Operation Viewsets
     path('api/operations/costingmeasures',
-        views.OperationCostingMeasureView.as_view({'get': 'list'})),
+        views.CostingMeasureView.as_view({'get': 'list'})),
     path('api/operations/<int:pk>/',
         views.OperationsViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
     path('api/operations/<int:pk>/steps',

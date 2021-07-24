@@ -4,8 +4,9 @@ from django.db import models
 from djmoney.models.fields import MoneyField
 from django_measurement.models import MeasurementField
 from measurement.measures import Time, Speed as MeasureSpeed
-from core.utils.measures import Quantity, Measure, AreaSpeed, VolumeSpeed, QuantitySpeed
+from core.utils.measures import CostingMeasure, Quantity, Measure, AreaSpeed, VolumeSpeed, QuantitySpeed
 from inventory.models import Item
+from inventory.properties.models import Tape, Line, Paper, Panel, Liquid
 from estimation.machine.models import Machine
 from estimation.product.models import Material
 from estimation.exceptions import MeasurementMismatch, MaterialTypeMismatch
@@ -57,30 +58,6 @@ class Workstation(models.Model):
 
 
 class Operation(models.Model):
-    class CostingMeasure:
-        LENGTH = 'length'
-        AREA = 'area'
-        VOLUME = 'volume'
-        QUANTITY = 'quantity'
-        PERIMETER = 'perimeter'
-        TYPES = [
-            (LENGTH, 'Length'),
-            (AREA, 'Area'),
-            (VOLUME, 'Volume'),
-            (QUANTITY, 'Quantity'),
-            (PERIMETER, 'Perimeter'),
-        ]
-
-        @classmethod
-        def get_base_measure(cls, costing_measure):
-            mapping = {
-                cls.LENGTH: Measure.DISTANCE,
-                cls.AREA: Measure.AREA,
-                cls.VOLUME: Measure.VOLUME,
-                cls.QUANTITY: Measure.QUANTITY,
-                cls.PERIMETER: Measure.DISTANCE}
-            return mapping.get(costing_measure)
-
     name = models.CharField(max_length=50)
     process = models.ForeignKey(Process, on_delete=models.SET_NULL,
         related_name='operations', blank=True, null=True)
@@ -98,24 +75,15 @@ class Operation(models.Model):
     @classmethod
     def get_costing_measure_choices(cls, itemType=None):
         def __get(costing_measures):
-            return [measure for measure in Operation.CostingMeasure.TYPES 
+            return [measure for measure in CostingMeasure.TYPES 
                 if measure[0] in costing_measures]
         mapping = {
-            Item.TAPE: __get([
-                Operation.CostingMeasure.LENGTH]),
-            Item.LINE: __get([
-                Operation.CostingMeasure.LENGTH]),
-            Item.PAPER: __get([
-                Operation.CostingMeasure.AREA, 
-                Operation.CostingMeasure.PERIMETER, 
-                Operation.CostingMeasure.QUANTITY]),
-            Item.PANEL: __get([
-                Operation.CostingMeasure.AREA, 
-                Operation.CostingMeasure.PERIMETER, 
-                Operation.CostingMeasure.QUANTITY]),
-            Item.LIQUID: __get([
-                Operation.CostingMeasure.VOLUME]),
-            Item.OTHER: __get([Operation.CostingMeasure.QUANTITY])
+            Item.TAPE: __get(Tape.costing_measures),
+            Item.LINE: __get(Line.costing_measures),
+            Item.PAPER: __get(Paper.costing_measures),
+            Item.PANEL: __get(Panel.costing_measures),
+            Item.LIQUID: __get(Liquid.costing_measures),
+            Item.OTHER: __get([CostingMeasure.QUANTITY])
         }
         if itemType is not None:
             return mapping.get(itemType, Item.OTHER)
@@ -129,11 +97,11 @@ class Operation(models.Model):
     @property
     def measure(self):
         mapping = {
-            Operation.CostingMeasure.LENGTH: Measure.DISTANCE,
-            Operation.CostingMeasure.AREA: Measure.AREA,
-            Operation.CostingMeasure.VOLUME: Measure.VOLUME,
-            Operation.CostingMeasure.QUANTITY: Measure.QUANTITY,
-            Operation.CostingMeasure.PERIMETER: Measure.DISTANCE}
+            CostingMeasure.LENGTH: Measure.DISTANCE,
+            CostingMeasure.AREA: Measure.AREA,
+            CostingMeasure.VOLUME: Measure.VOLUME,
+            CostingMeasure.QUANTITY: Measure.QUANTITY,
+            CostingMeasure.PERIMETER: Measure.DISTANCE}
         return mapping.get(self.costing_measure, None)
 
     @property
@@ -203,20 +171,13 @@ class Operation(models.Model):
 
     def get_measurement(self, input:Item, output:Material, quantity, **kwargs):
         if self.material_type == input.type == output.type:
-            
+
             if self.machine is not None:
                 estimate = self.machine.estimate(input, output, quantity, **kwargs)
-                mapping = {
-                    Operation.CostingMeasure.LENGTH: estimate.length,
-                    Operation.CostingMeasure.AREA: estimate.area,
-                    Operation.CostingMeasure.VOLUME: estimate.volume,
-                    Operation.CostingMeasure.QUANTITY: estimate.run_count,
-                    Operation.CostingMeasure.PERIMETER: estimate.perimeter}
-                return mapping.get(self.costing_measure, None)
-
-            materials_per_item = math.floor(input.properties.pack(output))
-            item_count_needed = output.quantity * quantity / materials_per_item
-            return Quantity(pc=item_count_needed)
+            else:
+                estimate = input.estimate(output, quantity)
+            
+            return estimate.get(self.costing_measure, None)
         else:
             raise MaterialTypeMismatch(self.material.type, item.type, self.material_type)
 

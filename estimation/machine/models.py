@@ -1,7 +1,7 @@
 import math
 from django.db import models
 from core.utils.shapes import Rectangle
-from core.utils.measures import Measure, Quantity
+from core.utils.measures import Measure, CostingMeasure, Quantity
 from measurement.measures import Distance
 from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
@@ -10,15 +10,6 @@ from inventory.models import Item
 import inflect
 
 _inflect = inflect.engine()
-
-class Estimate:
-    def __init__(self, run_count, item_count):
-        self.run_count = run_count
-        self.item_count = item_count
-        self.length = 0
-        self.area = 0
-        self.volume = 0
-        self.perimeter = 0
 
 
 class MachineManager(PolymorphicManager):
@@ -32,19 +23,26 @@ class MachineManager(PolymorphicManager):
         return machine
 
 
-class Machine(PolymorphicModel):
+class Machine(PolymorphicModel): 
     SHEET_FED_PRESS = 'SheetFedPressMachine'
     TYPES = [
         (SHEET_FED_PRESS, 'Sheet-fed Press'),
     ]
+    costing_measures = []
 
     objects = MachineManager()
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=100, null=True, blank=True)
     type = models.CharField(max_length=30, choices=TYPES, null=False, blank=False)
+    material_type = models.CharField(max_length=15, choices=Item.TYPES, 
+        default=Item.OTHER)
 
     def estimate(self, **kwargs):
         pass
+
+    @property
+    def costing_measures(self):
+        return costing_measures
 
     def __str__(self):
         return self.name
@@ -71,13 +69,14 @@ class SheetFedPressMachine(PressMachine):
     uom = models.CharField(max_length=30, default='mm',
         choices=Measure.UNITS[Measure.DISTANCE])
 
+    costing_measures = [CostingMeasure.AREA, CostingMeasure.QUANTITY]
+
     def estimate(self, input:Item, output:Material, quantity, bleed=False):
         if input.type == output.type == Item.PAPER:
             child_sheets = (
                 ChildSheet.objects
                     .filter(parent__machine=self)
-                    .order_by('width_value', 'length_value')
-            )
+                    .order_by('width_value', 'length_value'))
             match = None
 
             for child_sheet in child_sheets:
@@ -97,13 +96,12 @@ class SheetFedPressMachine(PressMachine):
                 runs_needed = items_needed * parent_sheet_per_item
 
                 run_count = Quantity(sheet=runs_needed)
-                item_count = Quantity(sheet=items_needed)
                 total_area = runs_needed * match.parent.area
-
-                estimate = Estimate(run_count=run_count, item_count=item_count)
-                estimate.area = total_area
                 
-                return estimate
+                return {
+                    CostingMeasure.AREA: total_area,
+                    CostingMeasure.QUANTITY: run_count
+                }
             else:
                 return None
 

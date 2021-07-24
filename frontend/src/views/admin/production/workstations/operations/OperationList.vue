@@ -16,7 +16,8 @@
                 <Cell label="Steps">
                     <ul>
                         <li v-for="(y, key2) in x.operationSteps" :key="key2">
-                            {{y.sequence}} - {{y.activity.name}} : {{y.notes}}
+                            {{y.sequence}} - {{y.activity.name}} 
+                            {{y.notes? ` : ${y.notes}` : ''}}
                         </li>
                     </ul>
                 </Cell>

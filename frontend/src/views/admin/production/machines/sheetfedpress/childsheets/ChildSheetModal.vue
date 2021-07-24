@@ -99,7 +99,7 @@
             </div>
             <DescriptionList v-if="state.meta.layout">
                 <div class="flex justify-between">
-                    <DescriptionItem name="Count" 
+                    <DescriptionItem name="Yield" 
                         :value="`${state.meta.layout.count} sheets`"/>
                     <DescriptionItem name="Usage" 
                         :value="`${state.meta.layout.usage}%`"/>

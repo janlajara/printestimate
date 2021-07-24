@@ -96,13 +96,7 @@ class Operation(models.Model):
 
     @property
     def measure(self):
-        mapping = {
-            CostingMeasure.LENGTH: Measure.DISTANCE,
-            CostingMeasure.AREA: Measure.AREA,
-            CostingMeasure.VOLUME: Measure.VOLUME,
-            CostingMeasure.QUANTITY: Measure.QUANTITY,
-            CostingMeasure.PERIMETER: Measure.DISTANCE}
-        return mapping.get(self.costing_measure, None)
+        return CostingMeasure.get_base_measure(self.costing_measure)
 
     @property
     def steps_count(self):

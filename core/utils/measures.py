@@ -101,7 +101,7 @@ class CostingMeasure:
             cls.VOLUME: Measure.VOLUME,
             cls.QUANTITY: Measure.QUANTITY,
             cls.PERIMETER: Measure.DISTANCE}
-        return mapping.get(costing_measure)
+        return mapping.get(costing_measure, None)
 
 
 class Quantity(MeasureBase):

@@ -31,6 +31,8 @@
                     name="Name" :value="state.workstation.validatedData.name"/>
                 <DescriptionItem :loader="state.isProcessing" 
                     name="Description" :value="state.workstation.validatedData.description"/>
+                <DescriptionItem :loader="state.isProcessing" 
+                    name="Machine" :value="state.workstation.validatedData.machine"/>
             </DescriptionList>
         </Section>
         <Section heading="Configuration">
@@ -80,12 +82,13 @@ export default {
             isProcessing: false,
             workstation: {
                 rawData: {},
-                validatedData: {
-                    id: computed(()=>state.workstation.rawData.id),
-                    name: computed(()=>state.workstation.rawData.name? 
-                        state.workstation.rawData.name : ''),
-                    description: computed(()=>state.workstation.rawData.description)
-                },
+                validatedData: computed(()=>({
+                    id: state.workstation.rawData.id,
+                    name: state.workstation.rawData.name? 
+                        state.workstation.rawData.name : '',
+                    description: state.workstation.rawData.description,
+                    machine: state.workstation.rawData.machine
+                })),
                 editModal: {
                     isOpen: false,
                     toggle: value => state.workstation.editModal.isOpen = value,
@@ -107,7 +110,8 @@ export default {
                 state.workstation.rawData = {
                     id: response.id,
                     name: response.name,
-                    description: response.description
+                    description: response.description,
+                    machine: response.machine_name
                 }
             }
             state.isProcessing = false;

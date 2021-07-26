@@ -13,6 +13,12 @@
                 <InputText name="Description"  placeholder="Description"  class="col-span-2"
                     type="text" :value="state.data.description" required
                     @input="value => state.data.description = value"/>
+                <InputSelect name="Machine" :disabled="!state.meta.isMachineEditable"
+                    @input="(value)=>state.data.machine = value"
+                    :options="state.meta.machines.map(c=>({
+                        value: c.value, label: c.label,
+                        isSelected: state.data.machine == c.value
+                    }))"/>
             </div>
         </Section>
     </Modal>
@@ -22,13 +28,14 @@
 import Modal from '@/components/Modal.vue';
 import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
+import InputSelect from '@/components/InputSelect.vue';
 
-import {reactive, computed, watch} from 'vue';
-import {WorkstationApi} from '@/utils/apis.js';
+import {reactive, computed, watch, onBeforeMount} from 'vue';
+import {WorkstationApi, MachineApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Modal, Section, InputText
+        Modal, Section, InputText, InputSelect
     },
     props: {
         isOpen: Boolean,
@@ -43,7 +50,11 @@ export default {
             isProcessing: false,
             error: '',
             data: {
-                name: '', description: ''
+                name: '', description: '', machine: null
+            },
+            meta: {
+                machines: [],
+                isMachineEditable: true,
             },
             validate: ()=> {
                 let errors = [];
@@ -56,7 +67,9 @@ export default {
             save: ()=> {
                 if (state.validate()) return;
                 const workstation = {
-                    name: state.data.name, description: state.data.description}
+                    name: state.data.name, 
+                    description: state.data.description,
+                    machine: state.data.machine}
                 saveWorkstation(workstation);
             }
         });
@@ -66,12 +79,22 @@ export default {
             const response = await WorkstationApi.retrieveWorkstation(id);
             if (response) {
                 state.data = {
-                    name: response.name, description: response.description
+                    name: response.name, description: response.description,
+                    machine: response.machine
                 }
+                state.meta.isMachineEditable = response.can_edit_machine
             }
             state.isProcessing = false;
         }
 
+        const retrieveMachines = async ()=> {
+            const response = await MachineApi.listMachines();
+            if (response) {
+                state.meta.machines = response.map(x => ({
+                    value: x.id, label: x.name
+                }))
+            }
+        }
 
         const saveWorkstation = async (workstation)=> {
             state.isProcessing = true;
@@ -96,6 +119,8 @@ export default {
                 retrieveWorkstation(id);
             }
         })
+
+        onBeforeMount(retrieveMachines);
 
         return {
             state

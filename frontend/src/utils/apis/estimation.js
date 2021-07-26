@@ -174,6 +174,11 @@ export class OperationStepApi {
 export class MachineApi {
     static uri = '/estimation/api/machines'
 
+    static async listMachines() {
+        const response = await AXIOS.execute(AXIOS.GET, MachineApi.uri);
+        if (response) return response.data;
+    }
+
     static async listMachineTypes() {
         const response = await AXIOS.execute(AXIOS.GET, MachineApi.uri + '/types');
         if (response) return response.data;

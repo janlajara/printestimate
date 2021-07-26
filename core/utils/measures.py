@@ -1,3 +1,4 @@
+import functools
 from django.db import models
 from rest_framework import serializers  
 from measurement.utils import guess
@@ -102,6 +103,14 @@ class CostingMeasure:
             cls.QUANTITY: Measure.QUANTITY,
             cls.PERIMETER: Measure.DISTANCE}
         return mapping.get(costing_measure, None)
+
+    @classmethod
+    def get_unit_of_measure_choices(cls, costing_measures):
+        base_measures = [cls.get_base_measure(x) for x in costing_measures]
+        choices = []
+        for x in base_measures:
+            choices += Measure.UNITS[x]
+        return choices
 
 
 class Quantity(MeasureBase):

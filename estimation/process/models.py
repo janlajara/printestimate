@@ -9,7 +9,7 @@ from inventory.models import Item
 from inventory.properties.models import Tape, Line, Paper, Panel, Liquid
 from estimation.machine.models import Machine
 from estimation.product.models import Material
-from estimation.exceptions import MeasurementMismatch, MaterialTypeMismatch
+from estimation.exceptions import MeasurementMismatch, MaterialTypeMismatch, CostingMeasureMismatch
 import inflect
 
 _inflect = inflect.engine()
@@ -30,13 +30,18 @@ class Workstation(models.Model):
             return self.activities
 
     def add_operation(self, name, material_type, prerequisite=None, 
-            machine=None, costing_measure='quantity'):
+            machine=None, costing_measure='quantity', **kwargs):
+
+        if machine is not None and not costing_measure in machine.costing_measures:
+            raise CostingMeasureMismatch(costing_measure, machine.costing_measures)
+
         operation = Operation.objects.create(
             workstation=self, name=name, 
             material_type=material_type,
             costing_measure=costing_measure,
             prerequisite=prerequisite,
-            machine=machine)
+            machine=machine, **kwargs)
+            
         return operation
 
     def add_activity(self, name, set_up, tear_down, 

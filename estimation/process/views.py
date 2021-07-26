@@ -107,8 +107,7 @@ class WorkstationOperationsViewSet(mixins.ListModelMixin,
             if deserialized.is_valid():
                 validated_data = deserialized.validated_data
                 operation_steps = validated_data.pop('operation_steps')
-                operation = Operation.objects.create(
-                    workstation=workstation, **validated_data)
+                operation = workstation.add_operation(**validated_data)
 
                 # sort by sequence
                 operation_steps.sort(key=lambda x: x.get('sequence'))

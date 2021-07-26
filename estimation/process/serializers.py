@@ -116,8 +116,8 @@ class OperationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Operation
-        fields = ['id', 'name', 'material_type', 'prerequisite', 
-            'costing_measure', 'operation_steps']
+        fields = ['id', 'name', 'machine', 'material_type', 
+            'costing_measure', 'prerequisite', 'operation_steps']
 
 
 class OperationListSerializer(serializers.ModelSerializer):

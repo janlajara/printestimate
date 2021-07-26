@@ -11,6 +11,13 @@ class MaterialTypeMismatch(Exception):
                        (actual_material_type, actual_item_type, expected_type)
         super().__init__(self.message)
 
+
+class CostingMeasureMismatch(Exception):
+    def __init__(self, actual_costing_measure, expected_costing_measures):
+        self.message = "Provided costing measure '%s' not found in expected machine costing measures: %s" % \
+                       (actual_costing_measure, expected_costing_measures)
+        super().__init__(self.message)
+
 '''
 class InvalidProductMeasure(Exception):
     def __init__(self, measure, measure_type, measure_options):

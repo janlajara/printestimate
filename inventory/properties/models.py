@@ -49,19 +49,6 @@ class Panel(Rectangle):
 class ItemProperties(PolymorphicModel, Shape):
     properties_id = models.AutoField(primary_key=True)
 
-    # TO DO, eliminate
-    @staticmethod
-    def get_class(item_type):
-        mapping = {
-            'tape': TapeProperties,
-            'line': LineProperties,
-            'paper': PaperProperties,
-            'panel': PanelProperties,
-            'liquid': LiquidProperties,
-            'other': ItemProperties
-        }
-        return mapping.get(item_type, ItemProperties)
-
 
 class TapeProperties(ItemProperties, Tape):
     pass

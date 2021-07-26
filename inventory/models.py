@@ -2,7 +2,9 @@ from django.db import models
 from django.db.models import Q, Sum, Avg, Count
 from djmoney.models.fields import MoneyField
 from inventory.properties.models import TapeProperties, LineProperties, PaperProperties, \
-    PanelProperties, LiquidProperties, ItemProperties
+    PanelProperties, LiquidProperties, ItemProperties, Paper, Panel
+from core.utils.shapes import Line, Tape, Liquid
+from core.utils.measures import CostingMeasure
 from .exceptions import DepositTooBig, InsufficientStock, \
     InvalidExpireQuantity, IllegalUnboundedDeposit, \
         IllegalItemRequestOperation, IllegalItemRequestGroupOperation
@@ -287,6 +289,24 @@ class Item(models.Model):
     def expire_stock(self, stock_id, quantity):
         stock = Stock.objects.get(pk=stock_id)
         stock.expired(quantity)
+
+    @classmethod
+    def get_costing_measure_choices(cls, item_type=None):
+        def __get(costing_measures):
+            return [measure for measure in CostingMeasure.TYPES 
+                if measure[0] in costing_measures]
+        mapping = {
+            Item.TAPE: __get(Tape.costing_measures),
+            Item.LINE: __get(Line.costing_measures),
+            Item.PAPER: __get(Paper.costing_measures),
+            Item.PANEL: __get(Panel.costing_measures),
+            Item.LIQUID: __get(Liquid.costing_measures),
+            Item.OTHER: __get([CostingMeasure.QUANTITY])
+        }
+        if item_type is not None:
+            return mapping.get(item_type, Item.OTHER)
+        else:
+            return mapping
 
     def __str__(self):
         return self.full_name

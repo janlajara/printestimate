@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, mixins
 from rest_framework.response import Response
 from core.utils.measures import CostingMeasure
+from inventory.models import Item
 from estimation.models import Workstation, Activity, ActivityExpense, Speed, Operation, OperationStep
 from estimation import serializers
 
@@ -299,6 +300,6 @@ class CostingMeasureView(viewsets.ViewSet):
                         "base_measure": CostingMeasure.get_base_measure(x[0])
                     }, obj[1]))
             }
-        measure_choices = Operation.get_costing_measure_choices()
+        measure_choices = Item.get_costing_measure_choices()
         mapped = list(map(map_values, measure_choices.items()))
         return Response(mapped)

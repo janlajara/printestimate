@@ -28,21 +28,20 @@ class Machine(PolymorphicModel):
     TYPES = [
         (SHEET_FED_PRESS, 'Sheet-fed Press'),
     ]
-    costing_measures = []
 
     objects = MachineManager()
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=100, null=True, blank=True)
     type = models.CharField(max_length=30, choices=TYPES, null=False, blank=False)
-    material_type = models.CharField(max_length=15, choices=Item.TYPES, 
-        default=Item.OTHER)
+
+    material_type = Item.OTHER
 
     def estimate(self, **kwargs):
         pass
 
     @property
     def costing_measures(self):
-        return costing_measures
+        return [x[0] for x in Item.get_costing_measure_choices(self.material_type)]
 
     def __str__(self):
         return self.name
@@ -69,7 +68,7 @@ class SheetFedPressMachine(PressMachine):
     uom = models.CharField(max_length=30, default='mm',
         choices=Measure.UNITS[Measure.DISTANCE])
 
-    costing_measures = [CostingMeasure.AREA, CostingMeasure.QUANTITY]
+    material_type = Item.PAPER
 
     def estimate(self, input:Item, output:Material, quantity, bleed=False):
         if input.type == output.type == Item.PAPER:

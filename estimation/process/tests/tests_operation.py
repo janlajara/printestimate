@@ -170,6 +170,7 @@ def test_operation__get_duration_and_rate(db, korse_workstation):
 
 def test_operation__get_measurement_machine_based(db, korse_workstation, korse_machine,
         item_factory, component_factory):
+    korse_workstation.machine = korse_machine
     item = item_factory(name='Carbonless White', type=Item.PAPER)
     item.properties.length_value = 37
     item.properties.width_value = 25.5
@@ -195,8 +196,7 @@ def test_operation__get_measurement_machine_based(db, korse_workstation, korse_m
     assert area is not None and math.floor(area.sq_inch) == 589687
 
     operation = korse_workstation.add_operation(
-        name='2-Color Printing', material_type=Item.PAPER, 
-        machine=korse_machine)
+        name='2-Color Printing', material_type=Item.PAPER)
     measurement = operation.get_measurement(item, material, 100, bleed=True)
 
     assert measurement.pc == 2500

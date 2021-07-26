@@ -22,6 +22,8 @@ class Process(models.Model):
 class Workstation(models.Model):
     name = models.CharField(max_length=50)
     description = models.CharField(max_length=200)
+    machine = models.ForeignKey(Machine, on_delete=models.SET_NULL, 
+        related_name='operations', blank=True, null=True)
 
     def get_activities(self, measure=None):
         if measure is not None:
@@ -29,18 +31,17 @@ class Workstation(models.Model):
         else:
             return self.activities
 
-    def add_operation(self, name, material_type, prerequisite=None, 
-            machine=None, costing_measure='quantity', **kwargs):
+    def add_operation(self, name, material_type, prerequisite=None,
+            costing_measure='quantity', **kwargs):
 
-        if machine is not None and not costing_measure in machine.costing_measures:
-            raise CostingMeasureMismatch(costing_measure, machine.costing_measures)
+        if self.machine is not None and not costing_measure in self.machine.costing_measures:
+            raise CostingMeasureMismatch(costing_measure, self.machine.costing_measures)
 
         operation = Operation.objects.create(
             workstation=self, name=name, 
             material_type=material_type,
             costing_measure=costing_measure,
-            prerequisite=prerequisite,
-            machine=machine, **kwargs)
+            prerequisite=prerequisite, **kwargs)
             
         return operation
 
@@ -74,30 +75,10 @@ class Operation(models.Model):
         default=CostingMeasure.QUANTITY)
     material_type = models.CharField(max_length=15, choices=Item.TYPES, 
         default=Item.OTHER)
-    machine = models.ForeignKey(Machine, on_delete=models.SET_NULL, 
-        related_name='operations', blank=True, null=True)
-
-    @classmethod
-    def get_costing_measure_choices(cls, itemType=None):
-        def __get(costing_measures):
-            return [measure for measure in CostingMeasure.TYPES 
-                if measure[0] in costing_measures]
-        mapping = {
-            Item.TAPE: __get(Tape.costing_measures),
-            Item.LINE: __get(Line.costing_measures),
-            Item.PAPER: __get(Paper.costing_measures),
-            Item.PANEL: __get(Panel.costing_measures),
-            Item.LIQUID: __get(Liquid.costing_measures),
-            Item.OTHER: __get([CostingMeasure.QUANTITY])
-        }
-        if itemType is not None:
-            return mapping.get(itemType, Item.OTHER)
-        else:
-            return mapping
 
     @property
     def costing_measure_choices(self):
-        return Operation.get_costing_measure_choices(self.material_type)
+        return Item.get_costing_measure_choices(self.material_type)
 
     @property
     def measure(self):
@@ -178,8 +159,8 @@ class Operation(models.Model):
 
         # Estimate via machine algorithm (if provided) or shape packing algorithm
         if self.material_type == input.type == output.type:
-            if self.machine is not None:
-                estimate = self.machine.estimate(input, output, quantity, **kwargs)
+            if self.workstation.machine is not None:
+                estimate = self.workstation.machine.estimate(input, output, quantity, **kwargs)
             else:
                 estimate = input.estimate(output, quantity)
             

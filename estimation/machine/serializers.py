@@ -1,5 +1,5 @@
 from rest_framework import serializers
-#from rest_polymorphic.serializers import PolymorphicSerializer
+from rest_polymorphic.serializers import PolymorphicSerializer
 from estimation.models import Machine, SheetFedPressMachine, ParentSheet, ChildSheet
 from django.shortcuts import get_object_or_404
 import inflect
@@ -20,8 +20,10 @@ class SheetFedPressMachineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SheetFedPressMachine
-        fields = ['id', 'name', 'process_type', 'description', 'min_sheet_length', 
-            'max_sheet_length', 'min_sheet_width', 'max_sheet_width', 'uom', 
+        fields = ['id', 'name', 'process_type', 
+            'description', 'costing_measures', 
+            'min_sheet_length', 'max_sheet_length', 
+            'min_sheet_width', 'max_sheet_width', 'uom', 
             'length_range', 'width_range', 
             'min_parent_sheet_length', 'min_parent_sheet_width']
     
@@ -54,11 +56,11 @@ class SheetFedPressMachineSerializer(serializers.ModelSerializer):
         min_width_obj = obj.parent_sheets.order_by('width_value').first()
         return min_width_obj.width_value if min_width_obj else None
 
-#class MachinePolymorphicSerializer(PolymorphicSerializer):
-#    model_serializer_mapping = {
-#        Machine: MachineSerializer,
-#        SheetFedPressMachine: SheetFedPressMachineSerializer
-#    }
+class MachinePolymorphicSerializer(PolymorphicSerializer):
+    model_serializer_mapping = {
+        Machine: MachineSerializer,
+        SheetFedPressMachine: SheetFedPressMachineSerializer
+    }
 
 
 class ChildSheetSerializer(serializers.ModelSerializer):

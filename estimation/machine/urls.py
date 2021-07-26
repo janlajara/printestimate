@@ -3,6 +3,7 @@ from estimation import views
 
 urlpatterns = [
     # Machine Viewsets
+    path('api/machines', views.MachineViewSet.as_view({'get': 'list'})),
     path('api/machines/types', views.MachineTypesViewSet.as_view({'get': 'list'})),
     path('api/machines/sheetfedpress', 
         views.SheetFedPressMachineViewSet.as_view({'get': 'list', 'post': 'create'})),

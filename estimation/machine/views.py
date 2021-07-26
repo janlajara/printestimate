@@ -13,6 +13,11 @@ class MachineTypesViewSet(viewsets.ViewSet):
         return Response(types)
 
 
+class MachineViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    queryset = Machine.objects.all()
+    serializer_class = serializers.MachinePolymorphicSerializer
+
+
 class SheetFedPressMachineViewSet(viewsets.ModelViewSet):
     queryset = SheetFedPressMachine.objects.all()
     serializer_class = serializers.SheetFedPressMachineSerializer

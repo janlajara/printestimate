@@ -30,7 +30,19 @@ class WorkstationActivitiesViewSet(mixins.ListModelMixin,
         else:
             return Activity.objects.all()
 
-    def create(self, request, pk=None):
+    def options(self, request, pk=None):
+        response = super().options(request, pk)
+        workstation = get_object_or_404(Workstation, pk=pk)
+        
+        if workstation.machine is not None:
+            costing_measures = workstation.machine.costing_measures
+            uoms = CostingMeasure.get_unit_of_measure_choices(costing_measures)
+            uom_choices = [{'value': uom[0], 'display_name': uom[1]} for uom in uoms]
+            response.data['actions']['POST']['speed']['children']['measure_unit']['choices'] = uom_choices
+        
+        return response
+
+    def create(self, request, pk=None): 
         if pk is not None:
             workstation = get_object_or_404(Workstation, pk=pk)
             deserialized = serializers.ActivityCreateSerializer(data=request.data)
@@ -99,6 +111,18 @@ class WorkstationOperationsViewSet(mixins.ListModelMixin,
             return Operation.objects.filter(workstation=pk)
         else:
             return Operations.objects.all()
+
+    def options(self, request, pk=None):
+        response = super().options(request, pk)
+        workstation = get_object_or_404(Workstation, pk=pk)
+        
+        if workstation.machine is not None:
+            material_type = workstation.machine.material_type
+            material_type_choices = response.data['actions']['POST']['material_type']['choices']
+            filtered = [x for x in material_type_choices if x['value'] == material_type]
+            response.data['actions']['POST']['material_type']['choices'] = filtered
+        
+        return response
 
     def create(self, request, pk=None):
         if pk is not None:

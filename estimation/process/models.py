@@ -34,8 +34,12 @@ class Workstation(models.Model):
     def add_operation(self, name, material_type, prerequisite=None,
             costing_measure='quantity', **kwargs):
 
-        if self.machine is not None and not costing_measure in self.machine.costing_measures:
-            raise CostingMeasureMismatch(costing_measure, self.machine.costing_measures)
+        if self.machine is not None: 
+            material_type = self.machine.material_type
+
+            if not costing_measure in self.machine.costing_measures:
+                raise CostingMeasureMismatch(costing_measure, self.machine.costing_measures)
+
 
         operation = Operation.objects.create(
             workstation=self, name=name, 

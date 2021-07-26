@@ -8,10 +8,22 @@ from estimation.models import Workstation, ActivityExpense, \
 
 
 class WorkstationSerializer(serializers.ModelSerializer):
+    machine_name = serializers.SerializerMethodField()
+    can_edit_machine = serializers.SerializerMethodField()
+
     class Meta:
         model = Workstation
-        fields = ['id', 'name', 'description']
+        fields = ['id', 'name', 'description', 'machine', 
+            'machine_name', 'can_edit_machine']
 
+    def get_machine_name(self, obj):
+        return obj.machine.name if obj.machine is not None else None
+
+    def get_can_edit_machine(self, obj):
+        no_activities = len(obj.activities.all()) == 0
+        no_operations = len(obj.operations.all()) == 0
+        return (no_activities and no_operations)
+        
 
 class SpeedSerializer(serializers.ModelSerializer):
     rate = serializers.SerializerMethodField()
@@ -116,7 +128,7 @@ class OperationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Operation
-        fields = ['id', 'name', 'machine', 'material_type', 
+        fields = ['id', 'name', 'material_type', 
             'costing_measure', 'prerequisite', 'operation_steps']
 
 

@@ -38,15 +38,13 @@ class Material(PolymorphicModel, Shape):
     name = models.CharField(max_length=20, default='Material')
     component = models.ForeignKey(Component, on_delete=models.CASCADE,
         related_name='materials')
-    items = models.ManyToManyField(Item, related_name='materials', blank=True)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, 
+        related_name='materials')
     quantity = models.IntegerField(default=1)
 
     @property
     def type(self):
         return self.component.type
-
-    def link_item(self, item):
-        self.items.add(item)
 
 
 class TapeMaterial(Material, Tape):

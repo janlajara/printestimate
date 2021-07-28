@@ -29,19 +29,4 @@ def test_component__add_material(db, component_factory):
         width_value=8.5, length_value=11,
         size_uom='inch')
 
-    assert ply.width.inch == 8.5 and ply.length.inch == 11
-
-def test_material__link_item(db, item_factory, component_factory):
-    item1 = item_factory(name='Carbonless White', type=Item.PAPER)
-    item2 = item_factory(name='Carbonless Blue', type=Item.PAPER)
-    component = component_factory(
-        name='Form', type=Item.PAPER)
-    material = component.add_material(
-        name='ply', quantity=400,
-        width_value=8.5, length_value=11,
-        size_uom='inch')
-    material.link_item(item1)
-    material.link_item(item2)
-
-    assert len(material.items.all()) == 2
-    
+    assert ply.width.inch == 8.5 and ply.length.inch == 11    

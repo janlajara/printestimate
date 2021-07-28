@@ -38,8 +38,6 @@ class Material(PolymorphicModel, Shape):
     name = models.CharField(max_length=20, default='Material')
     component = models.ForeignKey(Component, on_delete=models.CASCADE,
         related_name='materials')
-    item = models.ForeignKey(Item, on_delete=models.CASCADE, 
-        related_name='materials')
     quantity = models.IntegerField(default=1)
 
     @property

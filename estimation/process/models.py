@@ -16,7 +16,11 @@ _inflect = inflect.engine()
 
 # Create your models here.
 class Process(models.Model):
-    name = models.CharField(max_length=40)
+    name = models.CharField(max_length=40)    
+    costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
+        default=CostingMeasure.QUANTITY)
+    material_type = models.CharField(max_length=15, choices=Item.TYPES, 
+        default=Item.OTHER)
 
 
 class Workstation(models.Model):

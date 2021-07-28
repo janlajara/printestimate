@@ -26,7 +26,7 @@ class Process(models.Model):
 class Workstation(models.Model):
     name = models.CharField(max_length=50)
     description = models.CharField(max_length=200)
-    machine = models.ForeignKey(Machine, on_delete=models.SET_NULL, 
+    machine = models.OneToOneField(Machine, on_delete=models.SET_NULL, 
         related_name='operations', blank=True, null=True)
 
     def get_activities(self, measure=None):

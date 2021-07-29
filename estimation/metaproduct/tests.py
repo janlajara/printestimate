@@ -1,14 +1,16 @@
 import pytest
+from core.utils.measures import CostingMeasure
 from inventory.models import Item
 from inventory.tests import item_factory, base_unit__sheet, alt_unit__ream
 from estimation.process.models import Workstation
-from estimation.metaproduct.models import MetaComponent, MetaMaterialOption, \
-    MetaProperty, MetaPropertyOption
+from estimation.metaproduct.models import MetaProduct, MetaService, \
+    MetaComponent, MetaMaterialOption, MetaProperty, MetaPropertyOption
 
 @pytest.fixture
 def meta_component_factory(db):
     def create_component(**kwargs):
-        return MetaComponent.objects.create(**kwargs)
+        meta_product = MetaProduct.objects.create(name='product')
+        return MetaComponent.objects.create(meta_product=meta_product, **kwargs)
     return create_component
 
 @pytest.fixture
@@ -28,6 +30,25 @@ def korse_printing_operation(db):
     ws = Workstation.objects.create(name='Korse', description='')
     op = ws.add_operation('Korse Printing', Item.PAPER)
     return op
+
+def test_meta_product__add_meta_component(db):
+    meta_product = MetaProduct.objects.create(name='Form')
+    meta_component = meta_product.add_meta_component(name='Sheets', type=Item.PAPER)
+
+    assert meta_component is not None
+    assert meta_component.name == 'Sheets'
+    assert meta_component.type == Item.PAPER
+
+def test_meta_product__add_meta_service(db):
+    meta_product = MetaProduct.objects.create(name='Form')
+    meta_service = meta_product.add_meta_service(name='Padding', 
+        type=Item.PAPER, costing_measure=CostingMeasure.QUANTITY)
+    
+    assert meta_service is not None
+    assert meta_service.name == 'Padding'
+    assert meta_service.type == Item.PAPER
+    assert meta_service.costing_measure == CostingMeasure.QUANTITY
+
 
 def test_meta_component__add_meta_material_option(db, form_meta_component, carbonless_item):
     meta_material_option = form_meta_component.add_meta_material_option(

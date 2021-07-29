@@ -1,12 +1,34 @@
 from django.db import models
+from core.utils.measures import CostingMeasure
 from inventory.models import Item
 from estimation.process.models import Operation
 from polymorphic.models import PolymorphicModel
 
 
+class MetaProduct(models.Model):
+    name = models.CharField(max_length=40)
+
+    def add_meta_component(self, name, type):
+        return MetaComponent.objects.create(name=name, type=type, 
+            meta_product=self)
+
+    def add_meta_service(self, name, type, costing_measure):
+        return MetaService.objects.create(name=name, type=type,
+            costing_measure=costing_measure, meta_product=self)
+
+
+class MetaService(models.Model):
+    name = models.CharField(max_length=40)
+    type = models.CharField(max_length=15, choices=Item.TYPES)
+    costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
+        default=CostingMeasure.QUANTITY)
+    meta_product = models.ForeignKey(MetaProduct, on_delete=models.CASCADE)
+
+
 class MetaComponent(models.Model):
     name = models.CharField(max_length=40)
     type = models.CharField(max_length=15, choices=Item.TYPES)
+    meta_product = models.ForeignKey(MetaProduct, on_delete=models.CASCADE)
 
     def add_meta_material_option(self, label, item:Item):
         return MetaMaterialOption.objects.create(label=label, 
@@ -39,6 +61,8 @@ class MetaProperty(models.Model):
     is_required = models.BooleanField(default=False)
     meta_component = models.ForeignKey(MetaComponent, on_delete=models.CASCADE, 
         related_name='meta_properties')
+    meta_service = models.ForeignKey(MetaService, on_delete=models.SET_NULL,
+        related_name='meta_properties', null=True)
 
     @property
     def options(self):

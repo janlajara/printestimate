@@ -34,9 +34,9 @@ class MetaComponent(models.Model):
         return MetaMaterialOption.objects.create(label=label, 
             meta_component=self, item=item)
     
-    def add_meta_property(self, name, options_type):
+    def add_meta_property(self, name, options_type, **kwargs):
         return MetaProperty.objects.create(name=name, options_type=options_type,
-            meta_component=self)
+            meta_component=self, **kwargs)
 
 
 class MetaMaterialOption(models.Model):

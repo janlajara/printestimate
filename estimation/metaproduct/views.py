@@ -66,7 +66,7 @@ class MetaProductComponentViewSet(mixins.ListModelMixin, mixins.CreateModelMixin
     queryset = MetaComponent.objects.all()
     
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action in ['create', 'meta']:
             return serializers.MetaComponentWriteSerializer
         else:
             return serializers.MetaComponentReadSerializer

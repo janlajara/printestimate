@@ -33,7 +33,7 @@ class MetaPropertyViewUtils:
         MetaPropertyOption.objects.filter(pk__in=ids_to_delete).delete()
 
         for mpo_data in meta_property_options:
-            mpo_id = mpo_data.get('id', None)
+            mpo_id = mpo_data.pop('id')
 
             if mpo_id is None:
                 meta_property.add_option(**mpo_data)
@@ -49,7 +49,7 @@ class MetaPropertyViewUtils:
 
         for mp_data in meta_properties:
             meta_property_options = mp_data.pop('meta_property_options')
-            mp_id = mp_data.get('id', None)
+            mp_id = mp_data.pop('id')
             meta_property = None
             
             if mp_id is None:
@@ -135,7 +135,7 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
         MetaMaterialOption.objects.filter(pk__in=ids_to_delete).delete()
 
         for mmo_data in meta_material_options:
-            mmo_id = mmo_data.get('id', None)
+            mmo_id = mmo_data.pop('id')
             if mmo_id is None:
                 meta_component.add_meta_material_option(**mmo_data)
             else:

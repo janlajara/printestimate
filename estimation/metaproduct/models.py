@@ -7,6 +7,7 @@ from polymorphic.models import PolymorphicModel
 
 class MetaProduct(models.Model):
     name = models.CharField(max_length=40)
+    description = models.CharField(max_length=100, null=True)
 
     def add_meta_component(self, name, type):
         return MetaComponent.objects.create(name=name, type=type, 
@@ -17,26 +18,28 @@ class MetaProduct(models.Model):
             costing_measure=costing_measure, meta_product=self)
 
 
-class MetaService(models.Model):
+class MetaProductData(models.Model):
+    meta_product = models.ForeignKey(MetaProduct, on_delete=models.CASCADE)
+    
+    def add_meta_property(self, name, options_type, **kwargs):
+        return MetaProperty.objects.create(name=name, options_type=options_type,
+            meta_product_data=self, **kwargs)
+
+
+class MetaService(MetaProductData):
     name = models.CharField(max_length=40)
     type = models.CharField(max_length=15, choices=Item.TYPES)
     costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
         default=CostingMeasure.QUANTITY)
-    meta_product = models.ForeignKey(MetaProduct, on_delete=models.CASCADE)
 
 
-class MetaComponent(models.Model):
+class MetaComponent(MetaProductData):
     name = models.CharField(max_length=40)
     type = models.CharField(max_length=15, choices=Item.TYPES)
-    meta_product = models.ForeignKey(MetaProduct, on_delete=models.CASCADE)
 
     def add_meta_material_option(self, label, item:Item):
         return MetaMaterialOption.objects.create(label=label, 
             meta_component=self, item=item)
-    
-    def add_meta_property(self, name, options_type, **kwargs):
-        return MetaProperty.objects.create(name=name, options_type=options_type,
-            meta_component=self, **kwargs)
 
 
 class MetaMaterialOption(models.Model):
@@ -59,10 +62,8 @@ class MetaProperty(models.Model):
     name = models.CharField(max_length=40)
     options_type = models.CharField(max_length=26, choices=TYPES)
     is_required = models.BooleanField(default=False)
-    meta_component = models.ForeignKey(MetaComponent, on_delete=models.CASCADE, 
+    meta_product_data = models.ForeignKey(MetaProductData, on_delete=models.CASCADE, 
         related_name='meta_properties')
-    meta_service = models.ForeignKey(MetaService, on_delete=models.SET_NULL,
-        related_name='meta_properties', null=True)
 
     @property
     def options(self):

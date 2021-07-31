@@ -7,7 +7,7 @@ from estimation.metaproduct.models import MetaProduct, MetaService, MetaComponen
 class MetaProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = MetaProduct
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'description']
 
 
 class MetaPropertyOptionSerializer(serializers.ModelSerializer):
@@ -50,3 +50,17 @@ class MetaComponentWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = MetaComponent
         fields = ['id', 'name', 'type', 'meta_material_options', 'meta_properties']
+
+
+class MetaServiceReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MetaService
+        fields = ['id', 'name', 'type', 'costing_measure']
+
+
+class MetaServiceWriteSerializer(serializers.ModelSerializer):
+    meta_properties = MetaPropertySerializer(many=True)
+
+    class Meta:
+        model = MetaService
+        fields = ['id', 'name', 'type', 'costing_measure', 'meta_properties']

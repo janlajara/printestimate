@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
 from core.utils.measures import CostingMeasure
@@ -194,9 +195,12 @@ class ActivityRelatedExpensesViewSet(mixins.ListModelMixin,
             return Response({'error': 'missing activity pk'}, status.HTTP_400_BAD_REQUEST)
 
 
-class OperationsViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
+class OperationsViewSet(mixins.ListModelMixin, 
+                        mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
                         mixins.DestroyModelMixin, viewsets.GenericViewSet):
     queryset = Operation.objects.all()
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['material_type', 'costing_measure']
 
     def get_serializer_class(self):
         if self.action == 'update':

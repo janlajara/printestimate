@@ -1,8 +1,8 @@
 from django.shortcuts import render, get_object_or_404
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
 from estimation.metaproduct.models import MetaProduct, MetaComponent, \
-    MetaService, MetaProperty, MetaPropertyOption, MetaMaterialOption
+    MetaService, MetaProperty, MetaComponentProperty, MetaPropertyOption, MetaMaterialOption
 from estimation.metaproduct import serializers
 
 # Create your views here.
@@ -33,7 +33,7 @@ class MetaPropertyViewUtils:
         MetaPropertyOption.objects.filter(pk__in=ids_to_delete).delete()
 
         for mpo_data in meta_property_options:
-            mpo_id = mpo_data.pop('id')
+            mpo_id = mpo_data.pop('id') if 'id' in mpo_data else None
 
             if mpo_id is None:
                 meta_property.add_option(**mpo_data)
@@ -49,13 +49,16 @@ class MetaPropertyViewUtils:
 
         for mp_data in meta_properties:
             meta_property_options = mp_data.pop('meta_property_options')
-            mp_id = mp_data.pop('id')
+            mp_id = mp_data.pop('id') if 'id' in mp_data else None
             meta_property = None
             
             if mp_id is None:
                 meta_property = obj.add_meta_property(**mp_data)
             else:
-                MetaProperty.objects.filter(pk=mp_id).update(**mp_data)
+                if isinstance(obj, MetaComponentProperty):
+                    MetaComponentProperty.objects.filter(pk=mp_id).update(**mp_data)
+                else:
+                    MetaProperty.objects.filter(pk=mp_id).update(**mp_data)
                 meta_property = MetaProperty.objects.get(pk=mp_id)
     
             cls.update_or_create_meta_property_options(meta_property, meta_property_options)
@@ -91,9 +94,9 @@ class MetaProductComponentViewSet(mixins.ListModelMixin, mixins.CreateModelMixin
                 serialized = serializers.MetaComponentWriteSerializer(meta_component)
                 return Response(serialized.data)
             else:
-                return Response(deserialized.errors)
+                return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': 'missing metaproduct pk'})
+            return Response({'error': 'missing metaproduct pk'}, status.HTTP_400_BAD_REQUEST)
 
 
 class MetaProductServiceViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, 
@@ -119,8 +122,10 @@ class MetaProductServiceViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
 
                 serialized = serializers.MetaServiceWriteSerializer(meta_service)
                 return Response(serialized.data)
+            else:
+                return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': 'missing metaproduct pk'})
+            return Response({'error': 'missing metaproduct pk'}, status.HTTP_400_BAD_REQUEST)
 
 
 class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, 
@@ -135,7 +140,7 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
         MetaMaterialOption.objects.filter(pk__in=ids_to_delete).delete()
 
         for mmo_data in meta_material_options:
-            mmo_id = mmo_data.pop('id')
+            mmo_id = mmo_data.pop('id') if 'id' in mmo_data else None
             if mmo_id is None:
                 meta_component.add_meta_material_option(**mmo_data)
             else:
@@ -143,6 +148,7 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
 
     def update(self, request, pk=None):
         if pk is not None:
+
             meta_component = get_object_or_404(MetaComponent, pk=pk)
             deserialized = serializers.MetaComponentWriteSerializer(data=request.data)
 
@@ -159,9 +165,9 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
                 serialized = serializers.MetaComponentWriteSerializer(meta_component)
                 return Response(serialized.data)
             else:
-                return Response(deserialized.errors)
+                return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': 'missing metacomponent pk'})
+            return Response({'error': 'missing metacomponent pk'}, status.HTTP_400_BAD_REQUEST)
 
 
 class MetaServiceViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, 
@@ -185,6 +191,6 @@ class MetaServiceViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
                 serialized = serializers.MetaServiceWriteSerializer(meta_service)
                 return Response(serialized.data)
             else:
-                return Response(deserialized.errors)
+                return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': 'missing metaservice pk'})
+            return Response({'error': 'missing metaservice pk'}, status.HTTP_400_BAD_REQUEST)

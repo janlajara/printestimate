@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
 from core.utils.measures import CostingMeasure
 from inventory.models import Item
@@ -62,9 +62,9 @@ class WorkstationActivitiesViewSet(mixins.ListModelMixin,
                 serialized = serializers.ActivitySerializer(activity)
                 return Response(serialized.data)
             else:  
-                return Response({'error': deserialized.errors})
+                return Response({'error': deserialized.errors}, status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': "missing workstation pk"})
+            return Response({'error': "missing workstation pk"}, status.HTTP_400_BAD_REQUEST)
 
 
 class WorkstationActivityExpensesViewSet(mixins.ListModelMixin, 
@@ -90,9 +90,9 @@ class WorkstationActivityExpensesViewSet(mixins.ListModelMixin,
                 serialized = serializers.ActivityExpenseSerializer(expense)
                 return Response(serialized.data)
             else:
-                return Response(deserialized.errors)
+                return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': 'missing workstation pk'})
+            return Response({'error': 'missing workstation pk'}, status.HTTP_400_BAD_REQUEST)
 
 
 class WorkstationOperationsViewSet(mixins.ListModelMixin,
@@ -149,9 +149,9 @@ class WorkstationOperationsViewSet(mixins.ListModelMixin,
                 serialized = serializers.OperationSerializer(operation)
                 return Response(serialized.data)
             else:
-                return Response(deserialized.errors)
+                return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': 'missing workstation pk'})
+            return Response({'error': 'missing workstation pk'}, status.HTTP_400_BAD_REQUEST)
 
 
 class ActivityExpenseViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
@@ -189,9 +189,9 @@ class ActivityRelatedExpensesViewSet(mixins.ListModelMixin,
                 serialized = serializers.ActivityExpenseSerializer(expense)
                 return Response(serialized.data)
             else:
-                return Response(deserialized.errors)
+                return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': 'missing activity pk'})
+            return Response({'error': 'missing activity pk'}, status.HTTP_400_BAD_REQUEST)
 
 
 class OperationsViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
@@ -242,9 +242,9 @@ class OperationsViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
                 serialized = serializers.OperationSerializer(operation)
                 return Response(serialized.data)
             else:
-                return Response(deserialized.errors)
+                return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': 'missing operation pk'})
+            return Response({'error': 'missing operation pk'}, status.HTTP_400_BAD_REQUEST)
 
 
 class OperationRelatedStepsViewSet(mixins.ListModelMixin,
@@ -275,9 +275,9 @@ class OperationRelatedStepsViewSet(mixins.ListModelMixin,
                 serialized = serializers.OperationStepSerializer(operation_step)
                 return Response(serialized.data)
             else:
-                return Response(deserialized.errors)
+                return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': 'missing operation pk'})
+            return Response({'error': 'missing operation pk'}, status.HTTP_400_BAD_REQUEST)
 
 
 class OperationStepViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
@@ -302,7 +302,7 @@ class OperationStepViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
 
             return Response(serialized.data)
         else:
-            return Response(deserialized.errors)
+            return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk=None):
         operation_step = get_object_or_404(OperationStep, pk=pk)

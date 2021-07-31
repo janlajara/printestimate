@@ -19,6 +19,8 @@ class MetaProduct(models.Model):
 
 
 class MetaProductData(models.Model):
+    name = models.CharField(max_length=40)
+    type = models.CharField(max_length=15, choices=Item.TYPES)
     meta_product = models.ForeignKey(MetaProduct, on_delete=models.CASCADE)
     
     def add_meta_property(self, name, options_type, **kwargs):
@@ -27,15 +29,15 @@ class MetaProductData(models.Model):
 
 
 class MetaService(MetaProductData):
-    name = models.CharField(max_length=40)
-    type = models.CharField(max_length=15, choices=Item.TYPES)
     costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
         default=CostingMeasure.QUANTITY)
 
 
 class MetaComponent(MetaProductData):
-    name = models.CharField(max_length=40)
-    type = models.CharField(max_length=15, choices=Item.TYPES)
+
+    def add_meta_property(self, name, options_type, **kwargs):
+        return MetaComponentProperty.objects.create(name=name, options_type=options_type,
+            meta_product_data=self, **kwargs)
 
     def add_meta_material_option(self, label, item:Item):
         return MetaMaterialOption.objects.create(label=label, 
@@ -50,7 +52,7 @@ class MetaMaterialOption(models.Model):
         related_name='meta_material_options')
 
 
-class MetaProperty(models.Model):
+class MetaProperty(PolymorphicModel):
     SINGLE_OPTION = 'Single'
     MULTIPLE_OPTIONS = 'Multiple'
     BOOLEAN_OPTION = 'Boolean'
@@ -83,6 +85,11 @@ class MetaProperty(models.Model):
 
     def clear_options(self):
         self.meta_property_options.all().delete()
+
+
+class MetaComponentProperty(MetaProperty):
+    costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
+        default=CostingMeasure.QUANTITY)
 
 
 class MetaPropertyOption(models.Model):

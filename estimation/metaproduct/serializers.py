@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from estimation.process.serializers import OperationListSerializer
 from estimation.metaproduct.models import MetaProduct, MetaService, MetaComponent, \
-    MetaProperty, MetaPropertyOption, MetaMaterialOption
+    MetaProperty, MetaComponentProperty, MetaPropertyOption, MetaMaterialOption
 
 
 class MetaProductSerializer(serializers.ModelSerializer):
@@ -29,6 +29,16 @@ class MetaPropertySerializer(serializers.ModelSerializer):
             'meta_property_options']
 
 
+class MetaComponentPropertySerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False, allow_null=True)
+    meta_property_options = MetaPropertyOptionSerializer(many=True)
+    
+    class Meta:
+        model = MetaComponentProperty
+        fields = ['id', 'name', 'options_type', 'costing_measure', 
+            'is_required', 'meta_property_options']
+
+
 class MetaMaterialOptionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
 
@@ -44,7 +54,7 @@ class MetaComponentReadSerializer(serializers.ModelSerializer):
 
 
 class MetaComponentWriteSerializer(serializers.ModelSerializer):
-    meta_properties = MetaPropertySerializer(many=True)
+    meta_properties = MetaComponentPropertySerializer(many=True)
     meta_material_options = MetaMaterialOptionSerializer(many=True)
 
     class Meta:

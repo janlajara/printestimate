@@ -68,6 +68,7 @@ def test_meta_component__add_meta_property(db, form_meta_component):
     assert meta_property is not None
     assert meta_property.name == 'Padding'
     assert meta_property.options_type == MetaProperty.MULTIPLE_OPTIONS
+    assert meta_property.costing_measure == 'quantity'
 
 
 def test_meta_property__add_clear_option(db, form_meta_component, korse_printing_operation):

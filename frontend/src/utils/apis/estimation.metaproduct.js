@@ -32,8 +32,9 @@ export class MetaProductApi {
             'Product Meta deleted successfully.', 'Delete failed. Please try again.');
     }
 
-    static async retrieveMetaProductComponents(id) {
-        const response = await AXIOS.execute(AXIOS.GET, 
+    static async retrieveMetaProductComponents(id, getOptions=false) {
+        const action = (getOptions)? AXIOS.OPTIONS : AXIOS.GET;
+        const response = await AXIOS.execute(action, 
             MetaProductApi.uri + `/${id}/metacomponents`);
         if (response) return response.data;
     }

@@ -3,6 +3,9 @@ export {ItemApi, ItemRequestGroupApi, ItemRequestApi,
     AlternateStockUnitApi} from '@/utils/apis/inventory.js'
 
 export {WorkstationApi, ActivityExpenseApi, ActivityApi,
-    OperationApi, OperationStepApi, 
-    MachineApi, SheetFedPressMachineApi,
-    ParentSheetApi, ChildSheetApi} from '@/utils/apis/estimation.js'
+    OperationApi, OperationStepApi} from '@/utils/apis/estimation.process.js'
+
+export {MachineApi, SheetFedPressMachineApi,
+        ParentSheetApi, ChildSheetApi} from '@/utils/apis/estimation.machine.js'
+
+export {MetaProductApi, MetaComponentApi} from '@/utils/apis/estimation.metaproduct.js'

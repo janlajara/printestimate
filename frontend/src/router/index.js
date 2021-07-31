@@ -76,6 +76,18 @@ const routes = [
         props: true,
         component: ()=>import('../views/admin/production/machines/sheetfedpress/SheetFedPressMachineDetail.vue')
       }, 
+      {
+        path: 'admin/production/products',
+        name: 'admin-production-products',
+        component: ()=>import('../views/admin/production/products/MetaProductList.vue'),
+        meta: {label: 'Products', group: 'Production Admin'}
+      },
+      {
+        path: 'admin/production/products/:id',
+        name: 'admin-production-product-detail',
+        props: true,
+        component: ()=>import('../views/admin/production/products/MetaProductDetail.vue')
+      }, 
     ]
   },
   {

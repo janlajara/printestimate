@@ -75,10 +75,9 @@ def test_meta_property__add_clear_option(db, form_meta_component, korse_printing
     meta_property = form_meta_component.add_meta_property('Padding', 
         MetaProperty.MULTIPLE_OPTIONS)
     
-    option = meta_property.add_option('Color Print', korse_printing_operation)
+    option = meta_property.add_option(korse_printing_operation)
 
     assert option is not None
-    assert option.label == 'Color Print'
     assert len(meta_property.options) == 1
     assert meta_property.meta_property_options.first() == option
 
@@ -90,11 +89,11 @@ def test_meta_property__add_option_exception(db, form_meta_component, korse_prin
     meta_property = form_meta_component.add_meta_property('Padding', 
         MetaProperty.BOOLEAN_OPTION)
 
-    option = meta_property.add_option('Color Print', korse_printing_operation)
+    option = meta_property.add_option(korse_printing_operation)
 
     assert option is not None
     assert meta_property.options is not None
     assert meta_property.options[0] == option
 
     with pytest.raises(Exception):
-        meta_property.add_option('Another operation', korse_printing_operation)
+        meta_property.add_option(korse_printing_operation)

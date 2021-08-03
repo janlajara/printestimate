@@ -75,13 +75,13 @@ class MetaProperty(PolymorphicModel):
         else:
             return [self.meta_property_options.first()]
 
-    def add_option(self, label, operation):
+    def add_option(self, operation):
         if self.options_type == MetaProperty.BOOLEAN_OPTION and \
                 len(self.meta_property_options.all()) > 0:
             raise Exception('Cannot add more options for Boolean type property')
         else:
             return MetaPropertyOption.objects.create(
-                meta_property=self, label=label, operation=operation)
+                meta_property=self, operation=operation)
 
     def clear_options(self):
         self.meta_property_options.all().delete()

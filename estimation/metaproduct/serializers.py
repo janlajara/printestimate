@@ -11,8 +11,8 @@ class MetaProductSerializer(serializers.ModelSerializer):
 
 
 class MetaPropertyOptionSerializer(serializers.ModelSerializer):
-    # operation = OperationListSerializer()
     id = serializers.IntegerField(required=False, allow_null=True)
+    label = serializers.CharField(read_only=True)
 
     class Meta:
         model = MetaPropertyOption

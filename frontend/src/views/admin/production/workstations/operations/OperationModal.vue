@@ -57,8 +57,10 @@
                         </template>
                     </draggable>
                  </Table>
-                <div>
-                    <InputTextLookup placeholder="Search Activity" class="flex-grow"
+                 <hr/>
+                <div class="md:grid md:gap-4 md:grid-cols-2">
+                    <InputTextLookup name="Activity"
+                        placeholder="Search Activity" class="flex-grow"
                         :value="state.data.add.activityLookupText"
                         @select="selected => state.data.add.activity = selected"
                         @input="value => state.data.add.activityLookupText = value"
@@ -68,16 +70,17 @@
                             subtitle: option.subtitle,
                             figure: option.figure
                         }))"/>
-                    <InputTextarea placeholder="Notes" 
+                    <InputText name="Notes" 
+                        placeholder="Notes" type="text"
                         :value="`${state.data.add.notes}`"
                         @input="value => state.data.add.notes = value"/>
-                    <div class="flex justify-between mt-2">
-                        <span class="my-auto  text-xs">
-                            Activity choices: {{state.meta.activityChoices.length}} records found
-                        </span>
-                        <Button icon="add" class="my-auto"
-                            @click="state.addOperationStep">Add</Button>
-                    </div>
+                </div>
+                <div class="flex justify-between mt-4">
+                    <span class="my-auto  text-xs">
+                        Activity choices: {{state.meta.activityChoices.length}} records found
+                    </span>
+                    <Button icon="add" class="my-auto border-gray-300 border"
+                        @click="state.addOperationStep">Add</Button>
                 </div>
             </Section>
         </div>
@@ -88,7 +91,6 @@
 import Modal from '@/components/Modal.vue';
 import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
-import InputTextarea from '@/components/InputTextarea.vue';
 import InputSelect from '@/components/InputSelect.vue';
 import Table from '@/components/Table.vue';
 import Row from '@/components/Row.vue'
@@ -102,7 +104,7 @@ import {WorkstationApi, OperationApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Modal, Section, InputText, InputTextarea, InputSelect, 
+        Modal, Section, InputText, InputSelect, 
         InputTextLookup, Table, Row, Cell, Button, draggable
     },
     props: {

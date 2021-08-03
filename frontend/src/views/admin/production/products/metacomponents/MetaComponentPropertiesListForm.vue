@@ -21,7 +21,7 @@
                         <Button class="my-auto px-0" icon="edit"
                             @click="()=>{state.editProperty(i)}"/>
                         <Button class="my-auto px-0" icon="clear" 
-                            @click="()=>{}"/>
+                            @click="()=>{state.removeProperty(i)}"/>
                     </div>
                 </Cell>
             </Row>
@@ -174,6 +174,9 @@ export default {
                     metaPropertyOptions: selected.metaPropertyOptions.map( x => x.operation)
                 }
                 listOperations();
+            },
+            removeProperty: (index)=> {
+                state.propertyList.splice(index, 1)
             }
         });
 

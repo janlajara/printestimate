@@ -11,7 +11,7 @@
         <Table :headers="['Name', 'Type', '']" :loader="state.isProcessing">
             <Row v-for="(s, key) in state.list" :key="key" clickable>
                 <Cell label="Name">{{s.name}}</Cell>
-                <Cell label="Type">{{s.type}}</Cell>
+                <Cell label="Type" class="capitalize">{{s.type}}</Cell>
                 <Cell>
                     <div class="w-full flex justify-end">
                         <Button class="my-auto" icon="edit"

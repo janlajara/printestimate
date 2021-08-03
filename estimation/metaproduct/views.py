@@ -55,8 +55,6 @@ class MetaPropertyViewUtils:
             if mp_id is None:
                 meta_property = obj.add_meta_property(**mp_data)
             else:
-                print(obj)
-                print(mp_data)
                 if isinstance(obj, MetaComponent):
                     MetaComponentProperty.objects.filter(pk=mp_id).update(**mp_data)
                 else:

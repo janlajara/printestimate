@@ -11,6 +11,7 @@
                     type="text" :value="state.data.name" required
                     @input="value => state.data.name = value"/>
                 <InputSelect name="Material Type" required 
+                    :disabled="state.data.metaProperties.length > 0"
                     @input="(value)=>state.data.type = value"
                     :options="state.meta.materialTypeChoices.map(c=>({
                         value: c.value, label: c.label,
@@ -25,8 +26,11 @@
         </Section>
         <hr/>
         <Section heading="Properties" heading-position="side"> 
-            <div class="md:grid md:gap-4 md:grid-cols-3">
-            </div>
+            <MetaComponentPropertiesListForm 
+                :material-type="state.data.type"
+                :option-type-choices="state.meta.optionTypeChoices"
+                :value="state.data.metaProperties"
+                @input="value => state.data.metaProperties = value"/>
         </Section>
     </Modal>
 </template>
@@ -36,13 +40,15 @@ import Modal from '@/components/Modal.vue';
 import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
 import InputSelect from '@/components/InputSelect.vue';
+import MetaComponentPropertiesListForm from './MetaComponentPropertiesListForm.vue'
 
 import {reactive, computed, watch, onBeforeMount} from 'vue';
 import {MetaProductApi, MetaComponentApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Modal, Section, InputText, InputSelect
+        Modal, Section, InputText, InputSelect,
+        MetaComponentPropertiesListForm
     },
     props: {
         isOpen: Boolean,
@@ -66,7 +72,7 @@ export default {
             },
             meta: {
                 materialTypeChoices: [],
-                optionTypeChoices: [],
+                optionTypeChoices: []
             },
             clearData: ()=> {
                 state.data = {
@@ -100,11 +106,10 @@ export default {
                     meta_properties: state.data.metaProperties.map( x => ({
                         id: x.id,
                         name: x.name,
+                        costing_measure: x.costingMeasure,
                         options_type: x.optionsType,
                         is_required: x.isRequired,
                         meta_property_options: x.metaPropertyOptions.map( y => ({
-                            id: y.id,
-                            label: y.label,
                             operation: y.operation
                         }))
                     }))
@@ -124,6 +129,7 @@ export default {
                         metaProperties: response.meta_properties.map( x => ({
                             id: x.id,
                             name: x.name,
+                            costingMeasure: x.costing_measure,
                             optionsType: x.options_type,
                             isRequired: x.is_required,
                             metaPropertyOptions: x.meta_property_options.map( y => ({
@@ -182,8 +188,8 @@ export default {
                 state.error = '';
             }
         })
-        onBeforeMount(()=> {
-            retrieveComponentMetaData(state.metaProductId);
+        onBeforeMount(async ()=> {
+            await retrieveComponentMetaData(state.metaProductId);
         })
 
         return {

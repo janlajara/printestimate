@@ -93,8 +93,11 @@ class MetaComponentProperty(MetaProperty):
 
 
 class MetaPropertyOption(models.Model):
-    label = models.CharField(max_length=40)
     meta_property = models.ForeignKey(MetaProperty, on_delete=models.CASCADE,
         related_name='meta_property_options')
     operation = models.ForeignKey(Operation, on_delete=models.SET_NULL,
         related_name='meta_property_options', null=True)
+
+    @property
+    def label(self):
+        return self.operation.name

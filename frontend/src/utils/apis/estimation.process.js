@@ -120,6 +120,12 @@ export class OperationApi {
         return response.data
     }
 
+    static async listOperations(filter) {
+        const response = await AXIOS.execute(AXIOS.GET, OperationApi.uri, null, null,
+            null, filter)
+        return response.data
+    }
+
     static async retrieveOperation(id) {
         const response = await AXIOS.execute(AXIOS.GET, OperationApi.uri + `/${id}`)
         return response.data

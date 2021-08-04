@@ -24,21 +24,20 @@
                 <input type="text" class="rounded border-0 bg-transparent shadow-sm w-full" 
                     :disabled="$props.disabled"
                     @click="event => {
-                        $emit('input', event.target.value);
-                        lookup.toggle(true);
+                        lookup.emitOnInput(event);
                     }"
                     @input="event => {
-                        $emit('input', event.target.value);
-                        lookup.toggle(true);
+                        lookup.emitOnInput(event);
                     }"
                     :placeholder="$props.placeholder" 
                     :value="$props.value"
                     :class="[sizeStyle]"/>
+                <span class="material-icons absolute right-2 top-1.5">search</span>
                 <div class="bg-white rounded absolute shadow-md w-full mt-1 z-10 max-h-44 overflow-y-auto"
                     v-if="lookup.isOpen">
                     <div v-for="(option, index) in $props.options" :key="index"
                         class="p-2 hover:bg-secondary-light hover:bg-opacity-20 text-sm cursor-pointer"
-                        @click="()=> lookup.select(option.value, option.title + ' : ' + option.subtitle)">
+                        @click="()=> lookup.select(option.value, option.title, option.subtitle)">
                         <dt class="text-sm flex justify-between">
                             <span class="font-bold">{{option.title}}</span>
                             <span class="text-right">{{option.figure}}</span>
@@ -48,6 +47,11 @@
                             <span class="text-gray-400 text-right">{{option.timestamp}}</span>
                         </dd>
                     </div>
+                    <div v-if="$props.options.length == 0" class="p-2 text-sm">
+                        <dt class="text-sm flex justify-between">
+                            <span class="italic">No results found</span>
+                        </dt>
+                    </div>
                 </div>
             </div>
         </div>
@@ -56,6 +60,7 @@
 
 <script>
 import {reactive, watch} from 'vue';
+import {debounce} from 'lodash';
 
 export default {
     props: {
@@ -98,7 +103,9 @@ export default {
             toggle: (value) => {
                 lookup.isOpen = value;
             },
-            select: (value, label) => {
+            select: (value, title, subtitle) => {
+                subtitle =  subtitle && subtitle != '' ? ' : ' + subtitle : '';
+                const label = title + subtitle;
                 lookup.selected = label;
                 lookup.toggle(false);
                 emit('select', value);
@@ -106,7 +113,10 @@ export default {
             clearSelect: ()=> {
                 lookup.selected = null;
                 emit('select', '');
-            }
+            },
+            emitOnInput: debounce((event)=> {
+                emit('input', event.target.value);
+                lookup.toggle(true);}, 500)
         })
         watch(()=> props.value, 
             lookup.clearSelect

@@ -57,13 +57,7 @@ class MetaComponentSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'type', 'meta_material_options', 'meta_properties']
 
 
-class MetaServiceReadSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MetaService
-        fields = ['id', 'name', 'type', 'costing_measure']
-
-
-class MetaServiceWriteSerializer(serializers.ModelSerializer):
+class MetaServiceSerializer(serializers.ModelSerializer):
     meta_properties = MetaPropertySerializer(many=True)
 
     class Meta:

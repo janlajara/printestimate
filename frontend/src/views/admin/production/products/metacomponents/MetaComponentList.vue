@@ -8,10 +8,27 @@
             :is-open="state.createEditModal.isOpen"
             @toggle="state.createEditModal.toggle" 
             :on-after-save="populateMetaComponents"/>
-        <Table :headers="['Name', 'Type', '']" :loader="state.isProcessing">
+        <Table :headers="['Name', 'Type', 'Material Options', 'Properties', '']" 
+                :loader="state.isProcessing">
             <Row v-for="(s, key) in state.list" :key="key" clickable>
                 <Cell label="Name">{{s.name}}</Cell>
                 <Cell label="Type" class="capitalize">{{s.type}}</Cell>
+                <Cell label="Material Options">
+                    <ul class="pl-2">
+                        <li v-for="(x, i) in s.metaMaterialOptions" :key="i"
+                            class="list-disc">
+                            {{x.label}}
+                        </li>
+                    </ul>
+                </Cell>
+                <Cell label="Properties">
+                    <ul class="pl-2">
+                        <li v-for="(x, i) in s.metaProperties" :key="i"
+                            class="list-disc">
+                            {{x.name}}
+                        </li>
+                    </ul>
+                </Cell>
                 <Cell>
                     <div class="w-full flex justify-end">
                         <Button class="my-auto" icon="edit"
@@ -95,7 +112,9 @@ export default {
                     state.list = response.map(obj=> ({
                         id: obj.id,
                         name: obj.name,
-                        type: obj.type
+                        type: obj.type,
+                        metaMaterialOptions: obj.meta_material_options,
+                        metaProperties: obj.meta_properties
                     }));
                 }
             }

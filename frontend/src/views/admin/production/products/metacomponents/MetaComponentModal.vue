@@ -20,9 +20,11 @@
             </div>
         </Section>
         <hr/>
-        <Section heading="Materials" heading-position="side"> 
-            <div class="md:grid md:gap-4 md:grid-cols-3">
-            </div>
+        <Section heading="Material Options" heading-position="side"> 
+            <MetaComponentMaterialOptionsListForm 
+                :material-type="state.data.type"
+                :value="state.data.metaMaterialOptions"
+                @input="value => state.data.metaMaterialOptions = value"/>
         </Section>
         <hr/>
         <Section heading="Properties" heading-position="side"> 
@@ -40,7 +42,8 @@ import Modal from '@/components/Modal.vue';
 import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
 import InputSelect from '@/components/InputSelect.vue';
-import MetaComponentPropertiesListForm from './MetaComponentPropertiesListForm.vue'
+import MetaComponentMaterialOptionsListForm from './MetaComponentMaterialOptionsListForm.vue';
+import MetaComponentPropertiesListForm from './MetaComponentPropertiesListForm.vue';
 
 import {reactive, computed, watch, onBeforeMount} from 'vue';
 import {MetaProductApi, MetaComponentApi} from '@/utils/apis.js';
@@ -48,6 +51,7 @@ import {MetaProductApi, MetaComponentApi} from '@/utils/apis.js';
 export default {
     components: {
         Modal, Section, InputText, InputSelect,
+        MetaComponentMaterialOptionsListForm,
         MetaComponentPropertiesListForm
     },
     props: {
@@ -100,7 +104,6 @@ export default {
                     type: state.data.type,
                     meta_material_options: state.data.metaMaterialOptions.map( y => ({
                         id: y.id,
-                        label: y.label,
                         item: y.item
                     })),
                     meta_properties: state.data.metaProperties.map( x => ({

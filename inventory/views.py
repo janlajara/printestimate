@@ -6,14 +6,16 @@ from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from inventory import serializers
 
 
 # Create your views here.
 class ItemViewSet(viewsets.ModelViewSet):
     queryset = Item.objects.all()
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['name', 'type', 'stocks__brand_name']
+    filterset_fields = ['type']
 
     def get_serializer_class(self):
         if self.action in ['create', 'update']:

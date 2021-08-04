@@ -67,12 +67,14 @@ class MetaPropertyViewUtils:
 class MetaProductComponentViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
                                     viewsets.GenericViewSet):
     queryset = MetaComponent.objects.all()
+    serializer_class = serializers.MetaComponentSerializer
     
+    '''
     def get_serializer_class(self):
         if self.action in ['create', 'metadata']:
             return serializers.MetaComponentWriteSerializer
         else:
-            return serializers.MetaComponentReadSerializer
+            return serializers.MetaComponentReadSerializer'''
 
     def create_meta_material_options(self, meta_component, meta_material_options):
         for mmo_data in meta_material_options:
@@ -81,7 +83,7 @@ class MetaProductComponentViewSet(mixins.ListModelMixin, mixins.CreateModelMixin
     def create(self, request, pk=None):
         if pk is not None:
             meta_product = get_object_or_404(MetaProduct, pk=pk)
-            deserialized = serializers.MetaComponentWriteSerializer(data=request.data)
+            deserialized = serializers.MetaComponentSerializer(data=request.data)
 
             if deserialized.is_valid():
                 validated_data = deserialized.validated_data
@@ -91,7 +93,7 @@ class MetaProductComponentViewSet(mixins.ListModelMixin, mixins.CreateModelMixin
                 MetaPropertyViewUtils.create_meta_properties(meta_component, meta_properties)
                 self.create_meta_material_options(meta_component, meta_material_options)
 
-                serialized = serializers.MetaComponentWriteSerializer(meta_component)
+                serialized = serializers.MetaComponentSerializer(meta_component)
                 return Response(serialized.data)
             else:
                 return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
@@ -131,7 +133,7 @@ class MetaProductServiceViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
 class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, 
                             mixins.DestroyModelMixin, viewsets.GenericViewSet):
     queryset = MetaComponent.objects.all()
-    serializer_class = serializers.MetaComponentWriteSerializer
+    serializer_class = serializers.MetaComponentSerializer
 
     def update_or_create_meta_material_options(self, meta_component, meta_material_options):
         existing_ids = [y.get('id') for y in meta_material_options if not y.get('id') is None]
@@ -150,7 +152,7 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
         if pk is not None:
 
             meta_component = get_object_or_404(MetaComponent, pk=pk)
-            deserialized = serializers.MetaComponentWriteSerializer(data=request.data)
+            deserialized = serializers.MetaComponentSerializer(data=request.data)
 
             if deserialized.is_valid():
                 validated_data = deserialized.validated_data
@@ -162,7 +164,7 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
                 MetaComponent.objects.filter(pk=pk).update(**validated_data)
                 meta_component = get_object_or_404(MetaComponent, pk=pk)
 
-                serialized = serializers.MetaComponentWriteSerializer(meta_component)
+                serialized = serializers.MetaComponentSerializer(meta_component)
                 return Response(serialized.data)
             else:
                 return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)

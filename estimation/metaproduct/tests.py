@@ -51,11 +51,10 @@ def test_meta_product__add_meta_service(db):
 
 
 def test_meta_component__add_meta_material_option(db, form_meta_component, carbonless_item):
-    meta_material_option = form_meta_component.add_meta_material_option(
-        'Carbonless Paper', carbonless_item)
+    meta_material_option = form_meta_component.add_meta_material_option(carbonless_item)
     
     assert meta_material_option is not None
-    assert meta_material_option.label == 'Carbonless Paper'
+    assert meta_material_option.label == 'Carbonless'
     assert meta_material_option.meta_component == form_meta_component
     assert len(form_meta_component.meta_material_options.all()) == 1
     assert form_meta_component.meta_material_options.first() == meta_material_option

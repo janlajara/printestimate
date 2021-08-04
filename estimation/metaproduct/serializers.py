@@ -41,19 +41,14 @@ class MetaComponentPropertySerializer(serializers.ModelSerializer):
 
 class MetaMaterialOptionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
+    label = serializers.CharField(read_only=True)
 
     class Meta:
         model = MetaMaterialOption
         fields = ['id', 'label', 'item']
 
 
-class MetaComponentReadSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MetaComponent
-        fields = ['id', 'name', 'type']    
-
-
-class MetaComponentWriteSerializer(serializers.ModelSerializer):
+class MetaComponentSerializer(serializers.ModelSerializer):
     meta_properties = MetaComponentPropertySerializer(many=True)
     meta_material_options = MetaMaterialOptionSerializer(many=True)
 

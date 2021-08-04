@@ -39,17 +39,20 @@ class MetaComponent(MetaProductData):
         return MetaComponentProperty.objects.create(name=name, options_type=options_type,
             meta_product_data=self, **kwargs)
 
-    def add_meta_material_option(self, label, item:Item):
-        return MetaMaterialOption.objects.create(label=label, 
+    def add_meta_material_option(self, item:Item):
+        return MetaMaterialOption.objects.create(
             meta_component=self, item=item)
 
 
 class MetaMaterialOption(models.Model):
-    label = models.CharField(max_length=40)
     meta_component = models.ForeignKey(MetaComponent, on_delete=models.CASCADE, 
         related_name='meta_material_options')
     item = models.ForeignKey(Item, on_delete=models.CASCADE, 
         related_name='meta_material_options')
+
+    @property
+    def label(self):
+        return self.item.full_name
 
 
 class MetaProperty(PolymorphicModel):

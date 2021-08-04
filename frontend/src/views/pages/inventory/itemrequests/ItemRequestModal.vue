@@ -9,7 +9,7 @@
             <div class="md:grid md:gap-4 md:grid-cols-3">
                 <InputTextLookup v-if="item.isCreate"
                     name="Item" class="md:col-span-2"
-                    placeholder="Item Name"
+                    placeholder="Search Item"
                     :value="item.form.input"
                     @select="item.form.select"
                     @input="item.search"

@@ -1,12 +1,11 @@
 <template>
     <div>
-        <Table :headers="['Name', 'Costing Measure', 'Options Type', 'Options', '']"
-            layout="fixed" :cols-width="['', '', '', 'w-1/3', 'w-1/5']">
+        <Table :headers="['Name', 'Options Type', 'Options', '']"
+            layout="fixed" :cols-width="['', '', 'w-1/3', 'w-1/5']">
             <Row v-for="(x, i) in state.propertyList" :key="i"
                     :class="state.propertyForm.editIndex == i? 
                         'bg-secondary-light bg-opacity-20' : ''">
                 <Cell>{{x.name}}</Cell>
-                <Cell class="capitalize">{{x.costingMeasure}}</Cell>
                 <Cell>{{x.optionsType}}</Cell>
                 <Cell>
                     <ul class="pl-2">
@@ -31,20 +30,6 @@
             <InputText name="Name" required
                 type="text" :value="state.propertyForm.name"
                 @input="value => state.propertyForm.name = value"/>
-            <InputSelect name="Costing Measure" required
-                @input="(value)=> {
-                    state.propertyForm.costingMeasure = value;
-                    listOperations();
-                    state.propertyForm.metaPropertyOptions = [];
-                }"
-                :options="state.meta.costingMeasureChoices.map(c=>({
-                    value: c.value, label: c.label,
-                    isSelected: state.propertyForm.costingMeasure == c.value
-                }))"/>
-            
-            <InputCheckBox label="Is Required" 
-                :value="state.propertyForm.isRequired"
-                @input="value => state.propertyForm.isRequired = value"/>
             <InputSelect name="Options Type" required
                 @input="(value)=>{
                     state.propertyForm.optionsType = value;
@@ -59,7 +44,10 @@
                     value: c.value, label: c.label,
                     isSelected: state.propertyForm.optionsType == c.value
                 }))"/>
-            <InputSelect name="Property Options" class="col-span-2"
+            <InputCheckBox label="Is Required" 
+                :value="state.propertyForm.isRequired"
+                @input="value => state.propertyForm.isRequired = value"/>
+            <InputSelect name="Property Options" class="col-span-3"
                 required :multiple="state.propertyForm.optionsType != 'Boolean'" 
                 @input="(value)=>state.propertyForm.metaPropertyOptions = 
                     value.constructor === Array ? value : [value]"
@@ -84,7 +72,7 @@ import Row from '@/components/Row.vue';
 import Cell from '@/components/Cell.vue';
 import Button from '@/components/Button.vue';
 
-import {reactive, computed, onBeforeMount, watch} from 'vue';
+import {reactive, computed, watch} from 'vue';
 import {OperationApi} from '@/utils/apis.js';
 
 export default {
@@ -94,6 +82,7 @@ export default {
     },
     props: {
         materialType: String,
+        costingMeasure: String,
         optionTypeChoices: Array,
         value: Array
     },
@@ -101,6 +90,7 @@ export default {
     setup(props, {emit}) {
         const state = reactive({
             materialType: computed(()=> props.materialType),
+            costingMeasure: computed(()=> props.costingMeasure),
             optionTypeChoices: computed(()=> props.optionTypeChoices),
             propertyList: [],
             propertyForm: {
@@ -113,24 +103,7 @@ export default {
                 metaPropertyOptions: []
             },
             meta: {
-                materialTypeChoices: [],
-                metaPropertyOptionChoices: [],
-                costingMeasureChoicesMapping: [],
-                costingMeasureChoices: computed(()=> {
-                    const mapping =  state.meta.costingMeasureChoicesMapping.filter(
-                        c => c.key == state.materialType);
-                    if (mapping && mapping[0]) {
-                        return mapping[0].value.map(c=> ({
-                            value: c.value, label: c.display
-                        }));
-                    } else return [];
-                }),
-                costingMeasureChoice: computed(()=> {
-                    const a = state.meta.costingMeasureChoicesMapping.find(
-                        x => x.key == state.materialType);
-                    if (a) return a.value.find(y => y.value == state.propertyForm.costingMeasure);
-                    else return null;
-                }),
+                metaPropertyOptionChoices: []
             },
             clearPropertyForm: ()=> {
                 state.propertyForm = {
@@ -138,7 +111,6 @@ export default {
                     editIndex: null,
                     name: '',
                     optionsType: '', 
-                    costingMeasure: '',
                     isRequired: false,
                     metaPropertyOptions: []
                 }
@@ -149,7 +121,6 @@ export default {
                     id: state.propertyForm.id,
                     name: state.propertyForm.name,
                     optionsType: state.propertyForm.optionsType,
-                    costingMeasure: state.propertyForm.costingMeasure,
                     isRequired: state.propertyForm.isRequired,
                     metaPropertyOptions: state.propertyForm.metaPropertyOptions.map( x=> ({
                         operation: x,
@@ -171,7 +142,6 @@ export default {
                     editIndex: index,
                     name: selected.name,
                     optionsType: selected.optionsType, 
-                    costingMeasure: selected.costingMeasure,
                     isRequired: selected.isRequired,
                     metaPropertyOptions: selected.metaPropertyOptions.map( x => x.operation)
                 }
@@ -182,19 +152,10 @@ export default {
             }
         });
 
-        const listOperationCostingMeasures = async () => {
-            const response = await OperationApi.listOperationCostingMeasures();
-            if (response) {
-                state.meta.costingMeasureChoicesMapping = response.map(c=> ({
-                    key: c.material, value:c.measure_choices
-                }));
-            }
-        }
-
         const listOperations = async () => {
             const filter = {
                 material_type: state.materialType || '',
-                costing_measure: state.propertyForm.costingMeasure || ''
+                costing_measure: state.costingMeasure || ''
             }
             const response = await OperationApi.listOperations(filter);
             if (response) {
@@ -203,13 +164,13 @@ export default {
                 }));
             }
         }
-        onBeforeMount(listOperationCostingMeasures);
         watch(()=> props.value, ()=> {
             state.propertyList = props.value;
+            listOperations();
         })
 
         return {
-            state, listOperations
+            state
         }
     }
 }

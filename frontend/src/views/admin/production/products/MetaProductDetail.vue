@@ -37,6 +37,7 @@
             <MetaComponentList :meta-product-id="parseInt(state.id)"/>
         </Section>
         <Section heading="Services">
+            <MetaServiceList :meta-product-id="parseInt(state.id)"/>
         </Section>
     </Page>
 </template>
@@ -51,6 +52,7 @@ import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 
 import MetaProductModal from './MetaProductModal.vue';
 import MetaComponentList from './metacomponents/MetaComponentList.vue';
+import MetaServiceList from './metaservices/MetaServiceList.vue';
 
 import {useRoute} from 'vue-router';
 import {reactive, computed, onBeforeMount} from 'vue';
@@ -59,7 +61,7 @@ import {MetaProductApi} from '@/utils/apis.js';
 export default {
     components: {
         Page, Button, Section, DescriptionList, DescriptionItem, DeleteRecordDialog,
-        MetaProductModal, MetaComponentList
+        MetaProductModal, MetaComponentList, MetaServiceList
     },
     setup() {
         const route = useRoute();

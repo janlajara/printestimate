@@ -46,6 +46,21 @@ export class MetaProductApi {
             metaComponent);
         return response;
     }
+
+    static async retrieveMetaProductServices(id, getOptions=false) {
+        const action = (getOptions)? AXIOS.OPTIONS : AXIOS.GET;
+        const response = await AXIOS.execute(action, 
+            MetaProductApi.uri + `/${id}/metaservices`);
+        if (response) return response.data;
+    }
+
+    static async createMetaProductService(id, metaService) {
+        const response = await AXIOS.execute(AXIOS.POST, 
+            MetaProductApi.uri + `/${id}/metaservices`, 
+            'Service created successfully.', 'Create failed. Please try again.', 
+            metaService);
+        return response;
+    }
 }
 
 
@@ -66,6 +81,29 @@ export class MetaComponentApi {
 
     static async deleteMetaComponent(id) {
         await AXIOS.execute(AXIOS.DELETE, MetaComponentApi.uri + `/${id}/`, 
+            'Component deleted successfully.', 'Delete failed. Please try again.');
+    }
+
+}
+
+
+export class MetaServiceApi {
+    static uri = '/estimation/api/metaservices'
+
+    static async retrieveMetaService(id) {
+        const response = await AXIOS.execute(AXIOS.GET, MetaServiceApi.uri + `/${id}/`)
+        return response.data
+    }
+
+    static async updateMetaService(id, metaService) {
+        const response = await AXIOS.execute(AXIOS.PUT, 
+            MetaServiceApi.uri + `/${id}/`, 'Service updated successfully.', 
+            'Update failed. Please try again.', metaService)
+        if (response) return response.data;
+    }
+
+    static async deleteMetaService(id) {
+        await AXIOS.execute(AXIOS.DELETE, MetaServiceApi.uri + `/${id}/`, 
             'Component deleted successfully.', 'Delete failed. Please try again.');
     }
 

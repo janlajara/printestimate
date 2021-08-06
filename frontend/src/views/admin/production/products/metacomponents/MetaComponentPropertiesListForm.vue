@@ -151,10 +151,14 @@ export default {
                     optionsType: state.propertyForm.optionsType,
                     costingMeasure: state.propertyForm.costingMeasure,
                     isRequired: state.propertyForm.isRequired,
-                    metaPropertyOptions: state.propertyForm.metaPropertyOptions.map( x=> ({
-                        operation: x,
-                        label: state.meta.metaPropertyOptionChoices.find(y => y.value == x).label
-                    }))
+                    metaPropertyOptions: state.propertyForm.metaPropertyOptions.map( x=> {
+                        const o = state.meta.metaPropertyOptionChoices.find(y => y.value == x);
+                        return {
+                            id: o.id,
+                            operation: x,
+                            label: o.label
+                        }
+                    })
                 };
                 if (editIndex != null) {
                     state.propertyList[editIndex] = propertyForm;

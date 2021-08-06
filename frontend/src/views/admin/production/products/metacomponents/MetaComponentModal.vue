@@ -113,6 +113,7 @@ export default {
                         options_type: x.optionsType,
                         is_required: x.isRequired,
                         meta_property_options: x.metaPropertyOptions.map( y => ({
+                            id: y.id,
                             operation: y.operation
                         }))
                     }))

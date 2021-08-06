@@ -156,7 +156,7 @@ export default {
             const filter = {
                 material_type: state.materialType || '',
                 costing_measure: state.costingMeasure || ''
-            }
+            } 
             const response = await OperationApi.listOperations(filter);
             if (response) {
                 state.meta.metaPropertyOptionChoices = response.map( x => ({
@@ -166,6 +166,9 @@ export default {
         }
         watch(()=> props.value, ()=> {
             state.propertyList = props.value;
+            listOperations();
+        })
+        watch(()=> props.costingMeasure, ()=> {
             listOperations();
         })
 

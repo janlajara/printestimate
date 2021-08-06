@@ -7,18 +7,18 @@
             class="pt-4 text-sm text-red-600">*{{state.error}}</div>
         <Section heading="General Information" heading-position="side"> 
             <div class="md:grid md:gap-4 md:grid-cols-3">
-                <InputText name="Name"  placeholder="Name"
+                <InputText name="Name"  placeholder="Name" class="col-span-2"
                     type="text" :value="state.data.name" required
                     @input="value => state.data.name = value"/>
-                <InputText name="Description"  placeholder="Description"  class="col-span-2"
-                    type="text" :value="state.data.description" required
-                    @input="value => state.data.description = value"/>
                 <InputSelect name="Machine" :disabled="!state.meta.isMachineEditable"
                     @input="(value)=>state.data.machine = value"
                     :options="state.meta.machines.map(c=>({
                         value: c.value, label: c.label,
                         isSelected: state.data.machine == c.value
                     }))"/>
+                <InputText name="Description"  placeholder="Description"  class="col-span-2"
+                    type="text" :value="state.data.description" required
+                    @input="value => state.data.description = value"/>
             </div>
         </Section>
     </Modal>
@@ -55,6 +55,11 @@ export default {
             meta: {
                 machines: [],
                 isMachineEditable: true,
+            },
+            clear: ()=> {
+                state.data = {
+                    name: '', description: '', machine: null
+                }
             },
             validate: ()=> {
                 let errors = [];
@@ -114,9 +119,12 @@ export default {
         }
 
         watch(()=> props.isOpen, ()=> { 
-            if (props.isOpen && state.id && !state.isCreate) {
-                const id = parseInt(state.id);
-                retrieveWorkstation(id);
+            if (props.isOpen) {
+                state.clear();
+                if (state.id && !state.isCreate) {
+                    const id = parseInt(state.id);
+                    retrieveWorkstation(id);
+                }
             }
         })
 

@@ -228,7 +228,9 @@ class Speed(models.Model):
         value = self.measure_value
         measure_unit = self.measure_unit if value == 1 else _inflect.plural(self.measure_unit)
         speed_unit = self.speed_unit
-        return '%.2f %s/%s' % (value, measure_unit, speed_unit)
+        return '{0:,.2f}'.format(value) + \
+            ' %s/%s' % (measure_unit, speed_unit)
+            #'%.2f %s/%s' % (value, measure_unit, speed_unit)
 
 
 class ActivityManager(models.Manager):

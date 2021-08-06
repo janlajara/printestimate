@@ -28,7 +28,7 @@ class MetaPropertyViewUtils:
     @classmethod
     def update_or_create_meta_property_options(cls, meta_property, meta_property_options):
         existing_ids = [y.get('id') for y in meta_property_options if not y.get('id') is None]
-        ids_to_delete = [x.id for x in meta_property.options if not x.id in existing_ids]
+        ids_to_delete = [x.id for x in meta_property.options if x is not None and not x.id in existing_ids]
 
         MetaPropertyOption.objects.filter(pk__in=ids_to_delete).delete()
 
@@ -43,7 +43,7 @@ class MetaPropertyViewUtils:
     @classmethod
     def update_or_create_meta_properties(cls, obj, meta_properties):
         existing_ids = [y.get('id') for y in meta_properties if not y.get('id') is None]
-        ids_to_delete = [x.id for x in obj.meta_properties.all() if not x.id in existing_ids]
+        ids_to_delete = [x.id for x in obj.meta_properties.all() if x is not None and not x.id in existing_ids]
 
         MetaProperty.objects.filter(pk__in=ids_to_delete).delete()
 
@@ -71,6 +71,7 @@ class MetaProductComponentViewSet(mixins.ListModelMixin, mixins.CreateModelMixin
 
     def create_meta_material_options(self, meta_component, meta_material_options):
         for mmo_data in meta_material_options:
+            mmo_data.pop('id')
             meta_component.add_meta_material_option(**mmo_data)
 
     def create(self, request, pk=None):
@@ -125,7 +126,7 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
 
     def update_or_create_meta_material_options(self, meta_component, meta_material_options):
         existing_ids = [y.get('id') for y in meta_material_options if not y.get('id') is None]
-        ids_to_delete = [x.id for x in meta_component.meta_material_options.all() if not x.id in existing_ids]
+        ids_to_delete = [x.id for x in meta_component.meta_material_options.all() if not x is not None and x.id in existing_ids]
 
         MetaMaterialOption.objects.filter(pk__in=ids_to_delete).delete()
 

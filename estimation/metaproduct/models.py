@@ -98,8 +98,8 @@ class MetaComponentProperty(MetaProperty):
 class MetaPropertyOption(models.Model):
     meta_property = models.ForeignKey(MetaProperty, on_delete=models.CASCADE,
         related_name='meta_property_options')
-    operation = models.ForeignKey(Operation, on_delete=models.SET_NULL,
-        related_name='meta_property_options', null=True)
+    operation = models.ForeignKey(Operation, on_delete=models.CASCADE,
+        related_name='meta_property_options')
 
     @property
     def label(self):

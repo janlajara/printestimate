@@ -18,7 +18,8 @@
                 <InputText name="Value"  placeholder="Value"
                     type="decimal" :value="state.data.speed.measureValue" required
                     @input="value => state.data.speed.measureValue = value"/>
-                <InputSelect name="Measure" required :disabled="!state.isCreate"
+                <InputSelect name="Measure" required 
+                    :disabled="state.data.operationSteps.length > 0"
                     @input="(value)=>state.data.speed.measureUnit = value"
                     :options="state.meta.measureUnitChoices.map(c=>({
                         value: c.value, label: c.label,
@@ -98,7 +99,8 @@ export default {
                     value: 0, unit: 'hr'},
                 tearDown: {
                     value: 0, unit: 'hr'},
-                expenses: []
+                expenses: [],
+                operationSteps: []
             },
             meta: {
                 measureUnitChoices: [],
@@ -117,7 +119,8 @@ export default {
                         value: 0, unit: 'hr'},
                     tearDown: {
                         value: 0, unit: 'hr'},
-                    expenses: []
+                    expenses: [],
+                    operationSteps: []
                 }
             },
             validate: ()=> {
@@ -162,7 +165,8 @@ export default {
                             measureValue: response.speed.measure_value,
                             measureUnit: response.speed.measure_unit,
                             speedUnit: response.speed.speed_unit},
-                        expenses: response.activity_expenses
+                        expenses: response.activity_expenses,
+                        operationSteps: response.operation_steps
                     }
                     if (setupSplit != null && setupSplit.length == 2) {
                         state.data.setUp = {

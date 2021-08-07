@@ -63,6 +63,7 @@ class ActivitySerializer(serializers.ModelSerializer):
     flat_rate_formatted = serializers.SerializerMethodField()
     measure_rate_formatted = serializers.SerializerMethodField()
     hourly_rate_formatted = serializers.SerializerMethodField()
+    operation_steps = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
 
     class Meta:
         model = Activity
@@ -70,7 +71,8 @@ class ActivitySerializer(serializers.ModelSerializer):
             'activity_expenses', 'measure', 'measure_unit', 
             'flat_rate', 'flat_rate_formatted', 
             'measure_rate', 'measure_rate_formatted', 
-            'hourly_rate', 'hourly_rate_formatted']
+            'hourly_rate', 'hourly_rate_formatted',
+            'operation_steps']
 
     def get_flat_rate_formatted(self, obj):
         return str(obj.flat_rate)

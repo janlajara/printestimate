@@ -11,7 +11,8 @@
                     type="text" :value="state.data.name" required
                     @input="value => state.data.name = value"/>
                 <InputSelect name="Material Type" required 
-                    :disabled="state.data.metaProperties.length > 0"
+                    :disabled="state.data.metaProperties.length > 0 ||
+                        state.data.metaMaterialOptions.length > 0"
                     @input="(value)=>state.data.type = value"
                     :options="state.meta.materialTypeChoices.map(c=>({
                         value: c.value, label: c.label,

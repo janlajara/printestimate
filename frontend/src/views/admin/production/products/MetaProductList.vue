@@ -5,7 +5,7 @@
             <div class="my-auto">
                 <Button color="secondary" icon="add"
                     :action="state.createModal.open">
-                    Add Product Meta</Button>
+                    Add Product Class</Button>
                 <MetaProductModal 
                     :is-open="state.createModal.isOpen"
                     @toggle="state.createModal.toggle" 
@@ -13,10 +13,10 @@
             </div>
         </div>
         <Section>
-            <Table :headers="['Name', 'Description']" :loader="state.isProcessing">
+            <Table :headers="['Class', 'Description']" :loader="state.isProcessing">
                 <Row v-for="(s, key) in state.list" :key="key" clickable
                     @click="()=> goToDetail(s.id)">
-                    <Cell label="Name">{{s.name}}</Cell>
+                    <Cell label="Class">{{s.name}}</Cell>
                     <Cell label="Description">{{s.description}}</Cell>
                 </Row>
             </Table>

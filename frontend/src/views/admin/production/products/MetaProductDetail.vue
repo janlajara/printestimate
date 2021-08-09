@@ -1,5 +1,5 @@
   <template>
-    <Page :title="`Product : ${state.metaProduct.validatedData.name}`">
+    <Page :title="`Product Class : ${state.metaProduct.validatedData.name}`">
         <hr class="my-4"/>
         <div class="flex gap-4">
             <Button color="secondary" icon="arrow_back"

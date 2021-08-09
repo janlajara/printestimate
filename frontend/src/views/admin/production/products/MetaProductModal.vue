@@ -1,5 +1,5 @@
 <template>
-    <Modal :heading="`${state.isCreate ? 'Add' : 'Edit'} Product`" 
+    <Modal :heading="`${state.isCreate ? 'Add' : 'Edit'} Product Class`" 
         :is-open="$props.isOpen" @toggle="(value)=> $emit('toggle', value)"
         :buttons="[{color: 'primary', icon:'save', text:'Save', 
             action: state.save, disabled: state.isProcessing},]">

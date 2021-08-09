@@ -131,7 +131,8 @@ class OperationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Operation
         fields = ['id', 'name', 'material_type', 
-            'costing_measure', 'prerequisite', 'operation_steps']
+            'costing_measure', 'estimate_measures',
+            'prerequisite', 'operation_steps']
 
 
 class OperationListSerializer(serializers.ModelSerializer):
@@ -142,7 +143,7 @@ class OperationListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Operation
         fields = ['id', 'name', 'material_type', 'prerequisite', 
-            'costing_measure', 'operation_steps']
+            'costing_measure', 'estimate_measures', 'operation_steps']
 
     def get_operation_steps(self, instance):
         steps = instance.operation_steps.all().order_by('sequence')

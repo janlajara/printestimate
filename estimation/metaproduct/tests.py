@@ -23,6 +23,7 @@ def carbonless_item(db, item_factory):
     item = item_factory(type=Item.PAPER, name='Carbonless')
     item.properties.length_value = 11
     item.properties.width_value = 8.5
+    item.properties.size_uom = 'inch'
     return item
 
 @pytest.fixture
@@ -54,7 +55,7 @@ def test_meta_component__add_meta_material_option(db, form_meta_component, carbo
     meta_material_option = form_meta_component.add_meta_material_option(carbonless_item)
     
     assert meta_material_option is not None
-    assert meta_material_option.label == 'Carbonless'
+    assert meta_material_option.label == 'Carbonless 8.5x11inch'
     assert meta_material_option.meta_component == form_meta_component
     assert len(form_meta_component.meta_material_options.all()) == 1
     assert form_meta_component.meta_material_options.first() == meta_material_option

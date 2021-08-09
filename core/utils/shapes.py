@@ -6,6 +6,8 @@ from .binpacker import BinPacker
 
 
 class Shape(models.Model):
+    costing_measures = []
+
     class Meta:
         abstract = True
     

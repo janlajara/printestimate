@@ -2,7 +2,7 @@ import pytest, math
 from core.utils.measures import Quantity, CostingMeasure
 from estimation.machine.models import Machine
 from estimation.process.models import Workstation, Operation, Speed
-from estimation.product.models import Component
+from estimation.product.models import Material
 from inventory.models import BaseStockUnit, AlternateStockUnit, Item
 
 
@@ -17,13 +17,6 @@ def item_factory(db):
                                         **kwargs)
         return item
     return create_item
-
-
-@pytest.fixture
-def component_factory(db):
-    def create_component(**kwargs):
-        return Component.objects.create(**kwargs)
-    return create_component
 
 
 @pytest.fixture
@@ -169,19 +162,17 @@ def test_operation__get_duration_and_rate(db, korse_workstation):
 
 
 def test_operation__get_measurement_machine_based(db, korse_workstation, korse_machine,
-        item_factory, component_factory):
+        item_factory):
     korse_workstation.machine = korse_machine
     item = item_factory(name='Carbonless White', type=Item.PAPER)
     item.properties.length_value = 37
     item.properties.width_value = 25.5
     item.properties.size_uom = 'inch'
     item.properties.save()
-    component = component_factory(
-        name='Form', type=Item.PAPER)
-    material = component.add_material(
-        name='ply', quantity=100,
+    material = Material.objects.create_material(
+        type=Item.PAPER, name='ply', quantity=100,
         width_value=8.25, length_value=5.875,
-        size_uom='inch')
+        size_uom='inch') 
     
     parent_sheet = korse_machine.add_parent_sheet(12.75, 18.5, 'inch')
     child_sheet = parent_sheet.add_child_sheet(8.25, 11.75, 'inch', 0.5, 0.5, 0.5, 0.5)

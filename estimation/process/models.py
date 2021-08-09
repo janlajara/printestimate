@@ -46,7 +46,6 @@ class Workstation(models.Model):
             if not costing_measure in self.machine.costing_measures:
                 raise CostingMeasureMismatch(costing_measure, self.machine.costing_measures)
 
-
         operation = Operation.objects.create(
             workstation=self, name=name, 
             material_type=material_type,
@@ -85,6 +84,18 @@ class Operation(models.Model):
         default=CostingMeasure.QUANTITY)
     material_type = models.CharField(max_length=15, choices=Item.TYPES, 
         default=Item.OTHER)
+
+    @property
+    def estimate_measures(self):
+        measures = []
+
+        if self.workstation.machine is not None:
+            measures = self.workstation.machine.costing_measures
+        else:
+            clazz = Material.get_class(self.material_type)
+            measures = clazz.costing_measures
+
+        return measures
 
     @property
     def costing_measure_choices(self):
@@ -160,12 +171,16 @@ class Operation(models.Model):
         step_to_delete.delete()
 
     def get_measurement(self, input:Item, output:Material, quantity, **kwargs):
+        estimate = self.get_estimate(input, output, quantity, **kwargs)
+        return estimate.get(self.costing_measure, None)
+
+    def get_estimate(self, input:Item, output:Material, quantity, **kwargs):
         # Provide quantity based estimation only, if either input or output is empty
         if self.costing_measure == CostingMeasure.QUANTITY and input is None:
             qty = quantity
             if output is not None:
                 qty = output.quantity * quantity
-            return Quantity(pc=qty)          
+            return Quantity(pc=qty)           
 
         # Estimate via machine algorithm (if provided) or shape packing algorithm
         if self.material_type == input.type == output.type:
@@ -174,7 +189,7 @@ class Operation(models.Model):
             else:
                 estimate = input.estimate(output, quantity)
             
-            return estimate.get(self.costing_measure, None)
+            return estimate
         else:
             raise MaterialTypeMismatch(self.material.type, item.type, self.material_type)
 

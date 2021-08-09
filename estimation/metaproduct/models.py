@@ -35,6 +35,37 @@ class MetaService(MetaProductData):
 
 class MetaComponent(MetaProductData):
 
+    class MeasurementVariable:
+        MATERIAL = 'Material'
+        PROPERTY = 'Property'
+
+        def __init__(self, name, type, costing_measure, reference=None):
+            self.name = name
+            self.type = type
+            self.costing_measure = costing_measure
+            self.reference = reference
+        
+
+    @property
+    def measurement_variables(self):
+        variables = []
+
+        if len(self.meta_material_options.all()) > 0:
+            mo = self.meta_material_options.first()
+
+            for x in mo.costing_measures:
+                variable = MetaComponent.MeasurementVariable(
+                    'material', MetaComponent.MeasurementVariable.MATERIAL, x)
+                variables.append(variable)
+        
+        for prop in self.meta_properties.all():
+            variable = MetaComponent.MeasurementVariable(
+                prop.name, MetaComponent.MeasurementVariable.PROPERTY, 
+                prop.costing_measure, prop.id)
+            variables.append(variable)
+    
+        return variables
+
     def add_meta_property(self, name, options_type, **kwargs):
         return MetaComponentProperty.objects.create(name=name, options_type=options_type,
             meta_product_data=self, **kwargs)
@@ -53,6 +84,10 @@ class MetaMaterialOption(models.Model):
     @property
     def label(self):
         return self.item.full_name
+
+    @property
+    def costing_measures(self):
+        return self.item.properties.costing_measures
 
 
 class MetaProperty(PolymorphicModel):

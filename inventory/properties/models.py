@@ -61,6 +61,9 @@ class ItemProperties(PolymorphicModel, Shape):
         }
         return mapping.get(item_type, ItemProperties)
 
+    def __str__(self):
+        return ''
+
 
 class TapeProperties(ItemProperties, Tape):
     pass

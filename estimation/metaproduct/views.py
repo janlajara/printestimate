@@ -66,8 +66,14 @@ class MetaPropertyViewUtils:
 
 class MetaProductComponentViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
                                     viewsets.GenericViewSet):
-    queryset = MetaComponent.objects.all()
     serializer_class = serializers.MetaComponentSerializer
+
+    def get_queryset(self):
+        pk = self.kwargs.get('pk', None)
+        if pk is not None:
+            return MetaComponent.objects.filter(meta_product__pk=pk)
+        else:
+            return MetaComponent.objects.all()
 
     def create_meta_material_options(self, meta_component, meta_material_options):
         for mmo_data in meta_material_options:
@@ -97,8 +103,14 @@ class MetaProductComponentViewSet(mixins.ListModelMixin, mixins.CreateModelMixin
 
 class MetaProductServiceViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, 
                                 viewsets.GenericViewSet):
-    queryset = MetaService.objects.all()
     serializer_class = serializers.MetaServiceSerializer
+
+    def get_queryset(self):
+        pk = self.kwargs.get('pk', None)
+        if pk is not None:
+            return MetaService.objects.filter(meta_product__pk=pk)
+        else:
+            return MetaService.objects.all()
 
     def create(self, request, pk=None):
         if pk is not None:

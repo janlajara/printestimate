@@ -170,13 +170,13 @@ def test_operation__get_measurement_machine_based(db, korse_workstation, korse_m
     item.properties.size_uom = 'inch'
     item.properties.save()
     material = Material.objects.create_material(
-        type=Item.PAPER, name='ply', quantity=100,
+        type=Item.PAPER, name='ply', item=item,
         width_value=8.25, length_value=5.875,
-        size_uom='inch') 
+        size_uom='inch', quantity=100) 
     
     parent_sheet = korse_machine.add_parent_sheet(12.75, 18.5, 'inch')
     child_sheet = parent_sheet.add_child_sheet(8.25, 11.75, 'inch', 0.5, 0.5, 0.5, 0.5)
-    estimate = korse_machine.estimate(item, material, 100, True)
+    estimate = korse_machine.estimate(material, 100, True)
 
     assert estimate is not None
     
@@ -188,7 +188,7 @@ def test_operation__get_measurement_machine_based(db, korse_workstation, korse_m
 
     operation = korse_workstation.add_operation(
         name='2-Color Printing', material_type=Item.PAPER)
-    measurement = operation.get_measurement(item, material, 100, bleed=True)
+    measurement = operation.get_measurement(material, 100, bleed=True)
 
     assert measurement.pc == 2500
 

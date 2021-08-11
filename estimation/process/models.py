@@ -170,28 +170,21 @@ class Operation(models.Model):
             step.save()
         step_to_delete.delete()
 
-    def get_measurement(self, input:Item, output:Material, quantity, **kwargs):
-        estimate = self.get_estimate(input, output, quantity, **kwargs)
+    def get_measurement(self, material, quantity, **kwargs):
+        estimate = self.get_estimate(material, quantity, **kwargs)
         return estimate.get(self.costing_measure, None)
 
-    def get_estimate(self, input:Item, output:Material, quantity, **kwargs):
-        # Provide quantity based estimation only, if either input or output is empty
-        if self.costing_measure == CostingMeasure.QUANTITY and input is None:
-            qty = quantity
-            if output is not None:
-                qty = output.quantity * quantity
-            return Quantity(pc=qty)           
-
+    def get_estimate(self, material, quantity, **kwargs):
         # Estimate via machine algorithm (if provided) or shape packing algorithm
-        if self.material_type == input.type == output.type:
+        if self.material_type == material.type:
             if self.workstation.machine is not None:
-                estimate = self.workstation.machine.estimate(input, output, quantity, **kwargs)
+                estimate = self.workstation.machine.estimate(material, quantity, **kwargs)
             else:
-                estimate = input.estimate(output, quantity)
+                estimate = material.estimate_stock_needed(quantity)
             
             return estimate
         else:
-            raise MaterialTypeMismatch(self.material.type, item.type, self.material_type)
+            raise MaterialTypeMismatch(material.type, self.material_type)
 
     def get_duration(self, measurement, contingency=0):
         total_duration = 0

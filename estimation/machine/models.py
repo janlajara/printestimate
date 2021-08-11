@@ -70,8 +70,8 @@ class SheetFedPressMachine(PressMachine):
 
     material_type = Item.PAPER
 
-    def estimate(self, input:Item, output:Material, quantity, bleed=False):
-        if input.type == output.type == Item.PAPER:
+    def estimate(self, material, quantity, bleed=False):
+        if material.type == Item.PAPER:
             child_sheets = (
                 ChildSheet.objects
                     .filter(parent__machine=self)
@@ -79,16 +79,16 @@ class SheetFedPressMachine(PressMachine):
             match = None
 
             for child_sheet in child_sheets:
-                if child_sheet.has_bleed == bleed and child_sheet.gte(output) \
-                        and input.properties.gte(child_sheet.parent):
+                if child_sheet.has_bleed == bleed and child_sheet.gte(material) \
+                        and material.item_properties.gte(child_sheet.parent):
                     match = child_sheet
                     break
 
             if match is not None:
-                parent_sheet_per_item = input.properties.pack(match.parent)
+                parent_sheet_per_item = material.item_properties.pack(match.parent)
                 child_sheet_per_parent = match.count
-                output_per_child = match.pack(output)
-                total_output_needed = output.quantity * quantity
+                output_per_child = match.pack(material)
+                total_output_needed = material.quantity * quantity
 
                 output_per_item = parent_sheet_per_item * child_sheet_per_parent * output_per_child
                 items_needed = math.ceil(total_output_needed / output_per_item)

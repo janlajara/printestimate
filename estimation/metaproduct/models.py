@@ -34,6 +34,7 @@ class MetaService(MetaProductData):
 
 
 class MetaComponent(MetaProductData):
+    multiple_materials = models.BooleanField(default=False)
 
     class MeasurementVariable:
         MATERIAL = 'Material'
@@ -44,7 +45,6 @@ class MetaComponent(MetaProductData):
             self.type = type
             self.costing_measure = costing_measure
             self.reference = reference
-        
 
     @property
     def measurement_variables(self):

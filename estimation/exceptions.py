@@ -6,9 +6,9 @@ class MeasurementMismatch(Exception):
 
 
 class MaterialTypeMismatch(Exception):
-    def __init__(self, actual_material_type, actual_item_type, expected_type):
-        self.message = "Provided types of material and/or item ('%s', '%s') is not equal to expected type '%s'." % \
-                       (actual_material_type, actual_item_type, expected_type)
+    def __init__(self, actual_material_type, expected_type):
+        self.message = "Provided type of material or item ('%s') is not equal to expected type '%s'." % \
+                       (actual_material_type, expected_type)
         super().__init__(self.message)
 
 

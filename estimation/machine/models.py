@@ -56,8 +56,10 @@ class PressMachine(Machine):
         (DIGITAL, 'Digital'),
         (LETTERPRESS, 'Letterpress')
     ]
+    
     process_type = models.CharField(max_length=15, choices=PROCESS_TYPES, 
         null=False, blank=False)
+    material_type = Item.PAPER
 
 
 class SheetFedPressMachine(PressMachine):
@@ -67,8 +69,6 @@ class SheetFedPressMachine(PressMachine):
     max_sheet_width = models.FloatField(default=0)
     uom = models.CharField(max_length=30, default='mm',
         choices=Measure.UNITS[Measure.DISTANCE])
-
-    material_type = Item.PAPER
 
     def estimate(self, material, quantity, bleed=False):
         if material.type == Item.PAPER:

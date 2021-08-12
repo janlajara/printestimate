@@ -68,3 +68,10 @@ def test_child_sheet__get_layout(db):
     assert wastage == 9.26
     assert len(rotated) == 1
     assert rotated[0] == 2
+
+
+def test_filter_machines_by_material_type(db, gto_machine):
+    machines = [x for x in Machine.objects.all() if x.material_type == Item.PAPER]
+
+    assert len(machines) == 1
+    assert machines[0] == gto_machine

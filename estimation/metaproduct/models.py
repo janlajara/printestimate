@@ -1,6 +1,8 @@
 from django.db import models
+from core.utils.shapes import Shape
 from core.utils.measures import CostingMeasure
 from inventory.models import Item
+from estimation.machine.models import Machine
 from estimation.process.models import Operation
 from polymorphic.models import PolymorphicModel
 
@@ -36,34 +38,27 @@ class MetaService(MetaProductData):
 class MetaComponent(MetaProductData):
     multiple_materials = models.BooleanField(default=False)
 
-    class MeasurementVariable:
-        MATERIAL = 'Material'
-        PROPERTY = 'Property'
-
-        def __init__(self, name, type, costing_measure, reference=None):
-            self.name = name
-            self.type = type
-            self.costing_measure = costing_measure
-            self.reference = reference
-
     @property
-    def measurement_variables(self):
+    def meta_estimate_variables(self):
         variables = []
+        counter = 0
 
-        if len(self.meta_material_options.all()) > 0:
-            mo = self.meta_material_options.first()
+        mat = self.meta_material_options.first()
+        if mat is not None:
+            for type in MetaEstimateVariable.MATERIAL_DERIVED_TYPES:
+                for costing_measure in mat.costing_measures:
+                    variable = MetaEstimateVariable(counter, type, costing_measure) 
+                    variables.append(variable)
+                    counter += 1
 
-            for x in mo.costing_measures:
-                variable = MetaComponent.MeasurementVariable(
-                    'material', MetaComponent.MeasurementVariable.MATERIAL, x)
-                variables.append(variable)
+        mac = self.meta_machine_options.first()
+        if mac is not None:
+            for type in MetaEstimateVariable.MACHINE_DERIVED_TYPES:
+                for costing_measure in mac.costing_measures:
+                    variable = MetaEstimateVariable(counter, type, costing_measure) 
+                    variables.append(variable)
+                    counter += 1
         
-        for prop in self.meta_properties.all():
-            variable = MetaComponent.MeasurementVariable(
-                prop.name, MetaComponent.MeasurementVariable.PROPERTY, 
-                prop.costing_measure, prop.id)
-            variables.append(variable)
-    
         return variables
 
     def add_meta_property(self, name, options_type, **kwargs):
@@ -74,11 +69,47 @@ class MetaComponent(MetaProductData):
         return MetaMaterialOption.objects.create(
             meta_component=self, item=item)
 
+    def add_meta_machine_option(self, machine:Machine):
+        if machine.type != self.type:
+            raise Exception("Cannot add machine with type '%s'. Expected type '%s'" % 
+                (machine.type, self.type))
+
+        return MetaMachineOption.objects.create(
+            meta_component=self, machine=machine)
+
+
+class MetaEstimateVariable:
+    RAW_MATERIAL = 'Raw Material'
+    SET_MATERIAL = 'Set Material'
+    TOTAL_MATERIAL = 'Total Material'
+    MACHINE_RUN = 'Machine Run Material'
+
+    MATERIAL_DERIVED_TYPES = [
+        RAW_MATERIAL, SET_MATERIAL,
+        TOTAL_MATERIAL
+    ]
+    MACHINE_DERIVED_TYPES = [
+        MACHINE_RUN
+    ]
+    TYPES = [
+        RAW_MATERIAL, SET_MATERIAL,
+        TOTAL_MATERIAL, MACHINE_RUN
+    ]
+
+    def __init__(self, id, type, costing_measure):
+        self.id = id
+        self.type = type
+        self.costing_measure = costing_measure
+
+    @property
+    def label(self):
+        return '%s %s' % (self.type, self.costing_measure.capitalize() )
+
 
 class MetaMaterialOption(models.Model):
     meta_component = models.ForeignKey(MetaComponent, on_delete=models.CASCADE, 
         related_name='meta_material_options')
-    item = models.ForeignKey(Item, on_delete=models.CASCADE, 
+    item = models.ForeignKey(Item, on_delete=models.RESTRICT, 
         related_name='meta_material_options')
 
     @property
@@ -88,6 +119,17 @@ class MetaMaterialOption(models.Model):
     @property
     def costing_measures(self):
         return self.item.properties.costing_measures
+
+
+class MetaMachineOption(models.Model):
+    meta_component = models.ForeignKey(MetaComponent, on_delete=models.CASCADE,
+        related_name='meta_machine_options')
+    machine = models.ForeignKey(Machine, on_delete=models.RESTRICT,
+        related_name='meta_machine_option')
+
+    @property
+    def label(self):
+        return self.machine.name
 
 
 class MetaProperty(PolymorphicModel):

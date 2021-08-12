@@ -48,19 +48,17 @@ class MetaMaterialOptionSerializer(serializers.ModelSerializer):
         fields = ['id', 'label', 'item']
 
 
-class MeasurementVariableSerializer(serializers.Serializer):
-    name = serializers.CharField()
+class MetaEstimateVariableSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    label = serializers.CharField(read_only=True)
     type = serializers.CharField()
     costing_measure = serializers.CharField()
-    reference = serializers.IntegerField(required=False, allow_null=True)
 
     def update(self, instance, validated_data):
-        instance.name = validated_data.get('name', instance.name)
+        instance.id = validated_data.get('id', instance.type)
         instance.type = validated_data.get('type', instance.type)
         instance.costing_measure = validated_data.get(
             'costing_measure', instance.costing_measure)
-        instance.reference = validated_data.get('reference', 
-            instance.reference)
         return instance
 
     def create(self, validated_data):
@@ -70,11 +68,11 @@ class MeasurementVariableSerializer(serializers.Serializer):
 class MetaComponentSerializer(serializers.ModelSerializer):
     meta_properties = MetaComponentPropertySerializer(many=True)
     meta_material_options = MetaMaterialOptionSerializer(many=True)
-    measurement_variables = MeasurementVariableSerializer(many=True)
-
+    meta_estimate_variables = MetaEstimateVariableSerializer(many=True)
+    
     class Meta:
         model = MetaComponent
-        fields = ['id', 'name', 'type', 'measurement_variables', 
+        fields = ['id', 'name', 'type', 'meta_estimate_variables',
             'meta_material_options', 'meta_properties']
 
 

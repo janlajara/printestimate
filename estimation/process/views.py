@@ -200,7 +200,7 @@ class OperationsViewSet(mixins.ListModelMixin,
                         mixins.DestroyModelMixin, viewsets.GenericViewSet):
     queryset = Operation.objects.all()
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['material_type', 'costing_measure']
+    filterset_fields = ['material_type', 'costing_measure', 'workstation']
 
     def get_serializer_class(self):
         if self.action == 'update':

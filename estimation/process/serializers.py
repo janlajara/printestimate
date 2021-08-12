@@ -142,7 +142,7 @@ class OperationListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Operation
-        fields = ['id', 'name', 'material_type', 'prerequisite', 
+        fields = ['id', 'name', 'workstation', 'material_type', 'prerequisite', 
             'costing_measure', 'estimate_measures', 'operation_steps']
 
     def get_operation_steps(self, instance):

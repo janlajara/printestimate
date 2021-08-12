@@ -41,6 +41,9 @@ class Shape(models.Model):
         raise TypeError('Instance expected must of be type %s. Actual is %' % 
             (expected.__class__, actual.__class__))
 
+    def __str__(self):
+        return ''
+
 
 class Line(Shape):
     costing_measures = [CostingMeasure.LENGTH]

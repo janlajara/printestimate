@@ -34,7 +34,7 @@ class MaterialManager(PolymorphicManager):
 class Material(PolymorphicModel, Shape):
     objects = MaterialManager()
     material_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=20, default='Material')
+    label = models.CharField(max_length=20, null=True)
     quantity = models.IntegerField(default=1)
     item = models.ForeignKey(Item, on_delete=models.RESTRICT, 
         related_name='materials')

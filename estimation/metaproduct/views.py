@@ -1,8 +1,8 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
-from estimation.metaproduct.models import MetaProduct, MetaComponent, \
-    MetaService, MetaOperation, MetaComponentOperation, MetaOperationOption, MetaMaterialOption
+from estimation.metaproduct.models import MetaProduct, MetaComponent, MetaService, \
+     MetaOperation, MetaComponentOperation, MetaOperationOption, MetaMaterialOption, MetaMachineOption
 from estimation.metaproduct import serializers
 
 # Create your views here.
@@ -79,6 +79,11 @@ class MetaProductComponentViewSet(mixins.ListModelMixin, mixins.CreateModelMixin
         for mmo_data in meta_material_options:
             mmo_data.pop('id')
             meta_component.add_meta_material_option(**mmo_data)
+    
+    def create_meta_machine_options(self, meta_component, meta_machine_options):
+        for mmo_data in meta_machine_options:
+            mmo_data.pop('id')
+            meta_component.add_meta_machine_option(**mmo_data)    
 
     def create(self, request, pk=None):
         if pk is not None:
@@ -89,9 +94,11 @@ class MetaProductComponentViewSet(mixins.ListModelMixin, mixins.CreateModelMixin
                 validated_data = deserialized.validated_data
                 meta_operations = validated_data.pop('meta_operations')
                 meta_material_options = validated_data.pop('meta_material_options')
+                meta_machine_options = validated_data.pop('meta_machine_options')
                 meta_component = meta_product.add_meta_component(**validated_data)
                 MetaOperationViewUtils.create_meta_operations(meta_component, meta_operations)
                 self.create_meta_material_options(meta_component, meta_material_options)
+                self.create_meta_machine_options(meta_component, meta_machine_options)
 
                 serialized = serializers.MetaComponentSerializer(meta_component)
                 return Response(serialized.data)
@@ -149,6 +156,19 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
             else:
                 MetaMaterialOption.objects.filter(pk=mmo_id).update(**mmo_data)
 
+    def update_or_create_meta_machine_options(self, meta_component, meta_machine_options):
+        existing_ids = [y.get('id') for y in meta_machine_options if not y.get('id') is None]
+        ids_to_delete = [x.id for x in meta_component.meta_machine_options.all() if not x is not None and x.id in existing_ids]
+
+        MetaMachineOption.objects.filter(pk__in=ids_to_delete).delete()
+
+        for mmc_data in meta_machine_options:
+            mmc_id = mmc_data.pop('id') if 'id' in mmc_data else None
+            if mmc_id is None:
+                meta_component.add_meta_machine_option(**mmc_data)
+            else:
+                MetaMachineOption.objects.filter(pk=mmc_id).update(**mmc_data)
+
     def update(self, request, pk=None):
         if pk is not None:
 
@@ -159,8 +179,10 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
                 validated_data = deserialized.validated_data
                 meta_operations = validated_data.pop('meta_operations')
                 meta_material_options = validated_data.pop('meta_material_options')
+                meta_machine_options = validated_data.pop('meta_machine_options')
                 MetaOperationViewUtils.update_or_create_meta_operations(meta_component, meta_operations)
                 self.update_or_create_meta_material_options(meta_component, meta_material_options)
+                self.update_or_create_meta_machine_options(meta_component, meta_machine_options)
 
                 MetaComponent.objects.filter(pk=pk).update(**validated_data)
                 meta_component = get_object_or_404(MetaComponent, pk=pk)

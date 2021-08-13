@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from estimation.process.serializers import OperationListSerializer
 from estimation.metaproduct.models import MetaProduct, MetaService, MetaComponent, \
-    MetaOperation, MetaComponentOperation, MetaOperationOption, MetaMaterialOption
+    MetaOperation, MetaComponentOperation, MetaOperationOption, MetaMaterialOption, MetaMachineOption
 
 
 class MetaProductSerializer(serializers.ModelSerializer):
@@ -48,6 +48,15 @@ class MetaMaterialOptionSerializer(serializers.ModelSerializer):
         fields = ['id', 'label', 'item']
 
 
+class MetaMachineOptionSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False, allow_null=True)
+    label = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = MetaMachineOption
+        fields = ['id', 'label', 'machine']
+
+
 class MetaEstimateVariableSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     label = serializers.CharField(read_only=True)
@@ -68,12 +77,14 @@ class MetaEstimateVariableSerializer(serializers.Serializer):
 class MetaComponentSerializer(serializers.ModelSerializer):
     meta_operations = MetaComponentOperationSerializer(many=True)
     meta_material_options = MetaMaterialOptionSerializer(many=True)
+    meta_machine_options = MetaMachineOptionSerializer(many=True)
     meta_estimate_variables = MetaEstimateVariableSerializer(many=True)
     
     class Meta:
         model = MetaComponent
-        fields = ['id', 'name', 'type', 'meta_estimate_variables',
-            'meta_material_options', 'meta_operations']
+        fields = ['id', 'name', 'type', 'allow_multiple_materials', 
+            'meta_estimate_variables', 'meta_material_options', 
+            'meta_machine_options', 'meta_operations']
 
 
 class MetaServiceSerializer(serializers.ModelSerializer):

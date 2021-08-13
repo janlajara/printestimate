@@ -36,7 +36,7 @@ class MetaService(MetaProductData):
 
 
 class MetaComponent(MetaProductData):
-    multiple_materials = models.BooleanField(default=False)
+    allow_multiple_materials = models.BooleanField(default=False)
 
     @property
     def meta_estimate_variables(self):

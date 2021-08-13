@@ -25,8 +25,8 @@ class MetaProductData(models.Model):
     type = models.CharField(max_length=15, choices=Item.TYPES)
     meta_product = models.ForeignKey(MetaProduct, on_delete=models.CASCADE)
     
-    def add_meta_property(self, name, options_type, **kwargs):
-        return MetaProperty.objects.create(name=name, options_type=options_type,
+    def add_meta_operation(self, name, options_type, **kwargs):
+        return MetaOperation.objects.create(name=name, options_type=options_type,
             meta_product_data=self, **kwargs)
 
 
@@ -40,29 +40,28 @@ class MetaComponent(MetaProductData):
 
     @property
     def meta_estimate_variables(self):
+        costing_measures = Item.get_costing_measure_choices(self.type)
         variables = []
         counter = 0
 
-        mat = self.meta_material_options.first()
-        if mat is not None:
+        if len(self.meta_material_options.all()) > 0:
             for type in MetaEstimateVariable.MATERIAL_DERIVED_TYPES:
-                for costing_measure in mat.costing_measures:
+                for costing_measure in costing_measures:
                     variable = MetaEstimateVariable(counter, type, costing_measure) 
                     variables.append(variable)
                     counter += 1
 
-        mac = self.meta_machine_options.first()
-        if mac is not None:
+        if len(self.meta_machine_options.all()) > 0:
             for type in MetaEstimateVariable.MACHINE_DERIVED_TYPES:
-                for costing_measure in mac.costing_measures:
+                for costing_measure in costing_measures:
                     variable = MetaEstimateVariable(counter, type, costing_measure) 
                     variables.append(variable)
                     counter += 1
         
         return variables
 
-    def add_meta_property(self, name, options_type, **kwargs):
-        return MetaComponentProperty.objects.create(name=name, options_type=options_type,
+    def add_meta_operation(self, name, options_type, **kwargs):
+        return MetaComponentOperation.objects.create(name=name, options_type=options_type,
             meta_product_data=self, **kwargs)
 
     def add_meta_material_option(self, item:Item):
@@ -70,9 +69,9 @@ class MetaComponent(MetaProductData):
             meta_component=self, item=item)
 
     def add_meta_machine_option(self, machine:Machine):
-        if machine.type != self.type:
+        if machine.material_type != self.type:
             raise Exception("Cannot add machine with type '%s'. Expected type '%s'" % 
-                (machine.type, self.type))
+                (machine.material_type, self.type))
 
         return MetaMachineOption.objects.create(
             meta_component=self, machine=machine)
@@ -131,8 +130,12 @@ class MetaMachineOption(models.Model):
     def label(self):
         return self.machine.name
 
+    @property
+    def costing_measures(self):
+        return self.machine.costing_measures
 
-class MetaProperty(PolymorphicModel):
+
+class MetaOperation(PolymorphicModel):
     SINGLE_OPTION = 'Single'
     MULTIPLE_OPTIONS = 'Multiple'
     BOOLEAN_OPTION = 'Boolean'
@@ -145,38 +148,38 @@ class MetaProperty(PolymorphicModel):
     options_type = models.CharField(max_length=26, choices=TYPES)
     is_required = models.BooleanField(default=False)
     meta_product_data = models.ForeignKey(MetaProductData, on_delete=models.CASCADE, 
-        related_name='meta_properties')
+        related_name='meta_operations')
 
     @property
     def options(self):
-        if self.options_type in [MetaProperty.SINGLE_OPTION, 
-                MetaProperty.MULTIPLE_OPTIONS]:
-            return self.meta_property_options.all()
+        if self.options_type in [MetaOperation.SINGLE_OPTION, 
+                MetaOperation.MULTIPLE_OPTIONS]:
+            return self.meta_operation_options.all()
         else:
-            return [self.meta_property_options.first()]
+            return [self.meta_operation_options.first()]
 
     def add_option(self, operation):
-        if self.options_type == MetaProperty.BOOLEAN_OPTION and \
-                len(self.meta_property_options.all()) > 0:
-            raise Exception('Cannot add more options for Boolean type property')
+        if self.options_type == MetaOperation.BOOLEAN_OPTION and \
+                len(self.meta_operation_options.all()) > 0:
+            raise Exception('Cannot add more options for Boolean type operation')
         else:
-            return MetaPropertyOption.objects.create(
-                meta_property=self, operation=operation)
+            return MetaOperationOption.objects.create(
+                meta_operation=self, operation=operation)
 
     def clear_options(self):
-        self.meta_property_options.all().delete()
+        self.meta_operation_options.all().delete()
 
 
-class MetaComponentProperty(MetaProperty):
+class MetaComponentOperation(MetaOperation):
     costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
         default=CostingMeasure.QUANTITY)
 
 
-class MetaPropertyOption(models.Model):
-    meta_property = models.ForeignKey(MetaProperty, on_delete=models.CASCADE,
-        related_name='meta_property_options')
+class MetaOperationOption(models.Model):
+    meta_operation = models.ForeignKey(MetaOperation, on_delete=models.CASCADE,
+        related_name='meta_operation_options')
     operation = models.ForeignKey(Operation, on_delete=models.CASCADE,
-        related_name='meta_property_options')
+        related_name='meta_operation_options')
 
     @property
     def label(self):

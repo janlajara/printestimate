@@ -1,10 +1,20 @@
 import pytest
+from estimation.machine.models import Machine
 from core.utils.measures import CostingMeasure
 from inventory.models import Item
 from inventory.tests import item_factory, base_unit__sheet, alt_unit__ream
 from estimation.process.models import Workstation
 from estimation.metaproduct.models import MetaProduct, MetaService, \
-    MetaComponent, MetaMaterialOption, MetaProperty, MetaPropertyOption
+    MetaComponent, MetaMaterialOption, MetaOperation, MetaOperationOption
+
+
+@pytest.fixture
+def gto_machine(db):
+    return Machine.objects.create_machine(name='GTO Press', 
+        type=Machine.SHEET_FED_PRESS, uom='inch',
+        min_sheet_width=10, max_sheet_width=30,
+        min_sheet_length=10, max_sheet_length=30)
+
 
 @pytest.fixture
 def meta_component_factory(db):
@@ -51,49 +61,60 @@ def test_meta_product__add_meta_service(db):
     assert meta_service.costing_measure == CostingMeasure.QUANTITY
 
 
+def test_meta_component__add_machine_option(db, form_meta_component, gto_machine):
+    meta_machine_option = form_meta_component.add_meta_machine_option(gto_machine)
+
+    assert meta_machine_option is not None
+    assert meta_machine_option.label == 'GTO Press'
+    assert meta_machine_option.machine == gto_machine
+    assert len(form_meta_component.meta_estimate_variables) == 3
+
+
 def test_meta_component__add_meta_material_option(db, form_meta_component, carbonless_item):
     meta_material_option = form_meta_component.add_meta_material_option(carbonless_item)
-    
+
     assert meta_material_option is not None
     assert meta_material_option.label == 'Carbonless 8.5x11inch'
     assert meta_material_option.meta_component == form_meta_component
+    assert meta_material_option.item == carbonless_item
     assert len(form_meta_component.meta_material_options.all()) == 1
     assert form_meta_component.meta_material_options.first() == meta_material_option
+    assert len(form_meta_component.meta_estimate_variables) == 9
 
 
-def test_meta_component__add_meta_property(db, form_meta_component):
-    meta_property = form_meta_component.add_meta_property('Padding', 
-        MetaProperty.MULTIPLE_OPTIONS)
+def test_meta_component__add_meta_operation(db, form_meta_component):
+    meta_operation = form_meta_component.add_meta_operation('Padding', 
+        MetaOperation.MULTIPLE_OPTIONS)
 
-    assert meta_property is not None
-    assert meta_property.name == 'Padding'
-    assert meta_property.options_type == MetaProperty.MULTIPLE_OPTIONS
-    assert meta_property.costing_measure == 'quantity'
+    assert meta_operation is not None
+    assert meta_operation.name == 'Padding'
+    assert meta_operation.options_type == MetaOperation.MULTIPLE_OPTIONS
+    assert meta_operation.costing_measure == 'quantity'
 
 
-def test_meta_property__add_clear_option(db, form_meta_component, korse_printing_operation):
-    meta_property = form_meta_component.add_meta_property('Padding', 
-        MetaProperty.MULTIPLE_OPTIONS)
+def test_meta_operation__add_clear_option(db, form_meta_component, korse_printing_operation):
+    meta_operation = form_meta_component.add_meta_operation('Padding', 
+        MetaOperation.MULTIPLE_OPTIONS)
     
-    option = meta_property.add_option(korse_printing_operation)
+    option = meta_operation.add_option(korse_printing_operation)
 
     assert option is not None
-    assert len(meta_property.options) == 1
-    assert meta_property.meta_property_options.first() == option
+    assert len(meta_operation.options) == 1
+    assert meta_operation.meta_operation_options.first() == option
 
-    meta_property.clear_options()
-    assert len(meta_property.options) == 0
+    meta_operation.clear_options()
+    assert len(meta_operation.options) == 0
 
 
-def test_meta_property__add_option_exception(db, form_meta_component, korse_printing_operation):
-    meta_property = form_meta_component.add_meta_property('Padding', 
-        MetaProperty.BOOLEAN_OPTION)
+def test_meta_operation__add_option_exception(db, form_meta_component, korse_printing_operation):
+    meta_operation = form_meta_component.add_meta_operation('Padding', 
+        MetaOperation.BOOLEAN_OPTION)
 
-    option = meta_property.add_option(korse_printing_operation)
+    option = meta_operation.add_option(korse_printing_operation)
 
     assert option is not None
-    assert meta_property.options is not None
-    assert meta_property.options[0] == option
+    assert meta_operation.options is not None
+    assert meta_operation.options[0] == option
 
     with pytest.raises(Exception):
-        meta_property.add_option(korse_printing_operation)
+        meta_operation.add_option(korse_printing_operation)

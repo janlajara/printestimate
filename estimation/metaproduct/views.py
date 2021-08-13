@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
 from estimation.metaproduct.models import MetaProduct, MetaComponent, \
-    MetaService, MetaProperty, MetaComponentProperty, MetaPropertyOption, MetaMaterialOption
+    MetaService, MetaOperation, MetaComponentOperation, MetaOperationOption, MetaMaterialOption
 from estimation.metaproduct import serializers
 
 # Create your views here.
@@ -11,57 +11,57 @@ class MetaProductViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.MetaProductSerializer
 
 
-class MetaPropertyViewUtils:
+class MetaOperationViewUtils:
 
     @classmethod
-    def create_meta_property_options(cls, meta_property, meta_property_options):
-        for mpo_data in meta_property_options:
-            meta_property.add_option(**mpo_data)
+    def create_meta_operation_options(cls, meta_operation, meta_operation_options):
+        for mpo_data in meta_operation_options:
+            meta_operation.add_option(**mpo_data)
 
     @classmethod
-    def create_meta_properties(cls, obj, meta_properties):
-        for mp_data in meta_properties:
-            meta_property_options = mp_data.pop('meta_property_options')
-            meta_property = obj.add_meta_property(**mp_data)
-            cls.create_meta_property_options(meta_property, meta_property_options)
+    def create_meta_operations(cls, obj, meta_operations):
+        for mp_data in meta_operations:
+            meta_operation_options = mp_data.pop('meta_operation_options')
+            meta_operation = obj.add_meta_operation(**mp_data)
+            cls.create_meta_operation_options(meta_operation, meta_operation_options)
 
     @classmethod
-    def update_or_create_meta_property_options(cls, meta_property, meta_property_options):
-        existing_ids = [y.get('id') for y in meta_property_options if not y.get('id') is None]
-        ids_to_delete = [x.id for x in meta_property.options if x is not None and not x.id in existing_ids]
+    def update_or_create_meta_operation_options(cls, meta_operation, meta_operation_options):
+        existing_ids = [y.get('id') for y in meta_operation_options if not y.get('id') is None]
+        ids_to_delete = [x.id for x in meta_operation.options if x is not None and not x.id in existing_ids]
 
-        MetaPropertyOption.objects.filter(pk__in=ids_to_delete).delete()
+        MetaOperationOption.objects.filter(pk__in=ids_to_delete).delete()
 
-        for mpo_data in meta_property_options:
+        for mpo_data in meta_operation_options:
             mpo_id = mpo_data.pop('id') if 'id' in mpo_data else None
 
             if mpo_id is None:
-                meta_property.add_option(**mpo_data)
+                meta_operation.add_option(**mpo_data)
             else:
-                MetaPropertyOption.objects.filter(pk=mpo_id).update(**mpo_data)
+                MetaOperationOption.objects.filter(pk=mpo_id).update(**mpo_data)
 
     @classmethod
-    def update_or_create_meta_properties(cls, obj, meta_properties):
-        existing_ids = [y.get('id') for y in meta_properties if not y.get('id') is None]
-        ids_to_delete = [x.id for x in obj.meta_properties.all() if x is not None and not x.id in existing_ids]
+    def update_or_create_meta_operations(cls, obj, meta_operations):
+        existing_ids = [y.get('id') for y in meta_operations if not y.get('id') is None]
+        ids_to_delete = [x.id for x in obj.meta_operations.all() if x is not None and not x.id in existing_ids]
 
-        MetaProperty.objects.filter(pk__in=ids_to_delete).delete()
+        MetaOperation.objects.filter(pk__in=ids_to_delete).delete()
 
-        for mp_data in meta_properties:
-            meta_property_options = mp_data.pop('meta_property_options')
+        for mp_data in meta_operations:
+            meta_operation_options = mp_data.pop('meta_operation_options')
             mp_id = mp_data.pop('id') if 'id' in mp_data else None
-            meta_property = None
+            meta_operation = None
             
             if mp_id is None:
-                meta_property = obj.add_meta_property(**mp_data)
+                meta_operation = obj.add_meta_operation(**mp_data)
             else:
                 if isinstance(obj, MetaComponent):
-                    MetaComponentProperty.objects.filter(pk=mp_id).update(**mp_data)
+                    MetaComponentOperation.objects.filter(pk=mp_id).update(**mp_data)
                 else:
-                    MetaProperty.objects.filter(pk=mp_id).update(**mp_data)
-                meta_property = MetaProperty.objects.get(pk=mp_id)
+                    MetaOperation.objects.filter(pk=mp_id).update(**mp_data)
+                meta_operation = MetaOperation.objects.get(pk=mp_id)
     
-            cls.update_or_create_meta_property_options(meta_property, meta_property_options)
+            cls.update_or_create_meta_operation_options(meta_operation, meta_operation_options)
 
 
 class MetaProductComponentViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
@@ -87,10 +87,10 @@ class MetaProductComponentViewSet(mixins.ListModelMixin, mixins.CreateModelMixin
 
             if deserialized.is_valid():
                 validated_data = deserialized.validated_data
-                meta_properties = validated_data.pop('meta_properties')
+                meta_operations = validated_data.pop('meta_operations')
                 meta_material_options = validated_data.pop('meta_material_options')
                 meta_component = meta_product.add_meta_component(**validated_data)
-                MetaPropertyViewUtils.create_meta_properties(meta_component, meta_properties)
+                MetaOperationViewUtils.create_meta_operations(meta_component, meta_operations)
                 self.create_meta_material_options(meta_component, meta_material_options)
 
                 serialized = serializers.MetaComponentSerializer(meta_component)
@@ -119,9 +119,9 @@ class MetaProductServiceViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
 
             if deserialized.is_valid():
                 validated_data = deserialized.validated_data
-                meta_properties = validated_data.pop('meta_properties')
+                meta_operations = validated_data.pop('meta_operations')
                 meta_service = meta_product.add_meta_service(**validated_data)
-                MetaPropertyViewUtils.create_meta_properties(meta_service, meta_properties)
+                MetaOperationViewUtils.create_meta_operations(meta_service, meta_operations)
 
                 serialized = serializers.MetaServiceSerializer(meta_service)
                 return Response(serialized.data)
@@ -157,9 +157,9 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
 
             if deserialized.is_valid():
                 validated_data = deserialized.validated_data
-                meta_properties = validated_data.pop('meta_properties')
+                meta_operations = validated_data.pop('meta_operations')
                 meta_material_options = validated_data.pop('meta_material_options')
-                MetaPropertyViewUtils.update_or_create_meta_properties(meta_component, meta_properties)
+                MetaOperationViewUtils.update_or_create_meta_operations(meta_component, meta_operations)
                 self.update_or_create_meta_material_options(meta_component, meta_material_options)
 
                 MetaComponent.objects.filter(pk=pk).update(**validated_data)
@@ -185,8 +185,8 @@ class MetaServiceViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
 
             if deserialized.is_valid():
                 validated_data = deserialized.validated_data
-                meta_properties = validated_data.pop('meta_properties')
-                MetaPropertyViewUtils.update_or_create_meta_properties(meta_service, meta_properties)
+                meta_operations = validated_data.pop('meta_operations')
+                MetaOperationViewUtils.update_or_create_meta_operations(meta_service, meta_operations)
 
                 MetaService.objects.filter(pk=pk).update(**validated_data)
                 meta_service = get_object_or_404(MetaService, pk=pk)

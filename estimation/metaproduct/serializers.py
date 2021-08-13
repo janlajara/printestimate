@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from estimation.process.serializers import OperationListSerializer
 from estimation.metaproduct.models import MetaProduct, MetaService, MetaComponent, \
-    MetaProperty, MetaComponentProperty, MetaPropertyOption, MetaMaterialOption
+    MetaOperation, MetaComponentOperation, MetaOperationOption, MetaMaterialOption
 
 
 class MetaProductSerializer(serializers.ModelSerializer):
@@ -10,33 +10,33 @@ class MetaProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description']
 
 
-class MetaPropertyOptionSerializer(serializers.ModelSerializer):
+class MetaOperationOptionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
     label = serializers.CharField(read_only=True)
 
     class Meta:
-        model = MetaPropertyOption
+        model = MetaOperationOption
         fields = ['id', 'label', 'operation']
 
 
-class MetaPropertySerializer(serializers.ModelSerializer):
+class MetaOperationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
-    meta_property_options = MetaPropertyOptionSerializer(many=True)
+    meta_operation_options = MetaOperationOptionSerializer(many=True)
 
     class Meta:
-        model = MetaProperty
+        model = MetaOperation
         fields = ['id', 'name', 'options_type', 'is_required', 
-            'meta_property_options']
+            'meta_operation_options']
 
 
-class MetaComponentPropertySerializer(serializers.ModelSerializer):
+class MetaComponentOperationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
-    meta_property_options = MetaPropertyOptionSerializer(many=True)
+    meta_operation_options = MetaOperationOptionSerializer(many=True)
     
     class Meta:
-        model = MetaComponentProperty
+        model = MetaComponentOperation
         fields = ['id', 'name', 'options_type', 'costing_measure', 
-            'is_required', 'meta_property_options']
+            'is_required', 'meta_operation_options']
 
 
 class MetaMaterialOptionSerializer(serializers.ModelSerializer):
@@ -66,19 +66,19 @@ class MetaEstimateVariableSerializer(serializers.Serializer):
 
 
 class MetaComponentSerializer(serializers.ModelSerializer):
-    meta_properties = MetaComponentPropertySerializer(many=True)
+    meta_operations = MetaComponentOperationSerializer(many=True)
     meta_material_options = MetaMaterialOptionSerializer(many=True)
     meta_estimate_variables = MetaEstimateVariableSerializer(many=True)
     
     class Meta:
         model = MetaComponent
         fields = ['id', 'name', 'type', 'meta_estimate_variables',
-            'meta_material_options', 'meta_properties']
+            'meta_material_options', 'meta_operations']
 
 
 class MetaServiceSerializer(serializers.ModelSerializer):
-    meta_properties = MetaPropertySerializer(many=True)
+    meta_operations = MetaOperationSerializer(many=True)
 
     class Meta:
         model = MetaService
-        fields = ['id', 'name', 'type', 'costing_measure', 'meta_properties']
+        fields = ['id', 'name', 'type', 'costing_measure', 'meta_operations']

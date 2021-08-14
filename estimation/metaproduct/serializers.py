@@ -78,7 +78,7 @@ class MetaComponentSerializer(serializers.ModelSerializer):
     meta_operations = MetaComponentOperationSerializer(many=True)
     meta_material_options = MetaMaterialOptionSerializer(many=True)
     meta_machine_options = MetaMachineOptionSerializer(many=True)
-    meta_estimate_variables = MetaEstimateVariableSerializer(many=True)
+    meta_estimate_variables = MetaEstimateVariableSerializer(many=True, read_only=True)
     
     class Meta:
         model = MetaComponent

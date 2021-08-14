@@ -8,7 +8,7 @@
             :is-open="state.createEditModal.isOpen"
             @toggle="state.createEditModal.toggle" 
             :on-after-save="populateMetaComponents"/>
-        <Table :headers="['Name', 'Type', 'Material Options', 'Properties', '']" 
+        <Table :headers="['Name', 'Type', 'Material Options', 'Operations', '']" 
                 :loader="state.isProcessing">
             <Row v-for="(s, key) in state.list" :key="key" clickable>
                 <Cell label="Name">{{s.name}}</Cell>
@@ -21,9 +21,9 @@
                         </li>
                     </ul>
                 </Cell>
-                <Cell label="Properties">
+                <Cell label="Operations">
                     <ul class="pl-2">
-                        <li v-for="(x, i) in s.metaProperties" :key="i"
+                        <li v-for="(x, i) in s.metaOperations" :key="i"
                             class="list-disc">
                             {{x.name}}
                         </li>
@@ -114,7 +114,7 @@ export default {
                         name: obj.name,
                         type: obj.type,
                         metaMaterialOptions: obj.meta_material_options,
-                        metaProperties: obj.meta_properties
+                        metaOperations: obj.meta_operations
                     }));
                 }
             }

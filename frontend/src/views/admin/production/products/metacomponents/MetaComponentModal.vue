@@ -11,7 +11,7 @@
                     type="text" :value="state.data.name" required
                     @input="value => state.data.name = value"/>
                 <InputSelect name="Material Type" required 
-                    :disabled="state.data.metaProperties.length > 0 ||
+                    :disabled="state.data.metaOperations.length > 0 ||
                         state.data.metaMaterialOptions.length > 0"
                     @input="(value)=>state.data.type = value"
                     :options="state.meta.materialTypeChoices.map(c=>({
@@ -28,12 +28,12 @@
                 @input="value => state.data.metaMaterialOptions = value"/>
         </Section>
         <hr/>
-        <Section heading="Properties" heading-position="side"> 
-            <MetaComponentPropertiesListForm 
+        <Section heading="Operations" heading-position="side"> 
+            <MetaComponentOperationsListForm 
                 :material-type="state.data.type"
                 :option-type-choices="state.meta.optionTypeChoices"
-                :value="state.data.metaProperties"
-                @input="value => state.data.metaProperties = value"/>
+                :value="state.data.metaOperations"
+                @input="value => state.data.metaOperations = value"/>
         </Section>
     </Modal>
 </template>
@@ -44,7 +44,7 @@ import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
 import InputSelect from '@/components/InputSelect.vue';
 import MetaComponentMaterialOptionsListForm from './MetaComponentMaterialOptionsListForm.vue';
-import MetaComponentPropertiesListForm from './MetaComponentPropertiesListForm.vue';
+import MetaComponentOperationsListForm from './MetaComponentOperationsListForm.vue';
 
 import {reactive, computed, watch, onBeforeMount} from 'vue';
 import {MetaProductApi, MetaComponentApi} from '@/utils/apis.js';
@@ -53,7 +53,7 @@ export default {
     components: {
         Modal, Section, InputText, InputSelect,
         MetaComponentMaterialOptionsListForm,
-        MetaComponentPropertiesListForm
+        MetaComponentOperationsListForm
     },
     props: {
         isOpen: Boolean,
@@ -72,8 +72,9 @@ export default {
             data: {
                 name: '', 
                 type: '', 
-                metaProperties: [],
-                metaMaterialOptions: []
+                metaOperations: [],
+                metaMaterialOptions: [],
+                metaMachineOptions: []
             },
             meta: {
                 materialTypeChoices: [],
@@ -83,8 +84,9 @@ export default {
                 state.data = {
                     name: '', 
                     type: '', 
-                    metaProperties: [],
-                    metaMaterialOptions: []
+                    metaOperations: [],
+                    metaMaterialOptions: [],
+                    metaMachineOptions: []
                 }
             },
             validate: ()=> {
@@ -107,16 +109,20 @@ export default {
                         id: y.id,
                         item: y.item
                     })),
-                    meta_properties: state.data.metaProperties.map( x => ({
+                    meta_operations: state.data.metaOperations.map( x => ({
                         id: x.id,
                         name: x.name,
                         costing_measure: x.costingMeasure,
                         options_type: x.optionsType,
                         is_required: x.isRequired,
-                        meta_property_options: x.metaPropertyOptions.map( y => ({
+                        meta_operation_options: x.metaOperationOptions.map( y => ({
                             id: y.id,
                             operation: y.operation
                         }))
+                    })),
+                    meta_machine_options: state.data.metaMachineOptions.map( z => ({
+                        id: z.id,
+                        machine: z.machine
                     }))
                 };
                 saveComponent(request);
@@ -131,13 +137,13 @@ export default {
                     state.data = {
                         name: response.name, 
                         type: response.type, 
-                        metaProperties: response.meta_properties.map( x => ({
+                        metaOperations: response.meta_operations.map( x => ({
                             id: x.id,
                             name: x.name,
                             costingMeasure: x.costing_measure,
                             optionsType: x.options_type,
                             isRequired: x.is_required,
-                            metaPropertyOptions: x.meta_property_options.map( y => ({
+                            metaOperationOptions: x.meta_operation_options.map( y => ({
                                 id: y.id,
                                 label: y.label,
                                 operation: y.operation
@@ -162,7 +168,7 @@ export default {
                     materialTypeChoices: metadata.type.choices.map( x => ({
                         value: x.value, label: x.display_name
                     })),
-                    optionTypeChoices: metadata.meta_properties.child.children.options_type.choices.map( y => ({
+                    optionTypeChoices: metadata.meta_operations.child.children.options_type.choices.map( y => ({
                         value: y.value, label: y.display_name
                     })),
                 }

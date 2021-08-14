@@ -2,14 +2,14 @@
     <div>
         <Table :headers="['Name', 'Options Type', 'Options', '']"
             layout="fixed" :cols-width="['', '', 'w-1/3', 'w-1/5']">
-            <Row v-for="(x, i) in state.propertyList" :key="i"
-                    :class="state.propertyForm.editIndex == i? 
+            <Row v-for="(x, i) in state.operationList" :key="i"
+                    :class="state.operationForm.editIndex == i? 
                         'bg-secondary-light bg-opacity-20' : ''">
                 <Cell>{{x.name}}</Cell>
                 <Cell>{{x.optionsType}}</Cell>
                 <Cell>
                     <ul class="pl-2">
-                        <li v-for="(x, i) in x.metaPropertyOptions" :key="i"
+                        <li v-for="(x, i) in x.metaOperationOptions" :key="i"
                             class="list-disc">
                             {{x.label || x.id}}
                         </li>
@@ -18,9 +18,9 @@
                 <Cell class="lg:px-0">
                     <div class="flex justify-end">
                         <Button class="my-auto px-0" icon="edit"
-                            @click="()=>{state.editProperty(i)}"/>
+                            @click="()=>{state.editOperation(i)}"/>
                         <Button class="my-auto px-0" icon="clear" 
-                            @click="()=>{state.removeProperty(i)}"/>
+                            @click="()=>{state.removeOperation(i)}"/>
                     </div>
                 </Cell>
             </Row>
@@ -28,37 +28,37 @@
         <hr/>
         <div class="md:grid md:gap-4 md:grid-cols-3">
             <InputText name="Name" required
-                type="text" :value="state.propertyForm.name"
-                @input="value => state.propertyForm.name = value"/>
+                type="text" :value="state.operationForm.name"
+                @input="value => state.operationForm.name = value"/>
             <InputSelect name="Options Type" required
                 @input="(value)=>{
-                    state.propertyForm.optionsType = value;
-                    if (state.propertyForm.optionsType == 'Boolean') {
-                        if (state.propertyForm.metaPropertyOptions.length > 0) {
-                            state.propertyForm.metaPropertyOptions = 
-                                [state.propertyForm.metaPropertyOptions[0]]
+                    state.operationForm.optionsType = value;
+                    if (state.operationForm.optionsType == 'Boolean') {
+                        if (state.operationForm.metaOperationOptions.length > 0) {
+                            state.operationForm.metaOperationOptions = 
+                                [state.operationForm.metaOperationOptions[0]]
                         }
                     }
                 }"
                 :options="state.optionTypeChoices.map(c=>({
                     value: c.value, label: c.label,
-                    isSelected: state.propertyForm.optionsType == c.value
+                    isSelected: state.operationForm.optionsType == c.value
                 }))"/>
             <InputCheckBox label="Is Required" 
-                :value="state.propertyForm.isRequired"
-                @input="value => state.propertyForm.isRequired = value"/>
-            <InputSelect name="Property Options" class="col-span-3"
-                required :multiple="state.propertyForm.optionsType != 'Boolean'" 
-                @input="(value)=>state.propertyForm.metaPropertyOptions = 
+                :value="state.operationForm.isRequired"
+                @input="value => state.operationForm.isRequired = value"/>
+            <InputSelect name="Operation Options" class="col-span-3"
+                required :multiple="state.operationForm.optionsType != 'Boolean'" 
+                @input="(value)=>state.operationForm.metaOperationOptions = 
                     value.constructor === Array ? value : [value]"
-                :options="state.meta.metaPropertyOptionChoices.map(c=>({
+                :options="state.meta.metaOperationOptionChoices.map(c=>({
                     value: c.value, label: c.label,
-                    isSelected: state.propertyForm.metaPropertyOptions.includes(c.value)
+                    isSelected: state.operationForm.metaOperationOptions.includes(c.value)
                 }))"/> 
             <div class="flex justify-end col-span-3 mt-4 md:mt-0">
                 <Button icon="add" class="my-auto border-gray-300 border"
-                        @click="state.saveProperty">
-                    {{ state.propertyForm.editIndex != null ? 'Update' : 'Add' }}</Button>
+                        @click="state.saveOperation">
+                    {{ state.operationForm.editIndex != null ? 'Update' : 'Add' }}</Button>
             </div>
         </div>
     </div>
@@ -92,63 +92,63 @@ export default {
             materialType: computed(()=> props.materialType),
             costingMeasure: computed(()=> props.costingMeasure),
             optionTypeChoices: computed(()=> props.optionTypeChoices),
-            propertyList: [],
-            propertyForm: {
+            operationList: [],
+            operationForm: {
                 id: null,
                 editIndex: null,
                 name: '',
                 optionsType: '', 
                 costingMeasure: '',
                 isRequired: false,
-                metaPropertyOptions: []
+                metaOperationOptions: []
             },
             meta: {
-                metaPropertyOptionChoices: []
+                metaOperationOptionChoices: []
             },
-            clearPropertyForm: ()=> {
-                state.propertyForm = {
+            clearOperationForm: ()=> {
+                state.operationForm = {
                     id: null,
                     editIndex: null,
                     name: '',
                     optionsType: '', 
                     isRequired: false,
-                    metaPropertyOptions: []
+                    metaOperationOptions: []
                 }
             },
-            saveProperty: ()=> {
-                const editIndex = state.propertyForm.editIndex;
-                const propertyForm = {
-                    id: state.propertyForm.id,
-                    name: state.propertyForm.name,
-                    optionsType: state.propertyForm.optionsType,
-                    isRequired: state.propertyForm.isRequired,
-                    metaPropertyOptions: state.propertyForm.metaPropertyOptions.map( x=> ({
+            saveOperation: ()=> {
+                const editIndex = state.operationForm.editIndex;
+                const operationForm = {
+                    id: state.operationForm.id,
+                    name: state.operationForm.name,
+                    optionsType: state.operationForm.optionsType,
+                    isRequired: state.operationForm.isRequired,
+                    metaOperationOptions: state.operationForm.metaOperationOptions.map( x=> ({
                         operation: x,
-                        label: state.meta.metaPropertyOptionChoices.find(y => y.value == x).label
+                        label: state.meta.metaOperationOptionChoices.find(y => y.value == x).label
                     }))
                 };
                 if (editIndex != null) {
-                    state.propertyList[editIndex] = propertyForm;
+                    state.operationList[editIndex] = operationForm;
                 } else {
-                    state.propertyList.push(propertyForm);
+                    state.operationList.push(operationForm);
                 }
-                emit('input', state.propertyList);
-                state.clearPropertyForm();
+                emit('input', state.operationList);
+                state.clearOperationForm();
             },
-            editProperty: (index)=> {
-                const selected = state.propertyList[index];
-                state.propertyForm = {
+            editOperation: (index)=> {
+                const selected = state.operationList[index];
+                state.operationForm = {
                     id: selected.id,
                     editIndex: index,
                     name: selected.name,
                     optionsType: selected.optionsType, 
                     isRequired: selected.isRequired,
-                    metaPropertyOptions: selected.metaPropertyOptions.map( x => x.operation)
+                    metaOperationOptions: selected.metaOperationOptions.map( x => x.operation)
                 }
                 listOperations();
             },
-            removeProperty: (index)=> {
-                state.propertyList.splice(index, 1)
+            removeOperation: (index)=> {
+                state.operationList.splice(index, 1)
             }
         });
 
@@ -159,13 +159,13 @@ export default {
             } 
             const response = await OperationApi.listOperations(filter);
             if (response) {
-                state.meta.metaPropertyOptionChoices = response.map( x => ({
+                state.meta.metaOperationOptionChoices = response.map( x => ({
                     label: x.name, value: x.id
                 }));
             }
         }
         watch(()=> props.value, ()=> {
-            state.propertyList = props.value;
+            state.operationList = props.value;
             listOperations();
         })
         watch(()=> props.costingMeasure, ()=> {

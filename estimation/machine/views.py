@@ -14,8 +14,22 @@ class MachineTypesViewSet(viewsets.ViewSet):
 
 
 class MachineViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-    queryset = Machine.objects.all()
     serializer_class = serializers.MachinePolymorphicSerializer
+
+    def get_queryset(self):
+        def __eval(a, b):
+            return a == b if b is not None else True
+
+        query_params = self.request.query_params
+        material_type = query_params.get('material_type', None)
+        resourcetype = query_params.get('resourcetype', None)
+        machines = Machine.objects.all()
+
+        if material_type is not None or resourcetype is not None:
+            machines = [x for x in machines if __eval(x.material_type, material_type)
+                and __eval(x.__class__.__name__, resourcetype)]
+
+        return machines
 
 
 class SheetFedPressMachineViewSet(viewsets.ModelViewSet):

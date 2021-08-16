@@ -9,7 +9,7 @@ _inflect = inflect.engine()
 class MachineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Machine
-        fields = ['id', 'name', 'type', 'description']
+        fields = ['id', 'name', 'type', 'material_type', 'description']
 
 
 class SheetFedPressMachineSerializer(serializers.ModelSerializer):
@@ -20,7 +20,7 @@ class SheetFedPressMachineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SheetFedPressMachine
-        fields = ['id', 'name', 'process_type', 
+        fields = ['id', 'name', 'process_type', 'material_type',
             'description', 'costing_measures', 
             'min_sheet_length', 'max_sheet_length', 
             'min_sheet_width', 'max_sheet_width', 'uom', 

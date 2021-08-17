@@ -18,7 +18,7 @@ class MachineViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
     def get_queryset(self):
         def __eval(a, b):
-            return a == b if b is not None else True
+            return a == b if b is not None and b != '' else True
 
         query_params = self.request.query_params
         material_type = query_params.get('material_type', None)

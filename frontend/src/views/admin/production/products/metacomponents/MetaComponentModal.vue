@@ -28,12 +28,11 @@
                 @input="value => state.data.metaMaterialOptions = value"/>
         </Section>
         <hr/>
-        <Section heading="Operations" heading-position="side"> 
-            <MetaComponentOperationsListForm 
+        <Section heading="Machine Options" heading-position="side"> 
+            <MetaComponentMachineOptionsListForm 
                 :material-type="state.data.type"
-                :option-type-choices="state.meta.optionTypeChoices"
-                :value="state.data.metaOperations"
-                @input="value => state.data.metaOperations = value"/>
+                :value="state.data.metaMachineOptions"
+                @input="value => state.data.metaMachineOptions = value"/>
         </Section>
     </Modal>
 </template>
@@ -44,7 +43,7 @@ import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
 import InputSelect from '@/components/InputSelect.vue';
 import MetaComponentMaterialOptionsListForm from './MetaComponentMaterialOptionsListForm.vue';
-import MetaComponentOperationsListForm from './MetaComponentOperationsListForm.vue';
+import MetaComponentMachineOptionsListForm from './MetaComponentMachineOptionsListForm.vue';
 
 import {reactive, computed, watch, onBeforeMount} from 'vue';
 import {MetaProductApi, MetaComponentApi} from '@/utils/apis.js';
@@ -53,7 +52,7 @@ export default {
     components: {
         Modal, Section, InputText, InputSelect,
         MetaComponentMaterialOptionsListForm,
-        MetaComponentOperationsListForm
+        MetaComponentMachineOptionsListForm
     },
     props: {
         isOpen: Boolean,
@@ -109,6 +108,10 @@ export default {
                         id: y.id,
                         item: y.item
                     })),
+                    meta_machine_options: state.data.metaMachineOptions.map( z => ({
+                        id: z.id,
+                        machine: z.machine
+                    })),
                     meta_operations: state.data.metaOperations.map( x => ({
                         id: x.id,
                         name: x.name,
@@ -119,10 +122,6 @@ export default {
                             id: y.id,
                             operation: y.operation
                         }))
-                    })),
-                    meta_machine_options: state.data.metaMachineOptions.map( z => ({
-                        id: z.id,
-                        machine: z.machine
                     }))
                 };
                 saveComponent(request);
@@ -153,6 +152,11 @@ export default {
                             id: z.id,
                             label: z.label,
                             item: z.item
+                        })),
+                        metaMachineOptions: response.meta_machine_options.map( a=> ({
+                            id: a.id,
+                            label: a.label,
+                            machine: a.machine
                         }))
                     }
                 }

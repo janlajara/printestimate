@@ -108,6 +108,7 @@ export default {
             state.materialList = props.value;
         });
         watch(()=> state.materialType, ()=> {
+            state.materialForm.lookupText = null;
             listMaterials();
         });
 

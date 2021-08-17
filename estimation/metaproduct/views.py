@@ -145,7 +145,7 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
 
     def update_or_create_meta_material_options(self, meta_component, meta_material_options):
         existing_ids = [y.get('id') for y in meta_material_options if not y.get('id') is None]
-        ids_to_delete = [x.id for x in meta_component.meta_material_options.all() if not x is not None and x.id in existing_ids]
+        ids_to_delete = [x.id for x in meta_component.meta_material_options.all() if x is not None and not x.id in existing_ids]
 
         MetaMaterialOption.objects.filter(pk__in=ids_to_delete).delete()
 
@@ -158,7 +158,7 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
 
     def update_or_create_meta_machine_options(self, meta_component, meta_machine_options):
         existing_ids = [y.get('id') for y in meta_machine_options if not y.get('id') is None]
-        ids_to_delete = [x.id for x in meta_component.meta_machine_options.all() if not x is not None and x.id in existing_ids]
+        ids_to_delete = [x.id for x in meta_component.meta_machine_options.all() if x is not None and not x.id in existing_ids]
 
         MetaMachineOption.objects.filter(pk__in=ids_to_delete).delete()
 

@@ -3,8 +3,9 @@ import {AXIOS} from '@/utils/apis/core.js'
 export class MachineApi {
     static uri = '/estimation/api/machines'
 
-    static async listMachines() {
-        const response = await AXIOS.execute(AXIOS.GET, MachineApi.uri);
+    static async listMachines(filter) {
+        const response = await AXIOS.execute(AXIOS.GET, MachineApi.uri, null, null,
+            null, filter);
         if (response) return response.data;
     }
 

@@ -2,6 +2,7 @@
     <div>
         <div class="grid gap-4 md:grid-cols-3">
             <InputSelect name="Machine Type"
+                :disabled="state.machineForm.machines.length > 0"
                 @input="value => {
                     state.machineForm.machineType = value;
                 }"
@@ -81,8 +82,8 @@ export default {
             if (response) {
                 state.meta.machineChoices = response.map( x => ({
                     label: x.name, value: x.id,
+                    resourcetype: x.resourcetype
                 }));
-                state.machineForm.machineType = response[0].resourcetype;
             }
         }
 
@@ -102,6 +103,11 @@ export default {
         });
         watch(()=> props.value, ()=> {
             state.machineForm.machines = props.value.map(x => x.machine);
+            const machines = state.machineForm.machines;
+            if (machines.length > 0) {
+                const m = state.meta.machineChoices.find(x => x.value == machines[0])
+                if (m) state.machineForm.machineType = m.resourcetype;
+            }
         });
         onBeforeMount(()=> {
             listMachineTypes();

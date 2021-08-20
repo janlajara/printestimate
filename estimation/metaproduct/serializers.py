@@ -42,10 +42,11 @@ class MetaComponentOperationSerializer(serializers.ModelSerializer):
 class MetaMaterialOptionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
     label = serializers.CharField(read_only=True)
+    type = serializers.CharField(read_only=True)
 
     class Meta:
         model = MetaMaterialOption
-        fields = ['id', 'label', 'item']
+        fields = ['id', 'label', 'item', 'type']
 
 
 class MetaMachineOptionSerializer(serializers.ModelSerializer):

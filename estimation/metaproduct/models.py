@@ -116,6 +116,10 @@ class MetaMaterialOption(models.Model):
         return self.item.full_name
 
     @property
+    def type(self):
+        return self.item.type
+
+    @property
     def costing_measures(self):
         return self.item.properties.costing_measures
 

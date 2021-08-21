@@ -151,7 +151,8 @@ export default {
                         metaMaterialOptions: response.meta_material_options.map( z => ({
                             id: z.id,
                             label: z.label,
-                            item: z.item
+                            item: z.item,
+                            type: z.type,
                         })),
                         metaMachineOptions: response.meta_machine_options.map( a=> ({
                             id: a.id,

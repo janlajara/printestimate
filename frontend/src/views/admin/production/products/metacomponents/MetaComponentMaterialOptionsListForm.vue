@@ -1,55 +1,34 @@
 <template>
     <div>
-        <Table :headers="['Name', '']"
-            layout="fixed" :cols-width="['w-2/3', 'w-1/3']">
-            <Row v-for="(x, i) in state.materialList" :key="i">
-                <Cell>{{x.label}}</Cell>
-                <Cell class="lg:px-0">
-                    <div class="flex justify-end">
-                        <Button class="my-auto px-0" icon="clear" 
-                            @click="()=>{state.removeMaterial(i)}"/>
-                    </div>
-                </Cell>
-            </Row>
-        </Table>
-        <hr/>
         <div class="grid gap-4 md:grid-cols-3">
-            <InputTextLookup name="Item" 
-                placeholder="Search Items" class="flex-grow md:col-span-2"
-                :value="state.materialForm.lookupText"
-                @select="selected => state.materialForm.item = selected"
+            <InputTextLookup name="Item" multiple
+                placeholder="Search..." class="flex-grow md:col-span-2"
+                :text="state.materialForm.lookupText"
+                @select="value => {
+                    state.select(value)
+                }"
                 @input="value => {
-                    state.materialForm.lookupText = value;
-                    listMaterials(value);
+                    state.lookupMaterials(value);
                 }"
                 :options="state.meta.materialChoices.map( option => ({
                     value: option.value,
                     title: option.label,
                     subtitle: option.type,
-                    figure: option.figure
+                    isSelected: state.materialForm.items.includes(option.value)
                 }))"/>
-            <div class="relative">
-                <span class="flex justify-end md:absolute md:bottom-0 md:left-0">
-                    <Button icon="add" class="my-auto border-gray-300 border"
-                            @click="state.addMaterial">Add</Button>
-                </span>
-            </div>
         </div>
     </div>
 </template>
 <script>
-import Table from '@/components/Table.vue';
-import Row from '@/components/Row.vue';
-import Cell from '@/components/Cell.vue';
-import Button from '@/components/Button.vue';
 import InputTextLookup from '@/components/InputTextLookup.vue';
 
-import {reactive, computed, watch} from 'vue';
+import {reactive, computed, watch, onBeforeMount} from 'vue';
 import {ItemApi} from '@/utils/apis.js';
+import {differenceWith, isEqual} from 'lodash';
 
 export default {
     components: {
-        Table, Row, Cell, Button, InputTextLookup
+        InputTextLookup
     },
     props: {
         materialType: String,
@@ -59,38 +38,49 @@ export default {
     setup(props, {emit}) {
         const state = reactive({
             materialType: computed(()=> props.materialType),
-            materialList: [],
             materialForm: {
                 id: null,
-                item: null,
+                items: [],
                 lookupText: '',
             },
             meta: {
+                selectedMaterialChoices: [],
                 materialChoices: [],
+            },
+            select: (value) => {
+                state.materialForm.items = value;
+                const choices = state.materialForm.items.map(x => 
+                    state.meta.materialChoices.find(y => y.value == x));
+                state.meta.selectedMaterialChoices = choices;
+                state.emitInput();
             },
             clearMaterialForm: ()=> {
                 state.materialForm = {
                     id: null,
-                    item: null,
+                    items: [],
                     lookupText: null,
                 }
             },
-            addMaterial: ()=> {
-                const material = state.meta.materialChoices.find(x => 
-                    x.value == state.materialForm.item);
-                const materialOption = {
-                    id: state.materialForm.id,
-                    item: state.materialForm.item,
-                    label: material.label
-                };
-                state.materialList.push(materialOption);
-                emit('input', state.materialList);
-                state.clearMaterialForm();
+            lookupMaterials: (lookupText)=> {
+                state.materialForm.lookupText = lookupText;
+                listMaterials(lookupText);
             },
-            removeMaterial: (index)=> {
-                state.materialList.splice(index, 1)
+            emitInput: ()=> {
+                let materialList = [];
+                if (state.materialForm.items.length > 0) {
+                    materialList = state.materialForm.items.map(x => {
+                        const choice = state.meta.materialChoices.find( y => y.value == x);
+                        if (choice) {
+                            const materialOption = {
+                                id: choice.id, item: x, label: choice.label
+                            };
+                            return materialOption;
+                        }
+                    });
+                }
+                emit('input', materialList);
             }
-        });
+        }); 
 
         const listMaterials = async (search=null) => {
             const filter = {
@@ -98,19 +88,27 @@ export default {
             }
             const response = await ItemApi.listItems(5, 0, search, filter);
             if (response) {
-                state.meta.materialChoices = response.results.map( x => ({
+                let choices = [];
+                choices = response.results.map( x => ({
                     label: x.full_name, value: x.id,
-                    type: x.type, figure: x.onhand_quantity_formatted + ' available'
+                    type: x.type, 
                 }));
+                const toAdd = state.meta.selectedMaterialChoices;
+                const diff = differenceWith(toAdd, choices, isEqual);
+                state.meta.materialChoices = diff.concat(choices);
             }
-        }
+        } 
         watch(()=> props.value, ()=> {
-            state.materialList = props.value;
+            if (props.value.length > 0) {
+                state.materialForm.items = props.value.map(x => 
+                    x? x.item : null);
+            }
         });
         watch(()=> state.materialType, ()=> {
             state.materialForm.lookupText = null;
-            listMaterials();
+            //listMaterials();
         });
+        onBeforeMount(listMaterials)
 
         return {
             state, listMaterials

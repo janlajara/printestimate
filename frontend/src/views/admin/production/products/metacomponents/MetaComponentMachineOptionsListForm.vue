@@ -78,7 +78,7 @@ export default {
                 material_type: state.materialType || '',
                 resourcetype: state.machineForm.machineType || ''
             }
-            const response = await MachineApi.listMachines(filter);
+            const response = await MachineApi.listMachines(filter); 
             if (response) {
                 state.meta.machineChoices = response.map( x => ({
                     label: x.name, value: x.id,
@@ -101,7 +101,9 @@ export default {
                 state.machineForm.machines = [];
             listMachines();
         });
-        watch(()=> props.value, ()=> {
+        watch(()=> props.value, async ()=> {
+            await listMachines();
+
             state.machineForm.machines = props.value.map(x => x.machine);
             const machines = state.machineForm.machines;
             if (machines.length > 0) {
@@ -109,10 +111,7 @@ export default {
                 if (m) state.machineForm.machineType = m.resourcetype;
             }
         });
-        onBeforeMount(()=> {
-            listMachineTypes();
-            listMachines();
-        });
+        onBeforeMount(listMachineTypes);
 
         return {
             state, listMachines

@@ -8,36 +8,39 @@
             <span v-if="$props.disabled" 
                 class="material-icons text-sm text-secondary-light">lock</span>
         </label>
-        <div class="relative w-full " :class="bgStyle" 
+        <div class="relative w-full" :class="bgStyle" 
             v-click-outside="()=> lookup.toggle(false)">
-            <div v-if="lookup.selected"
-                class="flex h-9">
-                <span class="flex my-auto mx-3 text-xs">
-                    {{lookup.selected}}
-                    <span @click="lookup.clearSelect" 
-                        class="my-auto material-icons ml-2 text-xs 
-                        cursor-pointer text-gray-400 hover:text-red-400">
-                        close</span>
+            <div v-if="lookup.selected.length > 0"
+                class="grid">
+                <span v-for="(obj, key) in lookup.selectedObjects" :key="key"
+                    class="flex my-auto mx-3 text-xs py-2">
+                    <span v-if="obj">
+                        {{obj.title}} : {{obj.subtitle}}
+                        <span @click="() => lookup.clearSelect(obj.value)" 
+                            class="my-auto material-icons ml-2 text-xs 
+                            cursor-pointer text-gray-400 hover:text-red-400">
+                            close</span>
+                    </span>
                 </span>
             </div> 
-            <div v-else>
+            <div v-if="lookup.isEditable">
                 <input type="text" class="rounded border-0 bg-transparent shadow-sm w-full" 
                     :disabled="$props.disabled"
                     @click="event => {
-                        lookup.emitOnInput(event);
+                        lookup.toggle(true);
                     }"
                     @input="event => {
                         lookup.emitOnInput(event);
                     }"
                     :placeholder="$props.placeholder" 
-                    :value="$props.value"
+                    :value="$props.text"
                     :class="[sizeStyle]"/>
-                <span class="material-icons absolute right-2 top-1.5">search</span>
+                <span class="material-icons absolute right-2 top-1">search</span>
                 <div class="bg-white rounded absolute shadow-md w-full mt-1 z-10 max-h-44 overflow-y-auto"
                     v-if="lookup.isOpen">
-                    <div v-for="(option, index) in $props.options" :key="index"
-                        class="p-2 hover:bg-secondary-light hover:bg-opacity-20 text-sm cursor-pointer"
-                        @click="()=> lookup.select(option.value, option.title, option.subtitle)">
+                    <div :key="index" class="p-2 hover:bg-secondary-light hover:bg-opacity-20 text-sm cursor-pointer"
+                        v-for="(option, index) in lookup.options.filter(x => !x.isSelected)" 
+                        @click="()=> lookup.select(option.value)">
                         <dt class="text-sm flex justify-between">
                             <span class="font-bold">{{option.title}}</span>
                             <span class="text-right">{{option.figure}}</span>
@@ -47,7 +50,7 @@
                             <span class="text-gray-400 text-right">{{option.timestamp}}</span>
                         </dd>
                     </div>
-                    <div v-if="$props.options.length == 0" class="p-2 text-sm">
+                    <div v-if="lookup.options.length == 0" class="p-2 text-sm">
                         <dt class="text-sm flex justify-between">
                             <span class="italic">No results found</span>
                         </dt>
@@ -59,16 +62,21 @@
 </template>
 
 <script>
-import {reactive, watch} from 'vue';
+import {reactive, computed, watch} from 'vue';
 import {debounce} from 'lodash';
 
 export default {
     props: {
         name: String,
-        value: String,
-        options: Array,
+        text: String,
+        options: {
+            type: Array,
+            default: ()=>[]
+            // value, title, subtitle, figure, selected
+        },
         required: Boolean,
         disabled: Boolean,
+        multiple: Boolean,
         placeholder: String,
         bg: {
             type: String,
@@ -99,28 +107,46 @@ export default {
         }
         const lookup = reactive({
             isOpen: false,
-            selected: null,
+            isEditable: computed(()=> 
+                lookup.selected.length == 0 ||
+                (props.multiple)),
+            selected: [],
+            selectedObjects: computed(()=> 
+                lookup.selected.map(x => 
+                    lookup.options.find(y => y.value == x))),
+            options: [],
             toggle: (value) => {
                 lookup.isOpen = value;
             },
-            select: (value, title, subtitle) => {
-                subtitle =  subtitle && subtitle != '' ? ' : ' + subtitle : '';
-                const label = title + subtitle;
-                lookup.selected = label;
-                lookup.toggle(false);
-                emit('select', value);
+            select: (value) => {
+                if (!props.multiple) {
+                    lookup.selected = [value]
+                    lookup.toggle(false);
+                    emit('select', value);
+                } else {
+                    lookup.selected.push(value);
+                    emit('select', lookup.selected)
+                }
             },
-            clearSelect: ()=> {
-                lookup.selected = null;
-                emit('select', '');
+            clearSelect: (value=null)=> {
+                if (value) {
+                    const index = lookup.selected.indexOf(value);
+                    lookup.selected.splice(index, 1)
+                } else {
+                    lookup.selected = [];
+                }
+                emit('select', (!props.multiple)? '': lookup.selected);
             },
             emitOnInput: debounce((event)=> {
                 emit('input', event.target.value);
                 lookup.toggle(true);}, 500)
         })
-        watch(()=> props.value, 
-            lookup.clearSelect
-        )
+        watch(()=> props.options, ()=> {
+            lookup.options = props.options;
+            lookup.selected = props.options
+                .filter(x => x.isSelected)
+                .map(x => x.value);
+        });
         return {
             bgStyle: bgs[props.bg],
             sizeStyle: sizes[props.size],

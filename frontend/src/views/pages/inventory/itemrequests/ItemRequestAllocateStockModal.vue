@@ -58,9 +58,10 @@
                                 title: option.brandName,
                                 subtitle: option.code,
                                 figure: option.availableQuantityFormatted,
-                                timestamp: option.createdAt
+                                timestamp: option.createdAt,
+                                isSelected: detail.form.stock.selected.id == option.id
                             }))"
-                            :value="detail.form.stock.search"
+                            :text="detail.form.stock.search"
                             :disabled="detail.form.readOnly"
                             placeholder="Search Stock" 
                             bg="white" size="small"/>
@@ -166,10 +167,6 @@ export default {
                         }
                     },
                     add: async ()=> {
-                        if (detail.form.stock.search == null || 
-                            detail.form.stock.search == null)
-                            return;
-
                         detail.isProcessing = true;
                         const itemId = detail.data.itemId;
 
@@ -197,8 +194,9 @@ export default {
             },
             isProcessing: false,
         })
-        const lookupStock = async (search)=> {
-            if (detail.data.itemId) { 
+        const lookupStock = async (search=null)=> {
+            console.log('searching...', search, detail.data.itemId)
+            if (detail.data.itemId) {  
                 const response = await ItemApi.listItemStocks(
                     detail.data.itemId, 5, 0, true, search)
                 if (response && response.results) {
@@ -251,11 +249,15 @@ export default {
             }
             detail.isProcessing = false;
         }
-        watch(()=> props.isOpen, ()=> {
-            detail.id = props.itemRequestId;
-            retrieveItemRequest();
+        watch(()=> props.isOpen, async ()=> {
+            if (props.isOpen) {
+                detail.id = props.itemRequestId;
+                await retrieveItemRequest();
+                console.log(detail.data.itemId);
+                await lookupStock();
+            }
         });
-        onBeforeMount(retrieveItemRequest);
+        onBeforeMount(()=> retrieveItemRequest);
 
         return {
             detail, lookupStock,

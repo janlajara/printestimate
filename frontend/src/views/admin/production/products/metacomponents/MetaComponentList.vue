@@ -72,7 +72,8 @@ export default {
     props: {
         metaProductId: Number
     },
-    setup(props) {
+    emits: ['load'],
+    setup(props, {emit}) {
         const state = reactive({
             id: props.metaProductId,
             isProcessing: false,
@@ -113,9 +114,11 @@ export default {
                         id: obj.id,
                         name: obj.name,
                         type: obj.type,
+                        metaEstimateVariables: obj.meta_estimate_variables,
                         metaMaterialOptions: obj.meta_material_options,
                         metaMachineOptions: obj.meta_machine_options
                     }));
+                    emit('load', state.list);
                 }
             }
             state.isProcessing = false;

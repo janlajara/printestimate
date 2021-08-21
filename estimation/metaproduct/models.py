@@ -15,9 +15,9 @@ class MetaProduct(models.Model):
         return MetaComponent.objects.create(name=name, type=type, 
             meta_product=self)
 
-    def add_meta_service(self, name, type, costing_measure):
-        return MetaService.objects.create(name=name, type=type,
-            costing_measure=costing_measure, meta_product=self)
+    def add_meta_service(self, name, type, costing_measure, **kwargs):
+        return MetaService.objects.create(meta_product=self, name=name, type=type,
+            costing_measure=costing_measure, **kwargs)
 
 
 class MetaProductData(models.Model):
@@ -30,9 +30,37 @@ class MetaProductData(models.Model):
             meta_product_data=self, **kwargs)
 
 
-class MetaService(MetaProductData):
-    costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
-        default=CostingMeasure.QUANTITY)
+class MetaEstimateVariable:
+    RAW_MATERIAL = 'Raw Material'
+    SET_MATERIAL = 'Set Material'
+    TOTAL_MATERIAL = 'Total Material'
+    MACHINE_RUN = 'Machine Run Material'
+    MATERIAL_DERIVED_TYPES = [
+        RAW_MATERIAL, SET_MATERIAL,
+        TOTAL_MATERIAL
+    ]
+    MACHINE_DERIVED_TYPES = [
+        MACHINE_RUN
+    ]
+    TYPES = [
+        RAW_MATERIAL, SET_MATERIAL,
+        TOTAL_MATERIAL, MACHINE_RUN
+    ]
+    TYPE_CHOICES = [
+        (RAW_MATERIAL, RAW_MATERIAL),
+        (SET_MATERIAL, SET_MATERIAL),
+        (TOTAL_MATERIAL, TOTAL_MATERIAL),
+        (MACHINE_RUN, MACHINE_RUN)
+    ]
+
+    def __init__(self, id, type, costing_measure):
+        self.id = id
+        self.type = type
+        self.costing_measure = costing_measure
+
+    @property
+    def label(self):
+        return '%s %s' % (self.type, self.costing_measure.capitalize() )
 
 
 class MetaComponent(MetaProductData):
@@ -47,14 +75,14 @@ class MetaComponent(MetaProductData):
         if len(self.meta_material_options.all()) > 0:
             for type in MetaEstimateVariable.MATERIAL_DERIVED_TYPES:
                 for costing_measure in costing_measures:
-                    variable = MetaEstimateVariable(counter, type, costing_measure) 
+                    variable = MetaEstimateVariable(counter, type, costing_measure[0]) 
                     variables.append(variable)
                     counter += 1
 
         if len(self.meta_machine_options.all()) > 0:
             for type in MetaEstimateVariable.MACHINE_DERIVED_TYPES:
                 for costing_measure in costing_measures:
-                    variable = MetaEstimateVariable(counter, type, costing_measure) 
+                    variable = MetaEstimateVariable(counter, type, costing_measure[0]) 
                     variables.append(variable)
                     counter += 1
         
@@ -77,32 +105,13 @@ class MetaComponent(MetaProductData):
             meta_component=self, machine=machine)
 
 
-class MetaEstimateVariable:
-    RAW_MATERIAL = 'Raw Material'
-    SET_MATERIAL = 'Set Material'
-    TOTAL_MATERIAL = 'Total Material'
-    MACHINE_RUN = 'Machine Run Material'
-
-    MATERIAL_DERIVED_TYPES = [
-        RAW_MATERIAL, SET_MATERIAL,
-        TOTAL_MATERIAL
-    ]
-    MACHINE_DERIVED_TYPES = [
-        MACHINE_RUN
-    ]
-    TYPES = [
-        RAW_MATERIAL, SET_MATERIAL,
-        TOTAL_MATERIAL, MACHINE_RUN
-    ]
-
-    def __init__(self, id, type, costing_measure):
-        self.id = id
-        self.type = type
-        self.costing_measure = costing_measure
-
-    @property
-    def label(self):
-        return '%s %s' % (self.type, self.costing_measure.capitalize() )
+class MetaService(MetaProductData):
+    costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
+        default=CostingMeasure.QUANTITY)
+    component = models.ForeignKey(MetaComponent, on_delete=models.SET_NULL, 
+        blank=True, null=True)
+    estimate_variable_type = models.CharField(choices=MetaEstimateVariable.TYPE_CHOICES,
+        max_length=20, blank=True, null=True)
 
 
 class MetaMaterialOption(models.Model):

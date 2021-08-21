@@ -209,6 +209,9 @@ class MetaServiceViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
                 validated_data = deserialized.validated_data
                 meta_operations = validated_data.pop('meta_operations')
                 MetaOperationViewUtils.update_or_create_meta_operations(meta_service, meta_operations)
+                
+                if validated_data.get('component') is None:
+                    validated_data['estimate_variable_type'] = None
 
                 MetaService.objects.filter(pk=pk).update(**validated_data)
                 meta_service = get_object_or_404(MetaService, pk=pk)

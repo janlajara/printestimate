@@ -5,6 +5,7 @@
         <MetaServiceModal 
             :meta-product-id="state.id"
             :meta-service-id="state.createEditModal.data.id"
+            :meta-component-list="$props.metaComponentList"
             :is-open="state.createEditModal.isOpen"
             @toggle="state.createEditModal.toggle" 
             :on-after-save="populateMetaService"/>
@@ -65,7 +66,8 @@ export default {
         Table, Row, Cell, Button, DeleteRecordDialog, MetaServiceModal
     },
     props: {
-        metaProductId: Number
+        metaProductId: Number,
+        metaComponentList: Array
     },
     setup(props) {
         const state = reactive({

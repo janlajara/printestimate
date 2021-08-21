@@ -93,4 +93,5 @@ class MetaServiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MetaService
-        fields = ['id', 'name', 'type', 'costing_measure', 'meta_operations']
+        fields = ['id', 'name', 'type', 'costing_measure', 'meta_operations',
+            'component', 'estimate_variable_type']

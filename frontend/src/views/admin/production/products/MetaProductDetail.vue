@@ -34,10 +34,12 @@
             </DescriptionList>
         </Section>
         <Section heading="Components">
-            <MetaComponentList :meta-product-id="parseInt(state.id)"/>
+            <MetaComponentList :meta-product-id="parseInt(state.id)"
+                @load="list => state.metaProduct.componentList = list"/>
         </Section>
         <Section heading="Services">
-            <MetaServiceList :meta-product-id="parseInt(state.id)"/>
+            <MetaServiceList :meta-product-id="parseInt(state.id)"
+                :meta-component-list="state.metaProduct.componentList"/>
         </Section>
     </Page>
 </template>
@@ -69,6 +71,7 @@ export default {
             id: route.params.id,
             isProcessing: false,
             metaProduct: {
+                componentList: [],
                 rawData: {},
                 validatedData: computed(()=>({
                     id: state.metaProduct.rawData.id,

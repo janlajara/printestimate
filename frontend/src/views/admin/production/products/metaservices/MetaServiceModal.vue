@@ -15,6 +15,7 @@
                     @input="(value)=> {
                         state.data.type = value;
                         state.costingMeasure = '';
+                        state.data.component = '';
                     }"
                     :options="state.meta.materialTypeChoices.map(c=>({
                         value: c.value, label: c.label,
@@ -26,6 +27,26 @@
                     :options="state.meta.costingMeasureChoices.map(c=>({
                         value: c.value, label: c.label,
                         isSelected: state.data.costingMeasure == c.value
+                    }))"/>
+            </div>
+        </Section>
+        <hr/>
+        <Section heading="Input" heading-position="side"> 
+            <div class="md:grid md:gap-4 md:grid-cols-3">
+                <InputSelect 
+                    name="Component" 
+                    @input="(value)=>state.data.component = value"
+                    :options="state.meta.metaComponentChoices.map(c=>({
+                        value: c.value, label: c.label,
+                        isSelected: state.data.component == c.value
+                    }))"/>
+                <InputSelect :required="state.data.component == true"
+                    :name="`${state.data.costingMeasure} Derived From`" 
+                        class="col-span-2 capitalize"
+                    @input="(value)=>state.data.estimateVariableType = value"
+                    :options="state.meta.estimateVariableTypeChoices.map(c=>({
+                        value: c.value, label: c.label,
+                        isSelected: state.data.estimateVariableType == c.value
                     }))"/>
             </div>
         </Section>
@@ -60,6 +81,7 @@ export default {
         isOpen: Boolean,
         metaServiceId: Number,
         metaProductId: Number,
+        metaComponentList: Array,
         onAfterSave: Function
     },
     emits: ['toggle'],
@@ -74,6 +96,8 @@ export default {
                 name: '', 
                 type: '', 
                 costingMeasure: '',
+                component: '',
+                estimateVariableType: '',
                 metaOperations: [],
             },
             meta: {
@@ -89,23 +113,46 @@ export default {
                         }));
                     } else return [];
                 }),
+                metaComponents: computed(()=> props.metaComponentList),
+                metaComponentChoices: computed(()=> 
+                    props.metaComponentList
+                        .filter(x => x.type == state.data.type)
+                        .map(x => ({
+                        value: x.id, label: x.name
+                    }))),
+                estimateVariableTypes: computed(()=> {
+                    const component = state.meta.metaComponents.find(
+                        x => x.id == state.data.component);
+                    let filteredTypes = [];
+                    if (component) {                        
+                        filteredTypes = component.metaEstimateVariables.filter(
+                            x => x.costing_measure == state.data.costingMeasure
+                        );
+                    }
+                    return filteredTypes
+                }),
+                estimateVariableTypeChoices: computed(()=> 
+                    state.meta.estimateVariableTypes.map(x => ({
+                        value: x.type, label: x.label
+                })))
             },
             clearData: ()=> {
                 state.data = {
                     name: '', 
                     type: '', 
                     costingMeasure: '',
+                    component: '',
+                    estimateVariableType: '',
                     metaOperations: [],
                 }
             },
             validate: ()=> {
                 let errors = [];
-                if (state.data.name == '') 
-                    errors.push('name');
-                if (state.data.type == '') 
-                    errors.push('type');
-                if (state.data.costingMeasure == '') 
-                    errors.push('costing measure');
+                if (state.data.name == '') errors.push('name');
+                if (state.data.type == '') errors.push('type');
+                if (state.data.costingMeasure == '') errors.push('costing measure');
+                if (state.data.component != '' &&
+                    state.data.estimateVariableType == '') errors.push('derived from');
                 if (errors.length > 0)
                     state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
                 else state.error = '';
@@ -117,6 +164,8 @@ export default {
                     name: state.data.name,
                     type: state.data.type,
                     costing_measure: state.data.costingMeasure,
+                    component: state.data.component,
+                    estimate_variable_type: state.data.estimateVariableType,
                     meta_operations: state.data.metaOperations.map( x => ({
                         id: x.id,
                         name: x.name,
@@ -140,6 +189,8 @@ export default {
                         name: response.name, 
                         type: response.type, 
                         costingMeasure: response.costing_measure,
+                        component: response.component,
+                        estimateVariableType: response.estimate_variable_type,
                         metaOperations: response.meta_operations.map( x => ({
                             id: x.id,
                             name: x.name,

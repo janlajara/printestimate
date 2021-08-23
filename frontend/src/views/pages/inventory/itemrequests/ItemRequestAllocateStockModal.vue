@@ -195,7 +195,6 @@ export default {
             isProcessing: false,
         })
         const lookupStock = async (search=null)=> {
-            console.log('searching...', search, detail.data.itemId)
             if (detail.data.itemId) {  
                 const response = await ItemApi.listItemStocks(
                     detail.data.itemId, 5, 0, true, search)
@@ -253,7 +252,6 @@ export default {
             if (props.isOpen) {
                 detail.id = props.itemRequestId;
                 await retrieveItemRequest();
-                console.log(detail.data.itemId);
                 await lookupStock();
             }
         });

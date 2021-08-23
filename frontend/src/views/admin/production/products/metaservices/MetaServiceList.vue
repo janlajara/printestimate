@@ -142,8 +142,7 @@ export default {
         const updateMetaServiceSequences = async (id, sequences) => {
             state.isProcessing = true;
             if (id) {
-                const response = await MetaProductApi.updateMetaServiceSequence(id, sequences);
-                console.log(response)
+                await MetaProductApi.updateMetaServiceSequence(id, sequences);
             }
             state.isProcessing = false;
         }

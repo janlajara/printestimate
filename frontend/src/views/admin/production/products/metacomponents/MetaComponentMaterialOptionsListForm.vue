@@ -72,7 +72,7 @@ export default {
                         const choice = state.meta.materialChoices.find( y => y.value == x);
                         if (choice) {
                             const materialOption = {
-                                id: choice.id, item: x, label: choice.label
+                                id: choice.id || null, item: x, label: choice.label
                             };
                             return materialOption;
                         }

@@ -10,7 +10,7 @@
             :on-after-save="populateMetaComponents"/>
         <Table :headers="['Name', 'Type', 'Material Options', 'Machine Options', '']" 
                 :loader="state.isProcessing">
-            <Row v-for="(s, key) in state.list" :key="key" clickable>
+            <Row v-for="(s, key) in state.list" :key="key">
                 <Cell label="Name">{{s.name}}</Cell>
                 <Cell label="Type" class="capitalize">{{s.type}}</Cell>
                 <Cell label="Material Options">

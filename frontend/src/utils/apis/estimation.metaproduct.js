@@ -61,6 +61,13 @@ export class MetaProductApi {
             metaService);
         return response;
     }
+
+    static async updateMetaServiceSequence(id, serviceSequences) {
+        const response = await AXIOS.execute(AXIOS.PUT, 
+            MetaProductApi.uri + `/${id}/metaservices/sequences`, null, 
+            null, serviceSequences)
+        if (response) return response.data;
+    }
 }
 
 

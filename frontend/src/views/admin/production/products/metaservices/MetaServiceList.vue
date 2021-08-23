@@ -2,7 +2,7 @@
     <div>
         <Button icon="add" color="tertiary" :disabled="state.isProcessing"
             @click="()=>state.createEditModal.open()">Add Service</Button>
-        <MetaServiceModal 
+        <MetaServiceModal  
             :meta-product-id="state.id"
             :meta-service-id="state.createEditModal.data.id"
             :meta-component-list="$props.metaComponentList"
@@ -10,30 +10,38 @@
             @toggle="state.createEditModal.toggle" 
             :on-after-save="populateMetaService"/>
         <Table :headers="['Name', 'Type', 'Costing Measure', 'Operations', '']" 
-                :loader="state.isProcessing">
-            <Row v-for="(s, key) in state.list" :key="key" clickable>
-                <Cell label="Name">{{s.name}}</Cell>
-                <Cell label="Type" class="capitalize">
-                    {{s.type}}</Cell>
-                <Cell label="Costing Measure" class="capitalize">
-                    {{s.costingMeasure}}</Cell>
-                <Cell label="Operations">
-                    <ul class="pl-2">
-                        <li v-for="(x, i) in s.metaOperations" :key="i"
-                            class="list-disc">
-                            {{x.name}}
-                        </li>
-                    </ul>
-                </Cell>
-                <Cell>
-                    <div class="w-full flex justify-end">
-                        <Button class="my-auto" icon="edit"
-                            @click="()=>state.createEditModal.open(s.id)"/>
-                        <Button class="my-auto" icon="delete"
-                            @click="()=>state.deleteDialog.open(s.id, s.name)"/>
-                    </div>
-                </Cell>
-            </Row>
+                :no-body="true">
+            <draggable v-model="state.list" tag="tbody" 
+                item-key="id" handle=".drag" @change="state.updateServiceSequence"
+                class="bg-white divide-y divide-gray-200">
+                <template #item="{element}">
+                    <Row class="drag cursor-move">
+                        <Cell label="Name">
+                            <span class="material-icons text-xs my-auto">drag_indicator</span>
+                            {{element.name}}</Cell>
+                        <Cell label="Type" class="capitalize">
+                            {{element.type}}</Cell>
+                        <Cell label="Costing Measure" class="capitalize">
+                            {{element.costingMeasure}}</Cell>
+                        <Cell label="Operations">
+                            <ul class="pl-2">
+                                <li v-for="(x, i) in element.metaOperations" :key="i"
+                                    class="list-disc">
+                                    {{x.name}}
+                                </li>
+                            </ul>
+                        </Cell>
+                        <Cell>
+                            <div class="w-full flex justify-end">
+                                <Button class="my-auto" icon="edit"
+                                    @click="()=>state.createEditModal.open(element.id)"/>
+                                <Button class="my-auto" icon="delete"
+                                    @click="()=>state.deleteDialog.open(element.id, element.name)"/>
+                            </div>
+                        </Cell>
+                    </Row>
+                </template>
+            </draggable>
         </Table>
         <DeleteRecordDialog 
             heading="Delete Service"
@@ -57,13 +65,14 @@ import Cell from '@/components/Cell.vue';
 import Button from '@/components/Button.vue';
 import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import MetaServiceModal from './MetaServiceModal.vue';
+import draggable from 'vuedraggable';
 
 import {reactive, onBeforeMount} from 'vue';
 import {MetaProductApi, MetaServiceApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Table, Row, Cell, Button, DeleteRecordDialog, MetaServiceModal
+        Table, Row, Cell, Button, DeleteRecordDialog, MetaServiceModal, draggable
     },
     props: {
         metaProductId: Number,
@@ -98,6 +107,12 @@ export default {
                 delete: async () => {
                     await deleteMetaService(state.deleteDialog.data.id);
                 }
+            },
+            updateServiceSequence: ()=> {
+                const serviceSequences = state.list.map((x, index) => ({
+                    id: x.id, sequence: index+1
+                }));
+                updateMetaServiceSequences(state.id, serviceSequences);
             }
         });
 
@@ -121,6 +136,15 @@ export default {
         const deleteMetaService = async (id) => {
             state.isProcessing = true;
             if (id)  await MetaServiceApi.deleteMetaService(id);
+            state.isProcessing = false;
+        }
+
+        const updateMetaServiceSequences = async (id, sequences) => {
+            state.isProcessing = true;
+            if (id) {
+                const response = await MetaProductApi.updateMetaServiceSequence(id, sequences);
+                console.log(response)
+            }
             state.isProcessing = false;
         }
 

@@ -115,7 +115,7 @@ class MetaProductServiceViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
     def get_queryset(self):
         pk = self.kwargs.get('pk', None)
         if pk is not None:
-            return MetaService.objects.filter(meta_product__pk=pk)
+            return MetaService.objects.filter(meta_product__pk=pk).order_by('sequence')
         else:
             return MetaService.objects.all()
 
@@ -131,6 +131,34 @@ class MetaProductServiceViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
                 MetaOperationViewUtils.create_meta_operations(meta_service, meta_operations)
 
                 serialized = serializers.MetaServiceSerializer(meta_service)
+                return Response(serialized.data)
+            else:
+                return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'missing metaproduct pk'}, status.HTTP_400_BAD_REQUEST)
+
+
+class MetaProductServiceUpdateSequenceView(mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    queryset = MetaComponent.objects.all()
+    serializer_class = serializers.MetaServiceSequenceSerializer
+
+    def update(self, request, pk=None):
+        if pk is not None:
+            meta_product = get_object_or_404(MetaProduct, pk=pk)
+            related_ids = [x.id for x in meta_product.meta_product_datas.all()]
+            deserialized = serializers.MetaServiceSequenceSerializer(data=request.data, 
+                many=True)
+
+            if deserialized.is_valid():
+                validated_data = deserialized.validated_data 
+                filtered = [data for data in validated_data if data.get('id') in related_ids]
+                for service_data in filtered:
+                    service_id = service_data.get('id')
+                    service_sequence = service_data.get('sequence')
+                    MetaService.objects.filter(pk=service_id).update(sequence=service_sequence)
+
+                meta_services = MetaService.objects.filter(pk__in=related_ids)
+                serialized = serializers.MetaServiceSequenceSerializer(meta_services, many=True)
                 return Response(serialized.data)
             else:
                 return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
@@ -171,7 +199,6 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
 
     def update(self, request, pk=None):
         if pk is not None:
-
             meta_component = get_object_or_404(MetaComponent, pk=pk)
             deserialized = serializers.MetaComponentSerializer(data=request.data)
 

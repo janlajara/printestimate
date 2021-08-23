@@ -16,14 +16,19 @@ class MetaProduct(models.Model):
             meta_product=self)
 
     def add_meta_service(self, name, type, costing_measure, **kwargs):
-        return MetaService.objects.create(meta_product=self, name=name, type=type,
+        count = MetaService.objects.filter(meta_product=self).count()
+        sequence = count + 1
+
+        return MetaService.objects.create(meta_product=self, 
+            sequence=sequence, name=name, type=type,
             costing_measure=costing_measure, **kwargs)
 
 
 class MetaProductData(models.Model):
     name = models.CharField(max_length=40)
     type = models.CharField(max_length=15, choices=Item.TYPES)
-    meta_product = models.ForeignKey(MetaProduct, on_delete=models.CASCADE)
+    meta_product = models.ForeignKey(MetaProduct, on_delete=models.CASCADE,
+        related_name='meta_product_datas')
     
     def add_meta_operation(self, name, options_type, **kwargs):
         return MetaOperation.objects.create(name=name, options_type=options_type,
@@ -106,6 +111,7 @@ class MetaComponent(MetaProductData):
 
 
 class MetaService(MetaProductData):
+    sequence = models.IntegerField(default=0)
     costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
         default=CostingMeasure.QUANTITY)
     component = models.ForeignKey(MetaComponent, on_delete=models.SET_NULL, 

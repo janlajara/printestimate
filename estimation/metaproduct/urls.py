@@ -11,6 +11,8 @@ urlpatterns = [
         views.MetaProductComponentViewSet.as_view({'get': 'list', 'post': 'create'})),
     path('api/metaproducts/<pk>/metaservices',
         views.MetaProductServiceViewSet.as_view({'get': 'list', 'post': 'create'})),
+    path('api/metaproducts/<pk>/metaservices/sequences',
+        views.MetaProductServiceUpdateSequenceView.as_view({'put': 'update'})),
 
     # MetaComponent Viewsets
     path('api/metacomponents/<pk>/',

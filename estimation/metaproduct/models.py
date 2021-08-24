@@ -43,22 +43,20 @@ class MetaEstimateVariable:
     # Product quantity x set quantity
     TOTAL_MATERIAL = 'Component Total'
     MACHINE_RUN = 'Running Material'
-    MATERIAL_DERIVED_TYPES = [
-        RAW_MATERIAL, SET_MATERIAL,
-        TOTAL_MATERIAL
-    ]
-    MACHINE_DERIVED_TYPES = [
-        MACHINE_RUN
-    ]
-    TYPES = [
-        RAW_MATERIAL, SET_MATERIAL,
-        TOTAL_MATERIAL, MACHINE_RUN
-    ]
+
+    # Cut Properties for Paper Materials
+    RAW_TO_RUNNING_CUT = 'Raw-to-Running Cut'
+    RUNNING_TO_FINAL_CUT = 'Running-to-Final Cut'
+    FINAL_TRIM = 'Final Trim'
+
     TYPE_CHOICES = [
         (RAW_MATERIAL, RAW_MATERIAL),
         (SET_MATERIAL, SET_MATERIAL),
         (TOTAL_MATERIAL, TOTAL_MATERIAL),
-        (MACHINE_RUN, MACHINE_RUN)
+        (MACHINE_RUN, MACHINE_RUN),
+        (RAW_TO_RUNNING_CUT, RAW_TO_RUNNING_CUT),
+        (RUNNING_TO_FINAL_CUT, RUNNING_TO_FINAL_CUT),
+        (FINAL_TRIM, FINAL_TRIM)
     ]
 
     def __init__(self, type, costing_measure):
@@ -71,16 +69,24 @@ class MetaEstimateVariable:
 
     @classmethod
     def material_derived_variables(cls, material_type):
-        return cls._get_variables(material_type, cls.MATERIAL_DERIVED_TYPES)
+        variable_types = [cls.RAW_MATERIAL, cls.SET_MATERIAL, cls.TOTAL_MATERIAL]
+        return cls._get_variables(material_type, variable_types)
     
     @classmethod
     def machine_derived_variables(cls, material_type):
-        return cls._get_variables(material_type, cls.MACHINE_DERIVED_TYPES)
+        variable_types = [cls.MACHINE_RUN]
+        variables = cls._get_variables(material_type, variable_types)
+
+        if (material_type in [Item.PAPER, Item.PANEL]):
+            variable_types = [cls.RAW_TO_RUNNING_CUT, cls.RUNNING_TO_FINAL_CUT, cls.FINAL_TRIM]
+            variables += cls._get_variables(Item.OTHER, variable_types)
+        
+        return variables
 
     @classmethod
     def _get_variables(cls, material_type, variable_types):
-        costing_measures = Item.get_costing_measure_choices(material_type)
         variables = []
+        costing_measures = Item.get_costing_measure_choices(material_type)
 
         for type in variable_types:
             for costing_measure in costing_measures:

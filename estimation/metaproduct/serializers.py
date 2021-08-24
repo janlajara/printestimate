@@ -59,13 +59,11 @@ class MetaMachineOptionSerializer(serializers.ModelSerializer):
 
 
 class MetaEstimateVariableSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    label = serializers.CharField(read_only=True)
     type = serializers.CharField()
     costing_measure = serializers.CharField()
+    label = serializers.CharField(read_only=True)
 
     def update(self, instance, validated_data):
-        instance.id = validated_data.get('id', instance.type)
         instance.type = validated_data.get('type', instance.type)
         instance.costing_measure = validated_data.get(
             'costing_measure', instance.costing_measure)

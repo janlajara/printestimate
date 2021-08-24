@@ -36,10 +36,13 @@ class MetaProductData(models.Model):
 
 
 class MetaEstimateVariable:
-    RAW_MATERIAL = 'Raw Material'
-    SET_MATERIAL = 'Set Material'
-    TOTAL_MATERIAL = 'Total Material'
-    MACHINE_RUN = 'Machine Run Material'
+    # Total number of raw materials needed
+    RAW_MATERIAL = 'Raw Material'   
+    # Total number of sets needed (product qty) 
+    SET_MATERIAL = 'Component Set'
+    # Product quantity x set quantity
+    TOTAL_MATERIAL = 'Component Total'
+    MACHINE_RUN = 'Running Material'
     MATERIAL_DERIVED_TYPES = [
         RAW_MATERIAL, SET_MATERIAL,
         TOTAL_MATERIAL
@@ -58,8 +61,7 @@ class MetaEstimateVariable:
         (MACHINE_RUN, MACHINE_RUN)
     ]
 
-    def __init__(self, id, type, costing_measure):
-        self.id = id
+    def __init__(self, type, costing_measure):
         self.type = type
         self.costing_measure = costing_measure
 
@@ -67,30 +69,43 @@ class MetaEstimateVariable:
     def label(self):
         return '%s %s' % (self.type, self.costing_measure.capitalize() )
 
+    @classmethod
+    def material_derived_variables(cls, material_type):
+        return cls._get_variables(material_type, cls.MATERIAL_DERIVED_TYPES)
+    
+    @classmethod
+    def machine_derived_variables(cls, material_type):
+        return cls._get_variables(material_type, cls.MACHINE_DERIVED_TYPES)
+
+    @classmethod
+    def _get_variables(cls, material_type, variable_types):
+        costing_measures = Item.get_costing_measure_choices(material_type)
+        variables = []
+
+        for type in variable_types:
+            for costing_measure in costing_measures:
+                variable = MetaEstimateVariable(type, costing_measure[0])
+                variables.append(variable)
+
+        return variables
+
 
 class MetaComponent(MetaProductData):
     allow_multiple_materials = models.BooleanField(default=False)
-
+ 
     @property
     def meta_estimate_variables(self):
-        costing_measures = Item.get_costing_measure_choices(self.type)
+        material_type = self.type
         variables = []
-        counter = 0
 
         if len(self.meta_material_options.all()) > 0:
-            for type in MetaEstimateVariable.MATERIAL_DERIVED_TYPES:
-                for costing_measure in costing_measures:
-                    variable = MetaEstimateVariable(counter, type, costing_measure[0]) 
-                    variables.append(variable)
-                    counter += 1
+            material_variables = MetaEstimateVariable.material_derived_variables(material_type)
+            variables = material_variables
 
         if len(self.meta_machine_options.all()) > 0:
-            for type in MetaEstimateVariable.MACHINE_DERIVED_TYPES:
-                for costing_measure in costing_measures:
-                    variable = MetaEstimateVariable(counter, type, costing_measure[0]) 
-                    variables.append(variable)
-                    counter += 1
-        
+            machine_variables = MetaEstimateVariable.machine_derived_variables(material_type)
+            variables  += machine_variables
+
         return variables
 
     def add_meta_operation(self, name, options_type, **kwargs):

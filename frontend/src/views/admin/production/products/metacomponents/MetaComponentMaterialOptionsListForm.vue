@@ -1,7 +1,8 @@
 <template>
     <div>
         <div class="grid gap-4 md:grid-cols-3">
-            <InputTextLookup name="Item" multiple
+            <InputTextLookup name="Item" multiple 
+                :disabled="state.materialType == ''"
                 placeholder="Search..." class="flex-grow md:col-span-2"
                 :text="state.materialForm.lookupText"
                 @select="value => {
@@ -22,7 +23,7 @@
 <script>
 import InputTextLookup from '@/components/InputTextLookup.vue';
 
-import {reactive, computed, watch, onBeforeMount} from 'vue';
+import {reactive, computed, watch} from 'vue';
 import {ItemApi} from '@/utils/apis.js';
 import {differenceWith, isEqual} from 'lodash';
 
@@ -82,7 +83,7 @@ export default {
             }
         }); 
 
-        const listMaterials = async (search=null) => {
+        const listMaterials = async (search=null) => { 
             const filter = {
                 type: state.materialType || '',
             }
@@ -102,13 +103,13 @@ export default {
             if (props.value.length > 0) {
                 state.materialForm.items = props.value.map(x => 
                     x? x.item : null);
+                listMaterials();
             }
         });
         watch(()=> state.materialType, ()=> {
             state.materialForm.lookupText = null;
-            //listMaterials();
+            listMaterials();
         });
-        onBeforeMount(listMaterials)
 
         return {
             state, listMaterials

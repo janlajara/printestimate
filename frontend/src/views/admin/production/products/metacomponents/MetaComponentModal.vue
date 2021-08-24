@@ -26,6 +26,9 @@
                 :material-type="state.data.type"
                 :value="state.data.metaMaterialOptions"
                 @input="value => state.data.metaMaterialOptions = value"/>
+            <InputCheckbox label="Select Multiple" 
+                :value="state.data.selectMultipleMaterials"
+                @input="value => state.data.selectMultipleMaterials = value"/>
         </Section>
         <hr/>
         <Section heading="Machine Options" heading-position="side"> 
@@ -42,6 +45,7 @@ import Modal from '@/components/Modal.vue';
 import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
 import InputSelect from '@/components/InputSelect.vue';
+import InputCheckbox from '@/components/InputCheckbox.vue';
 import MetaComponentMaterialOptionsListForm from './MetaComponentMaterialOptionsListForm.vue';
 import MetaComponentMachineOptionsListForm from './MetaComponentMachineOptionsListForm.vue';
 
@@ -50,7 +54,7 @@ import {MetaProductApi, MetaComponentApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Modal, Section, InputText, InputSelect,
+        Modal, Section, InputText, InputSelect, InputCheckbox,
         MetaComponentMaterialOptionsListForm,
         MetaComponentMachineOptionsListForm
     },
@@ -71,6 +75,7 @@ export default {
             data: {
                 name: '', 
                 type: '', 
+                selectMultipleMaterials: false,
                 metaOperations: [],
                 metaMaterialOptions: [],
                 metaMachineOptions: []
@@ -83,6 +88,7 @@ export default {
                 state.data = {
                     name: '', 
                     type: '', 
+                    selectMultipleMaterials: false,
                     metaOperations: [],
                     metaMaterialOptions: [],
                     metaMachineOptions: []
@@ -104,6 +110,7 @@ export default {
                 const request = {
                     name: state.data.name,
                     type: state.data.type,
+                    allow_multiple_materials: state.data.selectMultipleMaterials,
                     meta_material_options: state.data.metaMaterialOptions.map( y => ({
                         id: y.id,
                         item: y.item
@@ -136,6 +143,7 @@ export default {
                     state.data = {
                         name: response.name, 
                         type: response.type, 
+                        selectMultipleMaterials: response.allow_multiple_materials,
                         metaOperations: response.meta_operations.map( x => ({
                             id: x.id,
                             name: x.name,

@@ -199,7 +199,8 @@ export default {
                             metaOperationOptions: x.meta_operation_options.map( y => ({
                                 id: y.id,
                                 label: y.label,
-                                operation: y.operation
+                                operation: y.operation,
+                                workstation: x.workstation,
                             }))
                         }))
                     }

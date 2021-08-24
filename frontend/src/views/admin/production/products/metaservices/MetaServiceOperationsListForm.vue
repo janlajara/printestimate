@@ -1,13 +1,13 @@
 <template>
     <div>
-        <Table :headers="['Name', 'Options Type', 'Options', '']"
-            layout="fixed" :cols-width="['', '', 'w-1/3', 'w-1/5']">
+        <Table :headers="['Name', 'Options', '']"
+            layout="fixed" :cols-width="['', 'w-1/2', 'w-1/5']">
             <Row v-for="(x, i) in state.operationList" :key="i"
                     :class="state.operationForm.editIndex == i? 
                         'bg-secondary-light bg-opacity-20' : ''">
                 <Cell>{{x.name}}</Cell>
-                <Cell>{{x.optionsType}}</Cell>
                 <Cell>
+                    <span>{{x.optionsType}} select:</span>
                     <ul class="pl-2">
                         <li v-for="(x, i) in x.metaOperationOptions" :key="i"
                             class="list-disc">
@@ -47,14 +47,20 @@
             <InputCheckBox label="Is Required" 
                 :value="state.operationForm.isRequired"
                 @input="value => state.operationForm.isRequired = value"/>
-            <InputSelect name="Operation Options" class="col-span-3"
-                required :multiple="state.operationForm.optionsType != 'Boolean'" 
-                @input="(value)=>state.operationForm.metaOperationOptions = 
+            <InputTextLookup name="Operation Options" class="col-span-3" 
+                multiple placeholder="Search..." :text="state.operationForm.lookupText"
+                @select="(value)=>state.operationForm.metaOperationOptions = 
                     value.constructor === Array ? value : [value]"
-                :options="state.meta.metaOperationOptionChoices.map(c=>({
-                    value: c.value, label: c.label,
-                    isSelected: state.operationForm.metaOperationOptions.includes(c.value)
-                }))"/> 
+                @input="value => state.operationForm.lookupText = value"
+                :options="state.meta.metaOperationOptionChoices
+                    .map(option=>({
+                        value: option.value,
+                        title: option.label,
+                        isSelected: state.operationForm.metaOperationOptions.includes(option.value)}))
+                    .filter(option => 
+                        option.title.includes(state.operationForm.lookupText) ||
+                        option.isSelected)
+            "/>
             <div class="flex justify-end col-span-3 mt-4 md:mt-0">
                 <Button icon="add" class="my-auto border-gray-300 border"
                         @click="state.saveOperation">
@@ -66,6 +72,7 @@
 <script>
 import InputText from '@/components/InputText.vue';
 import InputSelect from '@/components/InputSelect.vue';
+import InputTextLookup from '@/components/InputTextLookup.vue';
 import InputCheckBox from '@/components/InputCheckbox.vue';
 import Table from '@/components/Table.vue';
 import Row from '@/components/Row.vue';
@@ -77,7 +84,7 @@ import {OperationApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        InputText, InputSelect, InputCheckBox,
+        InputText, InputSelect, InputTextLookup, InputCheckBox,
         Table, Row, Cell, Button
     },
     props: {
@@ -98,12 +105,12 @@ export default {
                 editIndex: null,
                 name: '',
                 optionsType: '', 
-                costingMeasure: '',
                 isRequired: false,
+                lookupText: '',
                 metaOperationOptions: []
             },
             meta: {
-                metaOperationOptionChoices: []
+                metaOperationOptionChoices: [],
             },
             clearOperationForm: ()=> {
                 state.operationForm = {
@@ -112,6 +119,7 @@ export default {
                     name: '',
                     optionsType: '', 
                     isRequired: false,
+                    lookupText: '',
                     metaOperationOptions: []
                 }
             },
@@ -143,6 +151,7 @@ export default {
                     name: selected.name,
                     optionsType: selected.optionsType, 
                     isRequired: selected.isRequired,
+                    operationForm: '',
                     metaOperationOptions: selected.metaOperationOptions.map( x => x.operation)
                 }
                 listOperations();
@@ -159,13 +168,14 @@ export default {
             } 
             const response = await OperationApi.listOperations(filter);
             if (response) {
-                state.meta.metaOperationOptionChoices = response.map( x => ({
-                    label: x.name, value: x.id
-                }));
+                state.meta.metaOperationOptionChoices = response
+                    .sort((a,b)=> a.name > b.name)
+                    .map( x => ({label: x.name, value: x.id}));
             }
-        }
+        } 
         watch(()=> props.value, ()=> {
             state.operationList = props.value;
+
             listOperations();
         })
         watch(()=> props.costingMeasure, ()=> {
@@ -173,7 +183,7 @@ export default {
         })
 
         return {
-            state
+            state, listOperations
         }
     }
 }

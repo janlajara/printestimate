@@ -174,6 +174,7 @@ class Operation(models.Model):
         estimate = self.get_estimate(material, quantity, **kwargs)
         return estimate.get(self.costing_measure, None)
 
+    # To Remove : Might not be correct to put this here
     def get_estimate(self, material, quantity, **kwargs):
         # Estimate via machine algorithm (if provided) or shape packing algorithm
         if self.material_type == material.type:

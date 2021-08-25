@@ -26,6 +26,8 @@
             </Row>
         </Table>
         <hr/>
+        <div v-if="state.error" 
+            class="pt-4 text-sm text-red-600">*{{state.error}}</div>
         <div class="md:grid md:gap-4 md:grid-cols-3">
             <InputText name="Name" required
                 type="text" :value="state.operationForm.name"
@@ -112,6 +114,17 @@ export default {
             meta: {
                 metaOperationOptionChoices: [],
             },
+            validate: ()=> {
+                let errors = [];
+                if (state.operationForm.name == '') errors.push('name');
+                if (state.operationForm.optionsType == '') errors.push('options type');
+                if (state.operationForm.metaOperationOptions.length == 0) 
+                    errors.push('meta operations options');
+                if (errors.length > 0)
+                    state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
+                else state.error = '';
+                return errors.length > 0;
+            },
             clearOperationForm: ()=> {
                 state.operationForm = {
                     id: null,
@@ -124,6 +137,7 @@ export default {
                 }
             },
             saveOperation: ()=> {
+                if (state.validate()) return;
                 const editIndex = state.operationForm.editIndex;
                 const operationForm = {
                     id: state.operationForm.id,

@@ -23,13 +23,19 @@
                 icon="square_foot"
                 @selected="select" 
                 :selected="selected" class="nav-link">
-                Estimation</NavLink>
+                Estimation</NavLink>    
             <NavMenu
                 icon="precision_manufacturing"
                 @selected="select" 
                 :selected="selected"
                 meta-group="Production Admin" class="nav-link">
                 Production</NavMenu>
+            <NavMenu
+                icon="request_quote"
+                @selected="select" 
+                :selected="selected"
+                meta-group="Sales Admin" class="nav-link">
+                Sales</NavMenu>
         </NavGroup>
     </nav>
 </template>

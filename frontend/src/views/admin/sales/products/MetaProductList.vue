@@ -69,7 +69,7 @@ export default {
 
         const goToDetail = (id)=> {
             router.push({ 
-                name: 'admin-production-product-detail', 
+                name: 'admin-sales-product-detail', 
                 params: {id}});
         };
 

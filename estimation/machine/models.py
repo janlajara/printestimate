@@ -70,19 +70,24 @@ class SheetFedPressMachine(PressMachine):
     uom = models.CharField(max_length=30, default='mm',
         choices=Measure.UNITS[Measure.DISTANCE])
 
+    def get_nearest_match(self, material, bleed):
+        match = None
+        child_sheets = (
+            ChildSheet.objects
+                .filter(parent__machine=self)
+                .order_by('width_value', 'length_value'))
+
+        for child_sheet in child_sheets:
+            if child_sheet.has_bleed == bleed and child_sheet.gte(material) \
+                    and material.item_properties.gte(child_sheet.parent):
+                match = child_sheet
+                break
+        
+        return match
+
     def estimate(self, material, quantity, bleed=False):
         if material.type == Item.PAPER:
-            child_sheets = (
-                ChildSheet.objects
-                    .filter(parent__machine=self)
-                    .order_by('width_value', 'length_value'))
-            match = None
-
-            for child_sheet in child_sheets:
-                if child_sheet.has_bleed == bleed and child_sheet.gte(material) \
-                        and material.item_properties.gte(child_sheet.parent):
-                    match = child_sheet
-                    break
+            match = self.get_nearest_match(material, bleed)
 
             if match is not None:
                 parent_sheet_per_item = material.item_properties.pack(match.parent)

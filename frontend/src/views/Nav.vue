@@ -14,16 +14,6 @@
             meta-group="Inventory" class="nav-link">
             Inventory</NavMenu>
         <NavGroup name="Admin">
-            <NavLink :to="{name: 'admin-inventory'}"
-                icon="inventory"
-                @selected="select" 
-                :selected="selected" class="nav-link">
-                Inventory</NavLink>
-            <NavLink :to="{name: 'admin-estimation'}"
-                icon="square_foot"
-                @selected="select" 
-                :selected="selected" class="nav-link">
-                Estimation</NavLink>    
             <NavMenu
                 icon="precision_manufacturing"
                 @selected="select" 
@@ -36,6 +26,11 @@
                 :selected="selected"
                 meta-group="Sales Admin" class="nav-link">
                 Sales</NavMenu>
+            <NavLink :to="{name: 'admin-inventory'}"
+                icon="inventory"
+                @selected="select" 
+                :selected="selected" class="nav-link">
+                Inventory</NavLink>
         </NavGroup>
     </nav>
 </template>

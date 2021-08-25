@@ -48,11 +48,6 @@ const routes = [
         component: ()=>import('../views/admin/inventory/Inventory.vue')
       },
       {
-        path: 'admin/estimation',
-        name: 'admin-estimation',
-        component: ()=>import('../views/admin/Estimation.vue')
-      },
-      {
         path: 'admin/production/workstations',
         name: 'admin-production-workstations',
         component: ()=>import('../views/admin/production/workstations/WorkstationList.vue'),

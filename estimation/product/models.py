@@ -7,6 +7,20 @@ from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
 
 
+class Product(models.Model):
+    name = models.CharField(max_length=20, null=True)
+    quantity = models.IntegerField(default=1)
+
+
+class Component(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1)
+
+    @property
+    def total_material_quantity(self):
+        return self.materials.count() * self.quantity
+
+
 class MaterialManager(PolymorphicManager):
 
     @classmethod
@@ -22,26 +36,31 @@ class MaterialManager(PolymorphicManager):
         clazz = mapping.get(type, Material)
         return clazz
 
-    def create_material(self, type, quantity, item, name=None, **kwargs):
+    def create_material(self, component, type, item, name=None, **kwargs):
         if item.type != type:
             raise MaterialTypeMismatch(item.type, type)
         clazz = MaterialManager.get_class(type)
-        material = clazz.objects.create(name=name, item=item,
-            quantity=quantity, **kwargs)
+        material = clazz.objects.create(component=component, name=name, 
+            item=item, **kwargs)
         return material
 
 
 class Material(PolymorphicModel, Shape):
     objects = MaterialManager()
+    component = models.ForeignKey(Component, on_delete=models.CASCADE,
+        related_name='materials')
     material_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=20, null=True)
-    quantity = models.IntegerField(default=1)
     item = models.ForeignKey(Item, on_delete=models.RESTRICT, 
         related_name='materials')
 
     @classmethod
     def get_class(cls, type):
         return cls.objects.get_class(type)
+
+    @property
+    def quantity(self):
+        return self.component.quantity
 
     @property
     def item_properties(self):

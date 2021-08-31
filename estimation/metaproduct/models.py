@@ -11,9 +11,9 @@ class MetaProduct(models.Model):
     name = models.CharField(max_length=40)
     description = models.CharField(max_length=100, null=True)
 
-    def add_meta_component(self, name, type):
+    def add_meta_component(self, name, type, **kwargs):
         return MetaComponent.objects.create(name=name, type=type, 
-            meta_product=self)
+            meta_product=self, **kwargs)
 
     def add_meta_service(self, name, type, costing_measure, **kwargs):
         count = MetaService.objects.filter(meta_product=self).count()
@@ -24,7 +24,7 @@ class MetaProduct(models.Model):
             costing_measure=costing_measure, **kwargs)
 
 
-class MetaProductData(models.Model):
+class MetaProductData(PolymorphicModel):
     name = models.CharField(max_length=40)
     type = models.CharField(max_length=15, choices=Item.TYPES)
     meta_product = models.ForeignKey(MetaProduct, on_delete=models.CASCADE,
@@ -135,7 +135,7 @@ class MetaService(MetaProductData):
     sequence = models.IntegerField(default=0)
     costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
         default=CostingMeasure.QUANTITY)
-    component = models.ForeignKey(MetaComponent, on_delete=models.SET_NULL, 
+    meta_component = models.ForeignKey(MetaComponent, on_delete=models.SET_NULL, 
         blank=True, null=True)
     estimate_variable_type = models.CharField(choices=MetaEstimateVariable.TYPE_CHOICES,
         max_length=20, blank=True, null=True)

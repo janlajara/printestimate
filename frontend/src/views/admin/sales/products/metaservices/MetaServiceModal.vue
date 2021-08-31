@@ -164,7 +164,7 @@ export default {
                     name: state.data.name,
                     type: state.data.type,
                     costing_measure: state.data.costingMeasure,
-                    component: state.data.component,
+                    meta_component: state.data.component,
                     estimate_variable_type: state.data.estimateVariableType,
                     meta_operations: state.data.metaOperations.map( x => ({
                         id: x.id,
@@ -189,7 +189,7 @@ export default {
                         name: response.name, 
                         type: response.type, 
                         costingMeasure: response.costing_measure,
-                        component: response.component,
+                        component: response.meta_component,
                         estimateVariableType: response.estimate_variable_type,
                         metaOperations: response.meta_operations.map( x => ({
                             id: x.id,

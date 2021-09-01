@@ -113,7 +113,7 @@ export default {
                 };
                 if (response.properties) {
                     Object.entries(response.properties)
-                        .filter(entry => entry[0] != 'id')
+                        .filter(entry => entry[0] != 'properties_id')
                         .forEach(entry => data.properties[entry[0]] = entry[1]);
                     
                     loadPropLabels(response.properties.resourcetype); 

@@ -110,6 +110,7 @@ class ItemManager(models.Manager):
         if type == Item.PANEL or type == Item.PAPER:
             kwargz = {'width_value': 0, 'length_value': 0} 
         prop_clazz.objects.create(item=item, **kwargz)
+        item.save()
         return item
 
 

@@ -13,14 +13,43 @@ class ProductTemplate(models.Model):
     name = models.CharField(max_length=40)
     description = models.CharField(max_length=100, null=True)
 
-    def add_component_template(self, meta_component, quantity):
-        component_template = ComponentTemplate.objects.create(
+    def add_component_template(self, meta_component, quantity, **kwargs):
+        component_template = ComponentTemplate.objects.create_component_template(
             product_template=self, meta_component=meta_component,
-            quantity=quantity)
+            quantity=quantity, **kwargs)
+        return component_template
+
+    def add_service_template(self, meta_service):
+        service_template = ServiceTemplate.objects.create(
+            product_template=self, meta_service=meta_service)
+        return service_template
+
+
+class ComponentTemplateManager(PolymorphicManager):
+
+    @classmethod
+    def get_class(cls, type):
+        mapping = {
+            Item.TAPE: TapeComponentTemplate,
+            Item.LINE: LineComponentTemplate,
+            Item.PAPER: PaperComponentTemplate,
+            Item.PANEL: PanelComponentTemplate,
+            Item.LIQUID: LiquidComponentTemplate,
+            Item.OTHER: ComponentTemplate
+        }
+        clazz = mapping.get(type, ComponentTemplate)
+        return clazz
+
+    def create_component_template(self, product_template, meta_component, **kwargs):
+        clazz = ComponentTemplateManager.get_class(meta_component.type)
+        component_template = clazz.objects.create(product_template=product_template, 
+            meta_component=meta_component, **kwargs)
         return component_template
 
 
-class ComponentTemplate(models.Model):
+class ComponentTemplate(PolymorphicModel, Shape):
+    objects = ComponentTemplateManager()
+    component_template_id = models.AutoField(primary_key=True)
     product_template = models.ForeignKey(ProductTemplate, on_delete=models.CASCADE,
         related_name='component_templates')
     meta_component = models.ForeignKey(MetaComponent, on_delete=models.RESTRICT)
@@ -39,40 +68,33 @@ class ComponentTemplate(models.Model):
         return self.quantity * self.material_templates.count()
 
     def add_material_template(self, meta_material_option, **kwargs):
-        material_template = MaterialTemplate.objects.create_material_template(
+        material_template = MaterialTemplate.objects.create(
             component_template=self, meta_material_option=meta_material_option,
             **kwargs)
         return material_template
 
 
-class MaterialTemplateManager(PolymorphicManager):
-
-    @classmethod
-    def get_class(cls, type):
-        mapping = {
-            Item.TAPE: TapeMaterialTemplate,
-            Item.LINE: LineMaterialTemplate,
-            Item.PAPER: PaperMaterialTemplate,
-            Item.PANEL: PanelMaterialTemplate,
-            Item.LIQUID: LiquidMaterialTemplate,
-            Item.OTHER: MaterialTemplate
-        }
-        clazz = mapping.get(type, MaterialTemplate)
-        return clazz
-
-    def create_material_template(self, component_template, 
-            meta_material_option, **kwargs):
-        if component_template.type != meta_material_option.type:
-            raise MaterialTypeMismatch(component_template.type, meta_material_option.type)
-        clazz = MaterialTemplateManager.get_class(component_template.type)
-        material_template = clazz.objects.create(component_template=component_template, 
-            meta_material_option=meta_material_option, **kwargs)
-        return material_template
+class TapeComponentTemplate(ComponentTemplate, Tape):
+    pass
 
 
-class MaterialTemplate(PolymorphicModel, Shape):
-    objects = MaterialTemplateManager()
-    material_template_id = models.AutoField(primary_key=True)
+class LineComponentTemplate(ComponentTemplate, Line):
+    pass
+
+
+class PaperComponentTemplate(ComponentTemplate, Paper):
+    pass
+ 
+
+class PanelComponentTemplate(ComponentTemplate, Panel):
+    pass
+
+
+class LiquidComponentTemplate(ComponentTemplate, Liquid):
+    pass
+
+
+class MaterialTemplate(models.Model):
     component_template = models.ForeignKey(ComponentTemplate, on_delete=models.CASCADE,
         related_name='material_templates')
     meta_material_option = models.ForeignKey(MetaMaterialOption, on_delete=models.RESTRICT)
@@ -86,21 +108,45 @@ class MaterialTemplate(PolymorphicModel, Shape):
         return self.meta_material_option.label
 
 
-class TapeMaterialTemplate(MaterialTemplate, Tape):
-    pass
+class ServiceTemplate(models.Model):
+    product_template = models.ForeignKey(ProductTemplate, on_delete=models.CASCADE,
+        related_name='service_templates')
+    meta_service = models.ForeignKey(MetaService, on_delete=models.RESTRICT)
+
+    @property
+    def name(self):
+        return self.meta_service.name
+
+    @property
+    def type(self):
+        return self.meta_service.type
+
+    def add_operation_template(self, meta_operation):
+        operation_template = OperationTemplate.objects.create(
+            service_template=self, meta_operation=meta_operation)
+        return operation_template
 
 
-class LineMaterialTemplate(MaterialTemplate, Line):
-    pass
+class OperationTemplate(models.Model):
+    service_template = models.ForeignKey(ServiceTemplate, on_delete=models.CASCADE,
+        related_name='operation_templates')
+    meta_operation = models.ForeignKey(MetaOperation, on_delete=models.RESTRICT)
+
+    @property
+    def name(self):
+        return self.meta_operation.name
+
+    def add_operation_option_template(self, meta_operation_option):
+        operation_option_template = OperationOptionTemplate.objects.create(
+            operation_template=self, meta_operation_option=meta_operation_option)
+        return operation_option_template
 
 
-class PaperMaterialTemplate(MaterialTemplate, Paper):
-    pass
- 
+class OperationOptionTemplate(models.Model):
+    operation_template = models.ForeignKey(OperationTemplate, on_delete=models.CASCADE,
+        related_name='operation_option_templates')
+    meta_operation_option = models.ForeignKey(MetaOperationOption, on_delete=models.RESTRICT)
 
-class PanelMaterialTemplate(MaterialTemplate, Panel):
-    pass
-
-
-class LiquidMaterialTemplate(MaterialTemplate, Liquid):
-    pass
+    @property
+    def label(self):
+        return self.meta_operation_option.label

@@ -49,11 +49,11 @@ def test_product_template__add_component_template(db, meta_product):
     product_template = ProductTemplate.objects.create(meta_product=meta_product,
         name=meta_product.name, description=meta_product.description)
     sheet_component = meta_product.meta_product_datas.filter(name='Sheets').first()
-    sheet_template = product_template.add_component_template(sheet_component, 100)
+    sheet_template = product_template.add_component_template(
+        sheet_component, 100, length_value=11, width_value=8.5, size_uom='inch')
 
     for meta_material_option in sheet_component.meta_material_options.all():
-        sheet_template.add_material_template(meta_material_option, 
-            length_value=11, width_value=8.5, size_uom='inch')
+        sheet_template.add_material_template(meta_material_option)
     
     assert product_template.component_templates.count() == 1
     assert sheet_template.material_templates.count() == 3

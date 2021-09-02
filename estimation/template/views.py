@@ -58,7 +58,9 @@ class ProductTemplateViewUtils:
         return operation_option_templates
 
 
-class ProductTemplateViewSet(viewsets.ModelViewSet):
+class ProductTemplateViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
+                            mixins.RetrieveModelMixin, mixins.DestroyModelMixin,
+                            viewsets.GenericViewSet):
     queryset = ProductTemplate.objects.all()
 
     def get_serializer_class(self):

@@ -6,5 +6,5 @@ urlpatterns = [
     path('api/templates/products', 
         views.ProductTemplateViewSet.as_view({'get': 'list', 'post':'create'})),
     path('api/templates/products/<pk>/', 
-        views.ProductTemplateViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
+        views.ProductTemplateViewSet.as_view({'get': 'retrieve', 'delete': 'destroy'})),
 ]

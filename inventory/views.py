@@ -24,6 +24,15 @@ class ItemViewSet(viewsets.ModelViewSet):
             return serializers.ItemRetrieveSerializer
         else:
             return serializers.ItemSerializer
+    
+    def destroy(self, request, pk=None, **kwargs):
+        if pk is not None:
+            item = get_object_or_404(Item, pk=pk)
+            response = super().destroy(request, pk, **kwargs)
+            item.properties.delete()
+            return response
+        else:
+            return Response({"error": "item pk not provided"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BaseStockUnitViewSet(viewsets.ModelViewSet):

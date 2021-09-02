@@ -20,6 +20,9 @@ class Paper(Rectangle):
     gsm = models.IntegerField(null=True, blank=False)
     finish = models.CharField(max_length=15, choices=Finish.TYPES, null=True, blank=False)
 
+    class Meta:
+        abstract = True
+
     def __str__(self):
         gsm = str(self.gsm) + ' gsm' if self.gsm is not None else self.gsm
         arr = [super().__str__(), self.finish, super().format(gsm)]
@@ -30,6 +33,9 @@ class Panel(Rectangle):
     thickness_value = models.FloatField(null=True, blank=True)
     thickness_uom = models.CharField(max_length=30, null=True, blank=True,
                                      choices=Measure.UNITS[Measure.DISTANCE])
+
+    class Meta:
+        abstract = True
 
     @property
     def thickness(self):

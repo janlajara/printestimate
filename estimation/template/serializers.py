@@ -13,12 +13,15 @@ from estimation.metaproduct.serializers import MetaProductSerializer, MetaCompon
 
 
 class OperationOptionTemplate(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False, allow_null=True)
+    
     class Meta:
         model = OperationOptionTemplate
         fields = ['id', 'label', 'meta_operation_option']
 
 
 class OperationTemplateSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False, allow_null=True)
     operation_option_templates = OperationOptionTemplate(many=True)
 
     class Meta:
@@ -43,6 +46,7 @@ class ServiceTemplateReadSerializer(ServiceTemplateSerializer):
 
 
 class MaterialTemplateSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False, allow_null=True)
 
     class Meta:
         model = MaterialTemplate

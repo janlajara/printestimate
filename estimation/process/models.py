@@ -170,6 +170,7 @@ class Operation(models.Model):
             step.save()
         step_to_delete.delete()
 
+    '''
     # To Remove : Might not be correct to put this here
     def get_measurement(self, material, quantity, **kwargs):
         estimate = self.get_estimate(material, quantity, **kwargs)
@@ -187,6 +188,7 @@ class Operation(models.Model):
             return estimate
         else:
             raise MaterialTypeMismatch(material.type, self.material_type)
+    '''
 
     def get_duration(self, measurement, contingency=0):
         total_duration = 0

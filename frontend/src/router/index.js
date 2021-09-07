@@ -43,6 +43,18 @@ const routes = [
         component: ()=>import('../views/pages/inventory/itemrequests/ItemRequestGroupDetail.vue')
       }, 
       {
+        path: 'sales/products/templates',
+        name: 'sales-products-templates',
+        component: ()=>import('../views/pages/sales/templates/ProductTemplateList.vue'),
+        meta: {label: 'Product Templates', group: 'Sales'}
+      },
+      {
+        path: 'sales/products/templates/:id',
+        name: 'sales-product-template-detail',
+        props: true,
+        component: ()=>import('../views/pages/sales/templates/ProductTemplateDetail.vue')
+      }, 
+      {
         path: 'admin/inventory',
         name: 'admin-inventory',
         component: ()=>import('../views/admin/inventory/Inventory.vue')

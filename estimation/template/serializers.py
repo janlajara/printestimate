@@ -160,6 +160,12 @@ class ComponentTemplatePolymorphicSerializer(PolymorphicSerializer):
         LiquidComponentTemplate: LiquidComponentTemplateSerializer,
     }
 
+    @classmethod
+    def get_serializer_class(cls, resourcetype):
+        clazz = ComponentTemplate.objects.get_class(resourcetype)
+        serializer_class = cls.model_serializer_mapping.get(clazz, ComponentTemplateSerializer)
+        return serializer_class
+
     def to_resource_type(self, model_or_instance):
         mapping = {
             LineComponentTemplate.__name__: Item.LINE,

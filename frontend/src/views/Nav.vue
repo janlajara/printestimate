@@ -13,6 +13,12 @@
             :selected="selected"
             meta-group="Inventory" class="nav-link">
             Inventory</NavMenu>
+        <NavMenu
+            icon="request_quote"
+            @selected="select" 
+            :selected="selected"
+            meta-group="Sales" class="nav-link">
+            Sales</NavMenu>
         <NavGroup name="Admin">
             <NavMenu
                 icon="precision_manufacturing"

@@ -8,4 +8,7 @@ urlpatterns = [
     path('api/templates/products/<pk>/', 
         views.ProductTemplateViewSet.as_view({'get': 'retrieve', 'put': 'update', 
             'delete': 'destroy'})),
+
+    path('api/templates/products/components/metadata',
+        views.ComponentTemplateMetaView.as_view({'get': 'list'}))
 ]

@@ -3,8 +3,11 @@ import {AXIOS} from '@/utils/apis/core.js'
 export class MetaProductApi {
     static uri = '/estimation/api/metaproducts'
 
-    static async listMetaProducts() {
-        const response = await AXIOS.execute(AXIOS.GET, MetaProductApi.uri);
+    static async listMetaProducts(limit=null, offset=null, search=null) {
+        const params = offset != null && limit != null? 
+            {limit, offset, search} : {search};
+        const response = await AXIOS.execute(AXIOS.GET, MetaProductApi.uri,
+            null, null, null, params);
         if (response) return response.data;
     }
 

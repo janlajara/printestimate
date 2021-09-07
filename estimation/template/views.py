@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, mixins, status
+from inventory.models import Item
+from rest_framework import viewsets, mixins, status, metadata
 from rest_framework.response import Response
 from estimation.template import serializers
 from estimation.template.models import ProductTemplate, ComponentTemplate, \
@@ -93,11 +94,11 @@ class ProductTemplateViewSet(viewsets.ModelViewSet):
     queryset = ProductTemplate.objects.all()
 
     def get_serializer_class(self):
-        if self.action in ['create', 'retrieve']:
+        if self.action in ['create', 'retrieve', 'metadata']:
             return serializers.ProductTemplateSerializer
         else:
             return serializers.ProductTemplateListSerializer
-
+            
     def create(self, request):
         deserialized = serializers.ProductTemplateSerializer(data=request.data)
 
@@ -147,104 +148,20 @@ class ProductTemplateViewSet(viewsets.ModelViewSet):
             return Response({'errors': 'component template pk is not provided'},
                 status.HTTP_400_BAD_REQUEST)
 
-'''
-class ComponentTemplateViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
-    queryset = ComponentTemplate.objects.all()
-    serializer_class = serializers.ComponentTemplateSerializer
 
-    def update_material_templates(self, component_template, material_templates_data):
-        existing_ids = [m.get('id') for m in material_templates_data
-            if not m.get('id') is None]
-        ids_to_delete = [m.id for m in MaterialTemplate.objects.filter(component_template__pk=component_template.pk)
-            if m is not None and m.id not in existing_ids]
-        MaterialTemplate.objects.filter(pk__in=ids_to_delete).delete()
+class ComponentTemplateMetaView(viewsets.ViewSet):
+    
+    def list(self, request):
+        options = metadata.SimpleMetadata()
+        resourcetypes = [x[0] for x in Item.TYPES]
+        response = []
 
-        for mt_data in material_templates_data:
-            mt_id = mt_data.pop('id') if 'id' in mt_data else None
-            if mt_id is not None:
-                MaterialTemplate.objects.filter(pk=mt_id).update(**mt_data)
-            else:
-                component_template.add_material_template(**mt_data)
+        for resourcetype in resourcetypes:
+            serializer_class = serializers.ComponentTemplatePolymorphicSerializer.get_serializer_class(resourcetype)
+            component_metadata = options.get_serializer_info(serializer_class())
+            filtered = {key: value for key,value in component_metadata.items() \
+                if key not in['component_template_id', 'material_templates', 'meta_component',
+                'name', 'quantity', 'total_material_quantity', 'type']}
+            response.append({"type": resourcetype, "fields": filtered})
 
-    def update(self, request, pk=None):
-        if pk is not None:
-            deserialized = serializers.ComponentTemplateSerializer(data=request.data)
-
-            if deserialized.is_valid():
-                validated_data = deserialized.validated_data
-                component_template = get_object_or_404(ComponentTemplate, pk=pk)
-                material_templates_data = validated_data.pop('material_templates')
-                self.update_material_templates(component_template, material_templates_data)
-                
-                ComponentTemplate.objects.filter(pk=pk).update(**validated_data)
-                component_template.refresh_from_db()
-                serialized = serializers.ComponentTemplateSerializer(component_template)
-                return Response(serialized.data)
-            else:
-                return Response({'errors': deserialized.errors},
-                    status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({'errors': 'component template pk is not provided'},
-                status.HTTP_400_BAD_REQUEST)
-
-
-class ServiceTemplateViewSet(mixins.UpdateModelMixin, mixins.RetrieveModelMixin,
-                                viewsets.GenericViewSet):
-    queryset = ServiceTemplate.objects.all()
-    serializer_class = serializers.ServiceTemplateSerializer
-
-    def update_operation_option_templates(self, operation_template, operation_option_templates_data):
-        existing_ids = [m.get('id') for m in operation_option_templates_data
-            if not m.get('id') is None]
-        ids_to_delete = [m.id for m in OperationOptionTemplate.objects.filter(pk=operation_template.pk)
-            if m is not None and m.id not in existing_ids]
-        OperationOptionTemplate.objects.filter(pk__in=ids_to_delete).delete()
-
-        for oot_data in operation_option_templates_data:
-            oot_id = oot_data.pop('id') if 'id' in oot_data else None
-            if oot_id is not None:
-                OperationOptionTemplate.objects.filter(pk=oot_id).update(**oot_data)
-            else:
-                operation_template.add_operation_option_template(**oot_data)
-
-    def update_operation_templates(self, service_template, operation_templates_data):
-        existing_ids = [m.get('id') for m in operation_templates_data
-            if not m.get('id') is None]
-        ids_to_delete = [m.id for m in OperationTemplate.objects.filter(pk=service_template.pk)
-            if m is not None and m.id not in existing_ids]
-        OperationTemplate.objects.filter(pk__in=ids_to_delete).delete()
-
-        for ot_data in operation_templates_data:
-            ootemplates_data = ot_data.pop('operation_option_templates')
-            operation_template = None
-
-            ot_id = ot_data.pop('id') if 'id' in ot_data else None
-            if ot_id is not None:
-                OperationTemplate.objects.filter(pk=ot_id).update(**ot_data)
-                operation_template = OperationTemplate.objects.get(ot_id)
-            else:
-                operation_template = service_template.add_operation_template(**ot_data)
-            self.update_operation_option_templates(operation_template, ootemplates_data)
-
-    def update(self, request, pk=None):
-        if pk is not None:
-            deserialized = serializers.ServiceTemplateSerializer(data=request.data)
-            
-            if deserialized.is_valid():
-                validated_data = deserialized.validated_data
-                service_template = get_object_or_404(ServiceTemplate, pk=pk)
-                operation_templates_data = validated_data.pop('operation_templates')
-                self.update_operation_templates(service_template, operation_templates_data)
-
-                ServiceTemplate.objects.filter(pk=pk).update(**validated_data)
-                service_template.refresh_from_db()
-
-                serialized = serializers.ServiceTemplateSerializer(service_template)
-                return Response(serialized.data)
-            else:
-                return Response({'errors': deserialized.errors},
-                    status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({'errors': 'service template pk is not provided'},
-                status.HTTP_400_BAD_REQUEST)
-'''
+        return Response(response)

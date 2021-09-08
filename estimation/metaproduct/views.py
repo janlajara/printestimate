@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from rest_framework import viewsets, mixins, status
+from rest_framework import viewsets, mixins, status, filters
 from rest_framework.response import Response
 from estimation.metaproduct.models import MetaProduct, MetaComponent, MetaService, \
      MetaOperation, MetaComponentOperation, MetaOperationOption, MetaMaterialOption, MetaMachineOption
@@ -9,6 +9,8 @@ from estimation.metaproduct import serializers
 class MetaProductViewSet(viewsets.ModelViewSet):
     queryset = MetaProduct.objects.all()
     serializer_class = serializers.MetaProductSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
 
 
 class MetaOperationViewUtils:

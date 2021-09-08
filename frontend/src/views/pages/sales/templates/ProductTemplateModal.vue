@@ -32,7 +32,7 @@
             </div>
         </Section>
         <hr class=""/>
-        <ProductComponentsForm :meta-product-id="state.data.metaProduct" />
+        <ProductComponentsForm :meta-product-id="state.data.metaProduct"/>
     </Modal>
 </template>
 
@@ -48,7 +48,7 @@ import {MetaProductApi, ProductTemplateApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Modal, Section, InputText, InputTextLookup, ProductComponentsForm
+        Modal, Section, InputText, InputTextLookup, ProductComponentsForm 
     },
     props: {
         isOpen: Boolean,

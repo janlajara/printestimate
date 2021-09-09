@@ -55,7 +55,7 @@ export default {
     },
     setup(props, {emit}) {  
       const state = reactive({
-        baseOptions: props.options.filter(prop => prop.value != null),
+        baseOptions: props.options.filter(prop => prop && prop.value != null),
         options: computed(()=> {
           const options = (!props.required && !props.multiple)? 
             [{value: null, label: ''}].concat(state.baseOptions):
@@ -65,7 +65,7 @@ export default {
         isDroppedDown: false,
       }); 
       watch(()=>props.options, ()=> {
-        state.baseOptions = props.options.filter(prop => prop.value != null);
+        state.baseOptions = props.options.filter(prop => prop && prop.value != null);
       });
 
       const selectedOptions = computed(() => 

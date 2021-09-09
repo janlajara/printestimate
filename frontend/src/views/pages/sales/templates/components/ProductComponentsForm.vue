@@ -1,5 +1,5 @@
 <template>
-    <Section heading="Components" heading-position="side"> 
+    <Section heading="Components" heading-position="side">
         <div v-for="(component, key) in state.meta.components" :key="key">
             <span>{{component.name}}</span>
             <span class="capitalize">{{component.type}}</span>
@@ -8,26 +8,51 @@
                     class="flex-grow md:col-span-2"
                     :multiple="component.allowMultipleMaterials"
                     v-if="component.metaMaterialOptions.length > 0"
-                    @input="()=>{}"
-                    :options="component.metaMaterialOptions.map(c=>({
-                        value: c.id, label: c.label
-                    }))"/>
-                <InputSelect name="Machine" required 
+                    @input="(value)=> {
+                        const template = state.data.componentTemplates[key];
+                        if (template) template['materials'] = value
+                    }"
+                    :options="component.metaMaterialOptions.map(c=>{
+                        const template = state.data.componentTemplates[key];
+                        let options = {value: c.id, label: c.label};
+                        if (template && template['materials']) 
+                            options['isSelected'] = template['materials'].includes(c.id);
+                        return options;
+                    })"/>
+                <InputSelect name="Machine" 
                     v-if="component.metaMachineOptions.length > 0"
-                    @input="()=>{}"
-                    :options="component.metaMachineOptions.map(c=>({
-                        value: c.id, label: c.label
-                    }))"/>
+                    @input="(value)=> {
+                        const template = state.data.componentTemplates[key];
+                        if (template) template['machine'] = value;
+                    }"
+                    :options="component.metaMachineOptions.map(c=>{
+                        const template = state.data.componentTemplates[key];
+                        let options = {value: c.id, label: c.label};
+                        if (template) options['isSelected'] = template['machine'] == c.id;
+                        return options;
+                    })"/>
                 <component v-for="(field, key) in component.additionalFields" :key="key"
                     :is="field.inputComponent" :required="field.required"
                     :name="field.label" :type="field.inputType"
-                    @input="()=>{}"
-                    :value="''"
+                    @input="(value)=>{
+                        const template = state.data.componentTemplates[key];
+                        if (template) template[field.name] = value;
+                    }"
+                    :value="state.data.componentTemplates[key] ? 
+                        state.data.componentTemplates[key][field.name] : ''"
                     :options="(field.options)?
-                        field.options.map(option => ({
-                            ...option,
-                            isSelected: option.value != ''
-                        })) : null"/>
+                        field.options.map(option => {
+                            const template = state.data.componentTemplates[key];
+                            if (template) option['isSelected'] = option.value == template[field.name];
+                            return {...option}
+                        }) : null"/>
+                <InputText name="Quantity"  placeholder="Quantity" required
+                    type="number" :value="state.data.componentTemplates[key]?
+                        state.data.componentTemplates[key]['quantity'] : ''" 
+                    @input="value => {
+                        const template = state.data.componentTemplates[key];
+                        if (template) template['quantity'] = value
+                    }"/>
             </div>
         </div>
     </Section>
@@ -64,7 +89,6 @@ export default {
             if (id) {
                 const response = await MetaProductApi.retrieveMetaProductComponents(id);
                 if (response) {
-                    console.log(response);
                     state.meta.components = response.map(obj=> ({
                         id: obj.id,
                         name: obj.name,
@@ -76,7 +100,6 @@ export default {
                         metaMaterialOptions: obj.meta_material_options,
                         metaMachineOptions: obj.meta_machine_options
                     }));
-                    console.log(state.meta.components);
                 }
             }
             state.isProcessing = false;
@@ -115,10 +138,27 @@ export default {
             }
         }
 
+        const initializeComponentForms = () => {
+            state.data.componentTemplates = [];
+            state.meta.components.forEach(component => {
+                let commonProps = {
+                    'materials': null,
+                    'machine': null,
+                    'quantity': 1};
+                component.additionalFields
+                    .forEach(field => {
+                        commonProps[field.name] = null;
+                    });
+                state.data.componentTemplates.push(commonProps);
+            });
+            console.log(state.data.componentTemplates);
+        }
+
         onBeforeMount(getComponentTemplateFields);
-        watch(()=> state.id, ()=> {
+        watch(()=> state.id, async ()=> {
             if (state.id) {
-                retrieveMetaProductComponents(state.id);
+                await retrieveMetaProductComponents(state.id);
+                initializeComponentForms();
             }
         })
 

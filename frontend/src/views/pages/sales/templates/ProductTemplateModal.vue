@@ -13,7 +13,7 @@
                 <InputText name="Description"  placeholder="Description"  class="col-span-2"
                     type="text" :value="state.data.description" required
                     @input="value => state.data.description = value"/>
-                <InputTextLookup name="Product Class" 
+                <InputTextLookup name="Product Class" required
                     :disabled="!state.isCreate"
                     placeholder="Search..." class="flex-grow md:col-span-2"
                     :text="state.form.productClass.text"
@@ -31,8 +31,13 @@
                     }))"/>
             </div>
         </Section>
-        <hr class=""/>
-        <ProductComponentsForm :meta-product-id="state.data.metaProduct"/>
+        <hr/>
+        <ProductComponentsForm 
+            :meta-product-id="state.data.metaProduct"
+            @input="value => {
+                state.data.componentTemplates = value.data;
+                state.validators['componetTemplates'] = value.validator;
+            }"/>
     </Modal>
 </template>
 
@@ -48,7 +53,7 @@ import {MetaProductApi, ProductTemplateApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Modal, Section, InputText, InputTextLookup, ProductComponentsForm 
+        Modal, Section, InputText, InputTextLookup, ProductComponentsForm
     },
     props: {
         isOpen: Boolean,
@@ -80,12 +85,19 @@ export default {
             meta: {
                 metaproducts: []
             },
+            validators: {},
             validate: ()=> {
                 let errors = [];
-                if (state.data.name == '' || state.data.name == null) errors.push('name');
+                if (state.data.name == '') errors.push('name');
+                if (state.data.description == '') errors.push('description');
+                if (state.data.metaProduct == null) errors.push('product class');
                 if (errors.length > 0)
                     state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
                 else state.error = '';
+
+                if (state.validators['componetTemplates']) 
+                    return state.validators['componetTemplates']();
+
                 return errors.length > 0;
             },
             save: ()=> {
@@ -93,7 +105,10 @@ export default {
                 const productTemplate = {
                     name: state.data.name, 
                     description: state.data.description}
-                saveProductTemplate(productTemplate);
+                
+                console.log(state.data);
+                if (state.id == 'asd')
+                    saveProductTemplate(productTemplate);
             }
         });
 
@@ -130,7 +145,7 @@ export default {
         const populateMetaProductList = async (search=null)=> {
             state.isProcessing = true;
             const response = await MetaProductApi.listMetaProducts(10, 0, search);
-            if (response) {console.log(response)
+            if (response) {
                 state.meta.metaproducts = response.results.map( obj => ({
                     id: obj.id,
                     name: obj.name,
@@ -141,9 +156,11 @@ export default {
         }
 
         watch(()=> props.isOpen, ()=> { 
-            if (props.isOpen && state.id && !state.isCreate) {
-                const id = parseInt(state.id);
-                retrieveProductTemplate(id);
+            if (props.isOpen) {
+                state.error = '';
+                if (state.id && !state.isCreate) {
+                    const id = parseInt(state.id);
+                    retrieveProductTemplate(id);}
             } else {
                 populateMetaProductList();
             }

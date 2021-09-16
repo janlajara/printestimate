@@ -1,7 +1,8 @@
 <template>
     <Section heading="Components" heading-position="side">
         <div v-for="(component, key) in state.meta.components" :key="key">
-            <ProductComponentAttributes :component="component"
+            <ProductComponentForm 
+                :component="component"
                 @input="data => {
                     state.data.componentTemplates[key] = data;
                     $emit('input', state.data.componentTemplates);
@@ -15,7 +16,7 @@
 </template>
 <script>
 import Section from '@/components/Section.vue';
-import ProductComponentAttributes from './ProductComponentAttributes.vue';
+import ProductComponentForm from './ProductComponentForm.vue';
 
 import {reactive, watch, computed, onBeforeMount, onMounted} from 'vue';
 import {MetaProductApi, ComponentTemplateApi} from '@/utils/apis.js';

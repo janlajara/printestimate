@@ -10,19 +10,16 @@
                 <InputText name="Name"  placeholder="Name"
                     type="text" :value="state.data.name" required
                     @input="value => state.data.name = value"/>
-                <InputText name="Description"  placeholder="Description"  class="col-span-2"
+                <InputText class="col-span-2"
+                    name="Description"  placeholder="Description"  
                     type="text" :value="state.data.description" required
                     @input="value => state.data.description = value"/>
                 <InputTextLookup name="Product Class" required
                     :disabled="!state.isCreate"
                     placeholder="Search..." class="flex-grow md:col-span-2"
                     :text="state.form.productClass.text"
-                    @select="value => {
-                        state.form.productClass.select(value)
-                    }"
-                    @input="value => {
-                        state.form.productClass.search(value);
-                    }"
+                    @select="value => state.form.productClass.select(value)"
+                    @input="value => state.form.productClass.search(value)"
                     :options="state.meta.metaproducts.map( option => ({
                         value: option.id,
                         title: option.name,
@@ -34,9 +31,10 @@
         <hr/>
         <ProductComponentsForm 
             :meta-product-id="state.data.metaProduct"
-            @input="value => {
-                state.data.componentTemplates = value.data;
-                state.validators['componetTemplates'] = value.validator;
+            @input="value => state.data.componentTemplates = value"
+            @load="event => {
+                state.data.componentTemplates = event.data;
+                state.validators = event.validators;
             }"/>
     </Modal>
 </template>
@@ -85,7 +83,15 @@ export default {
             meta: {
                 metaproducts: []
             },
-            validators: {},
+            clear: ()=>{
+                state.data = {
+                    name: '', description: '',
+                    metaProduct: null,
+                    componentTemplates: [],
+                    serviceTemplates: [],
+                }
+            },
+            validators: [],
             validate: ()=> {
                 let errors = [];
                 if (state.data.name == '') errors.push('name');
@@ -94,21 +100,25 @@ export default {
                 if (errors.length > 0)
                     state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
                 else state.error = '';
-
-                if (state.validators['componetTemplates']) 
-                    return state.validators['componetTemplates']();
-
+                if (state.validators.length > 0) {
+                    state.validators.forEach( validator => validator());
+                }
                 return errors.length > 0;
             },
             save: ()=> {
                 if (state.validate()) return;
                 const productTemplate = {
+                    meta_product: state.data.metaProduct,
                     name: state.data.name, 
-                    description: state.data.description}
+                    description: state.data.description,
+                    component_templates: state.data.componentTemplates,
+                    service_templates: []
+                }
                 
                 console.log(state.data);
-                if (state.id == 'asd')
-                    saveProductTemplate(productTemplate);
+                console.log(productTemplate);
+                //if (state.id == 'asd')
+                saveProductTemplate(state.id, productTemplate);
             }
         });
 
@@ -123,15 +133,15 @@ export default {
             state.isProcessing = false;
         }
 
-        const saveProductTemplate = async (productTemplate)=> {
+        const saveProductTemplate = async (id, productTemplate)=> {
             state.isProcessing = true;
             if (productTemplate) {
                 let response = null;
-                if (!state.isCreate && state.id) {
+                if (!state.isCreate && id) {
                     response = await ProductTemplateApi.updateProductTemplate(
-                        state.id, productTemplate);
+                        id, productTemplate);
                 } else {
-                    response = await ProductTemplateApi.updateProductTemplate(
+                    response = await ProductTemplateApi.createProductTemplate(
                         productTemplate);
                 }
                 if (response) {
@@ -160,9 +170,12 @@ export default {
                 state.error = '';
                 if (state.id && !state.isCreate) {
                     const id = parseInt(state.id);
-                    retrieveProductTemplate(id);}
+                    retrieveProductTemplate(id);
+                } else {
+                    populateMetaProductList();
+                }
             } else {
-                populateMetaProductList();
+                state.clear()
             }
         })
 

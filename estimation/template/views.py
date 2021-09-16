@@ -161,7 +161,7 @@ class ComponentTemplateMetaView(viewsets.ViewSet):
             component_metadata = options.get_serializer_info(serializer_class())
             filtered = {key: value for key,value in component_metadata.items() \
                 if key not in['component_template_id', 'material_templates', 'meta_component',
-                'name', 'quantity', 'total_material_quantity', 'type']}
+                'machine_option', 'name', 'quantity', 'total_material_quantity', 'type']}
             response.append({"type": resourcetype, "fields": filtered})
 
         return Response(response)

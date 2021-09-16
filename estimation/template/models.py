@@ -1,6 +1,6 @@
 from django.db import models
 from estimation.metaproduct.models import MetaProduct, MetaComponent, MetaService, \
-    MetaMaterialOption, MetaOperation, MetaOperationOption
+    MetaMaterialOption, MetaOperation, MetaOperationOption, MetaMachineOption
 from inventory.models import Item
 from inventory.properties.models import Shape, Tape, Line, Paper, Panel, Liquid
 from estimation.exceptions import MaterialTypeMismatch
@@ -53,6 +53,8 @@ class ComponentTemplate(PolymorphicModel, Shape):
     product_template = models.ForeignKey(ProductTemplate, on_delete=models.CASCADE,
         related_name='component_templates')
     meta_component = models.ForeignKey(MetaComponent, on_delete=models.RESTRICT)
+    machine_option = models.ForeignKey(MetaMachineOption, on_delete=models.RESTRICT,
+        null=True, blank=True)
     quantity = models.IntegerField(default=1)
 
     @property

@@ -65,7 +65,8 @@ class ComponentTemplateSerializer(serializers.ModelSerializer):
         model = ComponentTemplate
         fields = ['component_template_id', 'name', 'type', 
             'quantity', 'total_material_quantity', 
-            'meta_component', 'material_templates']
+            'meta_component', 'material_templates',
+            'machine_option']
 
 
 class LineComponentTemplateSerializer(ComponentTemplateSerializer):
@@ -73,7 +74,7 @@ class LineComponentTemplateSerializer(ComponentTemplateSerializer):
         model = LineComponentTemplate
         fields = ['component_template_id', 'name', 'type', 
             'quantity', 'total_material_quantity', 
-            'meta_component', 'material_templates',
+            'meta_component', 'machine_option', 'material_templates',
             'length_value', 'length_uom']
 
     def validate(self, data):
@@ -90,7 +91,7 @@ class TapeComponentTemplateSerializer(ComponentTemplateSerializer):
         model = TapeComponentTemplate
         fields = ['component_template_id', 'name', 'type', 
             'quantity', 'total_material_quantity', 
-            'meta_component', 'material_templates',
+            'meta_component', 'machine_option', 'material_templates',
             'length_value', 'length_uom', 
             'width_value', 'width_uom']
 
@@ -112,9 +113,8 @@ class PaperComponentTemplateSerializer(ComponentTemplateSerializer):
         model = PaperComponentTemplate
         fields = ['component_template_id', 'name', 'type', 
             'quantity', 'total_material_quantity', 
-            'meta_component', 'material_templates',
-            'width_value', 'length_value', 
-            'size_uom', 'gsm', 'finish']
+            'meta_component', 'machine_option', 'material_templates',
+            'width_value', 'length_value', 'size_uom']
 
 
 class PanelComponentTemplateSerializer(ComponentTemplateSerializer):
@@ -122,15 +122,14 @@ class PanelComponentTemplateSerializer(ComponentTemplateSerializer):
         model = PanelComponentTemplate
         fields = ['component_template_id', 'name', 'type', 
             'quantity', 'total_material_quantity', 
-            'meta_component', 'material_templates',
-            'width_value', 'length_value', 
-            'size_uom', 'thickness_value', 'thickness_uom']
+            'meta_component', 'machine_option', 'material_templates',
+            'width_value', 'length_value', 'size_uom']
 
-    def validate(self, data):
-        if data.get('thickness_value', None) is not None and data.get('thickness_uom', None) is None:
-            raise serializers.ValidationError(
-                {'thickness_uom': 'Must provide value if thickness_value is populated'})
-        return data
+    #def validate(self, data):
+    #    if data.get('thickness_value', None) is not None and data.get('thickness_uom', None) is None:
+    #        raise serializers.ValidationError(
+    #            {'thickness_uom': 'Must provide value if thickness_value is populated'})
+    #    return data
 
 
 class LiquidComponentTemplateSerializer(ComponentTemplateSerializer):
@@ -138,7 +137,7 @@ class LiquidComponentTemplateSerializer(ComponentTemplateSerializer):
         model = LiquidComponentTemplate
         fields = ['component_template_id', 'name', 'type', 
             'quantity', 'total_material_quantity', 
-            'meta_component', 'material_templates',
+            'meta_component', 'machine_option', 'material_templates',
             'volume_value', 'volume_uom']
 
     def validate(self, data):

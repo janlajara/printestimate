@@ -28,14 +28,20 @@
                     }))"/>
             </div>
         </Section>
-        <hr/>
-        <ProductComponentsForm 
-            :meta-product-id="state.data.metaProduct"
-            @input="value => state.data.componentTemplates = value"
-            @load="event => {
-                state.data.componentTemplates = event.data;
-                state.validators = event.validators;
-            }"/>
+        <div v-show="state.data.metaProduct != null && 
+                state.data.metaProduct != ''">
+            <hr/>
+            <ProductComponentsForm 
+                :meta-product-id="state.data.metaProduct"
+                @input="value => state.data.componentTemplates = value"
+                @load="event => {
+                    state.data.componentTemplates = event.data;
+                    state.validators = event.validators;
+                }"/>
+            <hr/>
+            <ProductServicesForm
+                :meta-product-id="state.data.metaProduct"/>
+        </div>
     </Modal>
 </template>
 
@@ -45,13 +51,15 @@ import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
 import InputTextLookup from '@/components/InputTextLookup.vue';
 import ProductComponentsForm from './components/ProductComponentsForm.vue';
+import ProductServicesForm from './services/ProductServicesForm.vue';
 
 import {reactive, computed, watch} from 'vue';
 import {MetaProductApi, ProductTemplateApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Modal, Section, InputText, InputTextLookup, ProductComponentsForm
+        Modal, Section, InputText, InputTextLookup, 
+        ProductComponentsForm, ProductServicesForm
     },
     props: {
         isOpen: Boolean,
@@ -114,10 +122,6 @@ export default {
                     component_templates: state.data.componentTemplates,
                     service_templates: []
                 }
-                
-                console.log(state.data);
-                console.log(productTemplate);
-                //if (state.id == 'asd')
                 saveProductTemplate(state.id, productTemplate);
             }
         });

@@ -11,6 +11,8 @@
                     state.data.componentTemplates[key] = event.data;
                     state.validators[key] = event.validator;
                 }"/>
+            <hr v-if="state.meta.components.length-1 > key" 
+                class="my-4"/>
         </div>
     </Section>
 </template>
@@ -26,7 +28,7 @@ export default {
         metaProductId: [Number, String]
     },
     components: {
-        Section, ProductComponentAttributes
+        Section, ProductComponentForm
     },
     emits: ['input', 'load'],
     setup(props, {emit}) {
@@ -40,6 +42,11 @@ export default {
             meta: {
                 components: [],
                 componentAdditionalFieldsMap: [],
+            },
+            clear() {
+                state.data = {
+                    componentTemplates: []}
+                state.meta.components = []
             }
         });
 
@@ -107,6 +114,8 @@ export default {
         watch(()=> state.id, async ()=> {
             if (state.id) {
                 await retrieveMetaProductComponents(state.id);
+            } else {
+                state.clear()
             }
         });
 

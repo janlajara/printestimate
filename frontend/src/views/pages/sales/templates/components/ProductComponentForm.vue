@@ -41,7 +41,6 @@
                 type="number" :value="state.data.quantity" :min="1"
                 @input="value => state.data.quantity = value"/>
         </div>
-        <hr class="my-4"/>
     </div>
 </template>
 <script>

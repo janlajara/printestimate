@@ -69,6 +69,18 @@ class Operation(models.Model):
             self.measure_rate = Money(measure_rate, currency)
             self.hourly_rate = Money(hourly_rate, currency)
             self.flat_rate = Money(flat_rate, currency)
+        
+        @property
+        def measure_rate_formatted(self):
+            return str(self.measure_rate)
+        
+        @property
+        def hourly_rate_formatted(self):
+            return str(self.hourly_rate)
+
+        @property
+        def flat_rate_formatted(self):
+            return str(self.flat_rate)
 
     name = models.CharField(max_length=50)
     workstation = models.ForeignKey(Workstation, on_delete=models.CASCADE,

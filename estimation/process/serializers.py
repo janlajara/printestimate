@@ -123,23 +123,36 @@ class OperationStepListSerializer(OperationStepSerializer):
     activity = ActivitySerializer(read_only=True)
 
 
+class TotalRatesSerializer(serializers.Serializer):
+    measure_rate = MoneyField(max_digits=14, decimal_places=2)
+    measure_rate_formatted = serializers.CharField()
+    hourly_rate = MoneyField(max_digits=14, decimal_places=2)
+    hourly_rate_formatted = serializers.CharField()
+    flat_rate = MoneyField(max_digits=14, decimal_places=2)
+    flat_rate_formatted = serializers.CharField()
+
+
 class OperationSerializer(serializers.ModelSerializer):
     operation_steps = OperationStepSerializer(many=True)
+    operation_total_rates = TotalRatesSerializer()
 
     class Meta:
         model = Operation
         fields = ['id', 'name', 'material_type', 
             'costing_measure', 'measure_unit', 
-            'estimate_measures', 'operation_steps']
+            'estimate_measures', 'operation_total_rates', 
+            'operation_steps']
 
 
 class OperationListSerializer(serializers.ModelSerializer):
+    operation_total_rates = TotalRatesSerializer()
     operation_steps = serializers.SerializerMethodField() 
 
     class Meta:
         model = Operation
         fields = ['id', 'name', 'workstation', 'material_type', 
-            'costing_measure', 'measure_unit', 'estimate_measures', 'operation_steps']
+            'costing_measure', 'measure_unit', 'estimate_measures', 
+            'operation_total_rates', 'operation_steps']
 
     def get_operation_steps(self, instance):
         steps = instance.operation_steps.all().order_by('sequence')

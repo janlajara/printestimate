@@ -95,6 +95,9 @@ def test_operation__add_delete_step(db, korse_workstation):
     step1 = operation.add_step(spot_printing, '1st color')
     step2 = operation.add_step(spot_printing, '2nd color')
 
+    assert operation.operation_total_rates.measure_rate.amount == 0
+    assert operation.operation_total_rates.hourly_rate.amount == 300
+    
     assert len(operation.operation_steps.all()) == 2
     assert step1.sequence == 1
     assert step2.sequence == 2

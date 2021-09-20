@@ -124,26 +124,23 @@ class OperationStepListSerializer(OperationStepSerializer):
 
 
 class OperationSerializer(serializers.ModelSerializer):
-    prerequisite = serializers.PrimaryKeyRelatedField(
-        required=False, queryset=Operation.objects.all())
     operation_steps = OperationStepSerializer(many=True)
 
     class Meta:
         model = Operation
         fields = ['id', 'name', 'material_type', 
-            'costing_measure', 'estimate_measures',
-            'prerequisite', 'operation_steps']
+            'costing_measure', 'measure_unit', 
+            'estimate_measures', 
+            'operation_steps']
 
 
 class OperationListSerializer(serializers.ModelSerializer):
-    prerequisite = serializers.PrimaryKeyRelatedField(
-        required=False, queryset=Operation.objects.all())
     operation_steps = serializers.SerializerMethodField() 
 
     class Meta:
         model = Operation
-        fields = ['id', 'name', 'workstation', 'material_type', 'prerequisite', 
-            'costing_measure', 'estimate_measures', 'operation_steps']
+        fields = ['id', 'name', 'workstation', 'material_type', 
+            'costing_measure', 'measure_unit', 'estimate_measures', 'operation_steps']
 
     def get_operation_steps(self, instance):
         steps = instance.operation_steps.all().order_by('sequence')

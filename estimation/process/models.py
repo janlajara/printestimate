@@ -1,6 +1,7 @@
 import math
 from decimal import Decimal
 from django.db import models
+from djmoney.money import Money
 from djmoney.models.fields import MoneyField
 from django_measurement.models import MeasurementField
 from measurement.measures import Time, Speed as MeasureSpeed
@@ -15,15 +16,6 @@ import inflect
 _inflect = inflect.engine()
 
 # Create your models here.
-'''
-class Process(models.Model):
-    name = models.CharField(max_length=40)    
-    costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
-        default=CostingMeasure.QUANTITY)
-    material_type = models.CharField(max_length=15, choices=Item.TYPES, 
-        default=Item.OTHER)
-'''
-
 
 class Workstation(models.Model):
     name = models.CharField(max_length=50)
@@ -37,8 +29,7 @@ class Workstation(models.Model):
         else:
             return self.activities
 
-    def add_operation(self, name, material_type, prerequisite=None,
-            costing_measure='quantity', **kwargs):
+    def add_operation(self, name, material_type, costing_measure='quantity', **kwargs):
 
         if self.machine is not None: 
             material_type = self.machine.material_type
@@ -49,8 +40,8 @@ class Workstation(models.Model):
         operation = Operation.objects.create(
             workstation=self, name=name, 
             material_type=material_type,
-            costing_measure=costing_measure,
-            prerequisite=prerequisite, **kwargs)
+            costing_measure=costing_measure, 
+            **kwargs)
             
         return operation
 
@@ -73,17 +64,45 @@ class Workstation(models.Model):
 
 
 class Operation(models.Model):
+    class TotalRates:
+        def __init__(self, measure_rate, hourly_rate, flat_rate, currency='PHP'):
+            self.measure_rate = Money(measure_rate, currency)
+            self.hourly_rate = Money(hourly_rate, currency)
+            self.flat_rate = Money(flat_rate, currency)
+
     name = models.CharField(max_length=50)
-    #process = models.ForeignKey(Process, on_delete=models.SET_NULL,
-    #    related_name='operations', blank=True, null=True)
     workstation = models.ForeignKey(Workstation, on_delete=models.CASCADE,
         related_name='operations')
-    prerequisite = models.ForeignKey('self', on_delete=models.SET_NULL,
-        blank=True, null=True)
     costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
         default=CostingMeasure.QUANTITY)
+    measure_unit = models.CharField(max_length=20, choices=Measure.PRIMARY_UNITS,
+        default='pc')
     material_type = models.CharField(max_length=15, choices=Item.TYPES, 
         default=Item.OTHER)
+
+    @property
+    def operation_total_rates(self):
+        related_activities = Activity.objects.filter(
+            operation_steps__in=self.operation_steps.all())
+        measure_filter = models.Sum('rate', 
+            filter=models.Q(activities__in=related_activities, 
+            type=ActivityExpense.MEASURE_BASED))
+        hourly_filter = models.Sum('rate', 
+            filter=models.Q(activities__in=related_activities, 
+            type=ActivityExpense.HOUR_BASED))
+        flat_filter = models.Sum('rate', 
+            filter=models.Q(activities__in=related_activities, 
+            type=ActivityExpense.FLAT))
+        aggregate = ActivityExpense.objects.aggregate(
+            per_measure=measure_filter, per_hour=hourly_filter,
+            flat=flat_filter)
+
+        measure = aggregate.get('per_measure', 0) or 0
+        hour = aggregate.get('per_hour', 0) or 0
+        flat = aggregate.get('flat', 0) or 0
+        total_rates = Operation.TotalRates(measure, hour, flat)
+
+        return total_rates
 
     @property
     def estimate_measures(self):
@@ -169,26 +188,6 @@ class Operation(models.Model):
             step.sequence -= 1
             step.save()
         step_to_delete.delete()
-
-    '''
-    # To Remove : Might not be correct to put this here
-    def get_measurement(self, material, quantity, **kwargs):
-        estimate = self.get_estimate(material, quantity, **kwargs)
-        return estimate.get(self.costing_measure, None)
-
-    # To Remove : Might not be correct to put this here
-    def get_estimate(self, material, quantity, **kwargs):
-        # Estimate via machine algorithm (if provided) or shape packing algorithm
-        if self.material_type == material.type:
-            if self.workstation.machine is not None:
-                estimate = self.workstation.machine.estimate(material, quantity, **kwargs)
-            else:
-                estimate = material.estimate_stock_needed(quantity)
-            
-            return estimate
-        else:
-            raise MaterialTypeMismatch(material.type, self.material_type)
-    '''
 
     def get_duration(self, measurement, contingency=0):
         total_duration = 0
@@ -360,11 +359,11 @@ class Activity(models.Model):
             raise MeasurementMismatch(measurement, measure)
 
     def _get_total_expenses(self, expense_type):
-        total_rate = 0
-        expenses = ActivityExpense.objects.filter(activities=self, type=expense_type)
-        for expense in expenses:
-            total_rate += expense.rate
-        return total_rate
+        aggregate = ActivityExpense.objects \
+            .filter(activities=self, type=expense_type) \
+            .aggregate(total_expenses=models.Sum('rate'))
+        total_expenses = aggregate.get('total_expenses', 0) or 0
+        return Money(round(total_expenses, 2), 'PHP')
 
     def __str__(self):
         return self.name

@@ -130,8 +130,7 @@ class OperationSerializer(serializers.ModelSerializer):
         model = Operation
         fields = ['id', 'name', 'material_type', 
             'costing_measure', 'measure_unit', 
-            'estimate_measures', 
-            'operation_steps']
+            'estimate_measures', 'operation_steps']
 
 
 class OperationListSerializer(serializers.ModelSerializer):

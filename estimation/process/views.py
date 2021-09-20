@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
-from core.utils.measures import CostingMeasure
+from core.utils.measures import Measure, CostingMeasure
 from inventory.models import Item
 from estimation.models import Workstation, Activity, ActivityExpense, Speed, Operation, OperationStep
 from estimation import serializers
@@ -118,11 +118,17 @@ class WorkstationOperationsViewSet(mixins.ListModelMixin,
         workstation = get_object_or_404(Workstation, pk=pk)
         
         if workstation.machine is not None:
+            post = response.data['actions']['POST']
+
             material_type = workstation.machine.material_type
-            material_type_choices = response.data['actions']['POST']['material_type']['choices']
+            material_type_choices = post['material_type']['choices']
             filtered = [x for x in material_type_choices if x['value'] == material_type]
-            response.data['actions']['POST']['material_type']['choices'] = filtered
-        
+            post['material_type']['choices'] = filtered
+
+            post['measure_unit']['choices'] = [
+               {**x, 'measure': Measure.get_measure(x['value'])}
+               for x in post['measure_unit']['choices']]
+
         return response
 
     def create(self, request, pk=None):

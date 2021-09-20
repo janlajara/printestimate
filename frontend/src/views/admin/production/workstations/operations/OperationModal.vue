@@ -25,12 +25,27 @@
                     :disabled="state.data.operationSteps.length > 0"
                     @input="(value)=>{
                         state.data.costingMeasure = value;
+                        state.data.measureUnit = '';
                         state.clearOperationStepForm();
                     }"
                     :options="state.meta.costingMeasureChoices.map(c=>({
                         value: c.value, label: c.label,
                         isSelected: state.data.costingMeasure == c.value
                     }))"/>
+                <InputSelect name="Measure Unit" required 
+                    :disabled="state.data.operationSteps.length > 0 || 
+                        state.data.costingMeasure == ''"
+                    @input="(value)=>{
+                        state.data.measureUnit = value;
+                        state.clearOperationStepForm();
+                    }"
+                    :options="state.meta.measureUnitChoices
+                        .filter(x=> state.meta.costingMeasureChoice &&
+                            x.measure == state.meta.costingMeasureChoice.base_measure)
+                        .map(c=>({
+                            value: c.value, label: c.label,
+                            isSelected: state.data.measureUnit == c.value
+                        }))"/>
             </div>
         </Section>
         <div>
@@ -126,6 +141,7 @@ export default {
                 name: '', 
                 materialType: '',
                 costingMeasure: '',
+                measureUnit: '',
                 operationSteps: [],
                 add: {
                     activity: '',
@@ -135,11 +151,13 @@ export default {
             },
             meta: {
                 materialTypeChoices: [],
+                measureUnitChoices: [],
                 activities: [],
                 activityChoices: computed(()=> {
                     if (state.meta.costingMeasureChoice) {
                         const filtered = state.meta.activities.filter(
-                            x => x.measure == state.meta.costingMeasureChoice.base_measure);
+                            x => x.measure == state.meta.costingMeasureChoice.base_measure &&
+                                x.measureUnit == state.data.measureUnit);
                         return filtered.map(obj=> ({
                             value: obj.id,
                             title: obj.name,
@@ -174,6 +192,7 @@ export default {
                     name: '', 
                     materialType: '',
                     costingMeasure: '',
+                    measureUnit: '',
                     operationSteps: [],
                     add: {
                         activity: '',
@@ -187,6 +206,7 @@ export default {
                 if (state.data.name == '') errors.push('name');
                 if (state.data.materialType == '') errors.push('material type');
                 if (state.data.costingMeasure == '') errors.push('costing measure');
+                if (state.data.measureUnit == '') errors.push('measure unit');
                 if (errors.length > 0)
                     state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
                 else state.error = '';
@@ -198,11 +218,11 @@ export default {
                     name: state.data.name,
                     material_type: state.data.materialType,
                     costing_measure: state.data.costingMeasure,
+                    measure_unit: state.data.measureUnit,
                     operation_steps: state.data.operationSteps.map(o=>({
                         sequence: o.sequence,
                         id: o.id, activity: o.activityId, notes: o.notes
-                    }))
-                }
+                    }))};
                 const response = await saveOperation(request);
                 if (response) {
                     if (props.onAfterSave) props.onAfterSave();
@@ -250,6 +270,7 @@ export default {
                     state.data.name = response.name; 
                     state.data.materialType = response.material_type;
                     state.data.costingMeasure = response.costing_measure;
+                    state.data.measureUnit = response.measure_unit;
                 }
             }
             state.isProcessing = false;
@@ -271,11 +292,18 @@ export default {
                         value: c.value, label: c.display_name
                     }));
 
+                state.meta.measureUnitChoices = 
+                    response2.actions.POST.measure_unit.choices.map(x=> ({
+                        value: x.value, label: x.display_name, measure: x.measure
+                    }));
+
                 const response3 = await WorkstationApi.retrieveWorkstationActivities(id);
                 if (response3) {
                     state.meta.activities = response3.map(obj => ({
                         id: obj.id, name: obj.name, 
-                        measure: obj.measure, rate: obj.speed.rate
+                        measure: obj.measure, 
+                        measureUnit: obj.measure_unit,
+                        rate: obj.speed.rate
                     }));
                 }
             }

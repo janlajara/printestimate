@@ -116,18 +116,17 @@ class WorkstationOperationsViewSet(mixins.ListModelMixin,
     def options(self, request, pk=None):
         response = super().options(request, pk)
         workstation = get_object_or_404(Workstation, pk=pk)
-        
-        if workstation.machine is not None:
-            post = response.data['actions']['POST']
+        post = response.data['actions']['POST']
 
+        post['measure_unit']['choices'] = [
+            {**x, 'measure': Measure.get_measure(x['value'])}
+            for x in post['measure_unit']['choices']]
+
+        if workstation.machine is not None:
             material_type = workstation.machine.material_type
             material_type_choices = post['material_type']['choices']
             filtered = [x for x in material_type_choices if x['value'] == material_type]
             post['material_type']['choices'] = filtered
-
-            post['measure_unit']['choices'] = [
-               {**x, 'measure': Measure.get_measure(x['value'])}
-               for x in post['measure_unit']['choices']]
 
         return response
 

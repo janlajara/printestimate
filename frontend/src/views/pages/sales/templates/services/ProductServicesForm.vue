@@ -1,11 +1,26 @@
 <template>
     <Section heading="Services" heading-position="side">
+        <div v-for="(service, key) in state.meta.services" :key="key">
+            <ProductServiceForm
+                :service="service"
+                @input="data => {
+                    state.data.serviceTemplates[key] = data;
+                    $emit('input', state.data.serviceTemplates);
+                }"
+                @load="event => {
+                    state.data.serviceTemplates[key] = event.data;
+                    state.validators[key] = event.validator;
+                }"/>
+            <hr v-if="state.meta.services.length-1 > key" 
+                class="my-4"/>
+        </div>
     </Section>
 </template>
 <script>
 import Section from '@/components/Section.vue';
+import ProductServiceForm from './ProductServiceForm.vue';
 
-import {reactive, computed, watch} from 'vue';
+import {reactive, computed, watch, onMounted} from 'vue';
 import {MetaProductApi} from '@/utils/apis.js';
 
 export default {
@@ -13,9 +28,10 @@ export default {
         metaProductId: [Number, String]
     },
     components: {
-        Section
+        Section, ProductServiceForm
     },
-    setup(props) {
+    emits: ['input', 'load'],
+    setup(props, {emit}) {
         const state = reactive({
             id: computed(()=> props.metaProductId),
             errors: [],
@@ -48,13 +64,18 @@ export default {
                         metaComponent: obj.meta_component,
                         estimateVariableType: obj.estimate_variable_type
                     }));
-                    console.log(state.meta.services)
                 }
             }
             state.isProcessing = false;
         }
 
-
+        onMounted(()=> {
+            emit('load', {
+                data: state.data.serviceTemplates,
+                validators: state.validators
+            });
+            console.log(state.data)
+        });
         watch(()=> state.id, async ()=> {
             if (state.id) {
                 await retrieveMetaProductServices(state.id);

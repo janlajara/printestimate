@@ -26,6 +26,11 @@ export class ProductTemplateApi {
             'Update failed. Please try again.', productTemplate)
         if (response) return response.data;
     }
+
+    static async deleteProductTemplate(id) {
+        await AXIOS.execute(AXIOS.DELETE, ProductTemplateApi.uri + `/${id}/`, 
+            'Template deleted successfully.', 'Delete failed. Please try again.');
+    }
 }
 
 export class ComponentTemplateApi {

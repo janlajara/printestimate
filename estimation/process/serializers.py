@@ -134,7 +134,7 @@ class TotalRatesSerializer(serializers.Serializer):
 
 class OperationSerializer(serializers.ModelSerializer):
     operation_steps = OperationStepSerializer(many=True)
-    operation_total_rates = TotalRatesSerializer()
+    operation_total_rates = TotalRatesSerializer(read_only=True)
 
     class Meta:
         model = Operation

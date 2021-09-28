@@ -7,7 +7,8 @@
             class="pt-4 text-sm text-red-600">*{{state.error}}</div>
         <Section heading="General Information" heading-position="side"> 
             <div class="md:grid md:gap-4 md:grid-cols-3">
-                <InputText name="Name"  placeholder="Name"
+                <InputText class="col-span-2"
+                    name="Name"  placeholder="Name"
                     type="text" :value="state.data.name" required
                     @input="value => state.data.name = value"/>
                 <InputText class="col-span-2"
@@ -36,11 +37,16 @@
                 @input="value => state.data.componentTemplates = value"
                 @load="event => {
                     state.data.componentTemplates = event.data;
-                    state.validators = event.validators;
+                    state.validators.componentValidators = event.validators;
                 }"/>
             <hr/>
             <ProductServicesForm
-                :meta-product-id="state.data.metaProduct"/>
+                :meta-product-id="state.data.metaProduct"
+                @input="value => state.data.serviceTemplates = value"
+                @load="event => {
+                    state.data.serviceTemplates = event.data;
+                    state.validators.serviceValidators = event.validators;
+                }"/>
         </div>
     </Modal>
 </template>
@@ -99,7 +105,10 @@ export default {
                     serviceTemplates: [],
                 }
             },
-            validators: [],
+            validators: {
+                componentValidators: [],
+                serviceValidators: []
+            },
             validate: ()=> {
                 let errors = [];
                 if (state.data.name == '') errors.push('name');
@@ -108,8 +117,11 @@ export default {
                 if (errors.length > 0)
                     state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
                 else state.error = '';
-                if (state.validators.length > 0) {
-                    state.validators.forEach( validator => validator());
+                if (state.validators.componentValidators.length > 0) {
+                    state.validators.componentValidators.forEach( validator => validator());
+                }
+                if (state.validators.serviceValidators.length > 0) {
+                    state.validators.serviceValidators.forEach( validator => validator());
                 }
                 return errors.length > 0;
             },
@@ -120,7 +132,7 @@ export default {
                     name: state.data.name, 
                     description: state.data.description,
                     component_templates: state.data.componentTemplates,
-                    service_templates: []
+                    service_templates: state.data.serviceTemplates
                 }
                 saveProductTemplate(state.id, productTemplate);
             }

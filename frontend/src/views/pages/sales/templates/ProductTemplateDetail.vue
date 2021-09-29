@@ -33,6 +33,14 @@
                     name="Description" :value="state.data.description"/>
             </DescriptionList>
         </Section>
+        <Section heading="Components">
+            <ProductComponentList 
+                :product-components="state.data.componentTemplates"/>
+        </Section>
+        <Section heading="Services">
+            <ProductServiceList 
+                :product-services="state.data.serviceTemplates"/> 
+        </Section>
     </Page>
 </template>
 
@@ -43,6 +51,8 @@ import Section from '@/components/Section.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
+import ProductComponentList from './components/ProductComponentList.vue';
+import ProductServiceList from './services/ProductServiceList.vue';
 
 import {useRoute} from 'vue-router';
 import {reactive, onBeforeMount} from 'vue';
@@ -50,7 +60,8 @@ import {ProductTemplateApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Page, Button, Section, DescriptionList, DescriptionItem, DeleteRecordDialog
+        Page, Button, Section, DescriptionList, DescriptionItem, DeleteRecordDialog,
+        ProductComponentList, ProductServiceList
     },
     setup() {
         const route = useRoute();
@@ -88,21 +99,11 @@ export default {
                     description: response.description,
                     metaProduct: response.meta_product,
                     componentTemplates: response.component_templates,
-                    serviceTemplates: response.service_templates.map(x => ({
-                        id: x.id, name: x.name,
-                        type: x.type, metaService: x.meta_service,
-                        operationTemplates: x.operation_templates.map(y => ({
-                            id: y.id, name: y.name,
-                            metaOperation: y.meta_operation,
-                            operationOptionTemplates: y.operation_option_templates.map( z=> ({
-                                id: z.id, label: z.label, 
-                                metaOperationOption: z.meta_operation_option
-                            }))
-                        }))
-                    }))
+                    serviceTemplates: response.service_templates
                 }
             }
             state.isProcessing = false;
+            console.log(state.data)
         }
 
         const deleteMetaProduct = async (id)=> {

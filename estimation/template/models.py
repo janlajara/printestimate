@@ -62,6 +62,10 @@ class ComponentTemplate(PolymorphicModel, Shape):
         return self.meta_component.name
 
     @property
+    def size(self):
+        return str(self)
+
+    @property
     def type(self):
         return self.meta_component.type
 
@@ -122,6 +126,10 @@ class ServiceTemplate(models.Model):
     @property
     def type(self):
         return self.meta_service.type
+
+    @property
+    def sequence(self):
+        return self.meta_service.sequence
 
     def add_operation_template(self, meta_operation):
         operation_template = OperationTemplate.objects.create(

@@ -38,7 +38,7 @@ class ServiceTemplateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServiceTemplate
-        fields = ['id', 'name', 'type', 'meta_service', 'operation_templates']
+        fields = ['id', 'name', 'type', 'sequence', 'meta_service', 'operation_templates']
 
 
 class ServiceTemplateReadSerializer(ServiceTemplateSerializer):
@@ -72,7 +72,7 @@ class ComponentTemplateSerializer(serializers.ModelSerializer):
 class LineComponentTemplateSerializer(ComponentTemplateSerializer):
     class Meta:
         model = LineComponentTemplate
-        fields = ['component_template_id', 'name', 'type', 
+        fields = ['component_template_id', 'name', 'size', 'type', 
             'quantity', 'total_material_quantity', 
             'meta_component', 'machine_option', 'material_templates',
             'length_value', 'length_uom']
@@ -89,7 +89,7 @@ class LineComponentTemplateSerializer(ComponentTemplateSerializer):
 class TapeComponentTemplateSerializer(ComponentTemplateSerializer):
     class Meta:
         model = TapeComponentTemplate
-        fields = ['component_template_id', 'name', 'type', 
+        fields = ['component_template_id', 'name', 'size', 'type', 
             'quantity', 'total_material_quantity', 
             'meta_component', 'machine_option', 'material_templates',
             'length_value', 'length_uom', 
@@ -111,7 +111,7 @@ class TapeComponentTemplateSerializer(ComponentTemplateSerializer):
 class PaperComponentTemplateSerializer(ComponentTemplateSerializer):
     class Meta:
         model = PaperComponentTemplate
-        fields = ['component_template_id', 'name', 'type', 
+        fields = ['component_template_id', 'name', 'size', 'type', 
             'quantity', 'total_material_quantity', 
             'meta_component', 'machine_option', 'material_templates',
             'width_value', 'length_value', 'size_uom']
@@ -120,22 +120,23 @@ class PaperComponentTemplateSerializer(ComponentTemplateSerializer):
 class PanelComponentTemplateSerializer(ComponentTemplateSerializer):
     class Meta:
         model = PanelComponentTemplate
-        fields = ['component_template_id', 'name', 'type', 
+        fields = ['component_template_id', 'name', 'size', 'type', 
             'quantity', 'total_material_quantity', 
             'meta_component', 'machine_option', 'material_templates',
-            'width_value', 'length_value', 'size_uom']
+            'width_value', 'length_value', 'size_uom',
+            'thickness_value', 'thickness_uom']
 
-    #def validate(self, data):
-    #    if data.get('thickness_value', None) is not None and data.get('thickness_uom', None) is None:
-    #        raise serializers.ValidationError(
-    #            {'thickness_uom': 'Must provide value if thickness_value is populated'})
-    #    return data
+    def validate(self, data):
+        if data.get('thickness_value', None) is not None and data.get('thickness_uom', None) is None:
+            raise serializers.ValidationError(
+                {'thickness_uom': 'Must provide value if thickness_value is populated'})
+        return data
 
 
 class LiquidComponentTemplateSerializer(ComponentTemplateSerializer):
     class Meta:
         model = LiquidComponentTemplate
-        fields = ['component_template_id', 'name', 'type', 
+        fields = ['component_template_id', 'name', 'size', 'type', 
             'quantity', 'total_material_quantity', 
             'meta_component', 'machine_option', 'material_templates',
             'volume_value', 'volume_uom']
@@ -185,12 +186,16 @@ class ComponentTemplateReadSerializer(ComponentTemplateSerializer):
 
 class ProductTemplateSerializer(serializers.ModelSerializer):
     component_templates = ComponentTemplatePolymorphicSerializer(many=True)
-    service_templates = ServiceTemplateSerializer(many=True)
+    service_templates = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductTemplate
         fields = ['id', 'name', 'description', 'meta_product',
             'component_templates', 'service_templates']
+
+    def get_service_templates(self, instance):
+        service_templates = instance.service_templates.all().order_by('meta_service__sequence')
+        return ServiceTemplateSerializer(service_templates, many=True).data
 
 
 class ProductTemplateListSerializer(serializers.ModelSerializer):

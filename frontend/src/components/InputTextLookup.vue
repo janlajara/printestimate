@@ -129,13 +129,15 @@ export default {
                 }
             },
             clearSelect: (value=null)=> {
-                if (value) {
-                    const index = lookup.selected.indexOf(value);
-                    lookup.selected.splice(index, 1)
-                } else {
-                    lookup.selected = [];
+                if (!props.disabled) {
+                    if (value) {
+                        const index = lookup.selected.indexOf(value);
+                        lookup.selected.splice(index, 1)
+                    } else {
+                        lookup.selected = [];
+                    }
+                    emit('select', (!props.multiple)? '': lookup.selected);
                 }
-                emit('select', (!props.multiple)? '': lookup.selected);
             },
             emitOnInput: debounce((event)=> {
                 emit('input', event.target.value);

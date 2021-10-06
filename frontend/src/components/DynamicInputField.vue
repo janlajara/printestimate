@@ -15,6 +15,10 @@ import {reactive, computed, watch, onMounted} from 'vue';
 
 export default {
     props: {
+        value: {
+            type: [String, Number, Object],
+            default: null
+        },
         attribute: Object
     },
     components: {
@@ -24,7 +28,7 @@ export default {
     setup(props, {emit}) {
         const state = reactive({
             attribute: props.attribute || {},
-            value: null,
+            value: props.value,
             meta: {
                 options: computed(()=> {
                     let options = []

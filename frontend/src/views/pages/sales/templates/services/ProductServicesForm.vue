@@ -74,7 +74,6 @@ export default {
                 data: state.data.serviceTemplates,
                 validators: state.validators
             });
-            console.log(state.data)
         });
         watch(()=> state.id, async ()=> {
             if (state.id) {

@@ -14,6 +14,7 @@
                         state.data.material_templates = value.map(x => ({
                             meta_material_option: x
                         }));
+                        state.emitInput();
                     }
                 }"
                 :options="state.component.metaMaterialOptions.map(c=>{
@@ -26,7 +27,10 @@
                 })"/>
             <InputSelect name="Machine" class="flex-grow md:col-span-2"
                 v-if="state.component.metaMachineOptions.length > 0"
-                @input="(value)=> state.data.machine_option = value"
+                @input="(value)=> {
+                    state.data.machine_option = value;
+                    state.emitInput();
+                }"
                 :options="state.component.metaMachineOptions.map(c=>{
                     let options = {
                         value: c.id, label: c.label,
@@ -35,11 +39,18 @@
                 })"/>
             <DynamicInputField :key="i" :attribute="attribute"
                 v-for="(attribute, i) in state.component.additionalFields"
+                :value="state.data[attribute.name]"
                 @load="value => state.data[attribute.name] = value" 
-                @input="value => state.data[attribute.name] = value"/>
+                @input="value => {
+                    state.data[attribute.name] = value;
+                    state.emitInput();
+                }"/>
             <InputText name="Quantity"  placeholder="Quantity" required
                 type="number" :value="state.data.quantity" :min="1"
-                @input="value => state.data.quantity = value"/>
+                @input="value => {
+                    state.data.quantity = value;
+                    state.emitInput();
+                }"/>
         </div>
     </div>
 </template>
@@ -48,11 +59,12 @@ import InputSelect from '@/components/InputSelect.vue';
 import InputText from '@/components/InputText.vue';
 import DynamicInputField from '@/components/DynamicInputField.vue';
 
-import {reactive, watch, onMounted} from 'vue';
+import {reactive, onBeforeMount, onMounted} from 'vue';
 
 export default {
     props: {
-        component: Object
+        component: Object,
+        value: Object
     },
     components: {
         InputSelect, InputText, DynamicInputField
@@ -68,6 +80,9 @@ export default {
                 machine_option: null,
                 quantity: 1,
                 resourcetype: props.component.type
+            },
+            emitInput: ()=> {
+                emit('input', state.data);
             },
             validate: ()=> {
                 let errors = []
@@ -92,9 +107,22 @@ export default {
                 return errors.length > 0;
             }
         });
-
-        watch(()=> state.data, ()=> {
-            emit('input', state.data)
+        onBeforeMount(()=> {
+            if (props.value) {
+                const component = props.value;
+                state.data.material_templates = component.material_templates;
+                state.data.machine_option = component.machineOption;
+                state.data.quantity = component.quantity;
+                
+                const dynamicProps = Object.entries(component)
+                    .filter(x => !['meta_component', 'material_templates', 
+                        'quantity', 'resourcetype'].includes(x[0]));
+                dynamicProps.forEach(x => {
+                    const key = x[0];
+                    const value = x[1];
+                    state.data[key] = value;
+                });
+            }
         });
         onMounted(()=> {
             emit('load', {

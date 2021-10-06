@@ -3,6 +3,7 @@
         <div v-for="(component, key) in state.meta.components" :key="key">
             <ProductComponentForm 
                 :component="component"
+                :value="state.data.componentTemplates[key]"
                 @input="data => {
                     state.data.componentTemplates[key] = data;
                     $emit('input', state.data.componentTemplates);
@@ -10,6 +11,7 @@
                 @load="event => {
                     state.data.componentTemplates[key] = event.data;
                     state.validators[key] = event.validator;
+                    state.emitLoad();
                 }"/>
             <hr v-if="state.meta.components.length-1 > key" 
                 class="my-4"/>
@@ -20,18 +22,22 @@
 import Section from '@/components/Section.vue';
 import ProductComponentForm from './ProductComponentForm.vue';
 
-import {reactive, watch, computed, onBeforeMount, onMounted} from 'vue';
+import {reactive, computed, onBeforeMount, onMounted} from 'vue';
 import {MetaProductApi, ComponentTemplateApi} from '@/utils/apis.js';
 
 export default {
     props: {
-        metaProductId: [Number, String]
+        metaProductId: [Number, String],
+        value: {
+            type: Array,
+            default: ()=> []
+        }
     },
     components: {
         Section, ProductComponentForm
     },
     emits: ['input', 'load'],
-    setup(props, {emit}) {
+    setup(props, {emit}) { 
         const state = reactive({
             id: computed(()=> props.metaProductId),
             errors: [],
@@ -42,6 +48,12 @@ export default {
             meta: {
                 components: [],
                 componentAdditionalFieldsMap: [],
+            },
+            emitLoad() {
+                emit('load', {
+                    data: state.data.componentTemplates,
+                    validators: state.validators
+                });
             },
             clear() {
                 state.data = {
@@ -77,7 +89,9 @@ export default {
                 state.meta.componentAdditionalFieldsMap = response.data
                     .map(obj => ({
                         type: obj.type, 
-                        fields: Object.entries(obj.fields).map( entry => {
+                        fields: Object.entries(obj.fields)
+                                .filter(entry => !entry[1].read_only)
+                                .map( entry => {
                             const key = entry[0];
                             const value = entry[1];
                             let inputComponent;
@@ -100,23 +114,16 @@ export default {
                                 inputComponent, inputType, options
                             } 
                         })
-                    }))
+                    }));
             }
         }
 
         onBeforeMount(getComponentTemplateFields);
-        onMounted(()=> {
-            emit('load', {
-                data: state.data.componentTemplates,
-                validators: state.validators
-            });
-        });
-        watch(()=> state.id, async ()=> {
-            if (state.id) {
-                await retrieveMetaProductComponents(state.id);
-            } else {
-                state.clear()
-            }
+        onMounted(async ()=> {
+            if (props.value) {
+                state.data.componentTemplates = props.value;
+                if (state.id) await retrieveMetaProductComponents(state.id);
+            } else {state.clear()}
         });
 
         return {

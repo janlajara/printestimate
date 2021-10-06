@@ -8,10 +8,12 @@
                 @click="state.components.editModal.open"/>
             <Button icon="delete" 
                 @click="state.components.deleteDialog.open"/>
-            <!--MetaProductModal :meta-product-id="state.id"
-                :is-open="state.metaProduct.editModal.isOpen"
-                @toggle="state.metaProduct.editModal.toggle"
-                :on-after-save="()=>retrieveMetaProductDetail(state.id)"/-->
+            <ProductTemplateModal 
+                :product-template-id="state.id"
+                :value="state.data"
+                :is-open="state.components.editModal.isOpen"
+                @toggle="state.components.editModal.toggle" 
+                :on-after-save="()=> retrieveProductTempalateDetail(state.id)"/>
             <DeleteRecordDialog 
                 heading="Delete Product"
                 :is-open="state.components.deleteDialog.isOpen"
@@ -53,6 +55,7 @@ import DescriptionItem from '@/components/DescriptionItem.vue';
 import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import ProductComponentList from './components/ProductComponentList.vue';
 import ProductServiceList from './services/ProductServiceList.vue';
+import ProductTemplateModal from './ProductTemplateModal.vue';
 
 import {useRoute} from 'vue-router';
 import {reactive, onBeforeMount} from 'vue';
@@ -61,7 +64,7 @@ import {ProductTemplateApi} from '@/utils/apis.js';
 export default {
     components: {
         Page, Button, Section, DescriptionList, DescriptionItem, DeleteRecordDialog,
-        ProductComponentList, ProductServiceList
+        ProductComponentList, ProductServiceList, ProductTemplateModal
     },
     setup() {
         const route = useRoute();
@@ -103,7 +106,6 @@ export default {
                 }
             }
             state.isProcessing = false;
-            console.log(state.data)
         }
 
         const deleteMetaProduct = async (id)=> {
@@ -116,7 +118,7 @@ export default {
         })
 
         return {
-            state
+            state, retrieveProductTempalateDetail
         }
     }
 }

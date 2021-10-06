@@ -34,6 +34,7 @@
             <hr/>
             <ProductComponentsForm 
                 :meta-product-id="state.data.metaProduct"
+                :value="state.data.componentTemplates"
                 @input="value => state.data.componentTemplates = value"
                 @load="event => {
                     state.data.componentTemplates = event.data;
@@ -70,11 +71,12 @@ export default {
     props: {
         isOpen: Boolean,
         productTemplateId: String,
+        value: Object,
         onAfterSave: Function
     },
     emits: ['toggle'],
     setup(props, {emit}) {
-        const state = reactive({
+        const state = reactive({ 
             id: props.productTemplateId,
             isCreate: computed(()=> props.productTemplateId == null),
             isProcessing: false,
@@ -138,17 +140,6 @@ export default {
             }
         });
 
-        const retrieveProductTemplate = async (id)=> {
-            state.isProcessing = true;
-            const response = await ProductTemplateApi.retrieveProductTemplate(id);
-            if (response) {
-                state.data = {
-                    name: response.name, description: response.description
-                }
-            }
-            state.isProcessing = false;
-        }
-
         const saveProductTemplate = async (id, productTemplate)=> {
             state.isProcessing = true;
             if (productTemplate) {
@@ -183,13 +174,18 @@ export default {
 
         watch(()=> props.isOpen, ()=> { 
             if (props.isOpen) {
-                state.error = '';
-                if (state.id && !state.isCreate) {
-                    const id = parseInt(state.id);
-                    retrieveProductTemplate(id);
-                } else {
-                    populateMetaProductList();
-                }
+                state.error = ''; 
+                if (!state.isCreate && props.value != null) {
+                    const productTemplate = props.value;
+                    state.data = {
+                        name: productTemplate.name, 
+                        description: productTemplate.description,
+                        metaProduct: productTemplate.metaProduct,
+                        componentTemplates: productTemplate.componentTemplates,
+                        serviceTemplates: productTemplate.serviceTemplates
+                    };
+                } 
+                populateMetaProductList();
             } else {
                 state.clear()
             }

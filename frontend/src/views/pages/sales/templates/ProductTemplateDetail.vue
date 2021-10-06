@@ -10,7 +10,6 @@
                 @click="state.components.deleteDialog.open"/>
             <ProductTemplateModal 
                 :product-template-id="state.id"
-                :value="state.data"
                 :is-open="state.components.editModal.isOpen"
                 @toggle="state.components.editModal.toggle" 
                 :on-after-save="()=> retrieveProductTempalateDetail(state.id)"/>

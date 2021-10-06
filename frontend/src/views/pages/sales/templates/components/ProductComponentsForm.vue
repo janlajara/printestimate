@@ -22,7 +22,7 @@
 import Section from '@/components/Section.vue';
 import ProductComponentForm from './ProductComponentForm.vue';
 
-import {reactive, computed, onBeforeMount, onMounted} from 'vue';
+import {reactive, computed, onBeforeMount, watchEffect} from 'vue';
 import {MetaProductApi, ComponentTemplateApi} from '@/utils/apis.js';
 
 export default {
@@ -37,7 +37,7 @@ export default {
         Section, ProductComponentForm
     },
     emits: ['input', 'load'],
-    setup(props, {emit}) { 
+    setup(props, {emit}) {
         const state = reactive({
             id: computed(()=> props.metaProductId),
             errors: [],
@@ -119,10 +119,10 @@ export default {
         }
 
         onBeforeMount(getComponentTemplateFields);
-        onMounted(async ()=> {
+        watchEffect(()=> {
             if (props.value) {
                 state.data.componentTemplates = props.value;
-                if (state.id) await retrieveMetaProductComponents(state.id);
+                if (state.id) retrieveMetaProductComponents(state.id);
             } else {state.clear()}
         });
 

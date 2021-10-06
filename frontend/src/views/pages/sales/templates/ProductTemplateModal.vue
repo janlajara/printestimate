@@ -71,7 +71,6 @@ export default {
     props: {
         isOpen: Boolean,
         productTemplateId: String,
-        value: Object,
         onAfterSave: Function
     },
     emits: ['toggle'],
@@ -159,6 +158,21 @@ export default {
             state.isProcessing = false;
         }
 
+        const retrieveProductTemplateDetail = async (id)=> {
+            state.isProcessing = true;
+            const response = await ProductTemplateApi.retrieveProductTemplate(id);
+            if (response) {
+                state.data = {
+                    name: response.name,
+                    description: response.description,
+                    metaProduct: response.meta_product,
+                    componentTemplates: response.component_templates,
+                    serviceTemplates: response.service_templates
+                };
+            }
+            state.isProcessing = false;
+        }
+
         const populateMetaProductList = async (search=null)=> {
             state.isProcessing = true;
             const response = await MetaProductApi.listMetaProducts(10, 0, search);
@@ -172,19 +186,11 @@ export default {
             state.isProcessing = false;
         }
 
-        watch(()=> props.isOpen, ()=> { 
+        watch(()=> props.isOpen, async ()=> { 
             if (props.isOpen) {
                 state.error = ''; 
-                if (!state.isCreate && props.value != null) {
-                    const productTemplate = props.value;
-                    state.data = {
-                        name: productTemplate.name, 
-                        description: productTemplate.description,
-                        metaProduct: productTemplate.metaProduct,
-                        componentTemplates: productTemplate.componentTemplates,
-                        serviceTemplates: productTemplate.serviceTemplates
-                    };
-                } 
+                if (!state.isCreate && state.id != null) {
+                    await retrieveProductTemplateDetail(state.id);} 
                 populateMetaProductList();
             } else {
                 state.clear()

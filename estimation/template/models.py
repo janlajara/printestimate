@@ -40,6 +40,10 @@ class ComponentTemplateManager(PolymorphicManager):
         clazz = mapping.get(type, ComponentTemplate)
         return clazz
 
+    def update_component_template(self, id, type, **kwargs):
+        clazz = ComponentTemplateManager.get_class(type)
+        clazz.objects.filter(pk=id).update(**kwargs)
+
     def create_component_template(self, product_template, meta_component, **kwargs):
         clazz = ComponentTemplateManager.get_class(meta_component.type)
         component_template = clazz.objects.create(product_template=product_template, 

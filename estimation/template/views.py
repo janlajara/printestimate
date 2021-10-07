@@ -19,9 +19,18 @@ class ProductTemplateViewUtils:
         ComponentTemplate.objects.filter(pk__in=ids_to_delete).delete()
 
         for ct_data in component_templates_data:
+            ct_id = ct_data.pop('component_template_id') \
+                if 'component_template_id' in ct_data else None
             resourcetype = ct_data.pop('resourcetype')
             material_templates_data = ct_data.pop('material_templates')
-            ct = product_template.add_component_template(**ct_data)
+
+            if ct_id is None:
+                ct = product_template.add_component_template(**ct_data)
+            else:  
+                ComponentTemplate.objects.update_component_template(
+                    ct_id, resourcetype, **ct_data)
+                ct = ComponentTemplate.objects.get(pk=ct_id)
+
             cls.save_material_templates(ct, material_templates_data)
 
     @classmethod
@@ -35,7 +44,6 @@ class ProductTemplateViewUtils:
 
         for mt_data in material_templates_data:
             mt_id = mt_data.pop('id') if 'id' in mt_data else None
-
             if mt_id is not None:
                 MaterialTemplate.objects.filter(pk=mt_id).update(**mt_data)
             else:

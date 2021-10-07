@@ -34,6 +34,7 @@ class OperationTemplateReadSerializer(serializers.ModelSerializer):
 
 
 class ServiceTemplateSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False, allow_null=True)
     operation_templates = OperationTemplateSerializer(many=True)
 
     class Meta:
@@ -59,6 +60,7 @@ class MaterialTemplateReadSerializer(serializers.ModelSerializer):
 
 
 class ComponentTemplateSerializer(serializers.ModelSerializer):
+    component_template_id = serializers.IntegerField(required=False, allow_null=True)
     material_templates = MaterialTemplateSerializer(many=True)
 
     class Meta:
@@ -184,18 +186,25 @@ class ComponentTemplateReadSerializer(ComponentTemplateSerializer):
     meta_component = MetaComponentSerializer(read_only=True)
 
 
+class ServiceTemplateSerializerField(serializers.Field):
+    def to_representation(self, instance):
+        service_templates = instance.all().order_by('meta_service__sequence')
+        return ServiceTemplateSerializer(service_templates, many=True).data
+    
+    def to_internal_value(self, data):
+        deserialized = ServiceTemplateSerializer(data=data, many=True)
+        if deserialized.is_valid():
+            return deserialized.validated_data
+
+
 class ProductTemplateSerializer(serializers.ModelSerializer):
     component_templates = ComponentTemplatePolymorphicSerializer(many=True)
-    service_templates = serializers.SerializerMethodField()
+    service_templates = ServiceTemplateSerializerField()
 
     class Meta:
         model = ProductTemplate
         fields = ['id', 'name', 'description', 'meta_product',
             'component_templates', 'service_templates']
-
-    def get_service_templates(self, instance):
-        service_templates = instance.service_templates.all().order_by('meta_service__sequence')
-        return ServiceTemplateSerializer(service_templates, many=True).data
 
 
 class ProductTemplateListSerializer(serializers.ModelSerializer):

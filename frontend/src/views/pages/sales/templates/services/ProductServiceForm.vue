@@ -24,11 +24,12 @@
 </template>
 <script>
 import InputSelect from '@/components/InputSelect.vue';
-import {reactive, onMounted} from 'vue';
+import {reactive, onMounted, onBeforeMount} from 'vue';
 
 export default {
     props: {
-        service: Object
+        service: Object,
+        value: Object
     },
     components: {
         InputSelect
@@ -70,15 +71,18 @@ export default {
             }
         });
 
-        onMounted(()=> {
-            if (state.service.metaOperations) {
+        onBeforeMount(()=> {
+            if (props.value) {
+                state.data.operation_templates = props.value.operation_templates;
+            } else if (state.service.metaOperations) {
                 state.service.metaOperations.forEach((operation, key)=> {
                     state.data.operation_templates[key] = {
                         meta_operation: operation.id,
                         operation_option_templates: []}
                 });
-
             }
+        });
+        onMounted(()=> {
             emit('load', {
                 data: state.data,
                 validator: state.validate

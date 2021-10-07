@@ -3,6 +3,7 @@
         <div v-for="(service, key) in state.meta.services" :key="key">
             <ProductServiceForm
                 :service="service"
+                :value="state.data.serviceTemplates[key]"
                 @input="data => {
                     state.data.serviceTemplates[key] = data;
                     $emit('input', state.data.serviceTemplates);
@@ -10,9 +11,10 @@
                 @load="event => {
                     state.data.serviceTemplates[key] = event.data;
                     state.validators[key] = event.validator;
-                }"/>
+                    state.emitLoad();
+                }"/> 
             <hr v-if="state.meta.services.length-1 > key" 
-                class="my-4"/>
+                class="my-4"/> 
         </div>
     </Section>
 </template>
@@ -20,12 +22,16 @@
 import Section from '@/components/Section.vue';
 import ProductServiceForm from './ProductServiceForm.vue';
 
-import {reactive, computed, watch, onMounted} from 'vue';
+import {reactive, computed, watchEffect} from 'vue';
 import {MetaProductApi} from '@/utils/apis.js';
 
 export default {
     props: {
-        metaProductId: [Number, String]
+        metaProductId: [Number, String],
+        value: {
+            type: Array,
+            default: ()=> []
+        }
     },
     components: {
         Section, ProductServiceForm
@@ -43,6 +49,12 @@ export default {
                 services: []
             },
             clear() {
+            },
+            emitLoad() {
+                emit('load', {
+                    data: state.data.serviceTemplates,
+                    validators: state.validators
+                });
             }
         });
 
@@ -69,18 +81,11 @@ export default {
             state.isProcessing = false;
         }
 
-        onMounted(()=> {
-            emit('load', {
-                data: state.data.serviceTemplates,
-                validators: state.validators
-            });
-        });
-        watch(()=> state.id, async ()=> {
-            if (state.id) {
-                await retrieveMetaProductServices(state.id);
-            } else {
-                state.clear()
-            }
+        watchEffect(()=> { 
+            if (props.value) { 
+                state.data.serviceTemplates = props.value;
+                if (state.id) retrieveMetaProductServices(state.id);
+            } else {state.clear();}
         });
 
         return {

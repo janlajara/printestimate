@@ -31,7 +31,7 @@
         </Section>
         <div v-show="state.data.metaProduct != null && 
                 state.data.metaProduct != ''">
-            <hr/>
+            <hr/> 
             <ProductComponentsForm 
                 :meta-product-id="state.data.metaProduct"
                 :value="state.data.componentTemplates"
@@ -43,6 +43,7 @@
             <hr/>
             <ProductServicesForm
                 :meta-product-id="state.data.metaProduct"
+                :value="state.data.serviceTemplates" 
                 @input="value => state.data.serviceTemplates = value"
                 @load="event => {
                     state.data.serviceTemplates = event.data;

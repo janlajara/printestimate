@@ -58,8 +58,16 @@ class ProductTemplateViewUtils:
         ServiceTemplate.objects.filter(pk__in=ids_to_delete).delete()
 
         for st_data in service_templates_data:
+            st_id = st_data.pop('id') if 'id' in st_data else None
             operation_templates_data = st_data.pop('operation_templates')
-            st = product_template.add_service_template(**st_data)
+
+            print(st_id)
+            if st_id is None:
+                st = product_template.add_service_template(**st_data)
+            else:
+                ServiceTemplate.objects.filter(pk=st_id).update(**st_data)
+                st = ServiceTemplate.objects.get(pk=st_id)
+
             cls.save_operation_templates(st, operation_templates_data)
 
     @classmethod
@@ -76,10 +84,12 @@ class ProductTemplateViewUtils:
 
             if ot_id is not None:
                 OperationTemplate.objects.filter(pk=ot_id).update(**ot_data)
+                operation_template = get_object_or_404(OperationTemplate, pk=ot_id)
             else:
                 operation_template = service_template.add_operation_template(**ot_data)
-                cls.save_operation_option_templates(operation_template, 
-                    operation_option_templates_data)
+
+            cls.save_operation_option_templates(operation_template, 
+                operation_option_templates_data)
 
     @classmethod
     def save_operation_option_templates(cls, operation_template, operation_option_templates_data):

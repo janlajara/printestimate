@@ -35,11 +35,12 @@ export default {
         InputSelect
     },
     emits: ['input', 'load'],
-    setup(props, {emit}) {
+    setup(props, {emit}) { 
         const state = reactive({
             service: props.service,
             error: null,
             data: {
+                id: null,
                 meta_service: props.service.id,
                 operation_templates: []
             },
@@ -73,6 +74,7 @@ export default {
 
         onBeforeMount(()=> {
             if (props.value) {
+                state.data.id = props.value.id;
                 state.data.operation_templates = props.value.operation_templates;
             } else if (state.service.metaOperations) {
                 state.service.metaOperations.forEach((operation, key)=> {

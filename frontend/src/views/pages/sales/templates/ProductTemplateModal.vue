@@ -140,7 +140,7 @@ export default {
             }
         });
 
-        const saveProductTemplate = async (id, productTemplate)=> {
+        const saveProductTemplate = async (id, productTemplate)=> { console.log(productTemplate)
             state.isProcessing = true;
             if (productTemplate) {
                 let response = null;
@@ -162,7 +162,7 @@ export default {
         const retrieveProductTemplateDetail = async (id)=> {
             state.isProcessing = true;
             const response = await ProductTemplateApi.retrieveProductTemplate(id);
-            if (response) {
+            if (response) { 
                 state.data = {
                     name: response.name,
                     description: response.description,

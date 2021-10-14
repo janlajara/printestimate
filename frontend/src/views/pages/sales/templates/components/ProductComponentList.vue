@@ -1,7 +1,7 @@
  <template>
     <div>
         <Table :loader="state.isProcessing"
-            :headers="['Name', 'Type', 'Size', 'Quantity', 'Material/s']" >
+            :headers="['Name', 'Type', 'Size', 'Quantity', 'Material/s', 'Machine']" >
             <Row v-for="(s, key) in state.data.productComponents" :key="key">
                 <Cell label="Name">{{s.name}}</Cell>
                 <Cell label="Type" class="capitalize">{{s.type}}</Cell>
@@ -20,6 +20,7 @@
                         </li>
                     </ul>
                 </Cell>
+                <Cell label="Machine">{{s.machine_option_label}}</Cell>
             </Row>
         </Table>
     </div>

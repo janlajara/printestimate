@@ -120,10 +120,12 @@ export default {
                     state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
                 else state.error = '';
                 if (state.validators.componentValidators.length > 0) {
-                    state.validators.componentValidators.forEach( validator => validator());
+                    state.validators.componentValidators.forEach( validator => {
+                        errors = errors.concat(validator())});
                 }
                 if (state.validators.serviceValidators.length > 0) {
-                    state.validators.serviceValidators.forEach( validator => validator());
+                    state.validators.serviceValidators.forEach( validator => {
+                        errors = errors.concat(validator())});
                 }
                 return errors.length > 0;
             },

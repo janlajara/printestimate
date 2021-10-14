@@ -55,7 +55,7 @@ export default {
                 if (errors.length > 0)
                     state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
                 else state.error = '';
-                return errors.length > 0;
+                return errors;
             },
             setValue: (metaOperationId, value, index)=> {
                 state.data.operation_templates[index] = {

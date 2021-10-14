@@ -61,7 +61,6 @@ class ProductTemplateViewUtils:
             st_id = st_data.pop('id') if 'id' in st_data else None
             operation_templates_data = st_data.pop('operation_templates')
 
-            print(st_id)
             if st_id is None:
                 st = product_template.add_service_template(**st_data)
             else:

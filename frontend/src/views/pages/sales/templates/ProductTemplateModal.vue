@@ -140,7 +140,7 @@ export default {
             }
         });
 
-        const saveProductTemplate = async (id, productTemplate)=> { console.log(productTemplate)
+        const saveProductTemplate = async (id, productTemplate)=> {
             state.isProcessing = true;
             if (productTemplate) {
                 let response = null;

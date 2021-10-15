@@ -151,7 +151,7 @@ def test_activity__get_duration_null_param(db, activity: Activity):
 
 def test_activity__no_expense(db, activity: Activity):
     cost = activity.get_cost(Distance(m=1))
-    assert cost == 0
+    assert cost.amount == 0
 
 
 def test_activity__get_cost_hourly(db, activity: Activity):

@@ -5,7 +5,7 @@ from core.utils.measures import Measure, CostingMeasure, Quantity
 from measurement.measures import Distance
 from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
-from estimation.product.models import Material
+from estimation.product.models import Material, PaperMaterial
 from inventory.models import Item
 import inflect
 
@@ -70,7 +70,7 @@ class SheetFedPressMachine(PressMachine):
     uom = models.CharField(max_length=30, default='mm',
         choices=Measure.UNITS[Measure.DISTANCE])
 
-    def get_nearest_match(self, material, bleed):
+    def get_nearest_match(self, material, bleed=False):
         match = None
         child_sheets = (
             ChildSheet.objects
@@ -90,6 +90,10 @@ class SheetFedPressMachine(PressMachine):
             match = self.get_nearest_match(material, bleed)
 
             if match is not None:
+                # Item refers to the stock / raw material
+                # Parent refers to the press running sheet that the machine accepts
+                # Child refers to the divided parent sheets
+                # Output refers to the divided child sheets. It's also the final size.
                 parent_sheet_per_item = material.item_properties.pack(match.parent)
                 child_sheet_per_parent = match.count
                 output_per_child = match.pack(material)
@@ -250,18 +254,8 @@ class ChildSheet(Rectangle):
         cpackw = child_width + (child_margin_left + child_margin_right)
         cpackl = child_length + (child_margin_top + child_margin_bottom)
 
-        layout = Rectangle.binpacker(
-            ppackw, ppackl, parent_uom,
+        return Rectangle.get_layout(ppackw, ppackl, parent_uom,
             cpackw, cpackl, child_uom, rotate)
-
-        count = len(layout) if layout is not None else 0
-        usage = __get_usage__(ppackw, ppackl, parent_uom, 
-            cpackw, cpackl, child_uom, count) if layout is not None else 0
-        wastage = 1 - usage
-        rotated = [i for i, x in enumerate(layout) if x.width != cpackw and x.height != cpackl] if \
-            layout is not None and rotate else []
-
-        return layout, count, round(usage * 100, 2), round(wastage * 100, 2), rotated
 
     def __str__(self):
         unit = _inflect.plural(self.size_uom)

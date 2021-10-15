@@ -173,6 +173,32 @@ class Rectangle(Shape):
         }
 
     @classmethod
+    def get_layout(cls, parent_width, parent_length, parent_uom,
+            child_width, child_length, child_uom, rotate=False):
+        def __get_usage__(pw, pl, pu, cw, cl, cu, count):
+            d_cw = Distance(**{cu: cw})
+            d_cl = Distance(**{cu: cl})
+            d_pw = Distance(**{pu: pw})
+            d_pl = Distance(**{pu: pl})
+            ca = d_cw.mm * d_cl.mm * count
+            pa = d_pw.mm * d_pl.mm
+            return (ca / pa)
+        
+        layout = Rectangle.binpacker(
+            parent_width, parent_length, parent_uom,
+            child_width, child_length, child_uom, rotate)
+
+        count = len(layout) if layout is not None else 0
+        usage = __get_usage__(parent_width, parent_length, parent_uom, 
+            child_width, child_length, child_uom, count) if layout is not None else 0
+        wastage = 1 - usage
+        # list the rectangles that have been rotated
+        rotated = [i for i, x in enumerate(layout) if x.width != child_width and x.height != child_length] if \
+            layout is not None and rotate else []
+
+        return layout, count, round(usage * 100, 2), round(wastage * 100, 2), rotated
+
+    @classmethod
     def binpacker(cls, 
             parent_width, parent_length, parent_uom,
             child_width, child_length, child_uom, rotate):

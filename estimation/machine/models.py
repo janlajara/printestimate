@@ -240,15 +240,6 @@ class ChildSheet(Rectangle):
             child_margin_right, child_margin_left,
             rotate=False):
 
-        def __get_usage__(pw, pl, pu, cw, cl, cu, count):
-            d_cw = Distance(**{cu: cw})
-            d_cl = Distance(**{cu: cl})
-            d_pw = Distance(**{pu: pw})
-            d_pl = Distance(**{pu: pl})
-            ca = d_cw.mm * d_cl.mm * count
-            pa = d_pw.mm * d_pl.mm
-            return (ca / pa)
-
         ppackw = parent_width - (parent_padding_left + parent_padding_right)
         ppackl = parent_length - (parent_padding_top + parent_padding_bottom)
         cpackw = child_width + (child_margin_left + child_margin_right)

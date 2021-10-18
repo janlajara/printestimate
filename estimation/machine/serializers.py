@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
+from core.utils.shapes import Rectangle
 from estimation.models import Machine, SheetFedPressMachine, ParentSheet, ChildSheet
 from django.shortcuts import get_object_or_404
 import inflect
@@ -120,37 +121,3 @@ class ChildSheetLayoutSerializer(serializers.ModelSerializer):
         fields = ['parent', 'width_value', 'length_value', 'size_uom',
             'margin_top', 'margin_right', 'margin_bottom', 'margin_left',
             'pack_width', 'pack_length']
-
-
-class PackRectangle:
-    def __init__(self, i=0, x=0, y=0, width=0, length=0, is_rotated=False):
-        self.i = i
-        self.x = x 
-        self.y = y 
-        self.width = width
-        self.length = length
-        self.is_rotated = is_rotated
-    
-    def area(self):
-        return self.width * self.length
-
-
-class PackRectangleSerializer(serializers.Serializer):
-    i = serializers.IntegerField()
-    x = serializers.FloatField()
-    y = serializers.FloatField()
-    width = serializers.FloatField()
-    length = serializers.FloatField()
-    is_rotated = serializers.BooleanField()
-
-    def update(self, instance, validated_data):
-        instance.b = validated_data.get('i', instance.b)
-        instance.x = validated_data.get('x', instance.x)
-        instance.y = validated_data.get('y', instance.y)
-        instance.width = validated_data.get('width', instance.width)
-        instance.length = validated_data.get('length', instance.length)
-        instance.is_rotated = validated_data.get('is_rotated', instance.is_rotated)
-        return instance
-
-    def create(self, validated_data):
-        return PackRectangle(**validated_data)

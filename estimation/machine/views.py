@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
+from core.utils.shapes import Rectangle, RectangleLayoutSerializer
 from estimation.models import Machine, SheetFedPressMachine, ParentSheet, ChildSheet
 from estimation import serializers
 
@@ -164,7 +165,7 @@ class ChildSheetLayoutView(mixins.CreateModelMixin, viewsets.GenericViewSet):
         for key, rect in enumerate(packer.rect_list()):
             x, y, width, length, rid = rect
             is_rotated = key in rotated_idx
-            layout = serializers.PackRectangle(key + 1, x, y, width, length, is_rotated)
+            layout = Rectangle.Layout(key + 1, x, y, width, length, is_rotated)
             layouts.append(layout) 
 
         return layouts, count, usage, wastage
@@ -178,8 +179,8 @@ class ChildSheetLayoutView(mixins.CreateModelMixin, viewsets.GenericViewSet):
                 rotate_layouts, rotate_count, rotate_usage, rotate_wastage = self.get_layouts(child_sheet, True)
                 no_rotate_layouts, no_rotate_count, no_rotate_usage, no_rotate_wastage = self.get_layouts(child_sheet, False)
 
-                rotate_serialized = serializers.PackRectangleSerializer(rotate_layouts, many=True)
-                no_rotate_serialized = serializers.PackRectangleSerializer(no_rotate_layouts, many=True)
+                rotate_serialized = RectangleLayoutSerializer(rotate_layouts, many=True)
+                no_rotate_serialized = RectangleLayoutSerializer(no_rotate_layouts, many=True)
 
                 return Response({
                     "allow_rotate": {

@@ -185,6 +185,8 @@ class Rectangle(Shape):
             CostingMeasure.QUANTITY: Quantity(pc=estimate)
         }
 
+    # Returns the following:
+    # layouts, count, usage, wastage, indices of rotated rectangles
     @classmethod
     def get_layout(cls, parent_width, parent_length, parent_uom,
             child_width, child_length, child_uom, rotate=False):
@@ -196,20 +198,30 @@ class Rectangle(Shape):
             ca = d_cw.mm * d_cl.mm * count
             pa = d_pw.mm * d_pl.mm
             return (ca / pa)
+
+        def __get_layouts__(packer, rotated):
+            layouts = []
+            for key, rect in enumerate(packer.rect_list()):
+                x, y, width, length, rid = rect
+                is_rotated = key in rotated
+                layout = Rectangle.Layout(key + 1, x, y, width, length, is_rotated)
+                layouts.append(layout) 
+            return layouts
         
-        layout = Rectangle.binpacker(
+        packer = Rectangle.binpacker(
             parent_width, parent_length, parent_uom,
             child_width, child_length, child_uom, rotate)
 
-        count = len(layout) if layout is not None else 0
+        count = len(packer) if packer is not None else 0
         usage = __get_usage__(parent_width, parent_length, parent_uom, 
-            child_width, child_length, child_uom, count) if layout is not None else 0
+            child_width, child_length, child_uom, count) if packer is not None else 0
         wastage = 1 - usage
         # list the rectangles that have been rotated
-        rotated = [i for i, x in enumerate(layout) if x.width != child_width and x.height != child_length] if \
-            layout is not None and rotate else []
+        rotated = [i for i, x in enumerate(packer) if x.width != child_width and x.height != child_length] if \
+            packer is not None and rotate else []
+        layouts = __get_layouts__(packer, rotated)
 
-        return layout, count, round(usage * 100, 2), round(wastage * 100, 2), rotated
+        return layouts, count, round(usage * 100, 2), round(wastage * 100, 2), rotated
 
     @classmethod
     def binpacker(cls, 

@@ -230,6 +230,8 @@ class ChildSheet(Rectangle):
     def count(self):
         return self.parent.pack(self) 
 
+    # Returns the following:
+    # packer, count, usage, wastage, indices of rotated rectangles
     @classmethod
     def get_layout(cls, 
             parent_width, parent_length, parent_uom, 

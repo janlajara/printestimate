@@ -63,6 +63,14 @@ class PressMachine(Machine):
 
 
 class SheetFedPressMachine(PressMachine):
+    class SheetLayout:
+        def __init__(self, layouts, count, usage, wastage, rotated):
+            self.layouts = layouts
+            self.count = count
+            self.usage = usage
+            self.wastage = wastage
+            self.rotated = rotated
+
     min_sheet_length = models.FloatField(default=0)
     max_sheet_length = models.FloatField(default=0)
     min_sheet_width = models.FloatField(default=0)
@@ -84,6 +92,24 @@ class SheetFedPressMachine(PressMachine):
                 break
         
         return match
+
+    def get_sheet_layouts(self, material, bleed=False, rotate=True):
+        if material.type == Item.PAPER:
+            match = self.get_nearest_match(material, bleed)
+
+            if match is not None:
+                stock = material.item_properties
+                parent = match.parent
+                parent_on_stock_layout = Rectangle.get_layout(
+                    stock.width_value, stock.length_value, stock.size_uom, 
+                    parent.width_value, parent.length_value, parent.size_uom,
+                    rotate)
+                child_on_parent_layout = ChildSheet.get_layout(
+                    parent.width_value, parent.length_value, parent.size_uom,
+                    match.width_value, match.length_value, match.size_uom)
+            else:
+                return None
+                
 
     def estimate(self, material, quantity, bleed=False):
         if material.type == Item.PAPER:
@@ -137,6 +163,23 @@ class SheetFedPressMachine(PressMachine):
 
 
 class ParentSheet(Rectangle):
+    class Layout(Rectangle.Layout):
+        def __init__(self, padding_top=0, padding_right=0, 
+                padding_bottom=0, padding_left=0, **kwargs):
+            super().__init__(**kwargs)
+            self.padding_top = padding_top
+            self.padding_right = padding_right
+            self.padding_bottom = padding_bottom
+            self.padding_left = padding_left
+        
+        @property
+        def padding_x(self):
+            return self.padding_right + self.padding_left
+
+        @property
+        def padding_y(self):
+            return self.padding_top + self.padding_bottom
+
     machine = models.ForeignKey(SheetFedPressMachine, on_delete=models.CASCADE, 
         related_name='parent_sheets') 
     label = models.CharField(max_length=30, blank=True, null=True)
@@ -192,6 +235,23 @@ class ParentSheet(Rectangle):
 
 
 class ChildSheet(Rectangle):
+    class Layout(Rectangle.Layout):
+        def __init__(self, margin_top, margin_right, 
+                margin_bottom, margin_left, **kwargs):
+            super().__init__(**kwargs)
+            self.margin_top = margin_top
+            self.margin_right = margin_right
+            self.margin_bottom = margin_bottom
+            self.margin_left = margin_left
+        
+        @property
+        def margin_x(self):
+            return self.margin_right + self.margin_left
+
+        @property
+        def margin_y(self):
+            return self.margin_top + self.margin_bottom
+
     parent = models.ForeignKey(ParentSheet, 
         on_delete=models.CASCADE, related_name='child_sheets')
     label = models.CharField(max_length=30, blank=True, null=True)
@@ -231,24 +291,20 @@ class ChildSheet(Rectangle):
         return self.parent.pack(self) 
 
     # Returns the following:
-    # packer, count, usage, wastage, indices of rotated rectangles
+    # layouts, count, usage, wastage, indices of rotated rectangles
     @classmethod
-    def get_layout(cls, 
-            parent_width, parent_length, parent_uom, 
-            parent_padding_top, parent_padding_bottom,
-            parent_padding_right, parent_padding_left,
-            child_width, child_length, child_uom, 
-            child_margin_top, child_margin_bottom,
-            child_margin_right, child_margin_left,
-            rotate=False):
+    def get_layout(cls, parent_layout:ParentSheet.Layout,
+            child_layout:'ChildSheet.Layout', rotate=False):
 
-        ppackw = parent_width - (parent_padding_left + parent_padding_right)
-        ppackl = parent_length - (parent_padding_top + parent_padding_bottom)
-        cpackw = child_width + (child_margin_left + child_margin_right)
-        cpackl = child_length + (child_margin_top + child_margin_bottom)
+        ppackw = parent_layout.width - parent_layout.padding_x
+        ppackl = parent_layout.length - parent_layout.padding_y
+        cpackw = child_layout.width + child_layout.margin_x
+        cpackl = child_layout.length + child_layout.margin_y
 
-        return Rectangle.get_layout(ppackw, ppackl, parent_uom,
-            cpackw, cpackl, child_uom, rotate)
+        parent_layout = Rectangle.Layout(width=ppackw, length=ppackl, uom=parent_layout.uom)
+        child_layout = Rectangle.Layout(width=cpackw, length=cpackl, uom=child_layout.uom)
+
+        return Rectangle.get_layout(parent_layout, child_layout, rotate)
 
     def __str__(self):
         unit = _inflect.plural(self.size_uom)

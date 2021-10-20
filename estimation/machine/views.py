@@ -152,14 +152,16 @@ class ChildSheetLayoutView(mixins.CreateModelMixin, viewsets.GenericViewSet):
         if parent_width == 0 + parent_length == 0 or child_width + child_length == 0:
             raise ValueError('size must be greater than zero')
 
+        parent_layout = ParentSheet.Layout(width=parent_width, length=parent_length,
+            uom=parent_uom, padding_top=parent_padding_top, padding_bottom=parent_padding_bottom,
+            padding_right=parent_padding_right, padding_left=parent_padding_left)
+
+        child_layout = ChildSheet.Layout(width=child_width, length=child_length,
+            uom=child_uom, margin_top=child_margin_top, margin_bottom=child_margin_bottom,
+            margin_right=child_margin_right, margin_left=child_margin_left)
+
         layouts, count, usage, wastage, rotated_idx = ChildSheet.get_layout(
-            parent_width, parent_length, parent_uom,
-            parent_padding_top, parent_padding_bottom,
-            parent_padding_right, parent_padding_left,
-            child_width, child_length, child_uom,
-            child_margin_top, child_margin_bottom,
-            child_margin_right, child_margin_left, 
-            rotate)
+            parent_layout, child_layout, rotate)
 
         return layouts, count, usage, wastage
 

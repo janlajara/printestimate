@@ -116,13 +116,15 @@ class Tape(Line):
 
 class Rectangle(Shape):
     class Layout:
-        def __init__(self, i=0, x=0, y=0, width=0, length=0, is_rotated=False):
+        def __init__(self, i=0, x=0, y=0, width=0, length=0, 
+                is_rotated=False, uom=None):
             self.i = i
             self.x = x 
             self.y = y 
             self.width = width
             self.length = length
             self.is_rotated = is_rotated
+            self.uom = uom
     
         def area(self):
             return self.width * self.length
@@ -188,8 +190,7 @@ class Rectangle(Shape):
     # Returns the following:
     # layouts, count, usage, wastage, indices of rotated rectangles
     @classmethod
-    def get_layout(cls, parent_width, parent_length, parent_uom,
-            child_width, child_length, child_uom, rotate=False):
+    def get_layout(cls, parent_layout, child_layout, rotate=False):
         def __get_usage__(pw, pl, pu, cw, cl, cu, count):
             d_cw = Distance(**{cu: cw})
             d_cl = Distance(**{cu: cl})
@@ -207,6 +208,13 @@ class Rectangle(Shape):
                 layout = Rectangle.Layout(key + 1, x, y, width, length, is_rotated)
                 layouts.append(layout) 
             return layouts
+        
+        parent_width = parent_layout.width
+        parent_length = parent_layout.length
+        parent_uom = parent_layout.uom
+        child_width = child_layout.width
+        child_length = child_layout.length
+        child_uom = child_layout.uom
         
         packer = Rectangle.binpacker(
             parent_width, parent_length, parent_uom,
@@ -336,6 +344,7 @@ class RectangleLayoutSerializer(serializers.Serializer):
     width = serializers.FloatField()
     length = serializers.FloatField()
     is_rotated = serializers.BooleanField()
+    uom = serializers.CharField()
 
     def update(self, instance, validated_data):
         instance.b = validated_data.get('i', instance.b)
@@ -344,6 +353,7 @@ class RectangleLayoutSerializer(serializers.Serializer):
         instance.width = validated_data.get('width', instance.width)
         instance.length = validated_data.get('length', instance.length)
         instance.is_rotated = validated_data.get('is_rotated', instance.is_rotated)
+        instance.uom = validated_data.get('uom', instance.uom)
         return instance
 
     def create(self, validated_data):

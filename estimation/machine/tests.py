@@ -1,5 +1,5 @@
 import pytest
-from estimation.machine.models import Machine, ChildSheet
+from estimation.machine.models import Machine, ChildSheet, ParentSheet
 from estimation.product.models import Material
 from core.utils.measures import Measure
 from inventory.models import Item
@@ -44,24 +44,13 @@ def test_parent_sheet__add_child_sheet_value_error(db, gto_machine):
 
 
 def test_child_sheet__get_layout(db):
-    args = {
-        "parent_width": 36, 
-        "parent_length": 28, 
-        "parent_uom": 'inch', 
-        "parent_padding_top": 2, 
-        "parent_padding_bottom": 2,
-        "parent_padding_right": 0, 
-        "parent_padding_left": 0,
-        "child_width": 14, 
-        "child_length": 7, 
-        "child_uom": 'inch', 
-        "child_margin_top": 1, 
-        "child_margin_bottom": 0,
-        "child_margin_right": 0, 
-        "child_margin_left": 0,
-        "rotate": True}
+    parent_layout = ParentSheet.Layout(width=36, length=28, uom='inch',
+        padding_top=2, padding_bottom=2, padding_right=0, padding_left=0)
+    child_layout = ChildSheet.Layout(width=14, length=7, uom='inch',
+        margin_top=1, margin_bottom=0, margin_right=0, margin_left=0)
 
-    layout, count, usage, wastage, rotated = ChildSheet.get_layout(**args)
+    layout, count, usage, wastage, rotated = ChildSheet.get_layout(
+        parent_layout, child_layout, True)
 
     assert count == 7
     assert usage == 90.74

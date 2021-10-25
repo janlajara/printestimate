@@ -130,14 +130,16 @@ class Rectangle(Shape):
             return self.width * self.length
     
     class LayoutMeta:
-        def __init__(self, layouts, count, usage, wastage, rotate, name=None):
+        def __init__(self, layouts, count, usage, wastage, rotate, 
+                name=None, cut_count=0):
             self.name = name
             self.layouts = layouts
             self.count = count
             self.usage = usage
             self.wastage = wastage
             self.rotate = rotate
-        
+            self.cut_count = cut_count
+
         def __str__(self):
             return self.name
 
@@ -226,6 +228,31 @@ class Rectangle(Shape):
                 layouts.append(layout) 
             return layouts
         
+        def __get_cut_count__(packer, bin_width, bin_length):
+            unique_x = []
+            unique_y = []
+
+            for rect in packer:
+                x = rect.x 
+                y = rect.y 
+                w = rect.width 
+                h = rect.height
+                if x not in unique_x:
+                    if x > 0:
+                        unique_x.append(x)
+                    if x+w < bin_width:
+                        unique_x.append(x+w)
+                if y not in unique_y:
+                    if y > 0:
+                        unique_y.append(y)
+                    if y+h < bin_length:
+                        unique_y.append(y+h)
+            max_x = max(unique_x) if len(unique_x) > 0 else 0
+            max_y = max(unique_y) if len(unique_y) > 0 else 0
+            cut_count = len(unique_x) + len(unique_y)
+
+            return cut_count
+
         parent_width = parent_layout.width
         parent_length = parent_layout.length
         parent_uom = parent_layout.uom
@@ -245,10 +272,11 @@ class Rectangle(Shape):
         rotated = [i for i, x in enumerate(packer) if x.width != child_width and x.height != child_length] if \
             packer is not None and rotate else []
         layouts = __get_layouts__(packer, rotated)
+        cut_count = __get_cut_count__(packer, parent_width, parent_length)
 
         layout_meta = Rectangle.LayoutMeta(layouts, count, 
             round(usage * 100, 2), round(wastage * 100, 2),
-            rotated, name)
+            rotated, name, cut_count)
 
         return layout_meta
 

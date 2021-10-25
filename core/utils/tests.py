@@ -33,8 +33,15 @@ def test_binpacker__pack_rectangles(db):
 
 
 def test_binpacker__get_cut(db):
-    rects = [(4, 2)] * 27
-    bin = [(18, 13)]
+    bin_width = 32 #18
+    bin_height = 27 #13
+
+    rect_width = 21 #4
+    rect_height = 26 #2
+    rect_count = 1 #27
+
+    rects = [(rect_width, rect_height)] * rect_count
+    bin = [(bin_width, bin_height)]
 
     packer = BinPacker.pack_rectangles(rects, bin, True)
 
@@ -42,19 +49,24 @@ def test_binpacker__get_cut(db):
     unique_x = []
     unique_y = []
 
+    assert len(all_rects) == rect_count
+    assert packer[0].width == bin_width
+    assert packer[0].height == bin_height
+
     for rect in all_rects:
         b, x, y, w, h, rid = rect
-        if x not in unique_x and x > 0:
-            unique_x.append(x)
-            if x+w < 18:
+        if x not in unique_x:
+            if x > 0:
+                unique_x.append(x)
+            if x+w < bin_width:
                 unique_x.append(x+w)
-        if y not in unique_y and y > 0:
-            unique_y.append(y)
-            if y+h < 13:
+        if y not in unique_y:
+            if y > 0:
+                unique_y.append(y)
+            if y+h < bin_height:
                 unique_y.append(y+h)
         
     print(unique_x)
     print(unique_y)
 
-    assert len(packer[0]) == 27
     assert False

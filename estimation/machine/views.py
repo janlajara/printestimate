@@ -160,10 +160,9 @@ class ChildSheetLayoutView(mixins.CreateModelMixin, viewsets.GenericViewSet):
             uom=child_uom, margin_top=child_margin_top, margin_bottom=child_margin_bottom,
             margin_right=child_margin_right, margin_left=child_margin_left)
 
-        layouts, count, usage, wastage, rotated_idx = ChildSheet.get_layout(
-            parent_layout, child_layout, rotate)
+        layout_meta = ChildSheet.get_layout(parent_layout, child_layout, rotate)
 
-        return layouts, count, usage, wastage
+        return layout_meta
 
     def create(self, request):
         deserialized = serializers.ChildSheetLayoutSerializer(data=request.data)
@@ -171,23 +170,23 @@ class ChildSheetLayoutView(mixins.CreateModelMixin, viewsets.GenericViewSet):
         if deserialized.is_valid():
             try:
                 child_sheet = deserialized.validated_data
-                rotate_layouts, rotate_count, rotate_usage, rotate_wastage = self.get_layouts(child_sheet, True)
-                no_rotate_layouts, no_rotate_count, no_rotate_usage, no_rotate_wastage = self.get_layouts(child_sheet, False)
+                rotate = self.get_layouts(child_sheet, True)
+                no_rotate = self.get_layouts(child_sheet, False)
 
-                rotate_serialized = RectangleLayoutSerializer(rotate_layouts, many=True)
-                no_rotate_serialized = RectangleLayoutSerializer(no_rotate_layouts, many=True)
+                rotate_serialized = RectangleLayoutSerializer(rotate.layouts, many=True)
+                no_rotate_serialized = RectangleLayoutSerializer(no_rotate.layouts, many=True)
 
                 return Response({
                     "allow_rotate": {
-                        "count": rotate_count,
-                        "usage": rotate_usage,
-                        "wastage": rotate_wastage,
+                        "count": rotate.count,
+                        "usage": rotate.usage,
+                        "wastage": rotate.wastage,
                         "rects": rotate_serialized.data,
                     },
                     "no_rotate": {
-                        "count": no_rotate_count,
-                        "usage": no_rotate_usage,
-                        "wastage": no_rotate_wastage,
+                        "count": no_rotate.count,
+                        "usage": no_rotate.usage,
+                        "wastage": no_rotate.wastage,
                         "rects": no_rotate_serialized.data
                     }
                 })

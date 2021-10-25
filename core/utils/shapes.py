@@ -128,6 +128,18 @@ class Rectangle(Shape):
     
         def area(self):
             return self.width * self.length
+    
+    class LayoutMeta:
+        def __init__(self, layouts, count, usage, wastage, rotate, name=None):
+            self.name = name
+            self.layouts = layouts
+            self.count = count
+            self.usage = usage
+            self.wastage = wastage
+            self.rotate = rotate
+        
+        def __str__(self):
+            return self.name
 
     costing_measures = [CostingMeasure.AREA, CostingMeasure.PERIMETER, CostingMeasure.QUANTITY]
     length_value = models.FloatField(null=False, blank=False)
@@ -137,6 +149,11 @@ class Rectangle(Shape):
 
     class Meta:
         abstract = True
+
+    @property
+    def layout(self):
+        return Rectangle.Layout(width=self.width_value, 
+            length=self.length_value, uom=self.size_uom)
 
     @property
     def length(self):
@@ -190,7 +207,7 @@ class Rectangle(Shape):
     # Returns the following:
     # layouts, count, usage, wastage, indices of rotated rectangles
     @classmethod
-    def get_layout(cls, parent_layout, child_layout, rotate=False):
+    def get_layout(cls, parent_layout, child_layout, rotate=False, name=None):
         def __get_usage__(pw, pl, pu, cw, cl, cu, count):
             d_cw = Distance(**{cu: cw})
             d_cl = Distance(**{cu: cl})
@@ -229,7 +246,11 @@ class Rectangle(Shape):
             packer is not None and rotate else []
         layouts = __get_layouts__(packer, rotated)
 
-        return layouts, count, round(usage * 100, 2), round(wastage * 100, 2), rotated
+        layout_meta = Rectangle.LayoutMeta(layouts, count, 
+            round(usage * 100, 2), round(wastage * 100, 2),
+            rotated, name)
+
+        return layout_meta
 
     @classmethod
     def binpacker(cls, 

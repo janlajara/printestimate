@@ -63,14 +63,6 @@ class PressMachine(Machine):
 
 
 class SheetFedPressMachine(PressMachine):
-    class SheetLayout:
-        def __init__(self, layouts, count, usage, wastage, rotated):
-            self.layouts = layouts
-            self.count = count
-            self.usage = usage
-            self.wastage = wastage
-            self.rotated = rotated
-
     min_sheet_length = models.FloatField(default=0)
     max_sheet_length = models.FloatField(default=0)
     min_sheet_width = models.FloatField(default=0)
@@ -90,7 +82,7 @@ class SheetFedPressMachine(PressMachine):
                     and material.item_properties.gte(child_sheet.parent):
                 match = child_sheet
                 break
-        
+
         return match
 
     def get_sheet_layouts(self, material, bleed=False, rotate=True):
@@ -100,13 +92,18 @@ class SheetFedPressMachine(PressMachine):
             if match is not None:
                 stock = material.item_properties
                 parent = match.parent
-                parent_on_stock_layout = Rectangle.get_layout(
-                    stock.width_value, stock.length_value, stock.size_uom, 
-                    parent.width_value, parent.length_value, parent.size_uom,
-                    rotate)
-                child_on_parent_layout = ChildSheet.get_layout(
-                    parent.width_value, parent.length_value, parent.size_uom,
-                    match.width_value, match.length_value, match.size_uom)
+
+                stock_layout = Rectangle.Layout(width=stock.width_value,
+                    length=stock.length_value, uom=stock.size_uom)
+
+                parent_layout_meta = Rectangle.get_layout(
+                    stock_layout, parent.layout, rotate, 'Parent-to-runsheet')
+                child_layout_meta = ChildSheet.get_layout(
+                    parent.layout, match.layout, rotate, 'Runsheet-to-cutsheet')
+                material_layout_meta = Rectangle.get_layout(
+                    match.layout, material.layout, rotate, 'Cutsheet-to-trimsheet')
+
+                return [parent_layout_meta, child_layout_meta, material_layout_meta]
             else:
                 return None
                 
@@ -189,6 +186,13 @@ class ParentSheet(Rectangle):
     padding_left = models.FloatField(default=0)
 
     @property
+    def layout(self):
+        return ParentSheet.Layout(width=self.width_value, 
+            length=self.length_value, uom=self.size_uom, 
+            padding_top=self.padding_top, padding_right=self.padding_right,
+            padding_bottom=self.padding_bottom, padding_left=self.padding_left)
+
+    @property
     def pack_width(self):
         return self.width_value - self.padding_x
 
@@ -261,6 +265,13 @@ class ChildSheet(Rectangle):
     margin_left = models.FloatField(default=0)
 
     @property
+    def layout(self):
+        return ChildSheet.Layout(width=self.width_value, 
+            length=self.length_value, uom=self.size_uom,
+            margin_top=self.margin_top, margin_right=self.margin_right,
+            margin_bottom=self.margin_bottom, margin_left=self.margin_left)
+
+    @property
     def has_bleed(self):
         return self.margin_top + self.margin_right + \
             self.margin_bottom + self.margin_left > 0
@@ -294,7 +305,7 @@ class ChildSheet(Rectangle):
     # layouts, count, usage, wastage, indices of rotated rectangles
     @classmethod
     def get_layout(cls, parent_layout:ParentSheet.Layout,
-            child_layout:'ChildSheet.Layout', rotate=False):
+            child_layout:'ChildSheet.Layout', rotate=False, name=None):
 
         ppackw = parent_layout.width - parent_layout.padding_x
         ppackl = parent_layout.length - parent_layout.padding_y
@@ -304,7 +315,7 @@ class ChildSheet(Rectangle):
         parent_layout = Rectangle.Layout(width=ppackw, length=ppackl, uom=parent_layout.uom)
         child_layout = Rectangle.Layout(width=cpackw, length=cpackl, uom=child_layout.uom)
 
-        return Rectangle.get_layout(parent_layout, child_layout, rotate)
+        return Rectangle.get_layout(parent_layout, child_layout, rotate, name)
 
     def __str__(self):
         unit = _inflect.plural(self.size_uom)

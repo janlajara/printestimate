@@ -210,6 +210,9 @@ class Rectangle(Shape):
     # layouts, count, usage, wastage, indices of rotated rectangles
     @classmethod
     def get_layout(cls, parent_layout, child_layout, rotate=False, name=None):
+        def __round__(number):
+            return round(number * 100, 2)
+
         def __get_usage__(pw, pl, pu, cw, cl, cu, count):
             d_cw = Distance(**{cu: cw})
             d_cl = Distance(**{cu: cl})
@@ -247,10 +250,8 @@ class Rectangle(Shape):
                         unique_y.append(y)
                     if y+h < bin_length:
                         unique_y.append(y+h)
-            max_x = max(unique_x) if len(unique_x) > 0 else 0
-            max_y = max(unique_y) if len(unique_y) > 0 else 0
+                        
             cut_count = len(unique_x) + len(unique_y)
-
             return cut_count
 
         parent_width = parent_layout.width
@@ -275,8 +276,7 @@ class Rectangle(Shape):
         cut_count = __get_cut_count__(packer, parent_width, parent_length)
 
         layout_meta = Rectangle.LayoutMeta(layouts, count, 
-            round(usage * 100, 2), round(wastage * 100, 2),
-            rotated, name, cut_count)
+            __round__(usage), __round__(wastage), rotated, name, cut_count)
 
         return layout_meta
 

@@ -315,6 +315,10 @@ class Rectangle(Shape):
             x = BinPacker.pack_rectangles(child_rects, parent_rect, False)
             return x[0] if len(x) > 0 else None
 
+    def eq(self, rectangle):
+        self._validate(rectangle)
+        return self.width.mm == rectangle.width.mm and self.length.mm == rectangle.length.mm
+
     def gte(self, rectangle):
         self._validate(rectangle)
         return self.width.mm >= rectangle.width.mm and self.length.mm >= rectangle.length.mm

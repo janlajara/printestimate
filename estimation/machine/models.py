@@ -92,6 +92,7 @@ class SheetFedPressMachine(PressMachine):
             if match is not None:
                 stock = material.item_properties
                 parent = match.parent
+                layouts = []
 
                 stock_layout = Rectangle.Layout(width=stock.width_value,
                     length=stock.length_value, uom=stock.size_uom)
@@ -100,10 +101,14 @@ class SheetFedPressMachine(PressMachine):
                     stock_layout, parent.layout, rotate, 'Parent-to-runsheet')
                 child_layout_meta = ChildSheet.get_layout(
                     parent.layout, match.layout, rotate, 'Runsheet-to-cutsheet')
-                material_layout_meta = Rectangle.get_layout(
-                    match.layout, material.layout, rotate, 'Cutsheet-to-trimsheet')
+                layouts = [parent_layout_meta, child_layout_meta]
 
-                return [parent_layout_meta, child_layout_meta, material_layout_meta]
+                if not match.eq(material):
+                    material_layout_meta = Rectangle.get_layout(
+                        match.layout, material.layout, rotate, 'Cutsheet-to-trimsheet')
+                    layouts.append(material_layout_meta)
+
+                return layouts
             else:
                 return None
                 

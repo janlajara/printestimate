@@ -125,14 +125,16 @@ class Rectangle(Shape):
             self.length = length
             self.is_rotated = is_rotated
             self.uom = uom
-    
+
         def area(self):
             return self.width * self.length
     
     class LayoutMeta:
-        def __init__(self, layouts, count, usage, wastage, rotate, 
+        def __init__(self, bin, rect, layouts, count, usage, wastage, rotate, 
                 name=None, cut_count=0):
             self.name = name
+            self.bin = bin
+            self.rect = rect
             self.layouts = layouts
             self.count = count
             self.usage = usage
@@ -269,13 +271,13 @@ class Rectangle(Shape):
         usage = __get_usage__(parent_width, parent_length, parent_uom, 
             child_width, child_length, child_uom, count) if packer is not None else 0
         wastage = 1 - usage
-        # list the rectangles that have been rotated
+        # list of index of rectangles that have been rotated
         rotated = [i for i, x in enumerate(packer) if x.width != child_width and x.height != child_length] if \
             packer is not None and rotate else []
         layouts = __get_layouts__(packer, rotated)
         cut_count = __get_cut_count__(packer, parent_width, parent_length)
 
-        layout_meta = Rectangle.LayoutMeta(layouts, count, 
+        layout_meta = Rectangle.LayoutMeta(parent_layout, child_layout, layouts, count, 
             __round__(usage), __round__(wastage), rotated, name, cut_count)
 
         return layout_meta
@@ -411,3 +413,26 @@ class RectangleLayoutSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return Rectangle.Layout(**validated_data)
+
+
+class RectangleLayoutMetaSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    layouts = RectangleLayoutSerializer(many=True)
+    count = serializers.IntegerField()
+    usage = serializers.FloatField()
+    wastage = serializers.FloatField()
+    rotate = serializers.ListField(child=serializers.IntegerField())
+    cut_count = serializers.IntegerField()
+
+    def create(self, validated_data):
+        return Rectangle.LayoutMeta(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.layouts = validated_data.get('layouts', instance.layouts)
+        instance.count = validated_data.get('count', instance.count)
+        instance.usage = validated_data.get('usage', instance.usage)
+        instance.wastage = validated_data.get('wastage', instance.wastage)
+        instance.rotate = validated_data.get('rotate', instance.rotate)
+        instance.cut_count = validated_data.get('cut_count', instance.cut_count)
+        return instance

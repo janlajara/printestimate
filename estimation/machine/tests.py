@@ -29,7 +29,7 @@ def sheet_material(db, carbonless_item):
     component = Component.objects.create(product=product, quantity=1)
     sheet_material = Material.objects.create_material(component=component,
         type=Item.PAPER, item=carbonless_item, name='Sheet', 
-        length_value=11, width_value=8.5, size_uom='inch')
+        length_value=10, width_value=8, size_uom='inch')
     return sheet_material
 
 
@@ -119,5 +119,5 @@ def test_sheet_fed_press__get_sheet_layouts(db, gto_machine, sheet_material):
     assert runsheet_cutsheet.cut_count == 4
 
     assert cutsheet_trimsheet.count == 1
-    assert cutsheet_trimsheet.cut_count == 0
+    assert cutsheet_trimsheet.cut_count == 2
     

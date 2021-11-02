@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
-from core.utils.shapes import Rectangle
+from core.utils.shapes import Rectangle, RectangleLayoutSerializer, RectangleLayoutMetaSerializer
 from estimation.models import Machine, SheetFedPressMachine, ParentSheet, ChildSheet
 from django.shortcuts import get_object_or_404
 import inflect
@@ -105,7 +105,7 @@ class ParentSheetSerializer(serializers.ModelSerializer):
         return str(obj)
 
 
-class ParentSheetLayoutSerializer(serializers.ModelSerializer):
+class ParentSheetSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = ParentSheet
         fields = ['width_value', 'length_value', 'size_uom',
@@ -113,11 +113,47 @@ class ParentSheetLayoutSerializer(serializers.ModelSerializer):
             'pack_width', 'pack_length']
 
 
-class ChildSheetLayoutSerializer(serializers.ModelSerializer):
-    parent = ParentSheetLayoutSerializer()
+class ChildSheetSimpleSerializer(serializers.ModelSerializer):
+    parent = ParentSheetSimpleSerializer()
 
     class Meta:
         model = ChildSheet
         fields = ['parent', 'width_value', 'length_value', 'size_uom',
             'margin_top', 'margin_right', 'margin_bottom', 'margin_left',
             'pack_width', 'pack_length']
+
+
+class ParentSheetLayoutSerializer(RectangleLayoutSerializer):
+    padding_top = serializers.FloatField()
+    padding_right = serializers.FloatField()
+    padding_bottom = serializers.FloatField()
+    padding_left = serializers.FloatField()
+
+    def create(self, validated_data):
+        return ParentSheet.Layout(**validated_Data)
+
+    def update(self, instance, validated_data):
+        instance = super().update(self, instance, validated_data)
+        instance.padding_top = validated_data.get('padding_top', instance.padding_top)
+        instance.padding_right = validated_data.get('padding_right', instance.padding_right)
+        instance.padding_bottom = validated_data.get('padding_bottom', instance.padding_bottom)
+        instance.padding_left = validated_data.get('padding_left', instance.padding_left)
+        return instance
+
+
+class ChildSheetLayoutSerializer(RectangleLayoutSerializer):
+    margin_top = serializers.FloatField()
+    margin_right = serializers.FloatField()
+    margin_bottom = serializers.FloatField()
+    margin_left = serializers.FloatField()
+
+    def create(self, validated_data):
+        return ChildSheet.Layout(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance = super().update(self, instance, validated_data)
+        instance.margin_top = validated_data.get('margin_top', instance.margin_top)
+        instance.margin_right = validated_data.get('margin_right', instance.margin_right)
+        instance.margin_bottom = validated_data.get('margin_bottom', instance.margin_bottom)
+        instance.margin_left = validated_data.get('margin_left', instance.margin_left)
+        return instance

@@ -317,10 +317,16 @@ class ChildSheet(Rectangle):
         cpackw = child_layout.width + child_layout.margin_x
         cpackl = child_layout.length + child_layout.margin_y
 
-        parent_layout = Rectangle.Layout(width=ppackw, length=ppackl, uom=parent_layout.uom)
-        child_layout = Rectangle.Layout(width=cpackw, length=cpackl, uom=child_layout.uom)
+        parent_layout_reduced = Rectangle.Layout(
+            width=ppackw, length=ppackl, uom=parent_layout.uom)
+        child_layout_reduced = Rectangle.Layout(
+            width=cpackw, length=cpackl, uom=child_layout.uom)
+        layout_meta = Rectangle.get_layout(
+            parent_layout_reduced, child_layout_reduced, rotate, name)
+        layout_meta.bin = parent_layout
+        layout_meta.rect = child_layout
 
-        return Rectangle.get_layout(parent_layout, child_layout, rotate, name)
+        return layout_meta
 
     def __str__(self):
         unit = _inflect.plural(self.size_uom)

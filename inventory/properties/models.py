@@ -6,6 +6,15 @@ from core.utils.shapes import Shape, Line, Tape, Rectangle, Liquid
 
 
 class Paper(Rectangle):
+    class Meta:
+        abstract = True
+
+    class Layout(Rectangle.Layout):
+        def __init__(self, gsm=None, finish=None, **kwargs):
+            super().__init__(**kwargs)
+            self.gsm = gsm
+            self.finish = finish
+
     class Finish:
         UNCOATED = 'uncoated'
         MATTE = 'matte'
@@ -20,8 +29,11 @@ class Paper(Rectangle):
     gsm = models.IntegerField(null=True, blank=False)
     finish = models.CharField(max_length=15, choices=Finish.TYPES, null=True, blank=False)
 
-    class Meta:
-        abstract = True
+    @property
+    def layout(self):
+        layout = Paper.Layout(width=self.width_value, length=self.length_value, 
+            uom=self.size_uom, gsm=self.gsm, finish=self.finish)
+        return layout
 
     def __str__(self):
         gsm = str(self.gsm) + ' gsm' if self.gsm is not None else self.gsm

@@ -7,6 +7,8 @@ urlpatterns = [
     path('api/machines/types', views.MachineTypesViewSet.as_view({'get': 'list'})),
     path('api/machines/sheetfedpress', 
         views.SheetFedPressMachineViewSet.as_view({'get': 'list', 'post': 'create'})),
+    path('api/machines/sheetfedpress/getlayout', 
+        views.SheetFedPressMachineGetSheetLayoutsView.as_view({'post': 'create'})),
     path('api/machines/sheetfedpress/<pk>/', 
         views.SheetFedPressMachineViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
     path('api/machines/sheetfedpress/<pk>/parentsheets', 

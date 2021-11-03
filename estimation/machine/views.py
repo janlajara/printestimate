@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
 from core.utils.shapes import Rectangle, RectangleLayoutSerializer
+from estimation.product.serializers import MaterialPolymorphicSerializer, PaperMaterialSerializer
 from estimation.models import Machine, SheetFedPressMachine, ParentSheet, ChildSheet
 from estimation import serializers
 
@@ -48,6 +49,23 @@ class SheetFedPressMachineViewSet(viewsets.ModelViewSet):
             return Response(serialized.data)
         else:
             return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
+
+
+class SheetFedPressMachineGetSheetLayoutsView(mixins.CreateModelMixin, 
+        viewsets.GenericViewSet):
+    serializer_class = PaperMaterialSerializer
+
+    def create(self, request):
+        serializer = PaperMaterialSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            validated_data = serializer.validated_data
+            material = serializer.create(validated_data)
+            
+
+            return Response({})
+        else:
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
 
 class SheetFedPressMachineParentSheetViewSet(mixins.ListModelMixin,
@@ -128,7 +146,7 @@ class ChildSheetViewSet(viewsets.ModelViewSet):
 
 
 class ChildSheetLayoutView(mixins.CreateModelMixin, viewsets.GenericViewSet):
-    serializer_class = serializers.ChildSheetLayoutSerializer
+    serializer_class = serializers.ChildSheetSimpleSerializer
 
     def get_layouts(self, child_sheet, rotate):
         parent = child_sheet.get('parent')
@@ -139,7 +157,6 @@ class ChildSheetLayoutView(mixins.CreateModelMixin, viewsets.GenericViewSet):
         parent_padding_right = parent.get('padding_right')
         parent_padding_bottom = parent.get('padding_bottom')
         parent_padding_left = parent.get('padding_left')
-        parent_sheet = serializers.ParentSheetSerializer(parent)
 
         child_width = child_sheet.get('width_value')
         child_length = child_sheet.get('length_value')
@@ -165,7 +182,7 @@ class ChildSheetLayoutView(mixins.CreateModelMixin, viewsets.GenericViewSet):
         return layout_meta
 
     def create(self, request):
-        deserialized = serializers.ChildSheetLayoutSerializer(data=request.data)
+        deserialized = serializers.ChildSheetSimpleSerializer(data=request.data)
 
         if deserialized.is_valid():
             try:

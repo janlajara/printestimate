@@ -126,8 +126,30 @@ class Rectangle(Shape):
             self.is_rotated = is_rotated
             self.uom = uom
 
+        def __str__(self):
+            return '%sx%s %s' % (self.width, self.length, self.uom)
+
+        @property
+        def width_measurement(self):
+            if self.width is not None and self.uom is not None:
+                return Distance(**{self.uom: self.width})
+
+        @property
+        def length_measurement(self):
+            if self.length is not None and self.uom is not None:
+                return Distance(**{self.uom: self.length}) 
+
+        @property
         def area(self):
             return self.width * self.length
+
+        def eq(self, layout:'Rectangle.Layout'):
+            return self.width_measurement.mm == layout.width_measurement.mm and \
+                self.length_measurement.mm == layout.length_measurement.mm
+
+        def gte(self, layout:'Rectangle.Layout'):
+            return self.width_measurement.mm >= layout.width_measurement.mm and \
+                self.length_measurement.mm >= layout.length_measurement.mm
     
     class LayoutMeta:
         def __init__(self, bin, rect, layouts, count, usage, wastage, rotate, 

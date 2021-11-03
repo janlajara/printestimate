@@ -48,7 +48,7 @@ class MaterialManager(PolymorphicManager):
 class Material(PolymorphicModel, Shape):
     objects = MaterialManager()
     component = models.ForeignKey(Component, on_delete=models.CASCADE,
-        related_name='materials')
+        related_name='materials', null=True, blank=True)
     material_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=20, null=True)
     item = models.ForeignKey(Item, on_delete=models.RESTRICT, 
@@ -60,7 +60,10 @@ class Material(PolymorphicModel, Shape):
 
     @property
     def quantity(self):
-        return self.component.quantity
+        quantity = 1
+        if self.component is not None:
+            quantity = self.component.quantity
+        return quantity
 
     @property
     def item_properties(self):

@@ -7,6 +7,7 @@ from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
 from estimation.product.models import Material, PaperMaterial
 from inventory.models import Item
+from inventory.properties.models import Paper
 import inflect
 
 _inflect = inflect.engine()
@@ -70,7 +71,7 @@ class SheetFedPressMachine(PressMachine):
     uom = models.CharField(max_length=30, default='mm',
         choices=Measure.UNITS[Measure.DISTANCE])
 
-    def get_nearest_match(self, material, bleed=False):
+    def get_nearest_match(self, material_layout, item_layout, bleed=False):
         match = None
         child_sheets = (
             ChildSheet.objects
@@ -78,44 +79,41 @@ class SheetFedPressMachine(PressMachine):
                 .order_by('width_value', 'length_value'))
 
         for child_sheet in child_sheets:
-            if child_sheet.has_bleed == bleed and child_sheet.gte(material) \
-                    and material.item_properties.gte(child_sheet.parent):
+            if child_sheet.has_bleed == bleed and child_sheet.layout.gte(material_layout) \
+                    and item_layout.gte(child_sheet.parent.layout):
                 match = child_sheet
                 break
 
         return match
 
-    def get_sheet_layouts(self, material, bleed=False, rotate=True):
-        if material.type == Item.PAPER:
-            match = self.get_nearest_match(material, bleed)
+    def get_sheet_layouts(self, material_layout:Paper.Layout, item_layout:Paper.Layout,
+            bleed=False, rotate=False):
+        match = self.get_nearest_match(material_layout, item_layout, bleed)
 
-            if match is not None:
-                stock = material.item_properties
-                parent = match.parent
-                layouts = []
+        if match is not None:
+            parent_layout = match.parent.layout
+            layouts = []
 
-                stock_layout = Rectangle.Layout(width=stock.width_value,
-                    length=stock.length_value, uom=stock.size_uom)
+            parent_layout_meta = Rectangle.get_layout(
+                item_layout, parent_layout, rotate, 'Parent-to-runsheet')
+            child_layout_meta = ChildSheet.get_layout(
+                parent_layout, match.layout, rotate, 'Runsheet-to-cutsheet')
+            layouts = [parent_layout_meta, child_layout_meta]
 
-                parent_layout_meta = Rectangle.get_layout(
-                    stock_layout, parent.layout, rotate, 'Parent-to-runsheet')
-                child_layout_meta = ChildSheet.get_layout(
-                    parent.layout, match.layout, rotate, 'Runsheet-to-cutsheet')
-                layouts = [parent_layout_meta, child_layout_meta]
+            if not match.layout.eq(material_layout):
+                material_layout_meta = Rectangle.get_layout(
+                    match.layout, material_layout, rotate, 'Cutsheet-to-trimsheet')
+                layouts.append(material_layout_meta)
 
-                if not match.eq(material):
-                    material_layout_meta = Rectangle.get_layout(
-                        match.layout, material.layout, rotate, 'Cutsheet-to-trimsheet')
-                    layouts.append(material_layout_meta)
-
-                return layouts
-            else:
-                return None
+            return layouts
+        else:
+            return None
                 
 
     def estimate(self, material, quantity, bleed=False):
         if material.type == Item.PAPER:
-            match = self.get_nearest_match(material, bleed)
+            match = self.get_nearest_match(material.layout, 
+                material.item_properties.layout, bleed)
 
             if match is not None:
                 # Item refers to the stock / raw material

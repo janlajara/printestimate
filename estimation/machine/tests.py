@@ -91,7 +91,8 @@ def test_sheet_fed_press__get_nearest_match(db, gto_machine, sheet_material):
     child_sheet_1 = parent_sheet.add_child_sheet(7, 10, 'inch', 0.5, 0.5, 0.5, 0.5)
     child_sheet_2 = parent_sheet.add_child_sheet(8.5, 11, 'inch', 0.5, 0.5, 0.5, 0.5)
 
-    match = gto_machine.get_nearest_match(sheet_material, True)
+    match = gto_machine.get_nearest_match(sheet_material.layout, 
+        sheet_material.item_properties.layout, True)
 
     assert match is not None
     assert match.width_value == 8.5 and match.length_value == 11 and \
@@ -103,7 +104,8 @@ def test_sheet_fed_press__get_sheet_layouts(db, gto_machine, sheet_material):
     child_sheet_1 = parent_sheet.add_child_sheet(7, 10, 'inch', 0.5, 0.5, 0.5, 0.5)
     child_sheet_2 = parent_sheet.add_child_sheet(8.5, 11, 'inch', 0.5, 0.5, 0.5, 0.5)
 
-    layouts = gto_machine.get_sheet_layouts(sheet_material, True)
+    layouts = gto_machine.get_sheet_layouts(sheet_material.layout, 
+        sheet_material.item_properties.layout, True)
 
     assert layouts is not None
     assert len(layouts) == 3

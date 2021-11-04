@@ -115,9 +115,10 @@ class Tape(Line):
 
 
 class Rectangle(Shape):
-    class Layout:
+    class Layout:        
         def __init__(self, i=0, x=0, y=0, width=0, length=0, 
                 is_rotated=False, uom=None):
+            self.resourcetype = type(self).__qualname__
             self.i = i
             self.x = x 
             self.y = y 
@@ -415,15 +416,17 @@ class Liquid(Shape):
         return name
 
 class RectangleLayoutSerializer(serializers.Serializer):
-    i = serializers.IntegerField()
-    x = serializers.FloatField()
-    y = serializers.FloatField()
+    resourcetype = serializers.CharField(required=False)
+    i = serializers.IntegerField(required=False)
+    x = serializers.FloatField(required=False)
+    y = serializers.FloatField(required=False)
     width = serializers.FloatField()
     length = serializers.FloatField()
-    is_rotated = serializers.BooleanField()
+    is_rotated = serializers.BooleanField(required=False)
     uom = serializers.CharField()
 
     def update(self, instance, validated_data):
+        resourcetype = validated_data.get('resourcetype', instance.resourcetype)
         instance.b = validated_data.get('i', instance.b)
         instance.x = validated_data.get('x', instance.x)
         instance.y = validated_data.get('y', instance.y)
@@ -439,6 +442,8 @@ class RectangleLayoutSerializer(serializers.Serializer):
 
 class RectangleLayoutMetaSerializer(serializers.Serializer):
     name = serializers.CharField()
+    bin = RectangleLayoutSerializer()
+    rect = RectangleLayoutSerializer()
     layouts = RectangleLayoutSerializer(many=True)
     count = serializers.IntegerField()
     usage = serializers.FloatField()
@@ -451,6 +456,8 @@ class RectangleLayoutMetaSerializer(serializers.Serializer):
 
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
+        instance.bin = validated_data.get('bin', instance.bin)
+        instance.rect = validated_data.get('rect', instance.rect)
         instance.layouts = validated_data.get('layouts', instance.layouts)
         instance.count = validated_data.get('count', instance.count)
         instance.usage = validated_data.get('usage', instance.usage)

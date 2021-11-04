@@ -157,3 +157,51 @@ class ChildSheetLayoutSerializer(RectangleLayoutSerializer):
         instance.margin_bottom = validated_data.get('margin_bottom', instance.margin_bottom)
         instance.margin_left = validated_data.get('margin_left', instance.margin_left)
         return instance
+
+
+class PolymorphicSheetLayoutSerializer(PolymorphicSerializer):
+    model_serializer_mapping = {
+        Rectangle.Layout: RectangleLayoutSerializer,
+        ChildSheet.Layout: ChildSheetLayoutSerializer,
+        ParentSheet.Layout: ParentSheetLayoutSerializer
+    }
+
+    def to_resource_type(self, model_or_instance):
+        return type(model_or_instance).__qualname__
+
+    def _get_serializer_from_model_or_instance(self, model_or_instance):
+        resourcetype = type(model_or_instance).__qualname__
+
+        for klazz, serializer in self.model_serializer_mapping.items():
+            if klazz.__qualname__ == resourcetype:
+                return serializer
+        
+        raise KeyError(
+            '`{cls}.model_serializer_mapping` is missing '
+            'a corresponding serializer for `{model}` model'.format(
+                cls=self.__class__.__name__,
+                model=model.__name__))
+
+
+class SheetLayoutMetaSerializer(RectangleLayoutMetaSerializer):
+    bin = PolymorphicSheetLayoutSerializer()
+    rect = PolymorphicSheetLayoutSerializer()
+
+
+class GetSheetLayoutSerializer(serializers.Serializer):
+    material_layout = RectangleLayoutSerializer()
+    item_layout = RectangleLayoutSerializer()
+    bleed = serializers.BooleanField(default=False)
+    rotate = serializers.BooleanField(default=False)
+
+    def create(self, validated_data):
+        material_layout_data = validated_data.get('material_layout')
+        material_layout = Rectangle.Layout(**material_layout_data)
+
+        item_layout_data = validated_data.get('item_layout')
+        item_layout = Rectangle.Layout(**item_layout_data)
+
+        bleed = validated_data.get('bleed', False)
+        rotate = validated_data.get('rotate', False)
+
+        return material_layout, item_layout, bleed, rotate

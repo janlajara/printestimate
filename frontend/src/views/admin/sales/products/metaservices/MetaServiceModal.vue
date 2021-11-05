@@ -172,6 +172,7 @@ export default {
                         options_type: x.optionsType,
                         is_required: x.isRequired,
                         meta_operation_options: x.metaOperationOptions.map( y => ({
+                            id: y.id,
                             operation: y.operation
                         }))
                     }))

@@ -52,12 +52,14 @@
                     state.emitInput();
                 }"/>
         </div>
+        <ProductComponentSheetLayoutView/>
     </div>
 </template>
 <script>
 import InputSelect from '@/components/InputSelect.vue';
 import InputText from '@/components/InputText.vue';
 import DynamicInputField from '@/components/DynamicInputField.vue';
+import ProductComponentSheetLayoutView from './ProductComponentSheetLayoutView.vue';
 
 import {reactive, onBeforeMount, onMounted} from 'vue';
 
@@ -67,7 +69,7 @@ export default {
         value: Object
     },
     components: {
-        InputSelect, InputText, DynamicInputField
+        InputSelect, InputText, DynamicInputField, ProductComponentSheetLayoutView
     },
     emits: ['input', 'load'],
     setup(props, {emit}) {

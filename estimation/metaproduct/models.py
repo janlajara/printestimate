@@ -45,9 +45,9 @@ class MetaEstimateVariable:
     MACHINE_RUN = 'Running Material'
 
     # Cut Properties for Paper Materials
-    RAW_TO_RUNNING_CUT = 'Raw-to-Running Cut'
-    RUNNING_TO_FINAL_CUT = 'Running-to-Final Cut'
-    FINAL_TRIM = 'Final Trim'
+    RAW_TO_RUNNING_CUT = 'Parent-to-Runsheet Cut'
+    RUNNING_TO_FINAL_CUT = 'Runsheet-to-Cutsheet Cut'
+    FINAL_TRIM = 'Cutsheet-to-trimsheet Cut'
 
     TYPE_CHOICES = [
         (RAW_MATERIAL, RAW_MATERIAL),
@@ -138,7 +138,7 @@ class MetaService(MetaProductData):
     meta_component = models.ForeignKey(MetaComponent, on_delete=models.SET_NULL, 
         blank=True, null=True)
     estimate_variable_type = models.CharField(choices=MetaEstimateVariable.TYPE_CHOICES,
-        max_length=20, blank=True, null=True)
+        max_length=30, blank=True, null=True)
 
 
 class MetaMaterialOption(models.Model):

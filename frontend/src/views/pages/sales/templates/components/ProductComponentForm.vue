@@ -52,16 +52,16 @@
                     state.emitInput();
                 }"/>
         </div>
-        <ProductComponentSheetLayoutView/>
+        <ProductComponentSheetLayout/>
     </div>
 </template>
 <script>
 import InputSelect from '@/components/InputSelect.vue';
 import InputText from '@/components/InputText.vue';
 import DynamicInputField from '@/components/DynamicInputField.vue';
-import ProductComponentSheetLayoutView from './ProductComponentSheetLayoutView.vue';
+import ProductComponentSheetLayout from './ProductComponentSheetLayout.vue';
 
-import {reactive, onBeforeMount, onMounted} from 'vue';
+import {reactive, onBeforeMount, onMounted, watchEffect} from 'vue';
 
 export default {
     props: {
@@ -69,7 +69,7 @@ export default {
         value: Object
     },
     components: {
-        InputSelect, InputText, DynamicInputField, ProductComponentSheetLayoutView
+        InputSelect, InputText, DynamicInputField, ProductComponentSheetLayout
     },
     emits: ['input', 'load'],
     setup(props, {emit}) {
@@ -131,6 +131,11 @@ export default {
                 data: state.data,
                 validator: state.validate
             });
+        });
+
+        watchEffect(()=>{
+            console.log(state.data.material_templates);
+            console.log(state.component.additionalFields);
         });
 
         return {

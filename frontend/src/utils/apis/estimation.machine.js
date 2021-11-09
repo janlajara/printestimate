@@ -77,6 +77,13 @@ export class SheetFedPressMachineApi {
             'Child Sheet created successfully.', 'Create failed. Please try again.', sheet);
         return response.data;
     }
+
+    static async getSheetLayout(id, input) {
+        const response = await AXIOS.execute(AXIOS.POST, 
+            SheetFedPressMachineApi.uri + `/sheetfedpress/${id}/getlayout`,
+            null, null, input);
+        return response.data;
+    }
 }
 
 

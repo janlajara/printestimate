@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from inventory.serializers import ItemPropertiesPolymorphicSerializer
 from estimation.process.serializers import OperationListSerializer
 from estimation.metaproduct.models import MetaProduct, MetaService, MetaComponent, \
     MetaOperation, MetaComponentOperation, MetaOperationOption, MetaMaterialOption, MetaMachineOption
@@ -41,12 +42,18 @@ class MetaComponentOperationSerializer(serializers.ModelSerializer):
 
 class MetaMaterialOptionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
-    label = serializers.CharField(read_only=True)
+    label = serializers.CharField(read_only=True) 
     type = serializers.CharField(read_only=True)
+    properties = serializers.SerializerMethodField()
 
     class Meta:
         model = MetaMaterialOption
-        fields = ['id', 'label', 'item', 'type']
+        fields = ['id', 'label', 'item', 'type', 'properties']
+
+    def get_properties(self, obj):
+        if obj.item is not None:
+            serializer = ItemPropertiesPolymorphicSerializer(obj.item.properties)
+            return serializer.data
 
 
 class MetaMachineOptionSerializer(serializers.ModelSerializer):

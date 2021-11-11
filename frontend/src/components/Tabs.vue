@@ -27,8 +27,15 @@ import {reactive, toRefs, onBeforeMount, onMounted, provide} from 'vue'
 
 export default {
     name: 'Tabs',
-    setup(_, {slots}) {
+    props: {
+        refresh: {
+            type: Boolean,
+            default: true
+        }
+    },
+    setup(props, {slots}) {
         const state = reactive({
+            refresh: props.refresh,
             selectedIndex: 0,
             tabs: [],
             count: 0
@@ -42,8 +49,12 @@ export default {
 
         onBeforeMount(()=> {
             if (slots.default) {
-                state.tabs = slots.default().filter( child => {
-                    return child.type.name==='Tab'})
+                const slot_content = slots.default(); 
+                let tabs = slot_content.filter(child => child.type.name==='Tab');
+                if (tabs.length == 0 && slot_content[0] != null) {
+                    tabs = slot_content[0].children.filter( child => child.type.name==='Tab');
+                }
+                state.tabs = tabs;
             }
         })
 

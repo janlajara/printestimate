@@ -1,54 +1,38 @@
 <template>
-    <div class="mt-4 grid w-full">
-        <div class="flex justify-end">
-            <Button icon="dashboard" :action="state.hideToggle">
-                {{state.isHidden? 'Show': 'Hide' }} Layout</Button>
-        </div>
-        <div :class="[state.isHidden? 'hidden' : '', '']">
-            <CutListLayout/>
-        </div>
-    </div>
+    <CutListLayout/>
 </template>
 
 <script>
-import Button from '@/components/Button.vue';
 import CutListLayout from '@/views/commons/CutListLayout.vue';
 
-import {reactive, watch, watchEffect} from 'vue';
+import {reactive, watchEffect} from 'vue';
 import {SheetFedPressMachineApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Button, CutListLayout
+        CutListLayout
     },
     props: {
+        machineId: Number,
         materialLayout: Object,
         itemLayout: Object
     },
     setup(props) {
         const state = reactive({
-            isHidden: true,
-            hideToggle: ()=> {
-                state.isHidden = !state.isHidden;
-            },
-            materialLayout: null,
-            itemLayout: null
+            machineId: props.machineId,
+            materialLayout: props.materialLayout,
+            itemLayout: props.itemLayout
         });
     
-        const getSheetLayout = (input) => {
+        const getSheetLayout = async (machineId, input) => {
             if (input) {
-                const response = SheetFedPressMachineApi.getSheetLayout(input);
+                const response = await SheetFedPressMachineApi.getSheetLayout(
+                    machineId, input);
                 if (response) console.log(response);
             }
         };
 
-        watch(()=>props.materialLayout, ()=> {
-            state.materialLayout = props.materialLayout;
-        });
-        watch(()=>props.itemLayout, ()=> {
-            state.itemLayout = props.itemLayout;
-        });
-        watchEffect(()=> {
+        watchEffect(async ()=> {
             if (state.materialLayout && state.itemLayout) {
                 const input = {
                     material_layout: {
@@ -65,7 +49,7 @@ export default {
                     rotate: true
                 };
                 console.log(input);
-                getSheetLayout(input);
+                if (state.machineId) await getSheetLayout(state.machineId, input);
             }
         });
 

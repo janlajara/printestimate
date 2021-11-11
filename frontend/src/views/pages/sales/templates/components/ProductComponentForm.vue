@@ -52,16 +52,19 @@
                     state.emitInput();
                 }"/>
         </div>
-        <ProductComponentSheetLayout/>
+        <ProductComponentSheetLayoutTabs
+            :machine-id="state.data.machine_option"
+            :material-layout="state.meta.sheet_layout.material_layout"
+            :item-layouts="state.meta.sheet_layout.item_layouts"/>
     </div>
 </template>
 <script>
 import InputSelect from '@/components/InputSelect.vue';
 import InputText from '@/components/InputText.vue';
 import DynamicInputField from '@/components/DynamicInputField.vue';
-import ProductComponentSheetLayout from './ProductComponentSheetLayout.vue';
+import ProductComponentSheetLayoutTabs from './sheetlayout/ProductComponentSheetLayoutTabs.vue';
 
-import {reactive, onBeforeMount, onMounted, watchEffect} from 'vue';
+import {reactive, onBeforeMount, onMounted, computed} from 'vue';
 
 export default {
     props: {
@@ -69,7 +72,7 @@ export default {
         value: Object
     },
     components: {
-        InputSelect, InputText, DynamicInputField, ProductComponentSheetLayout
+        InputSelect, InputText, DynamicInputField, ProductComponentSheetLayoutTabs
     },
     emits: ['input', 'load'],
     setup(props, {emit}) {
@@ -81,7 +84,13 @@ export default {
                 material_templates: [],
                 machine_option: null,
                 quantity: 1,
-                resourcetype: props.component.type
+                resourcetype: props.component.type,
+            },
+            meta: {
+                sheet_layout: {
+                    material_layout: computed(()=>getMaterialLayout()),
+                    item_layouts: computed(()=>getItemLayouts()),
+                }
             },
             emitInput: ()=> {
                 emit('input', state.data);
@@ -133,10 +142,36 @@ export default {
             });
         });
 
-        watchEffect(()=>{
-            console.log(state.data.material_templates);
-            console.log(state.component.additionalFields);
-        });
+        const getMaterialLayout = ()=> {
+            let materialLayout = null;
+            if (state.data.resourcetype == 'paper') {
+                return {
+                    width: state.data['width_value'],
+                    length: state.data['length_value'],
+                    uom: state.data['size_uom']}
+            }
+            return materialLayout;
+        }
+
+        const getItemLayouts = () => {
+            let itemLayouts = [];
+            const getItemLayout = (x) => {
+                const metaMaterialOption = 
+                    state.component.metaMaterialOptions.find(
+                        y => y.id == x.meta_material_option);
+                const itemLayout = {
+                    width: metaMaterialOption.properties.width_value, 
+                    length: metaMaterialOption.properties.length_value,
+                    uom: metaMaterialOption.properties.size_uom
+                }
+                return itemLayout;
+            }
+            if (state.data.resourcetype == 'paper') {
+                itemLayouts = state.data.material_templates.map(x => 
+                    getItemLayout(x));                
+            }
+            return itemLayouts;
+        };
 
         return {
             state

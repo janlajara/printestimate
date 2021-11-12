@@ -186,6 +186,7 @@ class PolymorphicSheetLayoutSerializer(PolymorphicSerializer):
 class SheetLayoutMetaSerializer(RectangleLayoutMetaSerializer):
     bin = PolymorphicSheetLayoutSerializer()
     rect = PolymorphicSheetLayoutSerializer()
+    layouts = PolymorphicSheetLayoutSerializer(many=True)
 
 
 class GetSheetLayoutSerializer(serializers.Serializer):

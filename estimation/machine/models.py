@@ -1,4 +1,4 @@
-import math
+import math, copy
 from django.db import models
 from core.utils.shapes import Rectangle
 from core.utils.measures import Measure, CostingMeasure, Quantity
@@ -94,7 +94,7 @@ class SheetFedPressMachine(PressMachine):
             parent_layout = match.parent.layout
             layouts = []
 
-            parent_layout_meta = Rectangle.get_layout(
+            parent_layout_meta = ParentSheet.get_layout(
                 item_layout, parent_layout, rotate, 'Parent-to-runsheet')
             child_layout_meta = ChildSheet.get_layout(
                 parent_layout, match.layout, rotate, 'Runsheet-to-cutsheet')
@@ -180,6 +180,14 @@ class ParentSheet(Rectangle):
         def padding_y(self):
             return self.padding_top + self.padding_bottom
 
+        @property
+        def pack_width(self):
+            return self.width - self.padding_x
+        
+        @property
+        def pack_length(self):
+            return self.length - self.padding_y
+
     machine = models.ForeignKey(SheetFedPressMachine, on_delete=models.CASCADE, 
         related_name='parent_sheets') 
     label = models.CharField(max_length=30, blank=True, null=True)
@@ -236,6 +244,36 @@ class ParentSheet(Rectangle):
             
         return child
 
+    # Returns the following:
+    # layouts, count, usage, wastage, indices of rotated rectangles
+    @classmethod
+    def get_layout(cls, rect_layout:Rectangle, parent_layout:'ParentSheet.Layout', 
+            rotate=False, name=None):
+        layouts = []
+        layout_meta = Rectangle.get_layout(
+            rect_layout, parent_layout, rotate, name)
+
+        for layout in layout_meta.layouts:
+            parent = copy.copy(parent_layout)
+            parent.i = layout.i 
+            parent.x = layout.x 
+            parent.y = layout.y 
+            if layout.is_rotated:
+                parent.is_rotated = layout.is_rotated
+                temp_width = parent.width
+                parent.width = parent.length
+                parent.length = temp_width
+                temp_padding = parent.padding_top
+                parent.padding_top = parent.padding_right
+                parent.padding_right = parent.padding_bottom
+                parent.padding_bottom = parent.padding_left
+                parent.padding_left = temp_padding
+            layouts.append(parent)
+
+        layout_meta.layouts = layouts
+
+        return layout_meta
+
     def __str__(self):
         unit = _inflect.plural(self.size_uom)
         return '%g x %g %s' % (self.width_value, self.length_value, unit)
@@ -258,6 +296,14 @@ class ChildSheet(Rectangle):
         @property
         def margin_y(self):
             return self.margin_top + self.margin_bottom
+
+        @property
+        def pack_width(self):
+            return self.width + self.margin_x
+        
+        @property
+        def pack_length(self):
+            return self.length + self.margin_y
 
     parent = models.ForeignKey(ParentSheet, 
         on_delete=models.CASCADE, related_name='child_sheets')
@@ -304,25 +350,33 @@ class ChildSheet(Rectangle):
     def count(self):
         return self.parent.pack(self) 
 
+        
     # Returns the following:
     # layouts, count, usage, wastage, indices of rotated rectangles
     @classmethod
     def get_layout(cls, parent_layout:ParentSheet.Layout,
             child_layout:'ChildSheet.Layout', rotate=False, name=None):
-
-        ppackw = parent_layout.width - parent_layout.padding_x
-        ppackl = parent_layout.length - parent_layout.padding_y
-        cpackw = child_layout.width + child_layout.margin_x
-        cpackl = child_layout.length + child_layout.margin_y
-
-        parent_layout_reduced = Rectangle.Layout(
-            width=ppackw, length=ppackl, uom=parent_layout.uom)
-        child_layout_reduced = Rectangle.Layout(
-            width=cpackw, length=cpackl, uom=child_layout.uom)
+        layouts = []
         layout_meta = Rectangle.get_layout(
-            parent_layout_reduced, child_layout_reduced, rotate, name)
-        layout_meta.bin = parent_layout
-        layout_meta.rect = child_layout
+            parent_layout, child_layout, rotate, name)
+
+        for layout in layout_meta.layouts:
+            child = copy.copy(child_layout)
+            child.i = layout.i 
+            child.x = layout.x 
+            child.y = layout.y 
+            if layout.is_rotated:
+                child.is_rotated = layout.is_rotated
+                child.width = layout.width 
+                child.length = layout.length
+                temp = child.margin_top
+                child.margin_top = child.margin_right
+                child.margin_right = child.margin_bottom
+                child.margin_bottom = child.margin_left
+                child.margin_left = temp
+            layouts.append(child)
+
+        layout_meta.layouts = layouts
 
         return layout_meta
 

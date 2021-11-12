@@ -4,7 +4,7 @@
             <Rectangle 
                 :width="$props.width"
                 :height="$props.length"
-                :stroke="state.paddingStroke" 
+                :stroke="$props.stroke" 
                 :stroke-width="1"
                 :fill="$props.fill"/>
             <svg>    
@@ -70,20 +70,31 @@ export default {
         paddingBottom: {type: Number, default: 0},
         paddingLeft: {type: Number, default: 0},
         displayLabel: Boolean,
-        fill: {type: String, default: 'white'}
+        fill: {type: String, default: 'white'},
+        viewBoxWidth: {type: Number, default: 0}, 
+        viewBoxLength: {type: Number, default: 0},
+        stroke: {type: String, default: 'pink'}
     },
     components: {
         Rectangle, LineMeasure
     },
     setup(props) {
         const state = reactive({
-            paddingStroke: 'pink',
+            paddingStroke: props.stroke,
             paddingStrokeWidth: 2,
             offsetX: props.displayLabel? 2: 0,
             offsetY: props.displayLabel? 2: 0,
-            viewBoxWidth: computed(()=>  (props.width + (state.offsetX*2))),
-            viewBoxLength: computed(()=> (props.length + (state.offsetY*2)))
-        });
+            viewBoxWidth: computed(()=>  {
+                let width = props.width;
+                if (props.viewBoxWidth > 0) width = props.viewBoxWidth;
+                return width + (state.offsetX*2);
+            }),
+            viewBoxLength: computed(()=> {
+                let length = props.length;
+                if (props.viewBoxLength > 0) length = props.viewBoxLength;
+                return length + (state.offsetY*2);
+            })
+        });console.log(state)
         return {
             state
         }

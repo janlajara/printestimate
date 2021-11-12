@@ -144,6 +144,14 @@ class Rectangle(Shape):
         def area(self):
             return self.width * self.length
 
+        @property
+        def pack_width(self):
+            return self.width
+
+        @property
+        def pack_length(self):
+            return self.length
+
         def eq(self, layout:'Rectangle.Layout'):
             return self.width_measurement.mm == layout.width_measurement.mm and \
                 self.length_measurement.mm == layout.length_measurement.mm
@@ -247,7 +255,7 @@ class Rectangle(Shape):
             pa = d_pw.mm * d_pl.mm
             return (ca / pa)
 
-        def __get_layouts__(packer, rotated):
+        def __get_layouts__(packer, rotated, rect):
             layouts = []
             for key, rect in enumerate(packer.rect_list()):
                 x, y, width, length, rid = rect
@@ -279,11 +287,11 @@ class Rectangle(Shape):
             cut_count = len(unique_x) + len(unique_y)
             return cut_count
 
-        parent_width = parent_layout.width
-        parent_length = parent_layout.length
+        parent_width = parent_layout.pack_width
+        parent_length = parent_layout.pack_length
         parent_uom = parent_layout.uom
-        child_width = child_layout.width
-        child_length = child_layout.length
+        child_width = child_layout.pack_width
+        child_length = child_layout.pack_length
         child_uom = child_layout.uom
         
         packer = Rectangle.binpacker(
@@ -297,7 +305,7 @@ class Rectangle(Shape):
         # list of index of rectangles that have been rotated
         rotated = [i for i, x in enumerate(packer) if x.width != child_width and x.height != child_length] if \
             packer is not None and rotate else []
-        layouts = __get_layouts__(packer, rotated)
+        layouts = __get_layouts__(packer, rotated, child_layout)
         cut_count = __get_cut_count__(packer, parent_width, parent_length)
 
         layout_meta = Rectangle.LayoutMeta(parent_layout, child_layout, layouts, count, 

@@ -1,5 +1,5 @@
 <template>
-    <CutListLayout/>
+    <CutListLayout :layouts="state.data.sheetLayouts"/>
 </template>
 
 <script>
@@ -21,14 +21,17 @@ export default {
         const state = reactive({
             machineId: props.machineId,
             materialLayout: props.materialLayout,
-            itemLayout: props.itemLayout
+            itemLayout: props.itemLayout,
+            data: {
+                sheetLayouts: []
+            }
         });
     
-        const getSheetLayout = async (machineId, input) => {
+        const getSheetLayouts = async (machineId, input) => {
             if (input) {
                 const response = await SheetFedPressMachineApi.getSheetLayout(
                     machineId, input);
-                if (response) console.log(response);
+                if (response) return response || [];
             }
         };
 
@@ -48,8 +51,10 @@ export default {
                     bleed: false,
                     rotate: true
                 };
-                console.log(input);
-                if (state.machineId) await getSheetLayout(state.machineId, input);
+                if (state.machineId) {
+                    state.data.sheetLayouts = await getSheetLayouts(
+                        state.machineId, input);
+                }
             }
         });
 

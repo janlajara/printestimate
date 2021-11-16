@@ -144,13 +144,11 @@ class Rectangle(Shape):
         def area(self):
             return self.width * self.length
 
-        @property
-        def pack_width(self):
-            return self.width
+        def get_pack_size_as_bin(self):
+            return self.width, self.length, self.uom
 
-        @property
-        def pack_length(self):
-            return self.length
+        def get_pack_size_as_rect(self):
+            return self.width, self.length, self.uom
 
         def eq(self, layout:'Rectangle.Layout'):
             return self.width_measurement.mm == layout.width_measurement.mm and \
@@ -287,12 +285,8 @@ class Rectangle(Shape):
             cut_count = len(unique_x) + len(unique_y)
             return cut_count
 
-        parent_width = parent_layout.pack_width
-        parent_length = parent_layout.pack_length
-        parent_uom = parent_layout.uom
-        child_width = child_layout.pack_width
-        child_length = child_layout.pack_length
-        child_uom = child_layout.uom
+        parent_width, parent_length, parent_uom = parent_layout.get_pack_size_as_bin()
+        child_width, child_length, child_uom = child_layout.get_pack_size_as_rect()
         
         packer = Rectangle.binpacker(
             parent_width, parent_length, parent_uom,

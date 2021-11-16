@@ -180,13 +180,12 @@ class ParentSheet(Rectangle):
         def padding_y(self):
             return self.padding_top + self.padding_bottom
 
-        @property
-        def pack_width(self):
-            return self.width - self.padding_x
+        def get_pack_size_as_bin(self):
+            return (self.width - self.padding_x), \
+                (self.length - self.padding_y), self.uom
         
-        @property
-        def pack_length(self):
-            return self.length - self.padding_y
+        def get_pack_size_as_rect(self):
+            return self.width, self.length, self.uom
 
     machine = models.ForeignKey(SheetFedPressMachine, on_delete=models.CASCADE, 
         related_name='parent_sheets') 
@@ -297,13 +296,12 @@ class ChildSheet(Rectangle):
         def margin_y(self):
             return self.margin_top + self.margin_bottom
 
-        @property
-        def pack_width(self):
-            return self.width + self.margin_x
+        def get_pack_size_as_bin(self):
+            return self.width, self.length, self.uom
         
-        @property
-        def pack_length(self):
-            return self.length + self.margin_y
+        def get_pack_size_as_rect(self):
+            return self.width + self.margin_x, \
+                self.length + self.margin_y, self.uom
 
     parent = models.ForeignKey(ParentSheet, 
         on_delete=models.CASCADE, related_name='child_sheets')

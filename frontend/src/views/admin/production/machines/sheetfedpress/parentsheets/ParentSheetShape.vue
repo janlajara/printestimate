@@ -2,6 +2,7 @@
     <svg :viewBox="`0 0 ${state.viewBoxWidth} ${state.viewBoxLength}`">
         <svg :viewBox="`${-state.offsetX} ${-state.offsetY} ${state.viewBoxWidth} ${state.viewBoxLength}`">
             <Rectangle 
+                :x="$props.x" :y="$props.y"
                 :width="$props.width"
                 :height="$props.length"
                 :stroke="$props.stroke" 
@@ -63,6 +64,8 @@ import {reactive, computed} from 'vue';
 export default {
     props: {
         data: Object,
+        x: {type: Number, default: 0},
+        y: {type: Number, default: 0},
         width: {type: Number, default: 0},
         length: {type: Number, default: 0},
         paddingTop: {type: Number, default: 0},
@@ -94,7 +97,7 @@ export default {
                 if (props.viewBoxLength > 0) length = props.viewBoxLength;
                 return length + (state.offsetY*2);
             })
-        });console.log(state)
+        });
         return {
             state
         }

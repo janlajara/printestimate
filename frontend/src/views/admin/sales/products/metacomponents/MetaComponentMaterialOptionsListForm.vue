@@ -71,9 +71,11 @@ export default {
                 if (state.materialForm.items.length > 0) {
                     materialList = state.materialForm.items.map(x => {
                         const choice = state.meta.materialChoices.find( y => y.value == x);
+                        const existing = props.value.find(z => z.item == x);
                         if (choice) {
                             const materialOption = {
-                                id: choice.id || null, item: x, label: choice.label
+                                id: existing? existing.id : null, 
+                                item: x, label: choice.label
                             };
                             return materialOption;
                         }

@@ -32,7 +32,8 @@ class MetaOperationViewUtils:
         existing_ids = [y.get('id') for y in meta_operation_options if not y.get('id') is None]
         ids_to_delete = [x.id for x in meta_operation.options if x is not None and not x.id in existing_ids]
 
-        MetaOperationOption.objects.filter(pk__in=ids_to_delete).delete()
+        if len(ids_to_delete) > 0:
+            MetaOperationOption.objects.filter(pk__in=ids_to_delete).delete()
 
         for mpo_data in meta_operation_options:
             mpo_id = mpo_data.pop('id') if 'id' in mpo_data else None
@@ -47,7 +48,8 @@ class MetaOperationViewUtils:
         existing_ids = [y.get('id') for y in meta_operations if not y.get('id') is None]
         ids_to_delete = [x.id for x in obj.meta_operations.all() if x is not None and not x.id in existing_ids]
 
-        MetaOperation.objects.filter(pk__in=ids_to_delete).delete()
+        if len(ids_to_delete) > 0:
+            MetaOperation.objects.filter(pk__in=ids_to_delete).delete()
 
         for mp_data in meta_operations:
             meta_operation_options = mp_data.pop('meta_operation_options')
@@ -177,7 +179,8 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
         existing_ids = [y.get('id') for y in meta_material_options if not y.get('id') is None]
         ids_to_delete = [x.id for x in meta_component.meta_material_options.all() if x is not None and not x.id in existing_ids]
 
-        MetaMaterialOption.objects.filter(pk__in=ids_to_delete).delete()
+        if len(ids_to_delete) > 0:        
+            MetaMaterialOption.objects.filter(pk__in=ids_to_delete).delete()
 
         for mmo_data in meta_material_options:
             mmo_id = mmo_data.pop('id') if 'id' in mmo_data else None
@@ -190,7 +193,8 @@ class MetaComponentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
         existing_ids = [y.get('id') for y in meta_machine_options if not y.get('id') is None]
         ids_to_delete = [x.id for x in meta_component.meta_machine_options.all() if x is not None and not x.id in existing_ids]
 
-        MetaMachineOption.objects.filter(pk__in=ids_to_delete).delete()
+        if len(ids_to_delete) > 0:
+            MetaMachineOption.objects.filter(pk__in=ids_to_delete).delete()
 
         for mmc_data in meta_machine_options:
             mmc_id = mmc_data.pop('id') if 'id' in mmc_data else None

@@ -7,10 +7,10 @@
             class="pt-4 text-sm text-red-600">*{{state.error}}</div>
         <Section heading="General Information" heading-position="side"> 
             <div class="md:grid md:gap-4 md:grid-cols-3">
-                <InputText name="Name"  placeholder="Name"
+                <InputText name="Name"  placeholder="Name" class="col-span-2"
                     type="text" :value="state.data.name" required
                     @input="value => state.data.name = value"/>
-                <InputText name="Description"  placeholder="Description"  class="col-span-2"
+                <InputText name="Description"  placeholder="Description"  class="col-span-3"
                     type="text" :value="state.data.description" required
                     @input="value => state.data.description = value"/>
             </div>

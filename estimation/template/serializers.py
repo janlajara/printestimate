@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 from inventory.models import Item
+from estimation.machine.serializers import MachineSerializer
 from estimation.template.models import ProductTemplate, ComponentTemplate, \
     MaterialTemplate, ServiceTemplate, OperationTemplate, OperationOptionTemplate, \
     TapeComponentTemplate, LineComponentTemplate, PaperComponentTemplate, \
@@ -62,26 +63,27 @@ class MaterialTemplateReadSerializer(serializers.ModelSerializer):
 class ComponentTemplateSerializer(serializers.ModelSerializer):
     component_template_id = serializers.IntegerField(required=False, allow_null=True)
     material_templates = MaterialTemplateSerializer(many=True)
-    machine_option_label = serializers.SerializerMethodField(read_only=True)
+    machine_option_obj = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ComponentTemplate
         fields = ['component_template_id', 'name', 'type', 
             'quantity', 'total_material_quantity', 
             'meta_component', 'material_templates',
-            'machine_option', 'machine_option_label']
+            'machine_option', 'machine_option_obj']
     
-    def get_machine_option_label(self, instance):
-        return instance.machine_option.label if \
-            instance.machine_option is not None else ''
-
+    def get_machine_option_obj(self, instance):
+        obj = None
+        if instance.machine_option is not None:
+            obj = MachineSerializer(instance.machine_option.machine)
+        return obj.data
 
 class LineComponentTemplateSerializer(ComponentTemplateSerializer):
     class Meta:
         model = LineComponentTemplate
         fields = ['component_template_id', 'name', 'size', 'type', 
             'quantity', 'total_material_quantity', 
-            'meta_component', 'machine_option', 'machine_option_label', 
+            'meta_component', 'machine_option', 'machine_option_obj', 
             'material_templates', 'length_value', 'length_uom']
 
     def validate(self, data):
@@ -98,7 +100,7 @@ class TapeComponentTemplateSerializer(ComponentTemplateSerializer):
         model = TapeComponentTemplate
         fields = ['component_template_id', 'name', 'size', 'type', 
             'quantity', 'total_material_quantity', 
-            'meta_component', 'machine_option', 'machine_option_label', 
+            'meta_component', 'machine_option', 'machine_option_obj', 
             'material_templates',
             'length_value', 'length_uom', 
             'width_value', 'width_uom']
@@ -121,7 +123,7 @@ class PaperComponentTemplateSerializer(ComponentTemplateSerializer):
         model = PaperComponentTemplate
         fields = ['component_template_id', 'name', 'size', 'type', 
             'quantity', 'total_material_quantity', 
-            'meta_component', 'machine_option', 'machine_option_label', 
+            'meta_component', 'machine_option', 'machine_option_obj', 
             'material_templates',
             'width_value', 'length_value', 'size_uom']
 
@@ -131,7 +133,7 @@ class PanelComponentTemplateSerializer(ComponentTemplateSerializer):
         model = PanelComponentTemplate
         fields = ['component_template_id', 'name', 'size', 'type', 
             'quantity', 'total_material_quantity', 
-            'meta_component', 'machine_option', 'machine_option_label', 
+            'meta_component', 'machine_option', 'machine_option_obj', 
             'material_templates',
             'width_value', 'length_value', 'size_uom',
             'thickness_value', 'thickness_uom']
@@ -148,7 +150,7 @@ class LiquidComponentTemplateSerializer(ComponentTemplateSerializer):
         model = LiquidComponentTemplate
         fields = ['component_template_id', 'name', 'size', 'type', 
             'quantity', 'total_material_quantity', 
-            'meta_component', 'machine_option', 'machine_option_label', 
+            'meta_component', 'machine_option', 'machine_option_obj', 
             'material_templates', 'volume_value', 'volume_uom']
 
     def validate(self, data):

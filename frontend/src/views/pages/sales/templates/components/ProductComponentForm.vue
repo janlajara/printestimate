@@ -53,7 +53,7 @@
                 }"/>
         </div>
         <ProductComponentSheetLayoutTabs
-            :machine-id="state.data.machine_option"
+            :machine-id="state.meta.machine_option_obj_id"
             :material-layout="state.meta.sheet_layout.material_layout"
             :item-layouts="state.meta.sheet_layout.item_layouts"/>
     </div>
@@ -90,7 +90,8 @@ export default {
                 sheet_layout: {
                     material_layout: computed(()=>getMaterialLayout()),
                     item_layouts: computed(()=>getItemLayouts()),
-                }
+                },
+                machine_option_obj: null
             },
             emitInput: ()=> {
                 emit('input', state.data);
@@ -120,10 +121,12 @@ export default {
         });
         onBeforeMount(()=> {
             if (props.value) {
-                const component = props.value;
+                const component = props.value; 
                 state.data.material_templates = component.material_templates;
                 state.data.machine_option = component.machineOption;
                 state.data.quantity = component.quantity;
+                state.meta.machine_option_obj_id = component.machine_option_obj?
+                    component.machine_option_obj.id : null;
                 
                 const dynamicProps = Object.entries(component)
                     .filter(x => !['meta_component', 'material_templates', 

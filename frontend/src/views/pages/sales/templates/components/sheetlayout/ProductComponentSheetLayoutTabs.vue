@@ -23,7 +23,7 @@ import Tab from '@/components/Tab.vue';
 import Button from '@/components/Button.vue';
 import ProductComponentSheetLayout from './ProductComponentSheetLayout.vue';
 
-import {reactive} from 'vue';
+import {reactive, computed} from 'vue';
 
 export default {
     components: {
@@ -38,9 +38,9 @@ export default {
         const state = reactive({
             isHidden: true,
             data: {
-                machineId: props.machineId,
-                materialLayout: props.materialLayout,
-                itemLayouts: props.itemLayouts
+                machineId: computed(()=>props.machineId),
+                materialLayout: computed(()=>props.materialLayout),
+                itemLayouts: computed(()=>props.itemLayouts)
             },
             hideToggle: ()=> {
                 state.isHidden = !state.isHidden;

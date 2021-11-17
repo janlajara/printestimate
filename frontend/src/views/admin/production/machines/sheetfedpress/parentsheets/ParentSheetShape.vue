@@ -10,24 +10,27 @@
                 :fill="$props.fill"/>
             <svg>    
                 <Rectangle v-if="$props.paddingTop > 0" 
+                    :x="$props.x" :y="$props.y"
                     :width="$props.width" 
                     :height="$props.paddingTop"
                     :stroke="state.paddingStroke"
                     pattern="diagonal-hatch"/>
                 <Rectangle v-if="$props.paddingLeft"
-                    :x="0" :y="0"
+                    :x="$props.x" :y="$props.y"
                     :width="$props.paddingLeft" 
                     :height="$props.length"
                     :stroke="state.paddingStroke"
                     pattern="diagonal-hatch"/>
                 <Rectangle v-if="$props.paddingBottom"
-                    :x="0" :y="$props.length - $props.paddingBottom"
+                    :x="$props.x" 
+                    :y="$props.y + ($props.length - $props.paddingBottom)"
                     :width="$props.width" 
                     :height="$props.paddingBottom"
                     :stroke="state.paddingStroke"
                     pattern="diagonal-hatch"/>
                 <Rectangle v-if="$props.paddingRight"
-                    :x="$props.width - $props.paddingRight" :y="0"
+                    :x="$props.x + ($props.width - $props.paddingRight)" 
+                    :y="$props.y"
                     :width="$props.paddingRight" 
                     :height="$props.length"
                     :stroke="state.paddingStroke"

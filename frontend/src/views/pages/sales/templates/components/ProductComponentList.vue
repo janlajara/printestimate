@@ -20,7 +20,8 @@
                         </li>
                     </ul>
                 </Cell>
-                <Cell label="Machine">{{s.machine_option_label}}</Cell>
+                <Cell label="Machine">
+                    {{s.machine_option_obj? s.machine_option_obj.name : ''}}</Cell>
             </Row>
         </Table>
     </div>

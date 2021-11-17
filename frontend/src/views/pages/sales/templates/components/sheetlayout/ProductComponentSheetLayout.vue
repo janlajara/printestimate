@@ -19,9 +19,6 @@ export default {
     },
     setup(props) {
         const state = reactive({
-            machineId: props.machineId,
-            materialLayout: props.materialLayout,
-            itemLayout: props.itemLayout,
             data: {
                 sheetLayouts: []
             }
@@ -36,24 +33,24 @@ export default {
         };
 
         watchEffect(async ()=> {
-            if (state.materialLayout && state.itemLayout) {
+            if (props.materialLayout && props.itemLayout) {
                 const input = {
                     material_layout: {
-                        width: state.materialLayout.width,
-                        length: state.materialLayout.length,
-                        uom: state.materialLayout.uom
+                        width: props.materialLayout.width,
+                        length: props.materialLayout.length,
+                        uom: props.materialLayout.uom
                     },
                     item_layout: {
-                        width: state.itemLayout.width,
-                        length: state.itemLayout.length,
-                        uom: state.itemLayout.uom
+                        width: props.itemLayout.width,
+                        length: props.itemLayout.length,
+                        uom: props.itemLayout.uom
                     },
                     bleed: false,
                     rotate: true
                 };
-                if (state.machineId) {
+                if (props.machineId) {
                     state.data.sheetLayouts = await getSheetLayouts(
-                        state.machineId, input);
+                        props.machineId, input);
                 }
             }
         });

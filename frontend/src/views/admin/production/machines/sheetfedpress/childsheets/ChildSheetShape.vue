@@ -1,11 +1,14 @@
 <template>
     <svg :viewBox="`${$props.x} ${$props.y} ${state.viewBoxWidth} ${state.viewBoxLength}`">
-        <Rectangle 
-            :width="$props.width"
-            :height="$props.length"
-            stroke="darkgray" 
-            :stroke-width="1"
-            :fill="$props.fill"/>
+        <svg>
+            <Rectangle 
+                :width="$props.width"
+                :height="$props.length"
+                :stroke="$props.stroke" 
+                :stroke-width="1"
+                :fill="$props.fill"/>
+            <slot/>
+        </svg>
         <Line v-if="$props.marginTop > 0" 
             :stroke="state.marginStroke" 
             :stroke-width="state.marginStrokeWidth" dashed
@@ -59,7 +62,8 @@ export default {
         viewBoxLength: {type: Number, default: null},
         text: [String, Number],
         textSize: {type: Number, default: 1.5},
-        fill: {type: String, default: 'white'}
+        fill: {type: String, default: 'white'},
+        stroke: {type: String, default: 'darkgray'}
     },
     components: {
         Rectangle, Line

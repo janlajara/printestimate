@@ -91,7 +91,13 @@ export default {
                     material_layout: computed(()=>getMaterialLayout()),
                     item_layouts: computed(()=>getItemLayouts()),
                 },
-                machine_option_obj: null
+                machine_option_obj_id: computed(()=>{
+                    const machineOption = state.component.metaMachineOptions.find(x => 
+                        x.id == state.data.machine_option);
+                    let id = null;
+                    if (machineOption) id = machineOption.machine;
+                    return id;
+                })
             },
             emitInput: ()=> {
                 emit('input', state.data);
@@ -125,8 +131,6 @@ export default {
                 state.data.material_templates = component.material_templates;
                 state.data.machine_option = component.machineOption;
                 state.data.quantity = component.quantity;
-                state.meta.machine_option_obj_id = component.machine_option_obj?
-                    component.machine_option_obj.id : null;
                 
                 const dynamicProps = Object.entries(component)
                     .filter(x => !['meta_component', 'material_templates', 

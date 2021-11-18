@@ -71,7 +71,7 @@ class SheetFedPressMachine(PressMachine):
     uom = models.CharField(max_length=30, default='mm',
         choices=Measure.UNITS[Measure.DISTANCE])
 
-    def get_nearest_match(self, material_layout, item_layout, bleed=False):
+    def get_nearest_match(self, material_layout, item_layout, bleed=False, rotate=False):
         match = None
         child_sheets = (
             ChildSheet.objects
@@ -79,8 +79,8 @@ class SheetFedPressMachine(PressMachine):
                 .order_by('width_value', 'length_value'))
 
         for child_sheet in child_sheets:
-            if child_sheet.has_bleed == bleed and child_sheet.layout.gte(material_layout) \
-                    and item_layout.gte(child_sheet.parent.layout):
+            if child_sheet.has_bleed == bleed and child_sheet.layout.gte(material_layout, rotate) \
+                    and item_layout.gte(child_sheet.parent.layout, rotate):
                 match = child_sheet
                 break
 
@@ -88,12 +88,11 @@ class SheetFedPressMachine(PressMachine):
 
     def get_sheet_layouts(self, material_layout:Paper.Layout, item_layout:Paper.Layout,
             bleed=False, rotate=False):
-        match = self.get_nearest_match(material_layout, item_layout, bleed)
+        match = self.get_nearest_match(material_layout, item_layout, bleed, rotate)
+        layouts = []
 
         if match is not None:
             parent_layout = match.parent.layout
-            layouts = []
-
             parent_layout_meta = ParentSheet.get_layout(
                 item_layout, parent_layout, rotate, 'Parent-to-runsheet')
             child_layout_meta = ChildSheet.get_layout(
@@ -105,9 +104,7 @@ class SheetFedPressMachine(PressMachine):
                     match.layout, material_layout, rotate, 'Cutsheet-to-trimsheet')
                 layouts.append(material_layout_meta)
 
-            return layouts
-        else:
-            return None
+        return layouts
                 
 
     def estimate(self, material, quantity, bleed=False):

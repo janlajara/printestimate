@@ -154,9 +154,16 @@ class Rectangle(Shape):
             return self.width_measurement.mm == layout.width_measurement.mm and \
                 self.length_measurement.mm == layout.length_measurement.mm
 
-        def gte(self, layout:'Rectangle.Layout'):
-            return self.width_measurement.mm >= layout.width_measurement.mm and \
+        def gte(self, layout:'Rectangle.Layout', rotate=False):
+            is_gte = self.width_measurement.mm >= layout.width_measurement.mm and \
                 self.length_measurement.mm >= layout.length_measurement.mm
+            if rotate and not is_gte:
+                is_gte = self.width_measurement.mm >= layout.length_measurement.mm and \
+                self.length_measurement.mm >= layout.width_measurement.mm
+            return is_gte
+
+        def __str__(self):
+            return '%s x %s %s' % (self.width, self.length, self.uom)
     
     class LayoutMeta:
         def __init__(self, bin, rect, layouts, count, usage, wastage, rotate, 
@@ -333,9 +340,9 @@ class Rectangle(Shape):
             packer1 = BinPacker.pack_rectangles(child_rects, parent_rect, True)
             packer2 = BinPacker.pack_rectangles(child_rects, parent_rect, False)
             if len(packer1) > 0 or len(packer2) > 0:
-                p1 = packer1[0]
-                p2 = packer2[0]
-                return p1 if len(p1) > len(p2) else p2
+                p1 = len(packer1[0]) if len(packer1) > 0 else 0
+                p2 = len(packer2[0]) if len(packer2) > 0 else 0
+                return packer1[0] if p1 > p2 else packer2[0]
             else:
                 None
         else:

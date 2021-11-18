@@ -2,8 +2,8 @@
     <svg :viewBox="`${$props.x} ${$props.y} ${state.viewBoxWidth} ${state.viewBoxLength}`">
         <svg>
             <Rectangle 
-                :width="$props.width"
-                :height="$props.length"
+                :width="state.totalWidth"
+                :height="state.totalLength"
                 :stroke="$props.stroke" 
                 :stroke-width="1"
                 :fill="$props.fill"/>
@@ -13,24 +13,24 @@
             :stroke="state.marginStroke" 
             :stroke-width="state.marginStrokeWidth" dashed
             :x1="0" :y1="$props.marginTop"
-            :x2="$props.width" :y2="$props.marginTop"/>
+            :x2="state.totalWidth" :y2="$props.marginTop"/>
         <Line v-if="$props.marginLeft"
             :stroke="state.marginStroke" 
             :stroke-width="state.marginStrokeWidth" dashed
             :x1="$props.marginLeft" :y1="0"
-            :x2="$props.marginLeft" :y2="$props.length"/>
+            :x2="$props.marginLeft" :y2="state.totalLength"/>
         <Line v-if="$props.marginBottom"
             :stroke="state.marginStroke" 
             :stroke-width="state.marginStrokeWidth" dashed
-            :x1="0" :y1="$props.length - $props.marginBottom"
-            :x2="$props.width" :y2="$props.length - $props.marginBottom"/>
+            :x1="0" :y1="state.totalLength - $props.marginBottom"
+            :x2="state.totalWidth" :y2="state.totalLength - $props.marginBottom"/>
         <Line v-if="$props.marginRight"
             :stroke="state.marginStroke" 
             :stroke-width="state.marginStrokeWidth" dashed
-            :x1="$props.width - $props.marginRight" :y1="0"
-            :x2="$props.width - $props.marginRight" :y2="$props.length"/>
-        <svg :width="$props.width" :height="$props.length"
-                :viewBox="`0 0 ${$props.width} ${$props.length}`">
+            :x1="state.totalWidth - $props.marginRight" :y1="0"
+            :x2="state.totalWidth - $props.marginRight" :y2="state.totalLength"/>
+        <svg :width="state.totalWidth" :height="state.totalLength"
+                :viewBox="`0 0 ${state.totalWidth} ${state.totalLength}`">
             <text :id="state.text.id" v-if="$props.text"
                     :x="state.text.x" :y="state.text.y"
                     :font-size="state.text.size"
@@ -72,20 +72,24 @@ export default {
         const state = reactive({
             marginStroke: 'pink',
             marginStrokeWidth: 1,
+            marginX: computed(()=> (props.marginRight + props.marginLeft)),
+            marginY: computed(()=> (props.marginTop + props.marginBottom)),
+            totalWidth: computed(()=> props.width + state.marginX),
+            totalLength: computed(()=> props.length + state.marginY),
             offsetX: props.displayLabel? 2: 0,
             offsetY: props.displayLabel? 2: 0,
-            viewBoxWidth: computed(()=>  props.viewBoxWidth || props.width),
-            viewBoxLength: computed(()=> props.viewBoxLength || props.length),
+            viewBoxWidth: computed(()=>  props.viewBoxWidth || state.totalWidth),
+            viewBoxLength: computed(()=> props.viewBoxLength || state.totalLength),
             text: {
                 id: `text-${uuid()}`, 
                 size: props.textSize,
                 offsetX: 0,
                 offsetY: 0,
                 x: computed(()=> {
-                    return (props.width / 2) - state.text.offsetX
+                    return (state.totalWidth/ 2) - state.text.offsetX
                 }), 
                 y: computed(()=> {
-                    return (props.length / 2) + state.text.offsetY
+                    return (state.totalLength / 2) + state.text.offsetY
                 }),
             }
         });

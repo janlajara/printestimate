@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
-from core.utils.shapes import Rectangle, RectangleLayoutSerializer, RectangleLayoutMetaSerializer
+from core.utils.shapes import Rectangle, RectangleLayoutMetaSerializer
 from estimation.models import Machine, SheetFedPressMachine, ParentSheet, ChildSheet
 from estimation import serializers
 import json
@@ -202,8 +202,10 @@ class ChildSheetLayoutView(mixins.CreateModelMixin, viewsets.GenericViewSet):
                 rotate = self.get_layouts(child_sheet, True)
                 no_rotate = self.get_layouts(child_sheet, False)
 
-                rotate_serialized = RectangleLayoutSerializer(rotate.layouts, many=True)
-                no_rotate_serialized = RectangleLayoutSerializer(no_rotate.layouts, many=True)
+                rotate_serialized = serializers.ChildSheetLayoutSerializer(
+                    rotate.layouts, many=True)
+                no_rotate_serialized = serializers.ChildSheetLayoutSerializer(
+                    no_rotate.layouts, many=True)
 
                 return Response({
                     "allow_rotate": {

@@ -19,10 +19,10 @@
                 :text="rect.i"
                 :width="rect.width"
                 :length="rect.length"
-                :margin-top="rect.is_rotated ? $props.childMarginRight: $props.childMarginTop"
-                :margin-right="rect.is_rotated ? $props.childMarginBottom : $props.childMarginRight"
-                :margin-bottom="rect.is_rotated ? $props.childMarginLeft : $props.childMarginBottom"
-                :margin-left="rect.is_rotated ? $props.childMarginTop : $props.childMarginLeft"
+                :margin-top="rect.margin_top"
+                :margin-right="rect.margin_right"
+                :margin-bottom="rect.margin_bottom"
+                :margin-left="rect.margin_left"
                 :view-box-width="$props.parentWidth"
                 :view-box-length="$props.parentLength"/>
             {{state.rects}}

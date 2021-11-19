@@ -1,10 +1,11 @@
 <template>
     <div class="mt-4 grid w-full">
-        <div class="flex justify-end">
+        <!--div class="flex justify-end">
             <Button icon="dashboard" :action="state.hideToggle">
                 {{state.isHidden? 'Show': 'Hide' }} Layout</Button>
         </div>
-        <div :class="[state.isHidden? 'hidden' : '', '']">
+        <div :class="[state.isHidden? 'hidden' : '', '']"-->
+        <div>
             <Tabs :refresh="false">
                 <Tab v-for="(item_layout, key) in state.data.itemLayouts" :key="key"
                         :title="`Material #`+(key+1)">
@@ -20,14 +21,14 @@
 <script>
 import Tabs from '@/components/Tabs.vue';
 import Tab from '@/components/Tab.vue';
-import Button from '@/components/Button.vue';
+//import Button from '@/components/Button.vue';
 import ProductComponentSheetLayout from './ProductComponentSheetLayout.vue';
 
 import {reactive, computed} from 'vue';
 
 export default {
     components: {
-        Tabs, Tab, Button, ProductComponentSheetLayout
+        Tabs, Tab, ProductComponentSheetLayout, //Button, 
     },
     props: {
         machineId: Number,
@@ -36,15 +37,15 @@ export default {
     },
     setup(props) {
         const state = reactive({
-            isHidden: true,
+            //isHidden: true,
             data: {
                 machineId: computed(()=>props.machineId),
                 materialLayout: computed(()=>props.materialLayout),
                 itemLayouts: computed(()=>props.itemLayouts)
             },
-            hideToggle: ()=> {
+            /*hideToggle: ()=> {
                 state.isHidden = !state.isHidden;
-            },
+            },*/
         });
         return {
             state

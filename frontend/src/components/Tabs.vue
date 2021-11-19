@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import {reactive, toRefs, onBeforeMount, onMounted, provide} from 'vue'
+import {reactive, toRefs, onBeforeMount, onMounted, provide, watch} from 'vue'
 
 export default {
     name: 'Tabs',
@@ -45,20 +45,28 @@ export default {
             state.selectedIndex = index
         }
 
-        provide('TabsManager', state)
+        const getTabs = () => {
+            const slot_content = slots.default(); 
+            let tabs = slot_content.filter(child => child.type.name==='Tab');
+            if (tabs.length == 0 && slot_content[0] != null) {
+                tabs = slot_content[0].children.filter( child => child.type.name==='Tab');
+            }
+            state.tabs = tabs;
+        }
 
+        provide('TabsManager', state)
         onBeforeMount(()=> {
             if (slots.default) {
-                const slot_content = slots.default(); 
-                let tabs = slot_content.filter(child => child.type.name==='Tab');
-                if (tabs.length == 0 && slot_content[0] != null) {
-                    tabs = slot_content[0].children.filter( child => child.type.name==='Tab');
-                }
-                state.tabs = tabs;
+                getTabs();
             }
-        })
+        });
+        onMounted(()=> selectTab(0));
+        watch(()=> slots.default(), ()=> {
+            getTabs();
+            if (state.tabs.length > 0) state.selectedIndex = 0;
+            state.tabs.count = 0;
+        });
 
-        onMounted(()=> selectTab(0))
 
         return {
             ...toRefs(state), selectTab

@@ -6,7 +6,7 @@
                 :width="$props.width"
                 :height="$props.length"
                 :stroke="$props.stroke" 
-                :stroke-width="1"
+                :stroke-width="$props.strokeWidth"
                 :fill="$props.fill"/>
             <svg>    
                 <Rectangle v-if="$props.paddingTop > 0" 
@@ -79,7 +79,8 @@ export default {
         fill: {type: String, default: 'white'},
         viewBoxWidth: {type: Number, default: 0}, 
         viewBoxLength: {type: Number, default: 0},
-        stroke: {type: String, default: 'pink'}
+        stroke: {type: String, default: 'pink'},
+        strokeWidth: {type: Number, default: 1}
     },
     components: {
         Rectangle, LineMeasure

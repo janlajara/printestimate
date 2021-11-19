@@ -73,10 +73,12 @@ class ComponentTemplateSerializer(serializers.ModelSerializer):
             'machine_option', 'machine_option_obj']
     
     def get_machine_option_obj(self, instance):
-        obj = None
+        data = None
         if instance.machine_option is not None:
-            obj = MachineSerializer(instance.machine_option.machine)
-        return obj.data
+            serializer = MachineSerializer(instance.machine_option.machine)
+            if serializer is not None:
+                data = serializer.data
+        return data
 
 class LineComponentTemplateSerializer(ComponentTemplateSerializer):
     class Meta:

@@ -54,13 +54,13 @@
                                 <Rectangle 
                                     :key="tkey"
                                     v-for="(trimsheet, tkey) in state.cutsheetToTrimsheet.layouts"
-                                    :x="!runsheet.is_rotated && !cutsheet.is_rotated? 
+                                    :x="runsheet.is_rotated && cutsheet.is_rotated? 
                                         trimsheet.x : trimsheet.y"
-                                    :y="!runsheet.is_rotated && !cutsheet.is_rotated? 
+                                    :y="runsheet.is_rotated && cutsheet.is_rotated? 
                                         trimsheet.y : trimsheet.x"
-                                    :width="!runsheet.is_rotated && !cutsheet.is_rotated? 
+                                    :width="runsheet.is_rotated && cutsheet.is_rotated? 
                                         trimsheet.width : trimsheet.length"
-                                    :height="!runsheet.is_rotated && !cutsheet.is_rotated? 
+                                    :height="runsheet.is_rotated && cutsheet.is_rotated? 
                                         trimsheet.length : trimsheet.width"
                                     stroke="grey" :stroke-width="1" fill="white"/>
                             </template>

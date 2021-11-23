@@ -15,7 +15,8 @@
                     :x="runsheet.x" :y="runsheet.y"
                     :width="runsheet.width"
                     :length="runsheet.length"
-                    stroke="#6dd297"
+                    stroke="#6dd297" 
+                    :stroke-width="2"
                     fill="#c2ffdb"
                     :padding-top="runsheet.padding_top"
                     :padding-right="runsheet.padding_right"
@@ -30,11 +31,11 @@
                             :stroke="state.cutsheetToTrimsheet == null ? 'darkgrey' : '#c3a563'"
                             :fill="state.cutsheetToTrimsheet == null ? 'white': '#ffebbe'"
                             :x="!runsheet.is_rotated?
-                                -(cutsheet.x + runsheet.x + runsheet.padding_right) :
-                                -(cutsheet.y + runsheet.y + runsheet.padding_top)" 
+                                (cutsheet.x + runsheet.x + runsheet.padding_left) :
+                                (cutsheet.y + runsheet.x + runsheet.padding_left)" 
                             :y="!runsheet.is_rotated?
-                                -(cutsheet.y + runsheet.y + runsheet.padding_top) :
-                                -(cutsheet.x + runsheet.x + runsheet.padding_right)"
+                                (cutsheet.y + runsheet.y + runsheet.padding_top) :
+                                (cutsheet.x + runsheet.y + runsheet.padding_top)"
                             :width="!runsheet.is_rotated? 
                                 cutsheet.width : cutsheet.length"
                             :length="!runsheet.is_rotated? 

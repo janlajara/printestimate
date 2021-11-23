@@ -1,5 +1,5 @@
 <template>
-    <svg :viewBox="`${$props.x} ${$props.y} ${state.viewBoxWidth} ${state.viewBoxLength}`">
+    <svg :viewBox="`-${$props.x} -${$props.y} ${state.viewBoxWidth} ${state.viewBoxLength}`">
         <svg>
             <Rectangle 
                 :width="state.totalWidth"

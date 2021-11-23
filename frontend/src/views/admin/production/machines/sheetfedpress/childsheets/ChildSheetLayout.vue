@@ -14,8 +14,8 @@
         <template v-if="state.rects.length > 0">
             <ChildSheetShape 
                 :key="key" v-for="(rect, key) in state.rects"
-                :x="-(rect.x + $props.parentPaddingRight)" 
-                :y="-(rect.y + $props.parentPaddingTop)"
+                :x="(rect.x + $props.parentPaddingRight)" 
+                :y="(rect.y + $props.parentPaddingTop)"
                 :text="rect.i"
                 :width="rect.width"
                 :length="rect.length"

@@ -142,10 +142,10 @@ class ParentSheetLayoutSerializer(RectangleLayoutSerializer):
 
 
 class ChildSheetLayoutSerializer(RectangleLayoutSerializer):
-    margin_top = serializers.FloatField()
-    margin_right = serializers.FloatField()
-    margin_bottom = serializers.FloatField()
-    margin_left = serializers.FloatField()
+    margin_top = serializers.FloatField(default=0)
+    margin_right = serializers.FloatField(default=0)
+    margin_bottom = serializers.FloatField(default=0)
+    margin_left = serializers.FloatField(default=0)
 
     def create(self, validated_data):
         return ChildSheet.Layout(**validated_data)
@@ -190,14 +190,14 @@ class SheetLayoutMetaSerializer(RectangleLayoutMetaSerializer):
 
 
 class GetSheetLayoutSerializer(serializers.Serializer):
-    material_layout = RectangleLayoutSerializer()
+    material_layout = ChildSheetLayoutSerializer()
     item_layout = RectangleLayoutSerializer()
     bleed = serializers.BooleanField(default=False)
     rotate = serializers.BooleanField(default=False)
 
     def create(self, validated_data):
         material_layout_data = validated_data.get('material_layout')
-        material_layout = Rectangle.Layout(**material_layout_data)
+        material_layout = ChildSheet.Layout(**material_layout_data)
 
         item_layout_data = validated_data.get('item_layout')
         item_layout = Rectangle.Layout(**item_layout_data)

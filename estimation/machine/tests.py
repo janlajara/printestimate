@@ -99,6 +99,15 @@ def test_sheet_fed_press__get_nearest_match(db, gto_machine, sheet_material):
         match.size_uom == 'inch'
 
 
+def test_sheet_fed_press__get_runsheet_layout_meta(db, gto_machine, sheet_material):
+    material_layout = sheet_material.layout
+    item_layout = sheet_material.item_properties.layout
+
+    rs_layout_meta = gto_machine.get_runsheet_layout_meta(material_layout, item_layout, True)
+
+    assert rs_layout_meta.count == 2
+
+
 def test_sheet_fed_press__get_sheet_layouts(db, gto_machine, sheet_material):
     parent_sheet = gto_machine.add_parent_sheet(21, 26, 'inch', 1, 1, 1, 1)
     child_sheet_1 = parent_sheet.add_child_sheet(7, 10, 'inch', 0.5, 0.5, 0.5, 0.5)
@@ -108,18 +117,18 @@ def test_sheet_fed_press__get_sheet_layouts(db, gto_machine, sheet_material):
         sheet_material.item_properties.layout, True)
 
     assert layouts is not None
-    assert len(layouts) == 3
+    assert len(layouts) == 2
 
     parent_runsheet = layouts[0]
     runsheet_cutsheet = layouts[1]
-    cutsheet_trimsheet = layouts[2]
+    #cutsheet_trimsheet = layouts[2]
 
-    assert parent_runsheet.count == 1
+    assert parent_runsheet.count == 2
     assert parent_runsheet.cut_count == 2
 
     assert runsheet_cutsheet.count == 4
     assert runsheet_cutsheet.cut_count == 4
 
-    assert cutsheet_trimsheet.count == 1
-    assert cutsheet_trimsheet.cut_count == 2
+    #assert cutsheet_trimsheet.count == 1
+    #assert cutsheet_trimsheet.cut_count == 2
     

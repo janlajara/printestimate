@@ -1,9 +1,20 @@
-import pytest
+import pytest, math
 from estimation.machine.models import Machine, ChildSheet, ParentSheet
 from estimation.product.models import Material, Component, Product
 from core.utils.measures import Measure
 from inventory.models import Item
+from inventory.properties.models import Paper
 from inventory.tests import item_factory, base_unit__sheet, alt_unit__ream
+
+
+@pytest.fixture
+def create_sheetfed_machine(db):
+    def create(name, min_width, max_width, min_length, max_length, uom):
+        return Machine.objects.create_machine(name=name, 
+            type=Machine.SHEET_FED_PRESS, uom=uom,
+            min_sheet_width=min_width, max_sheet_width=max_width,
+            min_sheet_length=min_length, max_sheet_length=max_length)
+    return create
 
 
 @pytest.fixture
@@ -86,19 +97,6 @@ def test_filter_machines_by_material_type(db, gto_machine):
     assert machines[0] == gto_machine
 
 
-def test_sheet_fed_press__get_nearest_match(db, gto_machine, sheet_material):
-    parent_sheet = gto_machine.add_parent_sheet(21, 26, 'inch', 1, 1, 1, 1)
-    child_sheet_1 = parent_sheet.add_child_sheet(7, 10, 'inch', 0.5, 0.5, 0.5, 0.5)
-    child_sheet_2 = parent_sheet.add_child_sheet(8.5, 11, 'inch', 0.5, 0.5, 0.5, 0.5)
-
-    match = gto_machine.get_nearest_match(sheet_material.layout, 
-        sheet_material.item_properties.layout, True)
-
-    assert match is not None
-    assert match.width_value == 8.5 and match.length_value == 11 and \
-        match.size_uom == 'inch'
-
-
 def test_sheet_fed_press__get_runsheet_layout_meta(db, gto_machine, sheet_material):
     material_layout = sheet_material.layout
     item_layout = sheet_material.item_properties.layout
@@ -121,14 +119,28 @@ def test_sheet_fed_press__get_sheet_layouts(db, gto_machine, sheet_material):
 
     parent_runsheet = layouts[0]
     runsheet_cutsheet = layouts[1]
-    #cutsheet_trimsheet = layouts[2]
 
     assert parent_runsheet.count == 2
     assert parent_runsheet.cut_count == 2
 
     assert runsheet_cutsheet.count == 4
     assert runsheet_cutsheet.cut_count == 4
-
-    #assert cutsheet_trimsheet.count == 1
-    #assert cutsheet_trimsheet.cut_count == 2
     
+
+def test_sheet_fed_press__get_sheet_layouts__rotated_sheet(db, create_sheetfed_machine):
+    machine = create_sheetfed_machine(name='Some Machine', uom='inch',
+        min_width=2, max_width=5, min_length=2, max_length=5)
+    item = Paper.Layout(width=4, length=6, uom='inch')
+    material = Paper.Layout(width=2, length=2, uom='inch')
+
+    layouts = machine.get_sheet_layouts(material, item, False, True)
+
+    assert layouts is not None and len(layouts) == 2
+
+    item_to_runsheet = layouts[0]
+    runsheet_to_material = layouts[1]
+
+    assert item_to_runsheet.rect.length == 4 and \
+        item_to_runsheet.rect.width == 2 and item_to_runsheet.rect.uom == 'inch'
+    assert item_to_runsheet.count == 3
+    assert runsheet_to_material.count == 2

@@ -71,12 +71,20 @@ class SheetFedPressMachine(PressMachine):
     uom = models.CharField(max_length=30, default='mm',
         choices=Measure.UNITS[Measure.DISTANCE])
     
-    def get_runsheet_layout_meta(self, material_layout, item_layout, rotate=False, label=None):
+    def get_layouts_meta(self, material_layout, item_layout, rotate=False):
+        # Dirty workaround for the floating point-number lossy 
+        # implementation in python-measurements package
+        def _is_gte(x, y):
+            return x.mm > y.mm or math.isclose(x.mm, y.mm)
+
+        def _get_attr(obj, attr):
+            return getattr(obj, attr) if hasattr(obj, attr) else 0
+
         def _to_distance(value, uom):
             return Distance(**{uom: value})
 
         def _get_length(length, uom):
-            runsheet_length = _to_distance(0, uom)
+            runsheet_length_base = length
             input_length = _to_distance(length, uom)
             machine_max_length = _to_distance(self.max_sheet_length, self.uom)
             machine_min_length = _to_distance(self.min_sheet_length, self.uom)
@@ -84,23 +92,24 @@ class SheetFedPressMachine(PressMachine):
 
             if input_length.mm > machine_max_length.mm:
                 halved_input_length = input_length / 2
-                if machine_max_length.mm >= halved_input_length.mm >= machine_min_length.mm:
-                    runsheet_length = halved_input_length
-                elif machine_min_length > halved_input_length:
-                    if machine_max_length >= halved_input_length:
-                        runsheet_length = machine_max_length
+                if _is_gte(machine_max_length, halved_input_length) and \
+                        _is_gte(halved_input_length, machine_min_length):
+                    runsheet_length_base = length / 2
+                elif machine_min_length.mm > halved_input_length.mm:
+                    if _is_gte(machine_max_length, halved_input_length):
+                        runsheet_length_base = _get_attr(machine_max_length, uom)
                     else:
-                        runsheet_length = machine_min_length
-                elif halved_input_length.mm <= material_length.mm:
-                    runsheet_length = material_length
+                        runsheet_length_base = _get_attr(machine_min_length, uom)
+                elif _is_gte(material_length, halved_input_length):
+                    runsheet_length_base = _get_attr(material_length, uom)
                 else:
-                    runsheet_length = _get_length(length/2, uom)
-            else:
-                runsheet_length = input_length
-            return runsheet_length
+                    runsheet_length_base = _get_length(length/2, uom)
+                    
+            return runsheet_length_base
 
-        def _get_width(width, uom, runsheet_length=None):
-            runsheet_width = _to_distance(0, uom)
+        def _get_width(width, uom, rs_length_value=0, rs_length_uom='inch'):
+            runsheet_width_base = width
+            runsheet_length = _to_distance(rs_length_value, rs_length_uom)
             input_width = _to_distance(width, uom)
             machine_max_width = _to_distance(self.max_sheet_width, self.uom)
             machine_min_width = _to_distance(self.min_sheet_width, self.uom)
@@ -108,53 +117,61 @@ class SheetFedPressMachine(PressMachine):
 
             if input_width.mm > machine_max_width.mm:
                 halved_input_width = input_width / 2
-                if rotate and runsheet_length.mm > 0 and \
-                        machine_max_width.mm >= (input_width - runsheet_length).mm >= machine_min_width.mm:
-                    runsheet_width = input_width - runsheet_length
-                elif machine_max_width.mm >= halved_input_width.mm >= machine_min_width.mm:
-                    runsheet_width = halved_input_width
-                elif machine_min_width > halved_input_width:
-                    if machine_max_width >= halved_input_width:
-                        runsheet_width = machine_max_width
+                input_width_less_rs_length = input_width - runsheet_length
+                if rotate and input_width_less_rs_length.mm > 0 and \
+                        _is_gte(machine_max_width, input_width_less_rs_length) and \
+                        _is_gte(input_width_less_rs_length, machine_min_width):
+                    runsheet_width_base = width - rs_length_value
+                elif _is_gte(machine_max_width, halved_input_width) and \
+                        _is_gte(halved_input_width, machine_min_width):
+                    runsheet_width_base = width / 2
+                elif machine_min_width.mm > halved_input_width.mm:
+                    if _is_gte(machine_max_width, halved_input_width):
+                        runsheet_width_base = _get_attr(machine_max_width, uom)
                     else:
-                        runsheet_width = machine_min_width
-                elif halved_input_width.mm <= material_width.mm:
-                    runsheet_width = material_width
+                        runsheet_width_base = _get_attr(machine_min_width, uom)
+                elif _is_gte(material_width, halved_input_width):
+                    runsheet_width_base = _get_attr(material_width, uom)
                 else:
-                    runsheet_width = _get_width(width/2, uom)
-            else:
-                runsheet_width = input_width
-            return runsheet_width
+                    runsheet_width_base = _get_width(width/2, uom)
+                    
+            return runsheet_width_base
         
         def _create_parentsheet_layout(width, length, uom):
-            width_value = getattr(width, uom) if hasattr(width, uom) else 0
-            length_value = getattr(length, uom) if hasattr(width, uom) else 0
-            return ParentSheet.Layout(width=width_value, length=length_value, uom=uom)
+            return ParentSheet.Layout(width=width, length=length, uom=uom)
 
-        rs_length = _get_length(item_layout.length, item_layout.uom)
-        rs_width = _get_width(item_layout.width, item_layout.uom, rs_length)
-        parent_layout = _create_parentsheet_layout(rs_width, rs_length, item_layout.uom)
-        layout_meta = ParentSheet.get_layout(item_layout, parent_layout, rotate, label)
-        
-        rotated_parent_layout = _create_parentsheet_layout(rs_length, rs_width, item_layout.uom)
-        rotated_layout_meta = ParentSheet.get_layout(item_layout, parent_layout, rotate, label)
-        if rotated_layout_meta.count > layout_meta.count:
-            layout_meta = rotated_layout_meta
-        
-        return layout_meta
+        def _get_parentsheet_layout_meta(item_width, item_length, item_uom):
+            rs_length = _get_length(item_length, item_uom)
+            rs_width = _get_width(item_width, item_uom, rs_length)
+            item_layout = Paper.Layout(width=item_width, length=item_length, uom=item_uom)
+            parent_layout = _create_parentsheet_layout(rs_width, rs_length, item_uom)
+            layout_meta = ParentSheet.get_layout(item_layout, parent_layout, rotate, 'Parent-to-runsheet')
+            return layout_meta
+
+        item_to_parent_layout_meta = _get_parentsheet_layout_meta(item_layout.width, 
+            item_layout.length, item_layout.uom)
+        parent_to_child_layout_meta = ChildSheet.get_layout(
+            item_to_parent_layout_meta.rect, material_layout, rotate, 'Runsheet-to-cutsheet')
+        child_count = item_to_parent_layout_meta.count * parent_to_child_layout_meta.count
+
+        rotated_item_to_parent_layout_meta = _get_parentsheet_layout_meta(item_layout.length,
+            item_layout.width, item_layout.uom)
+        rotated_parent_to_child_layout_meta = ChildSheet.get_layout(
+            rotated_item_to_parent_layout_meta.rect, material_layout, rotate, 'Runsheet-to-cutsheet')
+        rotated_child_count = rotated_item_to_parent_layout_meta.count * rotated_parent_to_child_layout_meta.count
+
+        return_layouts_meta = [item_to_parent_layout_meta, parent_to_child_layout_meta]
+
+        if child_count < rotated_child_count:
+            return_layouts_meta = [rotated_item_to_parent_layout_meta, 
+                rotated_parent_to_child_layout_meta]
+
+        return return_layouts_meta
 
 
     def get_sheet_layouts(self, material_layout:Paper.Layout, item_layout:Paper.Layout,
             bleed=False, rotate=False):
-        layouts = []
-
-        parent_layout_meta = self.get_runsheet_layout_meta(material_layout, 
-            item_layout, rotate, 'Parent-to-runsheet')
-        parent_layout = parent_layout_meta.rect
-        child_layout_meta = ChildSheet.get_layout(
-            parent_layout, material_layout, rotate, 'Runsheet-to-cutsheet')
-        layouts = [parent_layout_meta, child_layout_meta]
-
+        layouts = self.get_layouts_meta(material_layout, item_layout, rotate)
         return layouts
                 
 

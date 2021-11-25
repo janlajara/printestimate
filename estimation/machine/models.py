@@ -2,7 +2,7 @@ import math, copy
 from django.db import models
 from core.utils.shapes import Rectangle
 from core.utils.measures import Measure, CostingMeasure, Quantity
-from measurement.measures import Distance
+from measurement.measures import Distance, Area
 from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
 from estimation.product.models import Material, PaperMaterial
@@ -70,21 +70,6 @@ class SheetFedPressMachine(PressMachine):
     max_sheet_width = models.FloatField(default=0)
     uom = models.CharField(max_length=30, default='mm',
         choices=Measure.UNITS[Measure.DISTANCE])
-
-    def get_nearest_match(self, material_layout, item_layout, bleed=False, rotate=False):
-        match = None
-        child_sheets = (
-            ChildSheet.objects
-                .filter(parent__machine=self)
-                .order_by('width_value', 'length_value'))
-
-        for child_sheet in child_sheets:
-            if child_sheet.has_bleed == bleed and child_sheet.layout.gte(material_layout, rotate) \
-                    and item_layout.gte(child_sheet.parent.layout, rotate):
-                match = child_sheet
-                break
-
-        return match
     
     def get_runsheet_layout_meta(self, material_layout, item_layout, rotate=False, label=None):
         def _to_distance(value, uom):
@@ -137,8 +122,6 @@ class SheetFedPressMachine(PressMachine):
                     runsheet_width = material_width
                 else:
                     runsheet_width = _get_width(width/2, uom)
-            elif halved_input_width.mm <= material_width.mm:
-                runsheet_width = material_width
             else:
                 runsheet_width = input_width
             return runsheet_width
@@ -151,27 +134,20 @@ class SheetFedPressMachine(PressMachine):
         rs_length = _get_length(item_layout.length, item_layout.uom)
         rs_width = _get_width(item_layout.width, item_layout.uom, rs_length)
         parent_layout = _create_parentsheet_layout(rs_width, rs_length, item_layout.uom)
-
         layout_meta = ParentSheet.get_layout(item_layout, parent_layout, rotate, label)
         
-        if rotate:
-            rotated_parent_layout = _create_parentsheet_layout(rs_length, rs_width, item_layout.uom)
-            rotated_layout_meta = ParentSheet.get_layout(item_layout, parent_layout, rotate, label)
-            if rotated_layout_meta.count > layout_meta.count:
-                return rotated_layout_meta
+        rotated_parent_layout = _create_parentsheet_layout(rs_length, rs_width, item_layout.uom)
+        rotated_layout_meta = ParentSheet.get_layout(item_layout, parent_layout, rotate, label)
+        if rotated_layout_meta.count > layout_meta.count:
+            layout_meta = rotated_layout_meta
         
         return layout_meta
 
 
     def get_sheet_layouts(self, material_layout:Paper.Layout, item_layout:Paper.Layout,
             bleed=False, rotate=False):
-        #match = self.get_nearest_match(material_layout, item_layout, bleed, rotate)
         layouts = []
 
-        #if match is not None:
-        #parent_layout = match.parent.layout
-        #parent_layout_meta = ParentSheet.get_layout(
-        #    item_layout, parent_layout, rotate, 'Parent-to-runsheet')
         parent_layout_meta = self.get_runsheet_layout_meta(material_layout, 
             item_layout, rotate, 'Parent-to-runsheet')
         parent_layout = parent_layout_meta.rect
@@ -179,37 +155,34 @@ class SheetFedPressMachine(PressMachine):
             parent_layout, material_layout, rotate, 'Runsheet-to-cutsheet')
         layouts = [parent_layout_meta, child_layout_meta]
 
-        '''
-        if not match.layout.eq(material_layout):
-            material_layout_meta = Rectangle.get_layout(
-                match.layout, material_layout, rotate, 'Cutsheet-to-trimsheet')
-            layouts.append(material_layout_meta)
-        '''
-
         return layouts
                 
 
-    def estimate(self, material, quantity, bleed=False):
+    def estimate(self, material, quantity, bleed=False, rotate=False):
         if material.type == Item.PAPER:
-            match = self.get_nearest_match(material.layout, 
-                material.item_properties.layout, bleed)
+            layouts = self.get_sheet_layouts(material.layout, 
+                material.item_properties.layout, bleed, rotate)
 
-            if match is not None:
+            if layouts is not None and len(layouts) == 2:
                 # Item refers to the stock / raw material
                 # Parent refers to the press running sheet that the machine accepts
                 # Child refers to the divided parent sheets
                 # Output refers to the divided child sheets. It's also the final size.
-                parent_sheet_per_item = material.item_properties.pack(match.parent)
-                child_sheet_per_parent = match.count
-                output_per_child = match.pack(material)
+                item_to_parent_layout_meta = layouts[0]
+                parent_to_child_layout_meta = layouts[1]
+
+                parent_sheet_per_item = item_to_parent_layout_meta.count
+                child_sheet_per_parent = parent_to_child_layout_meta.count
                 total_output_needed = material.quantity * quantity
 
-                output_per_item = parent_sheet_per_item * child_sheet_per_parent * output_per_child
+                output_per_item = parent_sheet_per_item * child_sheet_per_parent 
                 items_needed = math.ceil(total_output_needed / output_per_item)
                 runs_needed = items_needed * parent_sheet_per_item
 
                 run_count = Quantity(sheet=runs_needed)
-                total_area = runs_needed * match.parent.area
+                parent_layout = item_to_parent_layout_meta.rect
+                parent_area = Area(**{'sq_%s' % parent_layout.uom: parent_layout.area})
+                total_area = runs_needed * parent_area
                 
                 return {
                     CostingMeasure.AREA: total_area,

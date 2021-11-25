@@ -186,10 +186,10 @@ def test_operation__get_measurement_machine_based(db, korse_workstation, korse_m
     assert estimate is not None
     
     qty = estimate.get(CostingMeasure.QUANTITY, None)    
-    assert qty is not None and qty.sheet == 2500
+    assert qty is not None and qty.sheet == 556
     
     area = estimate.get(CostingMeasure.AREA, None)
-    assert area is not None and math.floor(area.sq_inch) == 589687
+    assert area is not None and math.floor(area.sq_inch) == 524586
 
     operation = korse_workstation.add_operation(
         name='2-Color Printing', material_type=Item.PAPER)

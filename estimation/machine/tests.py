@@ -144,3 +144,24 @@ def test_sheet_fed_press__get_sheet_layouts__rotated_sheet(db, create_sheetfed_m
         item_to_runsheet.rect.width == 2 and item_to_runsheet.rect.uom == 'inch'
     assert item_to_runsheet.count == 3
     assert runsheet_to_material.count == 2
+
+
+def test_sheet_fed_press__get_sheet_layouts__halved_length_less_than_machine_min(
+        db, create_sheetfed_machine):
+    machine = create_sheetfed_machine(name='Some Machine', uom='inch',
+        min_width=4.1, max_width=4.4, min_length=4.1, max_length=4.4)
+    item = Paper.Layout(width=9, length=9, uom='inch')
+    material = Paper.Layout(width=2, length=2, uom='inch')
+
+    layouts = machine.get_sheet_layouts(material, item, False, True)
+
+    assert layouts is not None and len(layouts) == 2
+
+    item_to_runsheet = layouts[0]
+    runsheet_to_material = layouts[1]
+
+    print(item_to_runsheet.rect)
+    print(item_to_runsheet.count)
+    print(runsheet_to_material.count)
+
+    assert False

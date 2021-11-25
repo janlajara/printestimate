@@ -177,10 +177,10 @@ class PolymorphicSheetLayoutSerializer(PolymorphicSerializer):
                 return serializer
         
         raise KeyError(
-            '`{cls}.model_serializer_mapping` is missing '
+            '`{clz}.model_serializer_mapping` is missing '
             'a corresponding serializer for `{model}` model'.format(
-                cls=self.__class__.__name__,
-                model=model.__name__))
+                clz=self.__class__.__name__,
+                model=type(model_or_instance).__qualname__))
 
 
 class SheetLayoutMetaSerializer(RectangleLayoutMetaSerializer):

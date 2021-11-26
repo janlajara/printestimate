@@ -1,9 +1,9 @@
 import pytest, math
 from estimation.machine.models import Machine, ChildSheet, ParentSheet
 from estimation.product.models import Material, Component, Product
+from core.utils.shapes import Rectangle
 from core.utils.measures import Measure
 from inventory.models import Item
-from inventory.properties.models import Paper
 from inventory.tests import item_factory, base_unit__sheet, alt_unit__ream
 
 
@@ -90,6 +90,17 @@ def test_child_sheet__get_layout(db):
     assert layout_meta.rotate[0] == 2
 
 
+def test_child_sheet__get_layout_test_cut(db):
+    parent_layout = ParentSheet.Layout(width=32, length=27, uom='inch')
+    child_layout = ChildSheet.Layout(width=27, length=16, uom='inch')
+
+    layout_meta = ChildSheet.get_layout(
+        parent_layout, child_layout, True)
+
+    assert layout_meta.count == 2
+    assert layout_meta.cut_count == 1
+
+
 def test_filter_machines_by_material_type(db, gto_machine):
     machines = [x for x in Machine.objects.all() if x.material_type == Item.PAPER]
 
@@ -97,22 +108,13 @@ def test_filter_machines_by_material_type(db, gto_machine):
     assert machines[0] == gto_machine
 
 
-def test_sheet_fed_press__get_runsheet_layout_meta(db, gto_machine, sheet_material):
-    material_layout = sheet_material.layout
-    item_layout = sheet_material.item_properties.layout
+def test_sheet_fed_press__get_sheet_layouts(db, create_sheetfed_machine):
+    machine = create_sheetfed_machine(name='Some Machine', uom='inch',
+        min_width=10, max_width=30, min_length=10, max_length=30)
+    item = Rectangle.Layout(width=32, length=27, uom='inch')
+    material = Rectangle.Layout(width=10, length=8, uom='inch')
 
-    rs_layout_meta = gto_machine.get_runsheet_layout_meta(material_layout, item_layout, True)
-
-    assert rs_layout_meta.count == 2
-
-
-def test_sheet_fed_press__get_sheet_layouts(db, gto_machine, sheet_material):
-    parent_sheet = gto_machine.add_parent_sheet(21, 26, 'inch', 1, 1, 1, 1)
-    child_sheet_1 = parent_sheet.add_child_sheet(7, 10, 'inch', 0.5, 0.5, 0.5, 0.5)
-    child_sheet_2 = parent_sheet.add_child_sheet(8.5, 11, 'inch', 0.5, 0.5, 0.5, 0.5)
-
-    layouts = gto_machine.get_sheet_layouts(sheet_material.layout, 
-        sheet_material.item_properties.layout, True)
+    layouts = machine.get_sheet_layouts(material, item, False, True)
 
     assert layouts is not None
     assert len(layouts) == 2
@@ -120,8 +122,9 @@ def test_sheet_fed_press__get_sheet_layouts(db, gto_machine, sheet_material):
     parent_runsheet = layouts[0]
     runsheet_cutsheet = layouts[1]
 
+    assert parent_runsheet.rect.length == 27 and parent_runsheet.rect.width == 16
     assert parent_runsheet.count == 2
-    assert parent_runsheet.cut_count == 2
+    assert parent_runsheet.cut_count == 1
 
     assert runsheet_cutsheet.count == 4
     assert runsheet_cutsheet.cut_count == 4
@@ -130,8 +133,8 @@ def test_sheet_fed_press__get_sheet_layouts(db, gto_machine, sheet_material):
 def test_sheet_fed_press__get_sheet_layouts__rotated_sheet(db, create_sheetfed_machine):
     machine = create_sheetfed_machine(name='Some Machine', uom='inch',
         min_width=2, max_width=5, min_length=2, max_length=5)
-    item = Paper.Layout(width=4, length=6, uom='inch')
-    material = Paper.Layout(width=2, length=2, uom='inch')
+    item = Rectangle.Layout(width=4, length=6, uom='inch')
+    material = Rectangle.Layout(width=2, length=2, uom='inch')
 
     layouts = machine.get_sheet_layouts(material, item, False, True)
 
@@ -150,8 +153,8 @@ def test_sheet_fed_press__get_sheet_layouts__halved_length_less_than_machine_min
         db, create_sheetfed_machine):
     machine = create_sheetfed_machine(name='Some Machine', uom='inch',
         min_width=4.1, max_width=4.4, min_length=4.1, max_length=4.4)
-    item = Paper.Layout(width=9, length=9, uom='inch')
-    material = Paper.Layout(width=2, length=2, uom='inch')
+    item = Rectangle.Layout(width=9, length=9, uom='inch')
+    material = Rectangle.Layout(width=2, length=2, uom='inch')
 
     layouts = machine.get_sheet_layouts(material, item, False, True)
 
@@ -160,8 +163,6 @@ def test_sheet_fed_press__get_sheet_layouts__halved_length_less_than_machine_min
     item_to_runsheet = layouts[0]
     runsheet_to_material = layouts[1]
 
-    print(item_to_runsheet.rect)
-    print(item_to_runsheet.count)
-    print(runsheet_to_material.count)
-
-    assert False
+    assert item_to_runsheet.rect.width == 4.1 and item_to_runsheet.rect.length == 4.1
+    assert item_to_runsheet.count == 4
+    assert runsheet_to_material.count == 4

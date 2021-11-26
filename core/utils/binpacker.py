@@ -14,14 +14,26 @@ class BinPacker:
         return math.ceil(parent_area / child_area)
 
     @classmethod
-    def pack_rectangles(cls, rectangles, bins, rotation=False):
-        packer = newPacker(pack_algo=MaxRectsBl, rotation=rotation)
+    def pack_rectangles(cls, rectangles, bins, rotation=False, algorithm=None):
+        def _pack(algorithm=None):
+            args = {'rotation': rotation}
+            if algorithm is not None:
+                args['pack_algo'] = algorithm
+            packer = newPacker(**args)
 
-        for b in bins:
-            packer.add_bin(*b)
-        for r in rectangles:
-            packer.add_rect(*r)
+            for b in bins:
+                packer.add_bin(*b)
+            for r in rectangles:
+                packer.add_rect(*r)
 
-        packer.pack()
+            packer.pack()
 
-        return packer
+            return packer
+        
+        a1 = _pack()
+        a2 = _pack(MaxRectsBl)
+        
+        if len(a1.rect_list()) > len(a2.rect_list()):
+            return a1
+        else:
+            return a2

@@ -272,8 +272,7 @@ class Rectangle(Shape):
         def __get_cut_count__(packer, bin_width, bin_length):
             unique_x = []
             unique_y = []
-
-            for rect in packer:
+            for idx, rect in enumerate(packer):
                 x = rect.x 
                 y = rect.y 
                 w = rect.width 
@@ -311,7 +310,6 @@ class Rectangle(Shape):
 
         layout_meta = Rectangle.LayoutMeta(parent_layout, child_layout, layouts, count, 
             __round__(usage), __round__(wastage), rotated, name, cut_count)
-
         return layout_meta
 
     @classmethod

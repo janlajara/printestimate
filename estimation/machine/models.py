@@ -343,8 +343,8 @@ class ParentSheet(Rectangle):
 
 class ChildSheet(Rectangle):
     class Layout(Rectangle.Layout):
-        def __init__(self, margin_top, margin_right, 
-                margin_bottom, margin_left, **kwargs):
+        def __init__(self, margin_top=0, margin_right=0, 
+                margin_bottom=0, margin_left=0, **kwargs):
             super().__init__(**kwargs)
             self.margin_top = margin_top
             self.margin_right = margin_right
@@ -426,7 +426,7 @@ class ChildSheet(Rectangle):
             child.i = layout.i 
             child.x = layout.x 
             child.y = layout.y 
-            if layout.is_rotated:
+            if layout.is_rotated: # and type(layout).__qualname__ == 'ChildSheet.Layout':
                 child.is_rotated = layout.is_rotated
                 child.width = layout.width 
                 child.length = layout.length

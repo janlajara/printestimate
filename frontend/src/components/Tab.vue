@@ -14,27 +14,22 @@
 </template>
 
 <script>
-import {ref, inject, watch, onBeforeMount, getCurrentInstance} from 'vue';
+import {ref, inject, computed, onBeforeMount, getCurrentInstance} from 'vue';
 
 export default {
     name: 'Tab',
     setup(){
         const index = ref(0);
         const tabs = inject('TabsManager');
-        const isActive = ref(false);
+        const isActive = computed(()=> {
+            return tabs.selectedIndex===index.value;
+        });
         const refresh = ref(true);
 
         onBeforeMount(()=>{
-            isActive.value = tabs.selectedIndex===index.value;
             refresh.value = tabs.refresh;
             index.value = getCurrentInstance().vnode.key;
         })
-
-        watch(()=> tabs.selectedIndex,
-            ()=> {
-                isActive.value = tabs.selectedIndex===index.value;
-            }
-        )
 
         return {
             index, isActive, refresh

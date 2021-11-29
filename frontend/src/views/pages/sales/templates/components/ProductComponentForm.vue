@@ -10,12 +10,10 @@
                 v-if="state.component.metaMaterialOptions.length > 0"
                 @input="(value)=> {
                     if (!Array.isArray(value)) value = [value];
-                    if (value.length > 0) {
-                        state.data.material_templates = value.map(x => ({
-                            meta_material_option: x
-                        }));
-                        state.emitInput();
-                    }
+                    state.data.material_templates = value.map(x => ({
+                        meta_material_option: x
+                    }));
+                    state.emitInput();
                 }"
                 :options="state.component.metaMaterialOptions.map(c=>{
                     let options = {

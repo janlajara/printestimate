@@ -426,15 +426,16 @@ class ChildSheet(Rectangle):
             child.i = layout.i 
             child.x = layout.x 
             child.y = layout.y 
-            if layout.is_rotated: # and type(layout).__qualname__ == 'ChildSheet.Layout':
+            if layout.is_rotated:
                 child.is_rotated = layout.is_rotated
                 child.width = layout.width 
                 child.length = layout.length
-                temp = child.margin_top
-                child.margin_top = child.margin_right
-                child.margin_right = child.margin_bottom
-                child.margin_bottom = child.margin_left
-                child.margin_left = temp
+                if type(layout).__qualname__ == 'ChildSheet.Layout':
+                    temp = child.margin_top
+                    child.margin_top = child.margin_right
+                    child.margin_right = child.margin_bottom
+                    child.margin_bottom = child.margin_left
+                    child.margin_left = temp
             layouts.append(child)
 
         layout_meta.layouts = layouts

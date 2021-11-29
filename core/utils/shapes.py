@@ -289,7 +289,6 @@ class Rectangle(Shape):
                             unique_y.append(y+h)
                         
             cut_count = len(unique_x) + len(unique_y)
-            print(unique_x, unique_y)
             return cut_count
 
         parent_width, parent_length, parent_uom = parent_layout.get_pack_size_as_bin()

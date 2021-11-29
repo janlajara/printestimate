@@ -52,6 +52,7 @@ export default {
                 tabs = slot_content[0].children.filter( child => child.type.name==='Tab');
             }
             state.tabs = tabs;
+            state.count = tabs.length;
         }
 
         provide('TabsManager', state)
@@ -64,7 +65,6 @@ export default {
         watch(()=> slots.default(), ()=> {
             getTabs();
             if (state.tabs.length > 0) state.selectedIndex = 0;
-            state.tabs.count = 0;
         });
 
 

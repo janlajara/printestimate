@@ -14,7 +14,7 @@
 </template>
 
 <script>
-import {ref, inject, watch, onBeforeMount} from 'vue' 
+import {ref, inject, watch, onBeforeMount, getCurrentInstance} from 'vue';
 
 export default {
     name: 'Tab',
@@ -25,9 +25,9 @@ export default {
         const refresh = ref(true);
 
         onBeforeMount(()=>{
-            index.value = tabs.count++;
             isActive.value = tabs.selectedIndex===index.value;
             refresh.value = tabs.refresh;
+            index.value = getCurrentInstance().vnode.key;
         })
 
         watch(()=> tabs.selectedIndex,

@@ -280,15 +280,16 @@ class Rectangle(Shape):
                 if x not in unique_x:
                     if x > 0:
                         unique_x.append(x)
-                    if x+w < bin_width:
-                        unique_x.append(x+w)
+                        if x+w < bin_width:
+                            unique_x.append(x+w)
                 if y not in unique_y:
                     if y > 0:
                         unique_y.append(y)
-                    if y+h < bin_length:
-                        unique_y.append(y+h)
+                        if y+h < bin_length:
+                            unique_y.append(y+h)
                         
             cut_count = len(unique_x) + len(unique_y)
+            print(unique_x, unique_y)
             return cut_count
 
         parent_width, parent_length, parent_uom = parent_layout.get_pack_size_as_bin()

@@ -289,7 +289,6 @@ class Rectangle(Shape):
                         if y+h < bin_length and y+(h*2) > bin_length:
                             unique_y.append(y+h)
             cut_count = len(unique_x) + len(unique_y)
-            print(unique_x, unique_y)
             return cut_count
 
         parent_width, parent_length, parent_uom = parent_layout.get_pack_size_as_bin()

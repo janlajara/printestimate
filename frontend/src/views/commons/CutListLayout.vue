@@ -7,7 +7,8 @@
                 <Rectangle 
                     :width="state.parentToRunsheet.bin.width"
                     :height="state.parentToRunsheet.bin.length"
-                    stroke="grey" :stroke-width="1" fill="white"/>
+                    stroke="grey" :stroke-width="1" fill="white"
+                    pattern="diagonal-hatch"/>
                 <ParentSheetShape :key="pkey"
                     v-for="(runsheet, pkey) in state.parentToRunsheet.layouts"
                     :view-box-width="state.parentToRunsheet.bin.width"

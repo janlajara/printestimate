@@ -94,14 +94,16 @@ export default {
             }
         });
 
-        onMounted(()=> {
+        const adjustOffset = ()=> {
             let textElem = document.getElementById(state.text.id);
             if (textElem) {
                 let textBbox = textElem.getBBox();
                 state.text.offsetX = textBbox.width / 2;
                 state.text.offsetY = textBbox.height / 4;
             }
-        })
+        }
+
+        onMounted(adjustOffset);
 
         return {
             state

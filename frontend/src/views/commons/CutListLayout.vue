@@ -7,8 +7,10 @@
                 <Rectangle 
                     :width="state.parentToRunsheet.bin.width"
                     :height="state.parentToRunsheet.bin.length"
-                    stroke="grey" :stroke-width="1" fill="white"
-                    pattern="diagonal-hatch"/>
+                    stroke="#838383" :stroke-width="2" 
+                    pattern="diagonal-hatch"
+                    pattern-color="#d3677b"
+                    pattern-fill="#cecece"/>
                 <ParentSheetShape :key="pkey"
                     v-for="(runsheet, pkey) in state.parentToRunsheet.layouts"
                     :view-box-width="state.parentToRunsheet.bin.width"
@@ -16,9 +18,10 @@
                     :x="runsheet.x" :y="runsheet.y"
                     :width="runsheet.width"
                     :length="runsheet.length"
-                    stroke="#6dd297" 
+                    stroke="#838383" 
                     :stroke-width="2"
-                    fill="#c2ffdb"
+                    pattern="diagonal-hatch"
+                    pattern-fill="white"
                     :padding-top="runsheet.padding_top"
                     :padding-right="runsheet.padding_right"
                     :padding-bottom="runsheet.padding_bottom"
@@ -26,11 +29,8 @@
                     <template v-if="state.runsheetToCutsheet">
                         <ChildSheetShape 
                             :key="ckey" v-for="(cutsheet, ckey) in state.runsheetToCutsheet.layouts"
-                            :text="state.cutsheetToTrimsheet == null ? 
-                                (state.runsheetToCutsheet.layouts.length * pkey) + cutsheet.i :
-                                ''"
-                            :stroke="state.cutsheetToTrimsheet == null ? 'darkgrey' : '#c3a563'"
-                            :fill="state.cutsheetToTrimsheet == null ? 'white': '#ffebbe'"
+                            :text="(state.runsheetToCutsheet.layouts.length * pkey) + cutsheet.i"
+                            stroke="#838383" stroke-width="1" fill="white"
                             :x="!runsheet.is_rotated?
                                 (cutsheet.x + runsheet.x + runsheet.padding_left) :
                                 (cutsheet.y + runsheet.x + runsheet.padding_left)" 
@@ -51,7 +51,7 @@
                                 cutsheet.margin_left : cutsheet.margin_top"
                             :view-box-width="state.parentToRunsheet.bin.width"
                             :view-box-length="state.parentToRunsheet.bin.length">
-                            <template v-if="state.cutsheetToTrimsheet">
+                            <!--template v-if="state.cutsheetToTrimsheet">
                                 <Rectangle 
                                     :key="tkey"
                                     v-for="(trimsheet, tkey) in state.cutsheetToTrimsheet.layouts"
@@ -64,7 +64,7 @@
                                     :height="runsheet.is_rotated && cutsheet.is_rotated? 
                                         trimsheet.length : trimsheet.width"
                                     stroke="grey" :stroke-width="1" fill="white"/>
-                            </template>
+                            </template-->
                         </ChildSheetShape>
                     </template>
                 </ParentSheetShape>

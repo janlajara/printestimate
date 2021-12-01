@@ -1,12 +1,14 @@
 <template>
     <svg>
         <defs> 
-            <pattern id="diagonal-hatch" 
+            <pattern :id="`diagonal-hatch-${state.id}`" 
                 patternUnits="userSpaceOnUse" 
                 width="1" height="1"
                 patternTransform="rotate(-45)" >
+                <rect x="0" y="0" width="1" height="1"
+                    :style="`fill: ${state.patternStyle.fill}`"/>
                 <path d="M 0,0 l 1,0" 
-                    :stroke="'pink'"
+                    :stroke="state.patternStyle.color"
                     :stroke-width="1"/>
             </pattern>
         </defs>
@@ -17,6 +19,7 @@
 </template>
 <script>
 import {reactive, computed} from 'vue';
+import { v4 as uuid } from 'uuid';
 
 export default {
     props: {
@@ -35,17 +38,23 @@ export default {
                 return ['diagonal-hatch', 'cross-hatch'].includes(value)
             }
         },
+        patternColor: String,
+        patternFill: String
     },
     setup(props){
         const state = reactive({
+            id: `rect-${uuid()}`, 
             style: computed(()=> ({
                 fill: props.pattern? 
-                    `url(#${props.pattern})` : props.fill,
+                    `url(#${props.pattern}-${state.id})` : props.fill,
                 stroke: props.stroke,
                 strokeWidth: props.strokeWidth || 1,
                 'vector-effect': 'non-scaling-stroke'
             })),
-            patternStyle: {}
+            patternStyle: {
+                color: props.patternColor || 'pink',
+                fill: props.patternFill || 'white'
+            }
         });
 
 

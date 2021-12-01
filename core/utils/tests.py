@@ -1,5 +1,6 @@
 from .measures import Measure
 from .binpacker import BinPacker
+from .shapes import Rectangle
 
 
 # Create your tests here.
@@ -32,41 +33,23 @@ def test_binpacker__pack_rectangles(db):
     assert len(packer[0]) == 7
 
 
-def test_binpacker__get_cut(db):
-    bin_width = 32 #18
-    bin_height = 27 #13
+def test_binpacker__get_layout(db):
+    parent = Rectangle.Layout(width=12, length=16, uom='inch')
+    child = Rectangle.Layout(width=4, length=5, uom='inch')
 
-    rect_width = 21 #4
-    rect_height = 26 #2
-    rect_count = 1 #27
+    layout = Rectangle.get_layout(parent, child, True)
 
-    rects = [(rect_width, rect_height)] * rect_count
-    bin = [(bin_width, bin_height)]
+    assert layout is not None
+    assert layout.count == 9
+    assert layout.cut_count == 5
 
-    packer = BinPacker.pack_rectangles(rects, bin, True)
 
-    all_rects = packer.rect_list()
-    unique_x = []
-    unique_y = []
+def test_binpacker_get_layout_2(db):
+    parent = Rectangle.Layout(width=16, length=27, uom='inch')
+    child = Rectangle.Layout(width=8, length=10, uom='inch')
 
-    assert len(all_rects) == rect_count
-    assert packer[0].width == bin_width
-    assert packer[0].height == bin_height
+    layout = Rectangle.get_layout(parent, child, True)
 
-    for rect in all_rects:
-        b, x, y, w, h, rid = rect
-        if x not in unique_x:
-            if x > 0:
-                unique_x.append(x)
-            if x+w < bin_width:
-                unique_x.append(x+w)
-        if y not in unique_y:
-            if y > 0:
-                unique_y.append(y)
-            if y+h < bin_height:
-                unique_y.append(y+h)
-        
-    print(unique_x)
-    print(unique_y)
-
-    assert False
+    assert layout is not None
+    assert layout.count == 4
+    assert layout.cut_count == 3

@@ -127,7 +127,7 @@ def test_sheet_fed_press__get_sheet_layouts(db, create_sheetfed_machine):
     assert parent_runsheet.cut_count == 1
 
     assert runsheet_cutsheet.count == 4
-    assert runsheet_cutsheet.cut_count == 3
+    assert runsheet_cutsheet.cut_count == 4
     
 
 def test_sheet_fed_press__get_sheet_layouts__rotated_sheet(db, create_sheetfed_machine):

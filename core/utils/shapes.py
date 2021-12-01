@@ -269,7 +269,7 @@ class Rectangle(Shape):
                 layouts.append(layout) 
             return layouts
         
-        def __get_cut_count__(packer, bin_width, bin_length):
+        def __get_cut_count__(packer, bin_width, bin_length, rotated):
             unique_x = []
             unique_y = []
             for idx, rect in enumerate(packer):
@@ -277,18 +277,19 @@ class Rectangle(Shape):
                 y = rect.y 
                 w = rect.width 
                 h = rect.height
+                is_rotated = idx in rotated
                 if x not in unique_x:
                     if x > 0:
                         unique_x.append(x)
-                        if x+w < bin_width:
+                        if x+w < bin_width and x+(w*2) > bin_width:
                             unique_x.append(x+w)
                 if y not in unique_y:
                     if y > 0:
                         unique_y.append(y)
-                        if y+h < bin_length:
+                        if y+h < bin_length and y+(h*2) > bin_length:
                             unique_y.append(y+h)
-                        
             cut_count = len(unique_x) + len(unique_y)
+            print(unique_x, unique_y)
             return cut_count
 
         parent_width, parent_length, parent_uom = parent_layout.get_pack_size_as_bin()
@@ -306,7 +307,7 @@ class Rectangle(Shape):
         rotated = [i for i, x in enumerate(packer) if x.width != child_width and x.height != child_length] if \
             packer is not None and rotate else []
         layouts = __get_layouts__(packer, rotated, child_layout)
-        cut_count = __get_cut_count__(packer, parent_width, parent_length)
+        cut_count = __get_cut_count__(packer, parent_width, parent_length, rotated)
 
         layout_meta = Rectangle.LayoutMeta(parent_layout, child_layout, layouts, count, 
             __round__(usage), __round__(wastage), rotated, name, cut_count)

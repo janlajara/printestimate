@@ -6,7 +6,7 @@
             </div>
         </div>
         <div v-else>
-            <div v-show="isActive">
+            <div :class="isActive? '': 'invisible absolute'">
                 <slot/>
             </div>
         </div>

@@ -46,8 +46,7 @@ class MetaEstimateVariable:
 
     # Cut Properties for Paper Materials
     RAW_TO_RUNNING_CUT = 'Parent-to-Runsheet Cut'
-    RUNNING_TO_FINAL_CUT = 'Runsheet-to-Cutsheet Cut'
-    FINAL_TRIM = 'Cutsheet-to-trimsheet Cut'
+    RUNNING_TO_FINAL_CUT = 'Runsheet-to-Finalsheet Cut'
 
     TYPE_CHOICES = [
         (RAW_MATERIAL, RAW_MATERIAL),
@@ -56,7 +55,6 @@ class MetaEstimateVariable:
         (MACHINE_RUN, MACHINE_RUN),
         (RAW_TO_RUNNING_CUT, RAW_TO_RUNNING_CUT),
         (RUNNING_TO_FINAL_CUT, RUNNING_TO_FINAL_CUT),
-        (FINAL_TRIM, FINAL_TRIM)
     ]
 
     def __init__(self, type, costing_measure):
@@ -78,7 +76,7 @@ class MetaEstimateVariable:
         variables = cls._get_variables(material_type, variable_types)
 
         if (material_type in [Item.PAPER, Item.PANEL]):
-            variable_types = [cls.RAW_TO_RUNNING_CUT, cls.RUNNING_TO_FINAL_CUT, cls.FINAL_TRIM]
+            variable_types = [cls.RAW_TO_RUNNING_CUT, cls.RUNNING_TO_FINAL_CUT]
             variables += cls._get_variables(Item.OTHER, variable_types)
         
         return variables

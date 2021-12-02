@@ -43,7 +43,7 @@
                     name="Min~max Length" :value="state.machine.data.lengthRange"/>
             </DescriptionList>
         </Section>
-        <Section heading="Press Sheets">
+        <!--Section heading="Press Sheets">
             <Tabs>
                 <Tab title="Parent Sheets">
                     <ParentSheetList :machine-id="state.id"/>
@@ -52,7 +52,7 @@
                     <ChildSheetList :machine-id="state.id"/>
                 </Tab>
             </Tabs>
-        </Section>
+        </Section-->
     </Page>
 </template>
 
@@ -63,12 +63,12 @@ import Section from '@/components/Section.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
-import Tabs from '@/components/Tabs.vue';
-import Tab from '@/components/Tab.vue';
+//import Tabs from '@/components/Tabs.vue';
+//import Tab from '@/components/Tab.vue';
 
 import SheetFedPressMachineModal from '@/views/admin/production/machines/sheetfedpress/SheetFedPressMachineModal.vue';
-import ParentSheetList from '@/views/admin/production/machines/sheetfedpress/parentsheets/ParentSheetList.vue';
-import ChildSheetList from '@/views/admin/production/machines/sheetfedpress/childsheets/ChildSheetList.vue';
+//import ParentSheetList from '@/views/admin/production/machines/sheetfedpress/parentsheets/ParentSheetList.vue';
+//import ChildSheetList from '@/views/admin/production/machines/sheetfedpress/childsheets/ChildSheetList.vue';
 
 import {useRoute} from 'vue-router';
 import {reactive, onBeforeMount} from 'vue';
@@ -77,7 +77,7 @@ import {SheetFedPressMachineApi} from '@/utils/apis.js';
 export default {
     components: {
         Page, Button, Section, DescriptionList, DescriptionItem, DeleteRecordDialog,
-        Tabs, Tab, SheetFedPressMachineModal, ParentSheetList, ChildSheetList
+        SheetFedPressMachineModal //, ParentSheetList, ChildSheetList, Tabs, Tab,
     },
     setup() {
         const route = useRoute();

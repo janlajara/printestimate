@@ -1,7 +1,7 @@
 <template>
     <Page title="Admin : Machines">
         <hr class="my-4"/>
-        <Tabs>
+        <Tabs :refresh="false">
             <Tab title="Sheet-fed Press">
                 <SheetFedPressMachineList/>
             </Tab>

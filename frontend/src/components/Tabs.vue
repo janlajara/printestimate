@@ -13,7 +13,7 @@
         <div class="border-primary border-b-4 sm:hidden my-4">
             <select v-model="selectedTab" 
                 class="w-full border-gray-300 border-b-0 pl-0">
-                <option v-for="(tab, index) in tabs" :key="index" :value="index">
+                <option v-for="(tab, index) in tabs" :key="index" :value="tab.props.title">
                     {{tab.props.title}}
                 </option>
             </select>

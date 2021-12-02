@@ -1,12 +1,10 @@
 <template>
     <div>
-        <div v-if="refresh">
-            <div v-if="isActive">
-                <slot/>
-            </div>
+        <div v-if="state.refresh && state.isActive">
+            <slot/>
         </div>
         <div v-else>
-            <div :class="isActive? '': 'invisible absolute'">
+            <div :class="state.isActive? '': 'invisible absolute'">
                 <slot/>
             </div>
         </div>
@@ -14,25 +12,27 @@
 </template>
 
 <script>
-import {ref, inject, computed, onBeforeMount, getCurrentInstance} from 'vue';
+import {reactive, inject, computed, getCurrentInstance} from 'vue';
 
 export default {
     name: 'Tab',
+    props: {
+        title: {type: String, default: ''}
+    },
     setup(){
-        const index = ref(0);
-        const tabs = inject('TabsManager');
-        const isActive = computed(()=> {
-            return tabs.selectedIndex===index.value;
+        const state = reactive({
+            title: getCurrentInstance().vnode.props.title,
+            tabs: inject('TabsManager'),
+            isActive: computed(()=> {
+                return state.tabs.selectedTab===state.title;
+            }),
+            refresh: computed(()=>{
+                return state.tabs.refresh
+            })
         });
-        const refresh = ref(true);
-
-        onBeforeMount(()=>{
-            refresh.value = tabs.refresh;
-            index.value = getCurrentInstance().vnode.key;
-        })
 
         return {
-            index, isActive, refresh
+            state
         }
     }
 }

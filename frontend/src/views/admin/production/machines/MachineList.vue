@@ -23,8 +23,6 @@ import SheetFedPressMachineList from '@/views/admin/production/machines/sheetfed
 export default {
     components: {
         Page, Tabs, Tab, SheetFedPressMachineList
-    },
-    setup() {
     }
 }
 </script>

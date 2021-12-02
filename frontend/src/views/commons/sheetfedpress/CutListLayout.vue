@@ -51,20 +51,6 @@
                                 cutsheet.margin_left : cutsheet.margin_top"
                             :view-box-width="state.parentToRunsheet.bin.width"
                             :view-box-length="state.parentToRunsheet.bin.length">
-                            <!--template v-if="state.cutsheetToTrimsheet">
-                                <Rectangle 
-                                    :key="tkey"
-                                    v-for="(trimsheet, tkey) in state.cutsheetToTrimsheet.layouts"
-                                    :x="runsheet.is_rotated && cutsheet.is_rotated? 
-                                        trimsheet.x : trimsheet.y"
-                                    :y="runsheet.is_rotated && cutsheet.is_rotated? 
-                                        trimsheet.y : trimsheet.x"
-                                    :width="runsheet.is_rotated && cutsheet.is_rotated? 
-                                        trimsheet.width : trimsheet.length"
-                                    :height="runsheet.is_rotated && cutsheet.is_rotated? 
-                                        trimsheet.length : trimsheet.width"
-                                    stroke="grey" :stroke-width="1" fill="white"/>
-                            </template-->
                         </ChildSheetShape>
                     </template>
                 </ParentSheetShape>
@@ -75,9 +61,9 @@
 <script>
 import Svg from '@/utils/svg/Svg.vue';
 import Rectangle from '@/utils/svg/Rectangle.vue';
-import ParentSheetShape from '@/views/admin/production/machines/sheetfedpress/parentsheets/ParentSheetShape.vue';
-import ChildSheetShape from '@/views/admin/production/machines/sheetfedpress/childsheets/ChildSheetShape.vue';
-
+import ParentSheetShape from './ParentSheetShape.vue';
+import ChildSheetShape from './ChildSheetShape.vue';
+ 
 import {reactive, computed} from 'vue';
 
 export default {
@@ -94,8 +80,7 @@ export default {
         const state = reactive({
             layouts: computed(()=> props.layouts || []),
             parentToRunsheet: computed(()=> findLayout('Parent-to-runsheet')),
-            runsheetToCutsheet: computed(()=> findLayout('Runsheet-to-cutsheet')),
-            cutsheetToTrimsheet: computed(()=> findLayout('Cutsheet-to-trimsheet'))
+            runsheetToCutsheet: computed(()=> findLayout('Runsheet-to-cutsheet'))
         });
 
         const findLayout = (name) => {

@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import CutListLayout from '@/views/commons/CutListLayout.vue';
+import CutListLayout from '@/views/commons/sheetfedpress/CutListLayout.vue';
 
 import {reactive, watchEffect} from 'vue';
 import {SheetFedPressMachineApi} from '@/utils/apis.js';

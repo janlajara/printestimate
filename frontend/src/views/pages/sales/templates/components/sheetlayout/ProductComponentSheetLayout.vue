@@ -1,12 +1,17 @@
 <template>
-    <CutListLayout :layouts="state.data.sheetLayouts"/>
+    <div>
+        <span class="text-sm font-bold">{{$props.itemLayout.label}}</span>
+        <CutListLayout :layouts="state.data.sheetLayouts"/>
+        Total Usage: {{formatNumber(state.stats.totalUsage, 2, true)}} %
+    </div>
 </template>
 
 <script>
 import CutListLayout from '@/views/commons/sheetfedpress/CutListLayout.vue';
 
-import {reactive, watchEffect} from 'vue';
+import {reactive, computed, watchEffect} from 'vue';
 import {SheetFedPressMachineApi} from '@/utils/apis.js';
+import {formatNumber} from '@/utils/format.js';
 
 export default {
     components: {
@@ -21,7 +26,36 @@ export default {
         const state = reactive({
             data: {
                 sheetLayouts: []
-            }
+            },
+            stats: computed(()=> {
+                let stats = {
+                    runsheetSize: '',
+                    runsheetPerParent: 0,
+                    childsheetPerRunsheet: 0,
+                    childsheetPerParent: 0,
+                    totalUsage: 0, 
+                    totalWasteage: 0,
+                    totalCutCount: 0
+                }
+                if (state.data.sheetLayouts.length == 2) {
+                    const parentToRunsheet = state.data.sheetLayouts[0];
+                    const runsheetToChildsheet = state.data.sheetLayouts[1];
+
+                    stats.runsheetSize = `${parentToRunsheet.rect.width} x ` +
+                        `${parentToRunsheet.rect.length} ${parentToRunsheet.rect.uom}`;
+                    stats.runsheetPerParent = parentToRunsheet.count;
+                    stats.childsheetPerRunsheet = runsheetToChildsheet.count;
+                    stats.childsheetPerParent = parentToRunsheet.count * runsheetToChildsheet.count;
+
+                    const parentArea = parentToRunsheet.bin.width * parentToRunsheet.bin.length;
+                    const totalUsedArea = runsheetToChildsheet.rect.width * 
+                        runsheetToChildsheet.rect.length * stats.childsheetPerParent;
+                    stats.totalUsage = totalUsedArea/parentArea  * 100;
+                    stats.totalWasteage =  100 - stats.totalUsage;
+                    stats.totalCutCount = parentToRunsheet.cut_count + runsheetToChildsheet.cut_count;
+                }
+                return stats;
+            })
         });
     
         const getSheetLayouts = async (machineId, input) => {
@@ -72,7 +106,7 @@ export default {
         });
 
         return {
-            state
+            state, formatNumber
         }
     }
 }

@@ -167,7 +167,8 @@ export default {
                 const itemLayout = {
                     width: metaMaterialOption.properties.width_value, 
                     length: metaMaterialOption.properties.length_value,
-                    uom: metaMaterialOption.properties.size_uom
+                    uom: metaMaterialOption.properties.size_uom,
+                    label: metaMaterialOption.label
                 }
                 return itemLayout;
             }

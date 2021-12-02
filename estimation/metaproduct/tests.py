@@ -67,7 +67,7 @@ def test_meta_component__add_machine_option(db, form_meta_component, gto_machine
     assert meta_machine_option is not None
     assert meta_machine_option.label == 'GTO Press'
     assert meta_machine_option.machine == gto_machine
-    assert len(form_meta_component.meta_estimate_variables) == 6
+    assert len(form_meta_component.meta_estimate_variables) == 5
 
 
 def test_meta_component__add_meta_material_option(db, form_meta_component, carbonless_item):

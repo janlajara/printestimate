@@ -1,13 +1,22 @@
 <template>
     <div>
-        <span class="text-sm font-bold">{{$props.itemLayout.label}}</span>
         <CutListLayout :layouts="state.data.sheetLayouts"/>
-        Total Usage: {{formatNumber(state.stats.totalUsage, 2, true)}} %
+        <DescriptionList class="md:grid-cols-3">
+            <DescriptionItem :name="`Total outs (${state.stats.childsheetSize})`" 
+                :value="`${state.stats.childsheetPerParent} sheets / material`"/>
+            <DescriptionItem :name="`Runsheet (${state.stats.runsheetSize})`" 
+                :value="`${state.stats.runsheetPerParent} sheets / material`"/>
+            <DescriptionItem name="Wastage" 
+                :value="`${formatNumber(state.stats.totalWasteage, 2, true)} %`"
+                :class="(state.stats.totalWasteage > 20)? 'text-red-500 font-bold' : ''"/>
+        </DescriptionList>
     </div>
 </template>
 
 <script>
 import CutListLayout from '@/views/commons/sheetfedpress/CutListLayout.vue';
+import DescriptionList from '@/components/DescriptionList.vue';
+import DescriptionItem from '@/components/DescriptionItem.vue';
 
 import {reactive, computed, watchEffect} from 'vue';
 import {SheetFedPressMachineApi} from '@/utils/apis.js';
@@ -15,7 +24,7 @@ import {formatNumber} from '@/utils/format.js';
 
 export default {
     components: {
-        CutListLayout
+        CutListLayout, DescriptionList, DescriptionItem
     },
     props: {
         machineId: Number,
@@ -31,6 +40,7 @@ export default {
                 let stats = {
                     runsheetSize: '',
                     runsheetPerParent: 0,
+                    childsheetSize: '',
                     childsheetPerRunsheet: 0,
                     childsheetPerParent: 0,
                     totalUsage: 0, 
@@ -44,6 +54,8 @@ export default {
                     stats.runsheetSize = `${parentToRunsheet.rect.width} x ` +
                         `${parentToRunsheet.rect.length} ${parentToRunsheet.rect.uom}`;
                     stats.runsheetPerParent = parentToRunsheet.count;
+                    stats.childsheetSize = `${runsheetToChildsheet.rect.width} x ` +
+                        `${runsheetToChildsheet.rect.length} ${runsheetToChildsheet.rect.uom}`;
                     stats.childsheetPerRunsheet = runsheetToChildsheet.count;
                     stats.childsheetPerParent = parentToRunsheet.count * runsheetToChildsheet.count;
 

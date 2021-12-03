@@ -3,7 +3,7 @@
         <div>
             <Tabs :refresh="false">
                 <Tab v-for="(item_layout, key) in state.data.itemLayouts" :key="key"
-                        :title="`Material #`+(key+1)">
+                        :title="item_layout.label">
                     <ProductComponentSheetLayout
                         :machine-id="state.data.machineId"
                         :item-layout="item_layout"

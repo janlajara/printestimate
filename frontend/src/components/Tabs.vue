@@ -1,19 +1,21 @@
 <template>
-    <div>
-        <ul class="border-gray-300 border-b mt-2 mb-6 hidden sm:flex">
-            <li v-for="(tab, index) in tabs" :key="index"
+    <div ref="wrapper">
+        <div class="border-gray-300 border-b mt-2 mb-6 overflow-x-auto
+                hidden sm:grid gap-6 grid-flow-col auto-cols-max"
+            :style="`width:${state.wrapperWidth}px`">
+            <div v-for="(tab, index) in state.tabs" :key="index"
                 @click="selectTab(tab.props.title)"
-                class="tab cursor-pointer" 
-                :class="tab.props.title === selectedTab? 
+                class="py-4 cursor-pointer" 
+                :class="tab.props.title === state.selectedTab? 
                     'text-primary border-primary font-bold border-b-4' : ''">
-                {{tab.props.title}}
-            </li>
-        </ul>
-
+                <p class="truncate w-auto">{{tab.props.title}}</p>
+            </div>
+        </div>
         <div class="border-primary border-b-4 sm:hidden my-4">
-            <select v-model="selectedTab" 
+            <select v-model="state.selectedTab" 
                 class="w-full border-gray-300 border-b-0 pl-0">
-                <option v-for="(tab, index) in tabs" :key="index" :value="tab.props.title">
+                <option v-for="(tab, index) in state.tabs" :key="index" 
+                        :value="tab.props.title">
                     {{tab.props.title}}
                 </option>
             </select>
@@ -23,7 +25,7 @@
 </template>
 
 <script>
-import {reactive, toRefs, onBeforeMount, onMounted, provide, watch} from 'vue'
+import {ref, reactive, onMounted, provide, watch} from 'vue'
 
 export default {
     name: 'Tabs',
@@ -38,42 +40,49 @@ export default {
             refresh: props.refresh,
             selectedTab: null,
             tabs: [],
-            count: 0
+            count: 0,
+            wrapperWidth: 0,
         })
+        const wrapper = ref(null);
 
-        const selectTab = (title) => {
-            state.selectedTab = title
+        const selectTab = (id) => {
+            state.selectedTab = id;
         }
 
         const selectFirstTab = ()=> {
             if (state.tabs.length > 0) {
-                const firstTabTitle = state.tabs[0].props.title;
-                state.selectedTab = firstTabTitle;
+                const firstTabId = state.tabs[0].props.title;
+                state.selectedTab = firstTabId;
             }
         }
 
         const getTabs = () => {
-            const slot_content = slots.default(); 
-            let tabs = slot_content.filter(child => child.type.name==='Tab');
-            if (tabs.length == 0 && slot_content[0] != null) {
-                tabs = slot_content[0].children.filter( child => child.type.name==='Tab');
+            if (slots.default) {
+                const slot_content = slots.default(); 
+                let tabs = slot_content.filter(child => child.type.name==='Tab');
+                if (tabs.length == 0 && slot_content[0] != null) {
+                    tabs = slot_content[0].children.filter( child => child.type.name==='Tab');
+                }
+                state.tabs = tabs;
+                state.count = tabs.length;
             }
-            state.tabs = tabs;
-            state.count = tabs.length;
         }
 
         provide('TabsManager', state)
-        onBeforeMount(()=> {
-            if (slots.default) {
-                getTabs();
-            }
+        onMounted(()=>{
+            getTabs();
+            selectFirstTab();
+            state.wrapperWidth = wrapper.value.clientWidth;
+            
         });
-        onMounted(selectFirstTab);
-        watch(()=> slots.default(), getTabs);
+        watch(()=> slots.default(), ()=>{
+            getTabs();
+            selectFirstTab();
+        });
 
 
         return {
-            ...toRefs(state), selectTab
+            state, selectTab, wrapper
         }
     }
 }

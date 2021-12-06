@@ -12,19 +12,19 @@
 </template>
 
 <script>
-import {reactive, inject, computed, getCurrentInstance} from 'vue';
+import {reactive, inject, computed} from 'vue';
 
 export default {
     name: 'Tab',
     props: {
         title: {type: String, default: ''}
     },
-    setup(){
+    setup(props){
         const state = reactive({
-            title: getCurrentInstance().vnode.props.title,
+            title: props.title,
             tabs: inject('TabsManager'),
             isActive: computed(()=> {
-                return state.tabs.selectedTab===state.title;
+                return state.tabs.selectedTab===props.title;
             }),
             refresh: computed(()=>{
                 return state.tabs.refresh

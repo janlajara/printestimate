@@ -8,7 +8,10 @@
                 class="py-4 cursor-pointer" 
                 :class="tab.props.title === state.selectedTab? 
                     'text-primary border-primary font-bold border-b-4' : ''">
-                <p class="truncate w-auto">{{tab.props.title}}</p>
+                <p class="truncate" :title="tab.props.title"
+                        :style="tab.props.title === state.selectedTab?
+                            '': `max-width: ${state.unselectedTabWidth}px`">
+                    {{tab.props.title}}</p>
             </div>
         </div>
         <div class="border-primary border-b-4 sm:hidden my-4">
@@ -25,7 +28,7 @@
 </template>
 
 <script>
-import {ref, reactive, onMounted, provide, watch} from 'vue'
+import {ref, reactive, onMounted, provide, watch, computed} from 'vue'
 
 export default {
     name: 'Tabs',
@@ -42,6 +45,7 @@ export default {
             tabs: [],
             count: 0,
             wrapperWidth: 0,
+            unselectedTabWidth: computed(()=> state.wrapperWidth/ 2 / Math.max(state.tabs.length, 1))
         })
         const wrapper = ref(null);
 

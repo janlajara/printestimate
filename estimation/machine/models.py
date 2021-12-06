@@ -115,13 +115,14 @@ class SheetFedPressMachine(PressMachine):
             if input_width.mm > machine_max_width.mm:
                 halved_input_width = input_width / 2
                 input_width_less_rs_length = input_width - runsheet_length
-                if rotate and input_width_less_rs_length.mm > 0 and \
+                if _is_gte(machine_max_width, halved_input_width) and \
+                        _is_gte(halved_input_width, machine_min_width) and \
+                        input_width_less_rs_length.mm > halved_input_width.mm:
+                    runsheet_width_base = width / 2
+                elif rotate and input_width_less_rs_length.mm > 0 and \
                         _is_gte(machine_max_width, input_width_less_rs_length) and \
                         _is_gte(input_width_less_rs_length, machine_min_width):
                     runsheet_width_base = width - rs_length_value
-                elif _is_gte(machine_max_width, halved_input_width) and \
-                        _is_gte(halved_input_width, machine_min_width):
-                    runsheet_width_base = width / 2
                 elif machine_min_width.mm > halved_input_width.mm > material_width.mm:
                     runsheet_width_base = _get_attr(machine_min_width, uom)
                 elif _is_gte(material_width, halved_input_width):

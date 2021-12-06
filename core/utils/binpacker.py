@@ -1,5 +1,5 @@
 import math
-from rectpack import newPacker, MaxRectsBl
+from rectpack import newPacker, MaxRectsBl, MaxRectsBaf
 
 
 class BinPacker:
@@ -30,10 +30,13 @@ class BinPacker:
 
             return packer
         
-        a1 = _pack()
-        a2 = _pack(MaxRectsBl)
-        
-        if len(a1.rect_list()) > len(a2.rect_list()):
-            return a1
-        else:
-            return a2
+        algorithms = [MaxRectsBaf, MaxRectsBl, None]
+        most_output = None
+
+        for algo in algorithms:
+            packer = _pack(algo) if algo is not None else _pack()
+            packer_rect_count = len(packer.rect_list())
+            if most_output is None or packer_rect_count > len(most_output.rect_list()):
+                most_output = packer
+
+        return most_output

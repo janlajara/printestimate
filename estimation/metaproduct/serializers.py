@@ -3,7 +3,7 @@ from inventory.serializers import ItemPropertiesPolymorphicSerializer
 from estimation.process.serializers import OperationListSerializer
 from estimation.metaproduct.models import MetaProduct, MetaService, MetaComponent, \
     MetaOperation, MetaComponentOperation, MetaOperationOption, MetaMaterialOption, MetaMachineOption
-
+from estimation.machine.serializers import MachinePolymorphicSerializer
 
 class MetaProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -59,11 +59,16 @@ class MetaMaterialOptionSerializer(serializers.ModelSerializer):
 class MetaMachineOptionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
     label = serializers.CharField(read_only=True)
+    machine_obj = serializers.SerializerMethodField()
 
     class Meta:
         model = MetaMachineOption
-        fields = ['id', 'label', 'machine']
+        fields = ['id', 'label', 'machine', 'machine_obj']
 
+    def get_machine_obj(self, obj):
+        if obj.machine is not None:
+            serializer = MachinePolymorphicSerializer(obj.machine)
+            return serializer.data
 
 class MetaEstimateVariableSerializer(serializers.Serializer):
     type = serializers.CharField()

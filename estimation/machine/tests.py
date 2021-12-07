@@ -166,3 +166,21 @@ def test_sheet_fed_press__get_sheet_layouts__halved_length_less_than_machine_min
     assert item_to_runsheet.rect.width == 4.1 and item_to_runsheet.rect.length == 4.1
     assert item_to_runsheet.count == 4
     assert runsheet_to_material.count == 4
+
+
+def test_sheet_fed_press__get_sheet_layouts__big_layout(
+        db, create_sheetfed_machine):
+    machine = create_sheetfed_machine(name='Some Machine', uom='inch',
+        min_width=11, max_width=25, min_length=11, max_length=25)
+    item = Rectangle.Layout(width=32, length=28, uom='inch')
+    material = Rectangle.Layout(width=17, length=14, uom='inch')
+
+    layouts = machine.get_sheet_layouts(material, item, False, True)
+
+    assert layouts is not None and len(layouts) == 2
+    
+    item_to_runsheet = layouts[0]
+    runsheet_to_material = layouts[1]
+
+    assert item_to_runsheet.count == 3
+    assert runsheet_to_material.count == 1

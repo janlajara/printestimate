@@ -38,6 +38,8 @@
             <DynamicInputField :key="i" :attribute="attribute"
                 v-for="(attribute, i) in state.component.additionalFields"
                 :value="state.data[attribute.name]"
+                :min="state.getMinValue(attribute)"
+                :max="state.getMaxValue(attribute)"
                 @load="value => state.data[attribute.name] = value" 
                 @input="value => {
                     state.data[attribute.name] = value;
@@ -51,7 +53,7 @@
                 }"/>
         </div>
         <ProductComponentSheetLayoutTabs
-            :machine-id="state.meta.machine_option_obj_id"
+            :machine-id="state.meta.machine_option_obj? state.meta.machine_option_obj.id : null"
             :material-layout="state.meta.sheet_layout.material_layout"
             :item-layouts="state.meta.sheet_layout.item_layouts"/>
     </div>
@@ -62,6 +64,7 @@ import InputText from '@/components/InputText.vue';
 import DynamicInputField from '@/components/DynamicInputField.vue';
 import ProductComponentSheetLayoutTabs from './sheetlayout/ProductComponentSheetLayoutTabs.vue';
 
+import convert from 'convert';
 import {reactive, onBeforeMount, onMounted, computed} from 'vue';
 
 export default {
@@ -85,20 +88,68 @@ export default {
                 resourcetype: props.component.type,
             },
             meta: {
+                materialUom: computed(()=> state.data['size_uom']),
+                isPaperType: computed(()=> state.data.resourcetype == 'paper'),
                 sheet_layout: {
                     material_layout: computed(()=>getMaterialLayout()),
                     item_layouts: computed(()=>getItemLayouts()),
                 },
-                machine_option_obj_id: computed(()=>{
+                machine_option_obj: computed(()=>{
                     const machineOption = state.component.metaMachineOptions.find(x => 
                         x.id == state.data.machine_option);
-                    let id = null;
-                    if (machineOption) id = machineOption.machine;
-                    return id;
-                })
+                    let obj = null;
+                    if (machineOption) obj = machineOption.machine_obj;
+                    return obj;
+                }),
+                converted_machine_dimensions: {
+                    width: computed(()=> {
+                        let min = null;
+                        let max = null;
+                        const machine_obj = state.meta.machine_option_obj;
+                        if (machine_obj) {
+                            min = convert(machine_obj.min_sheet_width, 
+                                machine_obj.uom).to(state.meta.materialUom);
+                            max = convert(machine_obj.max_sheet_width, 
+                                machine_obj.uom).to(state.meta.materialUom);
+                        }
+                        return {min, max};
+                    }),
+                    length: computed(()=> {
+                        let min = null;
+                        let max = null;
+                        const machine_obj = state.meta.machine_option_obj;
+                        if (machine_obj) {
+                            min = convert(machine_obj.min_sheet_length, 
+                                machine_obj.uom).to(state.meta.materialUom);
+                            max = convert(machine_obj.max_sheet_length, 
+                                machine_obj.uom).to(state.meta.materialUom);
+                        }
+                        return {min, max};
+                    })
+                }
             },
             emitInput: ()=> {
                 emit('input', state.data);
+            },
+            getMinValue: (attribute)=> {
+                let min = null;
+                if (state.meta.isPaperType) {
+                    if (attribute.name == 'width_value')
+                        min = state.meta.converted_machine_dimensions.width.min;
+                    else if (attribute.name == 'length_value')
+                        min = state.meta.converted_machine_dimensions.length.min;
+                }
+                return min;
+            },
+            getMaxValue: (attribute)=> {
+                let min = null;
+                if (state.meta.isPaperType) {
+                    if (attribute.name == 'width_value')
+                        min = state.meta.converted_machine_dimensions.width.max;
+                    else if (attribute.name == 'length_value')
+                        min = state.meta.converted_machine_dimensions.length.max;
+                }
+                return min;
             },
             validate: ()=> {
                 let errors = []
@@ -149,7 +200,7 @@ export default {
 
         const getMaterialLayout = ()=> {
             let materialLayout = null;
-            if (state.data.resourcetype == 'paper') {
+            if (state.meta.isPaperType) {
                 return {
                     width: state.data['width_value'],
                     length: state.data['length_value'],
@@ -172,7 +223,7 @@ export default {
                 }
                 return itemLayout;
             }
-            if (state.data.resourcetype == 'paper') {
+            if (state.meta.isPaperType) {
                 itemLayouts = state.data.material_templates.map(x => 
                     getItemLayout(x));                
             }

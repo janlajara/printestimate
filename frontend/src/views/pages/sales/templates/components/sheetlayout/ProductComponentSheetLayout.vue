@@ -29,12 +29,13 @@ export default {
     props: {
         machineId: Number,
         materialLayout: Object,
-        itemLayout: Object
+        itemLayout: Object,
     },
     setup(props) {
         const state = reactive({
             data: {
-                sheetLayouts: []
+                sheetLayouts: [],
+                error: null
             },
             stats: computed(()=> {
                 let stats = {
@@ -81,13 +82,15 @@ export default {
         const inputIsValid = (input) => {
             let isValid = false;
             if (input) {
-                const materialLayout = input.material_layout;
-                const materialLayoutIsValid = materialLayout.width > 0 &&
-                    materialLayout.length > 0 && materialLayout.uom != null;
-
                 const itemLayout = input.item_layout;
                 const itemLayoutIsValid = itemLayout.width > 0 && 
                     itemLayout.length > 0 && itemLayout.uom != null;
+
+                const materialLayout = input.material_layout;
+                const materialLayoutIsValid = 
+                    itemLayout.width >= materialLayout.width > 0 &&
+                    itemLayout.length >= materialLayout.length > 0 && 
+                    materialLayout.uom != null;
 
                 isValid = materialLayoutIsValid && itemLayoutIsValid;
             }
@@ -110,6 +113,7 @@ export default {
                     bleed: false,
                     rotate: true
                 };
+                if (!inputIsValid(input)) return;
                 if (props.machineId) {
                     state.data.sheetLayouts = await getSheetLayouts(
                         props.machineId, input);

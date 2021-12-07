@@ -260,40 +260,43 @@ class Rectangle(Shape):
             pa = d_pw.mm * d_pl.mm
             return (ca / pa)
 
-        def __get_layouts__(packer, rotated, rect):
+        def __get_layouts__(packer, rotated):
             layouts = []
-            for key, rect in enumerate(packer.rect_list()):
-                x, y, width, length, rid = rect
-                is_rotated = key in rotated
-                layout = Rectangle.Layout(key + 1, x, y, width, length, is_rotated)
-                layouts.append(layout) 
+            if packer is not None:
+                for key, rect in enumerate(packer.rect_list()):
+                    x, y, width, length, rid = rect
+                    is_rotated = key in rotated
+                    layout = Rectangle.Layout(key + 1, x, y, width, length, is_rotated)
+                    layouts.append(layout) 
             return layouts
         
         def __get_cut_count__(packer, bin_width, bin_length, rotated):
-            unique_x = []
-            unique_y = []
-            for idx, rect in enumerate(packer):
-                x = rect.x 
-                y = rect.y 
-                w = rect.width 
-                h = rect.height
-                is_rotated = idx in rotated
-                if x not in unique_x:
-                    if x > 0:
-                        unique_x.append(x)
-                        if x+w < bin_width and x+(w*2) > bin_width:
-                            unique_x.append(x+w)
-                if y not in unique_y:
-                    if y > 0:
-                        unique_y.append(y)
-                        if y+h < bin_length and y+(h*2) > bin_length:
-                            unique_y.append(y+h)
-            cut_count = len(unique_x) + len(unique_y)
+            cut_count = 0
+            if packer is not None:
+                unique_x = []
+                unique_y = []
+                for idx, rect in enumerate(packer):
+                    x = rect.x 
+                    y = rect.y 
+                    w = rect.width 
+                    h = rect.height
+                    is_rotated = idx in rotated
+                    if x not in unique_x:
+                        if x > 0:
+                            unique_x.append(x)
+                            if x+w < bin_width and x+(w*2) > bin_width:
+                                unique_x.append(x+w)
+                    if y not in unique_y:
+                        if y > 0:
+                            unique_y.append(y)
+                            if y+h < bin_length and y+(h*2) > bin_length:
+                                unique_y.append(y+h)
+                cut_count = len(unique_x) + len(unique_y)
             return cut_count
 
         parent_width, parent_length, parent_uom = parent_layout.get_pack_size_as_bin()
         child_width, child_length, child_uom = child_layout.get_pack_size_as_rect()
-        
+
         packer = Rectangle.binpacker(
             parent_width, parent_length, parent_uom,
             child_width, child_length, child_uom, rotate)
@@ -305,7 +308,7 @@ class Rectangle(Shape):
         # list of index of rectangles that have been rotated
         rotated = [i for i, x in enumerate(packer) if x.width != child_width and x.height != child_length] if \
             packer is not None and rotate else []
-        layouts = __get_layouts__(packer, rotated, child_layout)
+        layouts = __get_layouts__(packer, rotated)
         cut_count = __get_cut_count__(packer, parent_width, parent_length, rotated)
 
         layout_meta = Rectangle.LayoutMeta(parent_layout, child_layout, layouts, count, 

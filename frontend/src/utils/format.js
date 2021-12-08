@@ -1,3 +1,8 @@
+export const roundNumber = (number, maxDecimalPlaces=2) => {
+    const roundingNum = (Math.pow(10, maxDecimalPlaces));
+    return Math.round(number * roundingNum) / roundingNum;
+}
+
 export const formatNumber = (number, decimalPlaces, fixedDecimal=false) => {
     return number.toLocaleString(undefined, {
         minimumFractionDigits: fixedDecimal ? decimalPlaces : 0,

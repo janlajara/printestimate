@@ -18,6 +18,7 @@ import CutListLayout from '@/views/commons/sheetfedpress/CutListLayout.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 
+import convert from 'convert';
 import {reactive, computed, watchEffect} from 'vue';
 import {SheetFedPressMachineApi} from '@/utils/apis.js';
 import {formatNumber} from '@/utils/format.js';
@@ -60,7 +61,10 @@ export default {
                     stats.childsheetPerRunsheet = runsheetToChildsheet.count;
                     stats.childsheetPerParent = parentToRunsheet.count * runsheetToChildsheet.count;
 
-                    const parentArea = parentToRunsheet.bin.width * parentToRunsheet.bin.length;
+                    const parentUom = parentToRunsheet.bin.uom;
+                    const childUom = runsheetToChildsheet.rect.uom;
+                    const parentArea = convert(parentToRunsheet.bin.width, parentUom).to(childUom) * 
+                        convert(parentToRunsheet.bin.length, parentUom).to(childUom);
                     const totalUsedArea = runsheetToChildsheet.rect.width * 
                         runsheetToChildsheet.rect.length * stats.childsheetPerParent;
                     stats.totalUsage = totalUsedArea/parentArea  * 100;
@@ -88,9 +92,11 @@ export default {
 
                 const materialLayout = input.material_layout;
                 const materialLayoutIsValid = 
-                    itemLayout.width >= materialLayout.width > 0 &&
-                    itemLayout.length >= materialLayout.length > 0 && 
-                    materialLayout.uom != null;
+                    materialLayout.uom != null &&
+                    convert(itemLayout.width, itemLayout.uom).to(materialLayout.uom) 
+                        >= Number(materialLayout.width) > 0 &&
+                    convert(itemLayout.length, itemLayout.uom).to(materialLayout.uom)  
+                        >= Number(materialLayout.length) > 0;
 
                 isValid = materialLayoutIsValid && itemLayoutIsValid;
             }

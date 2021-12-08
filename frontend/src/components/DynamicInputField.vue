@@ -5,7 +5,7 @@
         :name="state.attribute.label" 
         :type="state.attribute.inputType"
         @input="value => state.value = value"
-        :value="state.value"
+        :value="$props.value"
         :options="state.meta.options"/>
 </template>
 <script>

@@ -55,6 +55,7 @@
                 }"/>
         </div>
         <ProductComponentSheetLayoutTabs
+            v-if="state.meta.isPaperType"
             :machine-id="state.meta.machine_option_obj? state.meta.machine_option_obj.id : null"
             :material-layout="state.meta.sheet_layout.material_layout"
             :item-layouts="state.meta.sheet_layout.item_layouts"/>
@@ -106,24 +107,28 @@ export default {
                 }),
                 converted_item_dimensions: {
                     width: computed(()=> {
-                        const width_values = state.meta.sheet_layout.item_layouts.map(
-                            x=> convert(x.width, x.uom).to(state.meta.materialUom));
                         let min = null;
                         let max = null;
-                        if (width_values.length > 0) {
-                            min = Math.min.apply(Math, width_values);
-                            max = Math.max.apply(Math, width_values);
+                        if (state.meta.materialUom) {
+                            const width_values = state.meta.sheet_layout.item_layouts.map(
+                                x=> convert(x.width, x.uom).to(state.meta.materialUom));
+                            if (width_values.length > 0) {
+                                min = Math.min.apply(Math, width_values);
+                                max = Math.max.apply(Math, width_values);
+                            }
                         }
                         return {min, max}
                     }),
                     length: computed(()=> {
-                        const length_values = state.meta.sheet_layout.item_layouts.map(
-                            x=> convert(x.length, x.uom).to(state.meta.materialUom));
                         let min = null;
                         let max = null;
-                        if (length_values.length > 0) {
-                            min = Math.min.apply(Math, length_values);
-                            max = Math.max.apply(Math, length_values);
+                        if (state.meta.materialUom) {
+                            const length_values = state.meta.sheet_layout.item_layouts.map(
+                                x=> convert(x.length, x.uom).to(state.meta.materialUom));
+                            if (length_values.length > 0) {
+                                min = Math.min.apply(Math, length_values);
+                                max = Math.max.apply(Math, length_values);
+                            }
                         }
                         return {min, max}
                     })
@@ -133,7 +138,7 @@ export default {
                         let min = null;
                         let max = null;
                         const machine_obj = state.meta.machine_option_obj;
-                        if (machine_obj) {
+                        if (machine_obj && state.meta.materialUom) {
                             min = convert(machine_obj.min_sheet_width, 
                                 machine_obj.uom).to(state.meta.materialUom);
                             max = convert(machine_obj.max_sheet_width, 
@@ -145,7 +150,7 @@ export default {
                         let min = null;
                         let max = null;
                         const machine_obj = state.meta.machine_option_obj;
-                        if (machine_obj) {
+                        if (machine_obj && state.meta.materialUom) {
                             min = convert(machine_obj.min_sheet_length, 
                                 machine_obj.uom).to(state.meta.materialUom);
                             max = convert(machine_obj.max_sheet_length, 
@@ -166,7 +171,7 @@ export default {
                         state.meta.converted_machine_dimensions.length.max;
                     const w = Number(width_value);
                     const l = Number(length_value);
-                    const asIsSizeUom = state.data['size_uom'];
+                    const asIsSizeUom = state.data['size_uom'] || value;
                     const toBeSizeUom = value;
                     const convertedWidth = convert(w, asIsSizeUom).to(toBeSizeUom);
                     const convertedLength = convert(l, asIsSizeUom).to(toBeSizeUom);
@@ -176,7 +181,7 @@ export default {
             },
             getMinValue: (attribute)=> {
                 let min = null;
-                if (state.meta.isPaperType && 
+                if (state.meta.materialUom && state.meta.isPaperType && 
                         ['width_value', 'length_value'].includes(attribute.name)) {
                     min = convert(1, 'inch').to(state.meta.materialUom);
                     min = roundNumber(min, 4);
@@ -195,7 +200,7 @@ export default {
                             state.meta.converted_machine_dimensions.length.max : 
                             state.meta.converted_item_dimensions.length.max;
                     }
-                    max = roundNumber(max, 4);
+                    if (max) max = roundNumber(max, 4);
                 }
                 return max;
             },

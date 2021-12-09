@@ -37,6 +37,7 @@
                 })"/>
             <DynamicInputField :key="i" :attribute="attribute"
                 v-for="(attribute, i) in state.component.additionalFields"
+                :number="['width_value', 'length_value'].includes(attribute.name)"
                 :value="state.data[attribute.name]"
                 :min="state.getMinValue(attribute)"
                 :max="state.getMaxValue(attribute)"
@@ -103,6 +104,30 @@ export default {
                     if (machineOption) obj = machineOption.machine_obj;
                     return obj;
                 }),
+                converted_item_dimensions: {
+                    width: computed(()=> {
+                        const width_values = state.meta.sheet_layout.item_layouts.map(
+                            x=> convert(x.width, x.uom).to(state.meta.materialUom));
+                        let min = null;
+                        let max = null;
+                        if (width_values.length > 0) {
+                            min = Math.min.apply(Math, width_values);
+                            max = Math.max.apply(Math, width_values);
+                        }
+                        return {min, max}
+                    }),
+                    length: computed(()=> {
+                        const length_values = state.meta.sheet_layout.item_layouts.map(
+                            x=> convert(x.length, x.uom).to(state.meta.materialUom));
+                        let min = null;
+                        let max = null;
+                        if (length_values.length > 0) {
+                            min = Math.min.apply(Math, length_values);
+                            max = Math.max.apply(Math, length_values);
+                        }
+                        return {min, max}
+                    })
+                },
                 converted_machine_dimensions: {
                     width: computed(()=> {
                         let min = null;
@@ -161,10 +186,15 @@ export default {
             getMaxValue: (attribute)=> {
                 let max = null;
                 if (state.meta.isPaperType) {
-                    if (attribute.name == 'width_value')
-                        max = state.meta.converted_machine_dimensions.width.max;
-                    else if (attribute.name == 'length_value')
-                        max = state.meta.converted_machine_dimensions.length.max;
+                    if (attribute.name == 'width_value') {
+                        max = state.data.machine_option?
+                            state.meta.converted_machine_dimensions.width.max : 
+                            state.meta.converted_item_dimensions.width.max;
+                    } else if (attribute.name == 'length_value') {
+                        max = state.data.machine_option?
+                            state.meta.converted_machine_dimensions.length.max : 
+                            state.meta.converted_item_dimensions.length.max;
+                    }
                     max = roundNumber(max, 4);
                 }
                 return max;

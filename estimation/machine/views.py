@@ -51,7 +51,29 @@ class SheetFedPressMachineViewSet(viewsets.ModelViewSet):
             return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
 
 
-class SheetFedPressMachineGetSheetLayoutsView(mixins.CreateModelMixin, 
+class GetSheetLayoutsView(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    queryset = []
+    serializer_class = serializers.GetSheetLayoutSerializer
+
+    def create(self, request):
+        serializer = serializers.GetSheetLayoutSerializer(data=request.data)
+
+        if serializer.is_valid():
+            validated_data = serializer.validated_data
+            material_layout, item_layout, bleed, rotate = \
+                    serializer.create(validated_data)
+            sheet_layout = ChildSheet.get_layout(item_layout, material_layout, 
+                rotate, 'Parent-to-cutsheet')
+            response = {}
+            if sheet_layout is not None:
+                serializer = serializers.SheetLayoutMetaSerializer(sheet_layout)
+                response = serializer.data
+            return Response(response)
+        else:
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+
+class SheetFedPressMachineGetSheetLayoutsView(mixins.CreateModelMixin,  
         viewsets.GenericViewSet):
     queryset = []
     serializer_class = serializers.GetSheetLayoutSerializer

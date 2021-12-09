@@ -134,4 +134,10 @@ export class ChildSheetApi {
             ChildSheetApi.uri + `/layout`,null, null, sheet);
         return response.data
     }
+
+    static async getSheetLayout(input) {
+        const response = await AXIOS.execute(AXIOS.POST, 
+            ChildSheetApi.uri + `/getlayout`, null, null, input);
+        return response.data;
+    }
 }

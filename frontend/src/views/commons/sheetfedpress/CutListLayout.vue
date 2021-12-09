@@ -1,20 +1,22 @@
 <template>
     <div class="mt-2 bg-gray-200 px-4 py-4 rounded-md">
-        <div v-if="state.parentToRunsheet != null">
-            <Svg :svg-height="250"
-                :view-box-width="state.parentToRunsheet.bin.width" 
-                :view-box-height="state.parentToRunsheet.bin.length">
-                <Rectangle 
-                    :width="state.parentToRunsheet.bin.width"
-                    :height="state.parentToRunsheet.bin.length"
-                    stroke="#838383" :stroke-width="2" 
-                    pattern="diagonal-hatch"
-                    pattern-color="#d3677b"
-                    pattern-fill="#cecece"/>
-                <ParentSheetShape :key="pkey"
+        <Svg :svg-height="250"
+            :view-box-width="state.svgRect.width" 
+            :view-box-height="state.svgRect.length">
+            <Rectangle 
+                :width="state.svgRect.width"
+                :height="state.svgRect.length"
+                stroke="#838383" :stroke-width="2" 
+                pattern="diagonal-hatch"
+                pattern-color="#d3677b"
+                pattern-fill="#cecece"/>
+            <!-- if layout consts of parentsheet, runsheet and childsheet -->
+            <template v-if="state.parentToRunsheet">
+                <ParentSheetShape 
+                    :key="pkey"
                     v-for="(runsheet, pkey) in state.parentToRunsheet.layouts"
-                    :view-box-width="state.parentToRunsheet.bin.width"
-                    :view-box-length="state.parentToRunsheet.bin.length"
+                    :view-box-width="state.svgRect.width"
+                    :view-box-length="state.svgRect.length"
                     :x="runsheet.x" :y="runsheet.y"
                     :width="runsheet.width"
                     :length="runsheet.length"
@@ -49,13 +51,28 @@
                                 cutsheet.margin_bottom : cutsheet.margin_left"
                             :margin-left="!runsheet.is_rotated? 
                                 cutsheet.margin_left : cutsheet.margin_top"
-                            :view-box-width="state.parentToRunsheet.bin.width"
-                            :view-box-length="state.parentToRunsheet.bin.length">
+                            :view-box-width="state.svgRect.width"
+                            :view-box-length="state.svgRect.length">
                         </ChildSheetShape>
                     </template>
                 </ParentSheetShape>
-            </Svg>
-        </div>
+            </template>
+            <template v-else-if="state.parentToCutsheet">
+                <ChildSheetShape 
+                    :key="ckey" v-for="(cutsheet, ckey) in state.parentToCutsheet.layouts"
+                    :text="cutsheet.i"
+                    stroke="#838383" stroke-width="1" fill="white"
+                    :x="cutsheet.x" :y="cutsheet.y"
+                    :width="cutsheet.width" :length="cutsheet.length"
+                    :margin-top="cutsheet.margin_top"
+                    :margin-right="cutsheet.margin_right"
+                    :margin-bottom="cutsheet.margin_bottom"
+                    :margin-left="cutsheet.margin_left"
+                    :view-box-width="state.svgRect.width"
+                    :view-box-length="state.svgRect.length">
+                </ChildSheetShape>
+            </template>
+        </Svg>
     </div>
 </template>
 <script>
@@ -80,7 +97,20 @@ export default {
         const state = reactive({
             layouts: computed(()=> props.layouts || []),
             parentToRunsheet: computed(()=> findLayout('Parent-to-runsheet')),
-            runsheetToCutsheet: computed(()=> findLayout('Runsheet-to-cutsheet'))
+            runsheetToCutsheet: computed(()=> findLayout('Runsheet-to-cutsheet')),
+            parentToCutsheet: computed(()=> findLayout('Parent-to-cutsheet')),
+            svgRect: computed(()=> {
+                let width = 0;
+                let length = 0;
+                if (state.parentToRunsheet != null) {
+                    width = state.parentToRunsheet.bin.width;
+                    length = state.parentToRunsheet.bin.length;
+                } else if (state.parentToCutsheet != null) {
+                    width = state.parentToCutsheet.bin.width;
+                    length =state.parentToCutsheet.bin.length;
+                }
+                return {width, length}
+            })
         });
 
         const findLayout = (name) => {

@@ -5,7 +5,7 @@
             class="pt-4 text-sm text-red-600">*{{state.error}}</div>
         <div class="md:grid md:gap-4 md:grid-cols-4">
             <InputSelect name="Material" required 
-                class="flex-grow md:col-span-4"
+                class="flex-grow" :class="`md:col-span-${state.meta.isPaperType? 4:3}`"
                 :multiple="state.component.allowMultipleMaterials"
                 v-if="state.component.metaMaterialOptions.length > 0"
                 @input="(value)=> {
@@ -55,7 +55,9 @@
                 }"/>
         </div>
         <ProductComponentSheetLayoutTabs
-            v-if="state.meta.isPaperType"
+            v-if="state.meta.isPaperType && 
+                state.meta.sheet_layout.material_layout.length && 
+                state.meta.sheet_layout.item_layouts"
             :machine-id="state.meta.machine_option_obj? state.meta.machine_option_obj.id : null"
             :material-layout="state.meta.sheet_layout.material_layout"
             :item-layouts="state.meta.sheet_layout.item_layouts"/>

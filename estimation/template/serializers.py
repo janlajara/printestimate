@@ -215,7 +215,7 @@ class ProductTemplateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductTemplate
-        fields = ['id', 'name', 'description', 'meta_product',
+        fields = ['id', 'code', 'name', 'description', 'meta_product',
             'component_templates', 'service_templates']
 
 
@@ -224,4 +224,4 @@ class ProductTemplateListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductTemplate
-        fields = ['id', 'name', 'description', 'meta_product']
+        fields = ['id', 'code', 'name', 'description', 'meta_product']

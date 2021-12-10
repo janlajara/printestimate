@@ -13,6 +13,10 @@ class ProductTemplate(models.Model):
     name = models.CharField(max_length=40)
     description = models.CharField(max_length=100, null=True)
 
+    @property
+    def code(self):
+        return 'PT-%s' % (str(self.id).zfill(4))
+
     def add_component_template(self, meta_component, quantity, **kwargs):
         component_template = ComponentTemplate.objects.create_component_template(
             product_template=self, meta_component=meta_component,

@@ -29,6 +29,8 @@
         <Section>
             <DescriptionList class="md:grid-cols-3">
                 <DescriptionItem :loader="state.isProcessing" 
+                    name="Code" :value="state.data.code"/>
+                <DescriptionItem :loader="state.isProcessing" 
                     name="Name" :value="state.data.name"/>
                 <DescriptionItem :loader="state.isProcessing" 
                     name="Description" :value="state.data.description"/>
@@ -71,6 +73,7 @@ export default {
             id: route.params.id,
             isProcessing: false,
             data: {
+                code: '',
                 name: '',
                 description: '',
                 metaProduct: null,
@@ -97,6 +100,7 @@ export default {
             const response = await ProductTemplateApi.retrieveProductTemplate(id);
             if (response) {
                 state.data = {
+                    code: response.code,
                     name: response.name,
                     description: response.description,
                     metaProduct: response.meta_product,

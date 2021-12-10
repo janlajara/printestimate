@@ -70,7 +70,7 @@ export default {
             },
             isProcessing: false,
             list: [],
-            listLimit: 5,
+            listLimit: 10,
             listCount: 0
         });
         

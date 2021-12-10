@@ -87,7 +87,7 @@ export default {
         const request = reactive({
             isProcessing: false,
             list: [],
-            listLimit: 5,
+            listLimit: 10,
             listCount: 0,
             search: null,
             filter: 'Open',

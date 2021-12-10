@@ -43,7 +43,7 @@ export default {
     emits: ['change-limit', 'change-page'],
     setup(props, {emit}) {
         const pagination = reactive({
-            limit: 5,
+            limit: 10,
             offset: 0,
             pageNum: computed(()=> {
                 let current = 1;

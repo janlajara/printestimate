@@ -13,9 +13,10 @@
             </div>
         </div>
         <Section>
-            <Table :headers="['Name', 'Description']" :loader="state.isProcessing">
+            <Table :headers="['Code', 'Name', 'Description']" :loader="state.isProcessing">
                 <Row v-for="(s, key) in state.list" :key="key" clickable
                     @click="()=> goToDetail(s.id)">
+                    <Cell label="Code">{{s.code}}</Cell>
                     <Cell label="Name">{{s.name}}</Cell>
                     <Cell label="Description">{{s.description}}</Cell>
                 </Row>
@@ -60,6 +61,7 @@ export default {
             if (response) {
                 state.list = response.map( obj => ({
                     id: obj.id,
+                    code: obj.code,
                     name: obj.name,
                     description: obj.description
                 }))

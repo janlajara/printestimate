@@ -70,12 +70,13 @@
                         <div :class="`grid md:grid-cols-${state.meta.quantitiesColumnLength}`">
                             <div v-for="(estimate, y) in material.estimates" :key="y" class="my-auto">
                                 <div class="text-xs flex">
-                                    <div class="text-right md:w-2/5">
+                                    <div class="text-right w-2/5">
                                         <span class="text-gray-500">x</span>
-                                        {{estimate.totalMaterialQuantity}}</div>
-                                    <div class="text-left ml-1 md:w-3/5">
+                                        {{estimate.totalQuantity}}</div>
+                                    <div class="ml-1 w-3/5 flex justify-between">
                                         <span class="text-gray-500">=</span>
-                                        {{formatMoney(material.rate * estimate.totalMaterialQuantity)}}</div>
+                                        <span>{{formatMoney(material.rate * estimate.totalQuantity)}}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -96,10 +97,11 @@
                                 <div class="text-xs flex">
                                     <div class="text-right w-2/5">
                                         <span>x</span>
-                                        {{estimate.estimatedMaterialQuantity}}</div>
-                                    <div class="text-left ml-1">
+                                        {{estimate.estimatedQuantity}}</div>
+                                    <div class="ml-1 w-3/5 flex justify-between">
                                         <span>=</span>
-                                        {{formatMoney(material.rate * estimate.estimatedMaterialQuantity)}}</div>
+                                        <span>{{formatMoney(material.rate * estimate.estimatedQuantity)}}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -120,10 +122,11 @@
                                 <div class="text-xs flex">
                                     <div class="text-right w-2/5">
                                         <span>x</span>
-                                        {{estimate.spoilageMaterialQuantity}}</div>
-                                    <div class="text-left ml-1">
+                                        {{estimate.spoilageQuantity}}</div>
+                                    <div class="ml-1 w-3/5 flex justify-between">
                                         <span>=</span>
-                                        {{formatMoney(material.rate * estimate.spoilageMaterialQuantity)}}</div>
+                                        <span>{{formatMoney(material.rate * estimate.spoilageQuantity)}}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -137,7 +140,7 @@
                         <div v-for="(quantity, x) in state.data.quantities" :key="x">
                             <div class="text-xs flex">
                                 <div class="w-2/5"></div>
-                                <div class="ml-1">
+                                <div class="ml-1 w-3/5 flex justify-between">
                                     <span class="mr-1">=</span>
                                     <span class="underline">
                                         {{state.getMaterialTotalPriceByQuantity(quantity)}}</span>
@@ -171,15 +174,15 @@
                                 <div class="flex text-xs">
                                     <div class="text-right w-2/5">
                                     </div>
-                                    <div class="text-left ml-1">
+                                    <div class="ml-1 w-3/5 flex justify-between">
                                         <span>=</span>
-                                        {{formatMoney(quantity)}}
+                                        <span>{{formatMoney(state.getServicePriceByQuantity(quantity, w))}}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+                    <!-- Service Breakdown Expandable -->
                     <div v-for="(operation, x) in service.operations" :key="x" v-show="service.isExpanded" 
                         class="border-t-2 border-dotted text-gray-500 text-sm">
                         <span class="ml-8">{{operation.name}}</span>
@@ -205,9 +208,10 @@
                                                 :class="estimate.estimate == null? 'invisible' : ''">
                                                 <span>x</span>
                                                 {{estimate.estimate}}</div>
-                                            <div class="text-left ml-1">
+                                            <div class="ml-1 w-3/5 flex justify-between">
                                                 <span>=</span>
-                                                {{formatMoney(expense.rate * (estimate.estimate || 1))}}</div>
+                                                <span>{{formatMoney(expense.rate * (estimate.estimate || 1))}}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -215,6 +219,24 @@
                         </div>
                     </div>
                 </div>
+                <!-- Total for Service -->
+                <div class="grid grid-cols-2 mt-1">
+                    <div>
+                    </div>
+                    <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength}`">
+                        <div v-for="(quantity, x) in state.data.quantities" :key="x">
+                            <div class="text-xs flex">
+                                <div class="w-2/5"></div>
+                                <div class="ml-1 w-3/5 flex justify-between">
+                                    <span class="mr-1">=</span>
+                                    <span class="underline">
+                                        {{formatMoney(state.getServicePriceByQuantity(quantity))}}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </Section>
     </Page>
@@ -228,8 +250,58 @@ import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 
-import {reactive, inject, computed} from 'vue';
+import {reactive, inject, computed, onBeforeMount} from 'vue';
 import {formatQuantity, formatMoney as formatCurrency} from '@/utils/format.js'
+
+class Material {
+    constructor(name, rate, uom, spoilageRate, estimates, currency) {
+        this._state = reactive({
+            name, rate, uom, spoilageRate, estimates, currency
+        })
+    }
+
+    set name(value){this._state.name = value}
+    get name(){return this._state.name}
+
+    set rate(value){this._state.rate = value}
+    get rate(){return this._state.rate}
+
+    set uom(value){this._state.uom = value}
+    get uom(){return this._state.uom}
+
+    set spoilageRate(value){this._state.spoilageRate = value}
+    get spoilageRate(){return this._state.spoilageRate}
+
+    set estimates(value){this._state.estimates = value}
+    get estimates(){return this._state.estimates}
+
+    set currency(value){this._state.currency = value}
+    get currency(){return this._state.currency}
+
+    get rateLabel() {
+        return formatCurrency(this._state.rate, this._state.currency)
+    }
+}
+
+class MaterialEstimate {
+    constructor(itemQuantity, estimatedQuantity, spoilageQuantity){
+        this._state = reactive({
+            itemQuantity, estimatedQuantity, spoilageQuantity
+        })
+    }
+
+    get totalQuantity(){return computed(()=> 
+        this.estimatedQuantity + this.spoilageQuantity);}
+
+    set itemQuantity(value){this._state.itemQuantity = value}
+    get itemQuantity(){return this._state.itemQuantity}
+
+    set estimatedQuantity(value){this._state.estimatedQuantity = value}
+    get estimatedQuantity(){return this._state.estimatedQuantity}
+
+    set spoilageQuantity(value){this._state.spoilageQuantity = value}
+    get spoilageQuantity(){return this._state.spoilageQuantity}
+}
 
 export default {
     components: {
@@ -240,7 +312,7 @@ export default {
         const state = reactive({
             isProcessing: false,
             meta: {
-                quantitiesColumnLength: computed(()=> Math.max(state.data.quantities.length, 1))
+                quantitiesColumnLength: computed(()=> Math.max(state.data.quantities.length, 1)),
             },
             data: {
                 estimateCode: 'CE-1234',
@@ -248,44 +320,7 @@ export default {
                 templateName: 'Carbonless Form',
                 templateDescription: '8.5x11" Carbonless Form (White, Yellow, Blue)',
                 quantities: [100, 200, 300],
-                billOfMaterials: [
-                    {name: 'Generic Carbonless White 32x24inch', 
-                     rate: 30.00, rateLabel: '₱30.00',
-                     uom: 'sheet', 
-                     spoilageRate: 0, isExpanded: false,
-                     estimates: [
-                        {itemQuantity: 100, 
-                          estimatedMaterialQuantity: 300,
-                          spoilageMaterialQuantity: 0,
-                          totalMaterialQuantity: 300},
-                        {itemQuantity: 200, 
-                          estimatedMaterialQuantity: 600,
-                          spoilageMaterialQuantity: 0,
-                          totalMaterialQuantity: 600},
-                        {itemQuantity: 300, 
-                          estimatedMaterialQuantity: 900,
-                          spoilageMaterialQuantity: 0,
-                          totalMaterialQuantity: 900}
-                     ]},
-                     {name: 'Carbonless Blue 32x24', 
-                     rate: 30.00, rateLabel: '₱30.00',
-                     uom: 'sheet', 
-                     spoilageRate: 0, isExpanded: false,
-                     estimates: [
-                        {itemQuantity: 100, 
-                          estimatedMaterialQuantity: 300,
-                          spoilageMaterialQuantity: 0,
-                          totalMaterialQuantity: 300},
-                        {itemQuantity: 200, 
-                          estimatedMaterialQuantity: 600,
-                          spoilageMaterialQuantity: 0,
-                          totalMaterialQuantity: 600},
-                        {itemQuantity: 300, 
-                          estimatedMaterialQuantity: 900,
-                          spoilageMaterialQuantity: 0,
-                          totalMaterialQuantity: 900}
-                     ]}
-                ],
+                billOfMaterials: [],
                 services: [
                     {name: 'Raw-to-running cut',
                     uom: 'count', 
@@ -433,22 +468,26 @@ export default {
             getMaterialTotalPriceByQuantity: (quantity=0) => {
                 const prices = state.data.billOfMaterials
                     .filter(x=>x.estimates.find(y=>y.itemQuantity == quantity) != null)
-                    .map(x=>x.estimates.find(y=>y.itemQuantity == quantity).totalMaterialQuantity * x.rate);
+                    .map(x=>x.estimates.find(y=>y.itemQuantity == quantity).totalQuantity * x.rate);
                 const totalPrice = prices.reduce((a,b)=> a+b, 0);
                 return formatMoney(totalPrice);
             },
-            getServicePriceByQuantity: (serviceIndex, quantity=0) => {
-                if (serviceIndex && quantity > 0) {
-                    const service = state.data.services[serviceIndex];
-                    const prices = service.operations.map(x=>
-                        x.activities.map(y=> 
-                            y.expenses.map(z=> {
-                                const estimate = z.estimates.find(a=> a.itemQuantity == quantity) || 0;
-                                return estimate.estimate * z.rate;
+            getServicePriceByQuantity: (quantity=0, serviceIndex=null) => {
+                if (quantity > 0) {
+                    let totalPrice = 0;
+                    let services = state.data.services;
+                    if (serviceIndex) services = [state.data.services[serviceIndex]];
+                    services.forEach(service => {
+                        service.operations.forEach(x=>
+                            x.activities.forEach(y=> {
+                                y.expenses.forEach(z=> {
+                                    const estimate = z.estimates.find(a=> a.itemQuantity == quantity);
+                                    if (estimate) totalPrice += (estimate.estimate || 1) * z.rate;
+                                });
                             })
-                        )
-                    )
-                    return prices.reduce((a,b)=> a+b, 0);
+                        );
+                    });
+                    return totalPrice;
                 }
             } 
         });
@@ -458,6 +497,59 @@ export default {
                 return formatCurrency(amount, currency)
             else return ''
         }
+
+        const initializeBillOfMaterials = ()=> {
+            const mockData = [
+                {name: 'Generic Carbonless White 32x24inch', 
+                rate: 30.00, 
+                uom: 'sheet', 
+                spoilageRate: 0, isExpanded: false,
+                estimates: [
+                {itemQuantity: 100, 
+                    estimatedMaterialQuantity: 300,
+                    spoilageMaterialQuantity: 0,
+                    totalMaterialQuantity: 300},
+                {itemQuantity: 200, 
+                    estimatedMaterialQuantity: 600,
+                    spoilageMaterialQuantity: 0,
+                    totalMaterialQuantity: 600},
+                {itemQuantity: 300, 
+                    estimatedMaterialQuantity: 900,
+                    spoilageMaterialQuantity: 0,
+                    totalMaterialQuantity: 900}
+                ]},
+                {name: 'Carbonless Blue 32x24', 
+                rate: 30.00, 
+                uom: 'sheet', 
+                spoilageRate: 0, isExpanded: false,
+                estimates: [
+                {itemQuantity: 100, 
+                    estimatedMaterialQuantity: 300,
+                    spoilageMaterialQuantity: 0,
+                    totalMaterialQuantity: 300},
+                {itemQuantity: 200, 
+                    estimatedMaterialQuantity: 600,
+                    spoilageMaterialQuantity: 0,
+                    totalMaterialQuantity: 600},
+                {itemQuantity: 300, 
+                    estimatedMaterialQuantity: 900,
+                    spoilageMaterialQuantity: 0,
+                    totalMaterialQuantity: 900}
+                ]}
+            ];
+            mockData.forEach(data => {
+                const estimates = data.estimates.map(x=> 
+                    new MaterialEstimate(x.itemQuantity, x.estimatedMaterialQuantity,
+                        x.spoilageMaterialQuantity));
+                const material = new Material(data.name, data.rate, 
+                    data.uom, data.spoilageRate, estimates, currency);
+                state.data.billOfMaterials.push(material); 
+            })
+        }
+
+        onBeforeMount(()=> {
+            initializeBillOfMaterials();
+        })
 
         return {
             state,

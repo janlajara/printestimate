@@ -30,12 +30,11 @@
                     name="Description" :value="state.data.templateDescription"/>
             </DescriptionList>
         </Section>
-        <Section>
+        <Section heading="Cost Estimation">
             <div class="w-full">
                 <!-- Table Header -->
                 <div class="border-b grid grid-cols-2">
-                    <div class="font-bold text-lg text-left">
-                        Cost Estimation</div>
+                    <div class="font-bold text-lg text-left"></div>
                     <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength}`">
                         <div v-for="(quantity, key) in state.data.quantities" :key="key"
                             class="flex justify-center">
@@ -45,12 +44,12 @@
                 </div>
 
                 <!-- Table Rows for Bill of Materials -->
-                <EstimateBillOfMaterials 
+                <EstimateBillOfMaterials class="py-2"
                     :quantities="state.data.quantities"
                     :bill-of-materials="state.data.billOfMaterials"/>
 
                 <!-- Table Rows for Services -->
-                <EstimateServices 
+                <EstimateServices class="py-2 pb-4"
                     :quantities="state.data.quantities"
                     :services="state.data.services"/>
 
@@ -113,16 +112,13 @@ export default {
                 estimates: [
                 {itemQuantity: 100, 
                     estimatedMaterialQuantity: 300,
-                    spoilageMaterialQuantity: 30,
-                    totalMaterialQuantity: 300},
+                    spoilageMaterialQuantity: 30},
                 {itemQuantity: 200, 
                     estimatedMaterialQuantity: 600,
-                    spoilageMaterialQuantity: 60,
-                    totalMaterialQuantity: 600},
+                    spoilageMaterialQuantity: 60},
                 {itemQuantity: 300, 
                     estimatedMaterialQuantity: 900,
-                    spoilageMaterialQuantity: 90,
-                    totalMaterialQuantity: 900}
+                    spoilageMaterialQuantity: 90}
                 ]},
                 {name: 'Carbonless Blue 32x24', 
                 rate: 30.00, 
@@ -131,16 +127,13 @@ export default {
                 estimates: [
                 {itemQuantity: 100, 
                     estimatedMaterialQuantity: 300,
-                    spoilageMaterialQuantity: 0,
-                    totalMaterialQuantity: 300},
+                    spoilageMaterialQuantity: 0},
                 {itemQuantity: 200, 
                     estimatedMaterialQuantity: 600,
-                    spoilageMaterialQuantity: 0,
-                    totalMaterialQuantity: 600},
+                    spoilageMaterialQuantity: 0},
                 {itemQuantity: 300, 
                     estimatedMaterialQuantity: 900,
-                    spoilageMaterialQuantity: 0,
-                    totalMaterialQuantity: 900}
+                    spoilageMaterialQuantity: 0}
                 ]}
             ];
 

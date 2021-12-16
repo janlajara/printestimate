@@ -1,7 +1,7 @@
 <template>
     <div>
         <!-- Table Rows for Bill of Materials -->
-        <div class="pt-4 text-primary-dark font-bold">
+        <div class="text-primary-dark font-bold">
             <span>Bill of Materials</span>
         </div>
         <div v-for="(material, x) in state.data.billOfMaterials" :key="x"

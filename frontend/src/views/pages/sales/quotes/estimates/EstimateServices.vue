@@ -1,7 +1,7 @@
 <template>
     <div>
         <!-- Table Rows for Services -->
-        <div class="pt-4 text-primary-dark font-bold">
+        <div class="text-primary-dark font-bold">
             <span>Services</span>
         </div>
         <div v-for="(service, w) in state.data.services" :key="w"

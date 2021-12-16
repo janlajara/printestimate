@@ -114,7 +114,7 @@ def test_sheet_fed_press__get_sheet_layouts(db, create_sheetfed_machine):
     item = Rectangle.Layout(width=32, length=27, uom='inch')
     material = Rectangle.Layout(width=10, length=8, uom='inch')
 
-    layouts = machine.get_sheet_layouts(material, item, False, True)
+    layouts = machine.get_sheet_layouts(material, item, True)
 
     assert layouts is not None
     assert len(layouts) == 2
@@ -136,7 +136,7 @@ def test_sheet_fed_press__get_sheet_layouts__rotated_sheet(db, create_sheetfed_m
     item = Rectangle.Layout(width=4, length=6, uom='inch')
     material = Rectangle.Layout(width=2, length=2, uom='inch')
 
-    layouts = machine.get_sheet_layouts(material, item, False, True)
+    layouts = machine.get_sheet_layouts(material, item, True)
 
     assert layouts is not None and len(layouts) == 2
 
@@ -156,7 +156,7 @@ def test_sheet_fed_press__get_sheet_layouts__halved_length_less_than_machine_min
     item = Rectangle.Layout(width=9, length=9, uom='inch')
     material = Rectangle.Layout(width=2, length=2, uom='inch')
 
-    layouts = machine.get_sheet_layouts(material, item, False, True)
+    layouts = machine.get_sheet_layouts(material, item, True)
 
     assert layouts is not None and len(layouts) == 2
 
@@ -175,7 +175,7 @@ def test_sheet_fed_press__get_sheet_layouts__big_layout(
     item = Rectangle.Layout(width=32, length=28, uom='inch')
     material = Rectangle.Layout(width=17, length=14, uom='inch')
 
-    layouts = machine.get_sheet_layouts(material, item, False, True)
+    layouts = machine.get_sheet_layouts(material, item, True)
 
     assert layouts is not None and len(layouts) == 2
     

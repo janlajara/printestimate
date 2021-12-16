@@ -88,7 +88,7 @@ class SheetFedPressMachineGetSheetLayoutsView(mixins.CreateModelMixin,
                 material_layout, item_layout, bleed, rotate = \
                     serializer.create(validated_data)
                 sheet_layouts = press_machine.get_sheet_layouts(material_layout, 
-                    item_layout, bleed, rotate)
+                    item_layout, rotate)
 
                 response = {}
                 if sheet_layouts is not None:

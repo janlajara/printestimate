@@ -177,15 +177,15 @@ class SheetFedPressMachine(PressMachine):
 
 
     def get_sheet_layouts(self, material_layout:Paper.Layout, item_layout:Paper.Layout,
-            bleed=False, rotate=False):
+            rotate=False):
         layouts = self.get_layouts_meta(material_layout, item_layout, rotate)
         return layouts
                 
 
-    def estimate(self, material, quantity, bleed=False, rotate=False):
+    def estimate(self, material, quantity, rotate=False):
         if material.type == Item.PAPER:
             layouts = self.get_sheet_layouts(material.layout, 
-                material.item_properties.layout, bleed, rotate)
+                material.item_properties.layout, rotate)
 
             if layouts is not None and len(layouts) == 2:
                 # Item refers to the stock / raw material

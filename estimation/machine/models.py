@@ -5,7 +5,6 @@ from core.utils.measures import Measure, CostingMeasure, Quantity
 from measurement.measures import Distance, Area
 from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
-from estimation.product.models import Material, PaperMaterial
 from inventory.models import Item
 from inventory.properties.models import Paper
 import inflect

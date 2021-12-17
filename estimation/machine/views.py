@@ -63,7 +63,7 @@ class GetSheetLayoutsView(mixins.CreateModelMixin, viewsets.GenericViewSet):
             material_layout, item_layout, bleed, rotate = \
                     serializer.create(validated_data)
             sheet_layout = ChildSheet.get_layout(item_layout, material_layout, 
-                rotate, 'Parent-to-cutsheet')
+                rotate)
             response = {}
             if sheet_layout is not None:
                 serializer = serializers.SheetLayoutMetaSerializer(sheet_layout)

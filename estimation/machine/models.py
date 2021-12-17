@@ -429,7 +429,8 @@ class ChildSheet(Rectangle):
     # layouts, count, usage, wastage, indices of rotated rectangles
     @classmethod
     def get_layout(cls, parent_layout:ParentSheet.Layout,
-            child_layout:'ChildSheet.Layout', rotate=False, name=None):
+            child_layout:'ChildSheet.Layout', rotate=False, 
+            name='Parent-to-cutsheet'):
         layouts = []
         layout_meta = Rectangle.get_layout(
             parent_layout, child_layout, rotate, name)

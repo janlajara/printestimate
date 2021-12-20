@@ -164,40 +164,6 @@ def test_operation__get_duration_and_rate(db, korse_workstation):
     assert cost.amount == 1800
 
 
-def test_operation__get_measurement_machine_based(db, korse_workstation, korse_machine,
-        item_factory):
-    korse_workstation.machine = korse_machine
-    item = item_factory(name='Carbonless White', type=Item.PAPER)
-    item.properties.length_value = 37
-    item.properties.width_value = 25.5
-    item.properties.size_uom = 'inch'
-    item.properties.save()
-    product = Product.objects.create(name='Form')
-    component = Component.objects.create(product=product, quantity=100)
-    material = Material.objects.create_material(
-        component=component, type=Item.PAPER, name='ply', item=item,
-        width_value=8.25, length_value=5.875,
-        size_uom='inch') 
-    
-    parent_sheet = korse_machine.add_parent_sheet(12.75, 18.5, 'inch')
-    child_sheet = parent_sheet.add_child_sheet(8.25, 11.75, 'inch', 0.5, 0.5, 0.5, 0.5)
-    estimate = korse_machine.estimate(material, 100, True)
-
-    assert estimate is not None
-    
-    qty = estimate.get(CostingMeasure.QUANTITY, None)    
-    assert qty is not None and qty.sheet == 556
-    
-    area = estimate.get(CostingMeasure.AREA, None)
-    assert area is not None and math.floor(area.sq_inch) == 524586
-
-    operation = korse_workstation.add_operation(
-        name='2-Color Printing', material_type=Item.PAPER)
-    # measurement = operation.get_measurement(material, 100, bleed=True)
-
-    # assert measurement.pc == 2500
-
-
 def test_operation__get_costing_measure_choices(db, korse_workstation):
     def __validate(actual, expected):
         expected_choices = [measure[0] for measure in expected]

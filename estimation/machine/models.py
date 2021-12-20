@@ -176,44 +176,11 @@ class SheetFedPressMachine(PressMachine):
         return return_layouts_meta
 
 
-    def get_sheet_layouts(self, material_layout:Paper.Layout, item_layout:Paper.Layout,
+    def get_sheet_layouts(self, item_layout:Paper.Layout, material_layout:Paper.Layout, 
             rotate=False):
         layouts = self.get_layouts_meta(material_layout, item_layout, rotate)
         return layouts
-                
-
-    def estimate(self, material, quantity, rotate=False):
-        if material.type == Item.PAPER:
-            layouts = self.get_sheet_layouts(material.layout, 
-                material.item_properties.layout, rotate)
-
-            if layouts is not None and len(layouts) == 2:
-                # Item refers to the stock / raw material
-                # Parent refers to the press running sheet that the machine accepts
-                # Child refers to the divided parent sheets
-                # Output refers to the divided child sheets. It's also the final size.
-                item_to_parent_layout_meta = layouts[0]
-                parent_to_child_layout_meta = layouts[1]
-
-                parent_sheet_per_item = item_to_parent_layout_meta.count
-                child_sheet_per_parent = parent_to_child_layout_meta.count
-                total_output_needed = material.quantity * quantity
-
-                output_per_item = parent_sheet_per_item * child_sheet_per_parent 
-                items_needed = math.ceil(total_output_needed / output_per_item)
-                runs_needed = items_needed * parent_sheet_per_item
-
-                run_count = Quantity(sheet=runs_needed)
-                parent_layout = item_to_parent_layout_meta.rect
-                parent_area = Area(**{'sq_%s' % parent_layout.uom: parent_layout.area})
-                total_area = runs_needed * parent_area
-                
-                return {
-                    CostingMeasure.AREA: total_area,
-                    CostingMeasure.QUANTITY: run_count
-                }
-            else:
-                return None
+        
 
     def add_parent_sheet(self, width_value, length_value, size_uom, 
         padding_top=0, padding_right=0, padding_bottom=0, padding_left=0, **kwargs):

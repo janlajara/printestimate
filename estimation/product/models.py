@@ -144,6 +144,8 @@ class LineMaterial(Material, Line):
 
 
 class PaperMaterial(Material, Paper):
+    type = Item.PAPER
+
     class Estimate(Material.Estimate):
 
         @property
@@ -160,16 +162,19 @@ class PaperMaterial(Material, Paper):
                 if layouts_count == 2:
                     parent_to_runsheet = self.layouts_meta[0]
                     runsheet_to_finalsheet = self.layouts_meta[1]
-
-                    layouts['parent_sheet'] = parent_to_runsheet.bin
-                    layouts['run_sheet'] = parent_to_runsheet.rect 
-                    layouts['final_sheet'] = runsheet_to_finalsheet.rect
+                    layouts = {
+                        'parent_sheet': parent_to_runsheet.bin,
+                        'run_sheet': parent_to_runsheet.rect,
+                        'final_sheet': runsheet_to_finalsheet.rect
+                    }
 
                 elif layouts_count == 1:
                     parent_to_finalsheet = self.layouts_meta[0]
-
-                    layouts['parent_sheet'] = parent_to_finalsheet.bin
-                    layouts['final_sheet'] = parent_to_finalsheet.rect
+                    layouts = {
+                        'parent_sheet': parent_to_finalsheet.bin,
+                        'run_sheet': parent_to_finalsheet.rect,
+                        'final_sheet': parent_to_finalsheet.rect
+                    }
 
             return layouts
 
@@ -225,11 +230,11 @@ class PaperMaterial(Material, Paper):
 
                     machine_run_quantity = math.ceil(self.estimated_total_quantity * child_sheet_per_item)
             
-            run_sheet = self.layouts.get('run_sheet')
+            run_sheet = self.layouts.get('run_sheet') 
             measures = {CostingMeasure.QUANTITY: Quantity(pc=machine_run_quantity)}
             add = self._get_additional_measures(run_sheet, machine_run_quantity)
             measures.update(add)
-            
+
             return measures
 
         @property
@@ -305,8 +310,6 @@ class PaperMaterial(Material, Paper):
                 }
             return measures
 
-    type = Item.PAPER
-
     def estimate(self, quantity, spoilage_rate=0, rotate=True):
         estimate = None
 
@@ -322,6 +325,7 @@ class PaperMaterial(Material, Paper):
                 spoilage_rate, layouts)
         
         return estimate
+ 
  
 class PanelMaterial(Material, Panel):
     type = Item.PANEL

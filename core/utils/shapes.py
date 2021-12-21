@@ -132,17 +132,33 @@ class Rectangle(Shape):
 
         @property
         def width_measurement(self):
+            w = Distance(inch=0)
             if self.width is not None and self.uom is not None:
-                return Distance(**{self.uom: self.width})
+                w = Distance(**{self.uom: self.width})
+            return w
 
         @property
         def length_measurement(self):
+            l = Distance(inch=0)
             if self.length is not None and self.uom is not None:
-                return Distance(**{self.uom: self.length}) 
+                l = Distance(**{self.uom: self.length}) 
+            return l
+
+        @property
+        def area_measurement(self):
+            return self.width_measurement * self.length_measurement
+
+        @property
+        def perimeter_measurement(self):
+            return self.width_measurement + self.length_measurement
 
         @property
         def area(self):
             return self.width * self.length
+
+        @property
+        def perimeter(self):
+            return self.width + self.length
 
         def get_pack_size_as_bin(self):
             return self.width, self.length, self.uom

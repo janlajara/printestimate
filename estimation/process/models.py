@@ -9,7 +9,6 @@ from core.utils.measures import CostingMeasure, Quantity, Measure, AreaSpeed, Vo
 from inventory.models import Item
 from inventory.properties.models import Tape, Line, Paper, Panel, Liquid
 from estimation.machine.models import Machine
-from estimation.product.models import Material
 from estimation.exceptions import MeasurementMismatch, MaterialTypeMismatch, CostingMeasureMismatch
 import inflect
 
@@ -123,7 +122,7 @@ class Operation(models.Model):
         if self.workstation.machine is not None:
             measures = self.workstation.machine.costing_measures
         else:
-            clazz = Material.get_class(self.material_type)
+            clazz = Item.get_item_shape(self.material_type) 
             measures = clazz.costing_measures
 
         return measures

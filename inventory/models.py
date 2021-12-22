@@ -143,6 +143,19 @@ class Item(models.Model):
                                       on_delete=models.RESTRICT, null=True,
                                       blank=True)
 
+    @classmethod
+    def get_item_shape(cls, type):
+        mapping = {
+            Item.TAPE: Tape,
+            Item.LINE: Line,
+            Item.PAPER: Paper,
+            Item.PANEL: Panel,
+            Item.LIQUID: Liquid,
+            Item.OTHER: Shape
+        }
+        clazz = mapping.get(type, Shape)
+        return clazz
+
     @property
     def full_name(self):
         properties = self.properties if self.properties is not None else ''

@@ -35,6 +35,13 @@ class Paper(Rectangle):
             uom=self.size_uom, gsm=self.gsm, finish=self.finish)
         return layout
 
+    def prop_args(self):
+        return {
+            'length_value': self.length_value, 
+            'width_value': self.width_value,
+            'size_uom': self.size_uom,
+            'gsm': self.gsm, 'finish': self.finish}
+
     def __str__(self):
         gsm = str(self.gsm) + ' gsm' if self.gsm is not None else self.gsm
         arr = [super().__str__(), self.finish, super().format(gsm)]
@@ -53,6 +60,14 @@ class Panel(Rectangle):
     def thickness(self):
         if self.thickness_value is not None and self.thickness_uom is not None:
             return Distance(**{self.thickness_uom: self.thickness_value})
+
+    def prop_args(self):
+        return {
+            'length_value': self.length_value, 
+            'width_value': self.width_value,
+            'size_uom': self.size_uom,
+            'thickness_value': self.thickness_value,
+            'thickness_uom': self.thickness_uom}
 
     def __str__(self):
         thickness_str = ''

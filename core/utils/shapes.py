@@ -35,6 +35,9 @@ class Shape(models.Model):
     def gte(self, obj):
         pass
 
+    def prop_args(self):
+        pass
+
     def _validate(self, obj):
         pass
 
@@ -78,6 +81,11 @@ class Line(Shape):
         self._validate(line)
         return self.length.mm >= line.length.mm
 
+    def prop_args(self):
+        return {
+            'length_value': self.length_value, 
+            'length_uom': self.size_uom}
+
     def _validate(self, line):
         if not isinstance(line, Line):
             self._raise_type_error(self, line)
@@ -103,6 +111,11 @@ class Tape(Line):
     def width(self):
         if self.width_value is not None and self.width_uom is not None:
             return Distance(**{self.width_uom: self.width_value})
+
+    def prop_args(self):
+        return {
+            'width_value': self.width_value,
+            'width_uom': self.size_uom}
 
     def __str__(self):
         width_str = ''
@@ -259,6 +272,12 @@ class Rectangle(Shape):
             CostingMeasure.PERIMETER: self.perimeter * estimate, 
             CostingMeasure.QUANTITY: Quantity(pc=estimate)
         }
+
+    def prop_args(self):
+        return {
+            'length_value': self.length_value, 
+            'width_value': self.width_value,
+            'size_uom': self.size_uom}
 
     # Returns the following:
     # layouts, count, usage, wastage, indices of rotated rectangles
@@ -428,6 +447,11 @@ class Liquid(Shape):
     def gte(self, liquid):
         self._validate(liquid)
         return self.volume.ml >= liquid.volume.ml
+
+    def prop_args(self):
+        return {
+            'volume_value': self.volume_value, 
+            'volume_uom': self.size_uom}
 
     def _validate(self, liquid):
         if not isinstance(liquid, Liquid):

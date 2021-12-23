@@ -114,6 +114,14 @@ class MaterialTemplate(models.Model):
     meta_material_option = models.ForeignKey(MetaMaterialOption, on_delete=models.RESTRICT)
 
     @property
+    def item(self):
+        return self.meta_material_option.item
+
+    @property
+    def type(self):
+        return self.meta_material_option.type
+
+    @property
     def quantity(self):
         return self.component_template.quantity
 

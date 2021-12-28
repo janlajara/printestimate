@@ -3,7 +3,7 @@ from django.db.models import Q, Sum, Avg, Count
 from djmoney.models.fields import MoneyField
 from inventory.properties.models import TapeProperties, LineProperties, PaperProperties, \
     PanelProperties, LiquidProperties, ItemProperties, Paper, Panel
-from core.utils.shapes import Line, Tape, Liquid
+from core.utils.shapes import Shape, Line, Tape, Liquid
 from core.utils.measures import CostingMeasure
 from .exceptions import DepositTooBig, InsufficientStock, \
     InvalidExpireQuantity, IllegalUnboundedDeposit, \

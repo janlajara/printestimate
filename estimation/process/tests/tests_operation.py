@@ -36,14 +36,14 @@ def workstation_factory(db):
 
 
 @pytest.fixture
-def korse_workstation(db, workstation_factory, speed_factory):
+def korse_workstation(db, workstation_factory):
     korse_ws = workstation_factory(name='Korse 1C')
     korse_ws.add_expense('Electricity', 'hour', 100)
     korse_ws.add_expense('Depreciation', 'hour', 200)
     korse_ws.add_activity('Spot Color Printing', 1, 1, 
-        speed_factory(10000, 'sheet', 'hr'), True)
+        (10000, 'sheet', 'hr'), True)
     korse_ws.add_activity('Numbering', 1, 1, 
-        speed_factory(10000, 'sheet', 'hr'), True)
+        (10000, 'sheet', 'hr'), True)
     return korse_ws
 
 
@@ -55,15 +55,15 @@ def korse_machine(db):
         min_sheet_length=1, max_sheet_length=40)
 
 
-def test_workstation__add_activity(db, workstation_factory, speed_factory):
-    speed = speed_factory(10000, 'sheet', 'hr')
+def test_workstation__add_activity(db, workstation_factory):
+    speed = (10000, 'sheet', 'hr')
     korse_ws = workstation_factory(name='Korse 1C')
     activity = korse_ws.add_activity('Spot Color Printing', 1, 1, speed)
 
     assert activity in korse_ws.activities.all() 
 
 
-def test_workstation__add_activity_with_preset_expense(db, workstation_factory, speed_factory):
+def test_workstation__add_activity_with_preset_expense(db, workstation_factory):
     korse_ws = workstation_factory(name='Korse 1C')
     elec_expense = korse_ws.add_expense('Electricity', 'hour', 100)
     dep_expense = korse_ws.add_expense('Depreciation', 'hour', 200)
@@ -71,9 +71,9 @@ def test_workstation__add_activity_with_preset_expense(db, workstation_factory, 
     assert len(korse_ws.activity_expenses.all()) == 2
 
     activity1 = korse_ws.add_activity('Spot Color Printing', 1, 1, 
-        speed_factory(10000, 'sheet', 'hr'), True)
+        (10000, 'sheet', 'hr'), True)
     activity2 = korse_ws.add_activity('Numbering', 1, 1, 
-        speed_factory(10000, 'sheet', 'hr'), True)
+        (10000, 'sheet', 'hr'), True)
 
     assert len(activity1.activity_expenses.all()) == 2 and \
         len(activity2.activity_expenses.all()) == 2

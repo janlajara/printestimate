@@ -221,6 +221,9 @@ class Operation(models.Model):
 
 
 class Speed(models.Model):
+    class Meta:
+        abstract = True
+
     measure_value = models.DecimalField(decimal_places=4, max_digits=12)
     measure_unit = models.CharField(max_length=20, choices=Measure.PRIMARY_UNITS)
     speed_unit = models.CharField(max_length=5, choices=Measure.TIME_UNITS)
@@ -260,9 +263,14 @@ class ActivityManager(models.Manager):
             set_up, tear_down, speed, workstation=None, activity_expenses=None):
         activity = Activity.objects.create(
             name=name, workstation=workstation,
-            speed=speed,
             set_up=Time(hr=set_up),
             tear_down=Time(hr=tear_down))
+
+        measure_value, measure_unit, speed_unit = speed
+        ActivitySpeed.objects.create(measure_value=measure_value, 
+            measure_unit=measure_unit, speed_unit=speed_unit,
+            activity=activity)
+
         if activity_expenses is not None:
             activity.activity_expenses.set(activity_expenses)
         return activity
@@ -273,17 +281,18 @@ class Activity(models.Model):
     name = models.CharField(max_length=40)
     workstation = models.ForeignKey(Workstation, on_delete=models.SET_NULL,
         related_name='activities', blank=True, null=True)
-    speed = models.OneToOneField(Speed, on_delete=models.CASCADE, related_name='activity')
     set_up = MeasurementField(measurement=Time, null=True, blank=False)
     tear_down = MeasurementField(measurement=Time, null=True, blank=False)
 
     @property
     def measure(self):
-        return self.speed.measure
+        if self.speed is not None:
+            return self.speed.measure
 
     @property
     def measure_unit(self):
-        return self.speed.measure_unit
+        if self.speed is not None:
+            return self.speed.measure_unit
 
     @property
     def flat_rate(self):
@@ -302,6 +311,9 @@ class Activity(models.Model):
 
     def get_duration(self, measurement, contingency=0, hours_per_day=10):
         self._validate_measurement(measurement)
+
+        if self.speed is None:
+            raise Exception('Activity speed is currently null and has not been initialized.')
 
         # factor hours for setup and teardown, multiplied by estimate num of days
         def __compute_overall(base_duration):
@@ -378,6 +390,10 @@ class Activity(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ActivitySpeed(Speed):
+    activity = models.OneToOneField(Activity, on_delete=models.CASCADE, related_name='speed')
 
 
 class ActivityExpense(models.Model):

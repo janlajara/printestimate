@@ -4,7 +4,8 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
 from core.utils.measures import Measure, CostingMeasure
 from inventory.models import Item
-from estimation.models import Workstation, Activity, ActivityExpense, Speed, Operation, OperationStep
+from estimation.models import Workstation, Activity, ActivityExpense, ActivitySpeed, \
+    Operation, OperationStep
 from estimation import serializers
 
 
@@ -52,7 +53,9 @@ class WorkstationActivitiesViewSet(mixins.ListModelMixin,
                 validated_data = deserialized.validated_data
                 
                 speed_data = validated_data.pop('speed', None)
-                speed = Speed.objects.create(**speed_data)
+                speed = (speed_data.get('measure_value'), 
+                    speed_data.get('measure_unit'),
+                    speed_data.get('speed_unit'))
 
                 set_up = validated_data.pop('set_up')
                 tear_down = validated_data.pop('tear_down')

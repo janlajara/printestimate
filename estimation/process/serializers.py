@@ -4,7 +4,7 @@ from measurement.measures import Time
 from core.utils.measures import MeasurementSerializerField
 from djmoney.contrib.django_rest_framework import MoneyField
 from estimation.models import Workstation, ActivityExpense, \
-    Activity, Speed, Operation, OperationStep
+    Activity, ActivitySpeed, Operation, OperationStep
 
 
 class WorkstationSerializer(serializers.ModelSerializer):
@@ -29,7 +29,7 @@ class SpeedSerializer(serializers.ModelSerializer):
     rate = serializers.SerializerMethodField()
 
     class Meta:
-        model = Speed
+        model = ActivitySpeed
         fields = ['id', 'measure_value', 
             'measure_unit', 'speed_unit',
             'measure', 'rate']

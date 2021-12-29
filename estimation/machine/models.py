@@ -96,8 +96,8 @@ class SheetFedPressMachine(PressMachine):
                 elif _is_gte(machine_max_length, halved_input_length) and \
                         _is_gte(halved_input_length, machine_min_length):
                     runsheet_length_base = length / 2
-                elif machine_min_length.mm > halved_input_length.mm > material_length.mm:
-                    runsheet_length_base = _get_attr(machine_min_length, uom)
+                elif machine_max_length.mm > halved_input_length.mm > material_length.mm:
+                    runsheet_length_base = _get_attr(machine_max_length, uom)
                 else:
                     runsheet_length_base = _get_length(length/2, uom)
                     
@@ -125,8 +125,8 @@ class SheetFedPressMachine(PressMachine):
                         _is_gte(machine_max_width, input_width_less_rs_length) and \
                         _is_gte(input_width_less_rs_length, machine_min_width):
                     runsheet_width_base = width - rs_length_value
-                elif machine_min_width.mm > halved_input_width.mm > material_width.mm:
-                    runsheet_width_base = _get_attr(machine_min_width, uom)
+                elif machine_max_width.mm > halved_input_width.mm > material_width.mm:
+                    runsheet_width_base = _get_attr(machine_max_width, uom)
                 else:
                     runsheet_width_base = _get_width(width/2, uom)
                     

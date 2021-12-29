@@ -11,7 +11,7 @@ class BinPacker:
         if parent_area == 0 or child_area == 0:
             return 0
 
-        return math.ceil(parent_area / child_area)
+        return math.floor(parent_area / child_area)
 
     @classmethod
     def pack_rectangles(cls, rectangles, bins, rotation=False, algorithm=None):
@@ -20,6 +20,11 @@ class BinPacker:
             if algorithm is not None:
                 args['pack_algo'] = algorithm
             packer = newPacker(**args)
+
+            print('start')
+            print(rectangles)
+            print(bins)
+            print('end')
 
             for b in bins:
                 packer.add_bin(*b)

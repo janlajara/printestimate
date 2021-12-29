@@ -21,11 +21,6 @@ class BinPacker:
                 args['pack_algo'] = algorithm
             packer = newPacker(**args)
 
-            print('start')
-            print(rectangles)
-            print(bins)
-            print('end')
-
             for b in bins:
                 packer.add_bin(*b)
             for r in rectangles:

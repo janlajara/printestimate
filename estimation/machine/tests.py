@@ -122,12 +122,12 @@ def test_sheet_fed_press__get_sheet_layouts(db, create_sheetfed_machine):
     parent_runsheet = layouts[0]
     runsheet_cutsheet = layouts[1]
 
-    assert parent_runsheet.rect.length == 27 and parent_runsheet.rect.width == 16
-    assert parent_runsheet.count == 2
+    assert parent_runsheet.rect.length == 27 and parent_runsheet.rect.width == 30
+    assert parent_runsheet.count == 1
     assert parent_runsheet.cut_count == 1
 
-    assert runsheet_cutsheet.count == 4
-    assert runsheet_cutsheet.cut_count == 4
+    assert runsheet_cutsheet.count == 9
+    assert runsheet_cutsheet.cut_count == 5
     
 
 def test_sheet_fed_press__get_sheet_layouts__rotated_sheet(db, create_sheetfed_machine):
@@ -163,7 +163,7 @@ def test_sheet_fed_press__get_sheet_layouts__halved_length_less_than_machine_min
     item_to_runsheet = layouts[0]
     runsheet_to_material = layouts[1]
 
-    assert item_to_runsheet.rect.width == 4.1 and item_to_runsheet.rect.length == 4.1
+    assert item_to_runsheet.rect.width == 4.4 and item_to_runsheet.rect.length == 4.4
     assert item_to_runsheet.count == 4
     assert runsheet_to_material.count == 4
 

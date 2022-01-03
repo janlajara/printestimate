@@ -147,7 +147,6 @@ class ServiceTemplate(models.Model):
                 meta_component__pk=meta_component.pk)
             return component_template
 
-
     @property
     def type(self):
         return self.meta_service.type
@@ -155,6 +154,14 @@ class ServiceTemplate(models.Model):
     @property
     def sequence(self):
         return self.meta_service.sequence
+
+    @property
+    def costing_measure(self):
+        return self.meta_service.costing_measure
+
+    @property
+    def estimate_variable_type(self):
+        return self.meta_service.estimate_variable_type
 
     def add_operation_template(self, meta_operation):
         operation_template = OperationTemplate.objects.create(

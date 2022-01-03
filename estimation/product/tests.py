@@ -2,7 +2,9 @@ import pytest, math
 from core.utils.measures import CostingMeasure
 from inventory.models import Item
 from inventory.tests import item_factory, base_unit__sheet, alt_unit__ream
-from estimation.product.models import Product, Component, Material
+from estimation.template.tests import meta_product
+from estimation.template.models import ProductTemplate
+from estimation.product.models import ProductEstimate, Product, Component, Material
 from estimation.machine.models import Machine
 
 
@@ -23,8 +25,17 @@ def gto_machine(db):
         min_sheet_length=11, max_sheet_length=25)
 
 
+def test_product_template__create_product(db, item_factory, meta_product):
+    product_template = ProductTemplate.objects.create(meta_product=meta_product,
+        name=meta_product.name, description=meta_product.description)
+    product_estimate = ProductEstimate.objects.create_product_estimate(
+        product_template, [100, 200, 300])
+
+    assert product_estimate is not None
+
+
 def test_material_estimate__with_machine(db, carbonless_item, gto_machine):
-    product = Product.objects.create(name='Carbonless Form', quantity=50)
+    product = Product.objects.create(name='Carbonless Form')
     component = Component.objects.create(name='Sheets', 
         product=product, machine=gto_machine, quantity=100)
     sheet_material = Material.objects.create_material(
@@ -86,13 +97,12 @@ def test_material_estimate__with_machine(db, carbonless_item, gto_machine):
 
 
 def test_material_estimate__without_machine(db, carbonless_item):
-    product = Product.objects.create(name='Carbonless Form', quantity=50)
+    product = Product.objects.create(name='Carbonless Form')
     component = Component.objects.create(name='Sheets', 
         product=product, quantity=100)
     sheet_material = Material.objects.create_material(
         component=component, type=Item.PAPER, item=carbonless_item,
         width_value=4, length_value=5, size_uom='inch')
-
     estimate = sheet_material.estimate(75, 30, True)
 
     assert estimate is not None

@@ -3,6 +3,9 @@ from django.db import models
 from core.utils.measures import Quantity, CostingMeasure
 from inventory.models import Item
 from inventory.properties.models import Shape, Tape, Line, Paper, Panel, Liquid
+from estimation.metaproduct.models import MetaEstimateVariable
+from estimation.process.models import ActivityExpense, Speed
+from estimation.template.models import ProductTemplate, ComponentTemplate
 from estimation.machine.models import Machine, ChildSheet
 from estimation.exceptions import MaterialTypeMismatch
 from polymorphic.models import PolymorphicModel
@@ -10,21 +13,67 @@ from polymorphic.managers import PolymorphicManager
 from djmoney.models.fields import MoneyField
 
 
+class ProductEstimateManager(models.Manager):
+
+    def create_product_estimate(self, product_template, quantities):
+        product_estimate = ProductEstimate.objects.create(product_template=product_template)
+        for quantity in quantities:
+            EstimateQuantity.objects.create(product_estimate=product_estimate, quantity=quantity)
+
+        product = Product.objects.create(name=product_template.name, product_estimate=product_estimate)
+        
+        for component_template in product_template.component_templates.all():
+            component = Component.objects.create_component(component_template, product)
+
+        return product_estimate
+
+
+class ProductEstimate(models.Model):
+    objects = ProductEstimateManager()
+    product_template = models.ForeignKey(ProductTemplate, null=True, on_delete=models.SET_NULL)
+
+
+class EstimateQuantity(models.Model):
+    product_estimate = models.ForeignKey(ProductEstimate, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1)
+
+
 class Product(models.Model):
     name = models.CharField(max_length=20, null=True)
-    quantity = models.IntegerField(default=1)
+    product_estimate = models.OneToOneField(ProductEstimate, on_delete=models.CASCADE,
+        null=True, blank=True)
+
+
+class ComponentManager(models.Manager):
+    def create_component(self, component_template, product):
+        name = component_template.name
+        machine = component_template.machine_option.machine if \
+            component_template.machine_option is not None and \
+            component_template.machine_option.machine is not None else None
+        component = Component.objects.create(name=name, 
+            component_template=component_template,
+            machine=machine, product=product,
+            quantity=component_template.quantity)
+
+        for material_template in component_template.material_templates.all():
+            material = Material.objects.create_material(component, 
+                material_template.type, material_template.item,
+                material_template.label, material_template.item.price,
+                **component_template.prop_args)
+        
+        return component
 
 
 class Component(models.Model):
+    objects = ComponentManager()
     name = models.CharField(max_length=20, null=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    component_template = models.ForeignKey(ComponentTemplate, 
+        on_delete=models.RESTRICT)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE,
+        related_name='components')
     machine = models.OneToOneField(Machine, on_delete=models.SET_NULL,
         null=True, related_name='component')
     quantity = models.IntegerField(default=1)
-
-    @property
-    def total_material_quantity(self):
-        return self.materials.count() * self.quantity
 
 
 class MaterialManager(PolymorphicManager):
@@ -42,7 +91,7 @@ class MaterialManager(PolymorphicManager):
         clazz = mapping.get(type, Material)
         return clazz
 
-    def create_material(self, component, type, item, name=None, **kwargs):
+    def create_material(self, component, type, item, name=None, price=0, **kwargs):
         if item.type != type:
             raise MaterialTypeMismatch(item.type, type)
         clazz = MaterialManager.get_class(type)
@@ -119,6 +168,10 @@ class Material(PolymorphicModel, Shape):
     @classmethod
     def get_class(cls, type):
         return cls.objects.get_class(type)
+
+    @property
+    def label(self):
+        return '%s %s' % (self.item.name, self)
 
     @property
     def quantity(self):
@@ -333,3 +386,81 @@ class PanelMaterial(Material, Panel):
 
 class LiquidMaterial(Material, Liquid):
     type = Item.LIQUID
+
+
+class ServiceManager(models.Manager):
+    def create_service(self, service_template, product):
+        name = service_template.name
+        sequence = service_template.sequence
+        costing_measure = service_template.costing_measure
+        estimate_variable_type = service_template.estimate_variable_type
+
+        component = None
+        component_template = service_template.component_template
+        if component_template is not None:
+            component = product.components.get(component_template__pk=component_template.pk)
+
+        service = Service.objects.create(name=name, product=product, 
+            sequence=sequence, component=component, costing_measure=costing_measure,
+            estimate_variable_type=estimate_variable_type)
+
+        return service
+        
+
+class Service(models.Model):
+    name = models.CharField(max_length=50, null=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    component = models.ForeignKey(Component, on_delete=models.SET_NULL, 
+        null=True, blank=True)
+    sequence = models.IntegerField(default=1)
+    costing_measure = models.CharField(max_length=15, 
+        choices=CostingMeasure.TYPES, 
+        default=CostingMeasure.QUANTITY)
+    estimate_variable_type = models.CharField(
+        choices=MetaEstimateVariable.TYPE_CHOICES,
+        max_length=30, blank=True, null=True)
+
+
+class OperationEstimate(models.Model):
+    name = models.CharField(max_length=50, null=True)
+    service = models.ForeignKey(Service, on_delete=models.CASCADE)
+    material = models.ForeignKey(Material, on_delete=models.SET_NULL,
+        null=True, blank=True)
+
+
+class ActivityEstimate(models.Model):
+    name = models.CharField(max_length=50, null=True)
+    operation_estimate = models.ForeignKey(OperationEstimate, on_delete=models.CASCADE)
+    sequence = models.IntegerField(default=0)
+    measure_unit = models.CharField(max_length=20, blank=True, null=True)
+    notes = models.CharField(max_length=20, blank=True, null=True)
+
+
+class SpeedEstimate(Speed):
+    activity_estimate = models.OneToOneField(ActivityEstimate, on_delete=models.CASCADE)
+
+
+class ActivityExpenseEstimate(models.Model):
+    name = models.CharField(max_length=50, null=True)
+    activity_estimate = models.ForeignKey(ActivityEstimate, on_delete=models.CASCADE)
+    type = models.CharField(max_length=7, choices=ActivityExpense.TYPES)
+    rate = MoneyField(default=0, max_digits=14, decimal_places=2, 
+        default_currency='PHP')
+
+    @property
+    def uom(self):
+        uom = None
+        if self.type == ActivityExpense.HOUR_BASED:
+            uom = 'hr'
+        elif self.type == ActivityExpense.MEASURE_BASED:
+            uom = self.activity_estimate.measure_unit
+        return uom
+
+    @property
+    def rate_label(self):
+        label = self.rate
+        if self.type == ActivityExpense.HOUR_BASED or self.type == ActivityExpense.MEASURE_BASED:
+            label = '%s / %s' % (self.rate, self.uom)
+        return label
+        
+

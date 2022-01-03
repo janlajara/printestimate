@@ -140,6 +140,15 @@ class ServiceTemplate(models.Model):
         return self.meta_service.name
 
     @property
+    def component_template(self):
+        if self.meta_service is not None:
+            meta_component = self.meta_service.meta_component
+            component_template = self.product_template.component_templates.get(
+                meta_component__pk=meta_component.pk)
+            return component_template
+
+
+    @property
     def type(self):
         return self.meta_service.type
 

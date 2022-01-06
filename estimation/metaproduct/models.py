@@ -1,6 +1,6 @@
 from django.db import models
 from core.utils.shapes import Shape
-from core.utils.measures import CostingMeasure
+from core.utils.measures import CostingMeasure, Measure
 from inventory.models import Item
 from estimation.machine.models import Machine
 from estimation.process.models import Operation
@@ -135,6 +135,8 @@ class MetaService(MetaProductData):
     sequence = models.IntegerField(default=0)
     costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
         default=CostingMeasure.QUANTITY)
+    uom = models.CharField(max_length=20, choices=Measure.PRIMARY_UNITS,
+        default='pc')
     meta_component = models.ForeignKey(MetaComponent, on_delete=models.SET_NULL, 
         blank=True, null=True)
     estimate_variable_type = models.CharField(choices=MetaEstimateVariable.TYPE_CHOICES,
@@ -219,8 +221,14 @@ class MetaOperationOption(models.Model):
     meta_operation = models.ForeignKey(MetaOperation, on_delete=models.CASCADE,
         related_name='meta_operation_options')
     operation = models.ForeignKey(Operation, on_delete=models.CASCADE,
-        related_name='meta_operation_options')
+        related_name='meta_operation_options') 
 
     @property
     def label(self):
         return self.operation.name
+
+    @property
+    def operation_steps(self):
+        operation = self.operation
+        if operation is not None and operation.operation_steps is not None:
+            return self.operation.operation_steps.all()

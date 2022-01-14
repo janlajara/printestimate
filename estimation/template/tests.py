@@ -39,9 +39,9 @@ def meta_product(db, gto_machine, item_factory):
         item.properties.size_uom = uom
         item.properties.save()
         return item
-    white_carbonless = _create_paper_item('Carbonless Blue', 22, 18, 'inch')
+    white_carbonless = _create_paper_item('Carbonless White', 22, 18, 'inch')
     blue_carbonless = _create_paper_item('Carbonless Blue', 22, 18, 'inch')
-    yellow_carbonless = _create_paper_item('Carbonless Blue', 22, 18, 'inch')
+    yellow_carbonless = _create_paper_item('Carbonless Yellow', 22, 18, 'inch')
 
     meta_product = MetaProduct.objects.create(name='Forms',
         description='8.5x11" Form')

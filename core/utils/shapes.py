@@ -35,8 +35,9 @@ class Shape(models.Model):
     def gte(self, obj):
         pass
 
+    @property
     def prop_args(self):
-        pass
+        return {}
 
     def _validate(self, obj):
         pass
@@ -81,6 +82,7 @@ class Line(Shape):
         self._validate(line)
         return self.length.mm >= line.length.mm
 
+    @property
     def prop_args(self):
         return {
             'length_value': self.length_value, 
@@ -112,6 +114,7 @@ class Tape(Line):
         if self.width_value is not None and self.width_uom is not None:
             return Distance(**{self.width_uom: self.width_value})
 
+    @property
     def prop_args(self):
         return {
             'width_value': self.width_value,
@@ -273,6 +276,7 @@ class Rectangle(Shape):
             CostingMeasure.QUANTITY: Quantity(pc=estimate)
         }
 
+    @property
     def prop_args(self):
         return {
             'length_value': self.length_value, 
@@ -449,6 +453,7 @@ class Liquid(Shape):
         self._validate(liquid)
         return self.volume.ml >= liquid.volume.ml
 
+    @property
     def prop_args(self):
         return {
             'volume_value': self.volume_value, 

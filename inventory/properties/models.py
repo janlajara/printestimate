@@ -35,6 +35,7 @@ class Paper(Rectangle):
             uom=self.size_uom, gsm=self.gsm, finish=self.finish)
         return layout
 
+    @property
     def prop_args(self):
         return {
             'length_value': self.length_value, 
@@ -61,6 +62,7 @@ class Panel(Rectangle):
         if self.thickness_value is not None and self.thickness_uom is not None:
             return Distance(**{self.thickness_uom: self.thickness_value})
 
+    @property
     def prop_args(self):
         return {
             'length_value': self.length_value, 

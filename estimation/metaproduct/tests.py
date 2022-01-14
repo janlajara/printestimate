@@ -38,9 +38,17 @@ def carbonless_item(db, item_factory):
 
 @pytest.fixture
 def korse_printing_operation(db):
-    ws = Workstation.objects.create(name='Korse', description='')
-    op = ws.add_operation('Korse Printing', Item.PAPER)
-    return op
+    korse_ws = Workstation.objects.create(name='Korse', description='')
+    korse_ws.add_expense('Electricity', 'hour', 100)
+    korse_ws.add_expense('Depreciation', 'hour', 200)
+    spot_printing = korse_ws.add_activity('Spot Color Printing', 1, 1, 
+        (10000, 'sheet', 'hr'), True)
+
+    operation = korse_ws.add_operation('Korse Printing', Item.PAPER)
+    step1 = operation.add_step(spot_printing, '1st color')
+    step2 = operation.add_step(spot_printing, '2nd color')
+    return operation
+
 
 def test_meta_product__add_meta_component(db):
     meta_product = MetaProduct.objects.create(name='Form')
@@ -82,18 +90,25 @@ def test_meta_component__add_meta_material_option(db, form_meta_component, carbo
     assert len(form_meta_component.meta_estimate_variables) == 9
 
 
-def test_meta_component__add_meta_operation(db, form_meta_component):
-    meta_operation = form_meta_component.add_meta_operation('Padding', 
+def test_meta_service__add_meta_operation(db, form_meta_component):
+    meta_product = MetaProduct.objects.create(name='Form')
+    meta_service = meta_product.add_meta_service(name='Padding', 
+        type=Item.PAPER, costing_measure=CostingMeasure.QUANTITY, 
+        meta_component=form_meta_component)
+    meta_operation = meta_service.add_meta_operation('Padding', 
         MetaOperation.MULTIPLE_OPTIONS)
 
     assert meta_operation is not None
     assert meta_operation.name == 'Padding'
     assert meta_operation.options_type == MetaOperation.MULTIPLE_OPTIONS
-    assert meta_operation.costing_measure == 'quantity'
 
 
 def test_meta_operation__add_clear_option(db, form_meta_component, korse_printing_operation):
-    meta_operation = form_meta_component.add_meta_operation('Padding', 
+    meta_product = MetaProduct.objects.create(name='Form')
+    meta_service = meta_product.add_meta_service(name='Padding', 
+        type=Item.PAPER, costing_measure=CostingMeasure.QUANTITY, 
+        meta_component=form_meta_component)
+    meta_operation = meta_service.add_meta_operation('Padding', 
         MetaOperation.MULTIPLE_OPTIONS)
     
     option = meta_operation.add_option(korse_printing_operation)

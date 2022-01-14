@@ -1,11 +1,20 @@
 import pytest
 from core.utils.measures import CostingMeasure
+from estimation.machine.models import Machine
 from inventory.models import BaseStockUnit, AlternateStockUnit
 from estimation.metaproduct.models import MetaProduct, MetaComponent, \
     MetaMaterialOption, MetaService, MetaEstimateVariable
 from estimation.template.models import ProductTemplate, ComponentTemplate, \
     MaterialTemplate, PaperComponentTemplate
 from inventory.models import Item
+
+
+@pytest.fixture
+def gto_machine(db):
+    return Machine.objects.create_machine(name='GTO Press', 
+        type=Machine.SHEET_FED_PRESS, uom='inch',
+        min_sheet_width=10, max_sheet_width=30,
+        min_sheet_length=10, max_sheet_length=30)
 
 
 @pytest.fixture
@@ -22,7 +31,7 @@ def item_factory(db):
 
 
 @pytest.fixture
-def meta_product(db, item_factory):
+def meta_product(db, gto_machine, item_factory):
     def _create_paper_item(name, length, width, uom):
         item = item_factory(name=name, type=Item.PAPER)
         item.properties.length_value = length
@@ -40,6 +49,7 @@ def meta_product(db, item_factory):
     meta_component.allow_multiple_materials = True
     meta_component.save()
 
+    meta_component.add_meta_machine_option(gto_machine)
     meta_component.add_meta_material_option(white_carbonless)
     meta_component.add_meta_material_option(blue_carbonless)
     meta_component.add_meta_material_option(yellow_carbonless)

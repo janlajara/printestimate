@@ -1,9 +1,10 @@
 import pytest
 from core.utils.measures import CostingMeasure
 from estimation.machine.models import Machine
+from estimation.process.models import Workstation
 from inventory.models import BaseStockUnit, AlternateStockUnit
 from estimation.metaproduct.models import MetaProduct, MetaComponent, \
-    MetaMaterialOption, MetaService, MetaEstimateVariable
+    MetaMaterialOption, MetaService, MetaEstimateVariable, MetaOperation
 from estimation.template.models import ProductTemplate, ComponentTemplate, \
     MaterialTemplate, PaperComponentTemplate
 from inventory.models import Item
@@ -15,6 +16,22 @@ def gto_machine(db):
         type=Machine.SHEET_FED_PRESS, uom='inch',
         min_sheet_width=10, max_sheet_width=30,
         min_sheet_length=10, max_sheet_length=30)
+
+
+@pytest.fixture
+def gto_workstation(db, gto_machine):
+    korse_ws = Workstation.objects.create(name='GTO', 
+        description='', machine=gto_machine)
+    korse_ws.add_expense('Electricity', 'hour', 100)
+    korse_ws.add_expense('Depreciation', 'hour', 200)
+    spot_printing = korse_ws.add_activity('Spot Color Printing', 1, 1, 
+        (10000, 'sheet', 'hr'), True)
+
+    operation = korse_ws.add_operation('GTO 2-color Printing', Item.PAPER)
+    operation.add_step(spot_printing, '1st color')
+    operation.add_step(spot_printing, '2nd color')
+
+    return korse_ws
 
 
 @pytest.fixture
@@ -31,7 +48,7 @@ def item_factory(db):
 
 
 @pytest.fixture
-def meta_product(db, gto_machine, item_factory):
+def meta_product(db, gto_machine, gto_workstation, item_factory):
     def _create_paper_item(name, length, width, uom):
         item = item_factory(name=name, type=Item.PAPER)
         item.properties.length_value = length
@@ -59,6 +76,10 @@ def meta_product(db, gto_machine, item_factory):
         costing_measure=CostingMeasure.QUANTITY, 
         meta_component=meta_component,
         estimate_variable_type=MetaEstimateVariable.RAW_TO_RUNNING_CUT)
+    front_print_operation = meta_service.add_meta_operation('Front Print', 
+        MetaOperation.SINGLE_OPTION)
+    gto_2color_printing_operation = gto_workstation.operations.filter(name='GTO 2-color Printing').first()
+    front_print_operation.add_option(gto_2color_printing_operation)
 
     return meta_product
 

@@ -445,7 +445,7 @@ class OperationEstimateManager(models.Manager):
 
         for operation_option in operation_options:
             for step in operation_option.meta_operation_option.operation_steps:
-                ActivityExpense.objects.create_activity_estimate(
+                ActivityEstimate.objects.create_activity_estimate(
                     step.activity, step.sequence, step.notes,
                     operation_estimate)
 
@@ -466,7 +466,7 @@ class ActivityEstimateManager(models.Manager):
 
         activity_estimate = ActivityEstimate.objects.create(
             operation_estimate=operation_estimate,
-            name=name, sequeunce=sequence, measure_unit=measure_unit, notes=notes)
+            name=name, sequence=sequence, measure_unit=measure_unit, notes=notes)
         
         SpeedEstimate.objects.create(activity_estimate=activity_estimate,
             measure_value=activity_speed.measure_value, 

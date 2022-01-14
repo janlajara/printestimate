@@ -2,7 +2,7 @@ import pytest, math
 from core.utils.measures import CostingMeasure
 from inventory.models import Item
 from inventory.tests import item_factory, base_unit__sheet, alt_unit__ream
-from estimation.template.tests import meta_product
+from estimation.template.tests import meta_product, gto_workstation, gto_machine
 from estimation.template.models import ProductTemplate
 from estimation.product.models import ProductEstimate, Product, Component, Material
 from estimation.machine.models import Machine
@@ -41,6 +41,13 @@ def product_template(db, item_factory, meta_product):
     meta_service = meta_product.meta_product_datas.filter(name='Printing').first()
     service_template = product_template.add_service_template(meta_service=meta_service)
 
+    meta_operation = meta_service.meta_operations.filter(name='Front Print').first()
+    operation_template = service_template.add_operation_template(meta_operation)
+
+    meta_operation_option = meta_operation.meta_operation_options.filter(
+        operation__name='GTO 2-color Printing').first()
+    operation_template.add_operation_option_template(meta_operation_option)
+
     return product_template
 
 
@@ -68,6 +75,13 @@ def test_product_estimate__create_product_by_template(db, product_template):
     product_services = product.services.all()
     assert product_services is not None and \
         len(product_services) == 1
+
+    printing_service = product.services.filter(name='Printing').first()
+    assert printing_service is not None 
+    assert printing_service.component == sheet_component
+    assert printing_service.sequence == 1
+    assert printing_service.costing_measure == 'quantity'
+    assert printing_service.estimate_variable_type == 'Parent-to-Runsheet Cut'
 
 
 def test_material_estimate__with_machine(db, carbonless_item, gto_machine):

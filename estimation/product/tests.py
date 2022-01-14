@@ -25,13 +25,49 @@ def gto_machine(db):
         min_sheet_length=11, max_sheet_length=25)
 
 
-def test_product_template__create_product(db, item_factory, meta_product):
+@pytest.fixture
+def product_template(db, item_factory, meta_product):
     product_template = ProductTemplate.objects.create(meta_product=meta_product,
         name=meta_product.name, description=meta_product.description)
+    meta_component = meta_product.meta_product_datas.filter(name='Sheets').first()
+    gto_machine_option = meta_component.meta_machine_options.filter(machine__name='GTO Press').first()
+    component_template = product_template.add_component_template(
+        meta_component, 100, machine_option=gto_machine_option, 
+        length_value=11, width_value=8.5, size_uom='inch')
+
+    for meta_material_option in meta_component.meta_material_options.all():
+        component_template.add_material_template(meta_material_option)
+
+    meta_service = meta_product.meta_product_datas.filter(name='Printing').first()
+    service_template = product_template.add_service_template(meta_service=meta_service)
+
+    return product_template
+
+
+def test_product_estimate__create_product_by_template(db, product_template):
     product_estimate = ProductEstimate.objects.create_product_estimate(
         product_template, [100, 200, 300])
+    product = product_estimate.product
 
-    assert product_estimate is not None
+    assert product is not None
+    product_components = product.components.all()
+    assert product_components is not None and \
+        len(product_components) == 1
+    
+    sheet_component = product_components.first()
+    assert sheet_component.name == 'Sheets'
+    assert sheet_component.machine is not None and sheet_component.machine.name == 'GTO Press'
+    assert sheet_component.materials is not None and \
+        len(sheet_component.materials.all()) == 3
+    
+    for material in sheet_component.materials.all():
+        assert material.label in ['Carbonless White 8.5x11inch', 
+            'Carbonless Blue 8.5x11inch', 'Carbonless Yellow 8.5x11inch']
+        assert material.quantity == 100
+
+    product_services = product.services.all()
+    assert product_services is not None and \
+        len(product_services) == 1
 
 
 def test_material_estimate__with_machine(db, carbonless_item, gto_machine):

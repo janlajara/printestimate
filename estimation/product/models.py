@@ -20,10 +20,7 @@ class ProductEstimateManager(models.Manager):
         for quantity in quantities:
             EstimateQuantity.objects.create(product_estimate=product_estimate, quantity=quantity)
 
-        product = Product.objects.create(name=product_template.name, product_estimate=product_estimate)
-        
-        for component_template in product_template.component_templates.all():
-            component = Component.objects.create_component(component_template, product)
+        product = Product.objects.create_product(product_template, product_estimate)
 
         return product_estimate
 
@@ -38,7 +35,26 @@ class EstimateQuantity(models.Model):
     quantity = models.IntegerField(default=1)
 
 
+class ProductManager(models.Manager):
+    def create_product(self, product_template, product_estimate=None):
+        product = Product.objects.create(name=product_template.name, 
+            product_estimate=product_estimate)
+        components_map = {}
+
+        for component_template in product_template.component_templates.all():
+            component = Component.objects.create_component(component_template, product)
+            components_map[component_template.pk] = component
+    
+        for service_template in product_template.service_templates.all():
+            component = None
+            if service_template.component_template is not None:
+                component = components_map.get(service_template.component_template.pk, None)
+
+            service = Service.objects.create_service(service_template, product, component)
+
+
 class Product(models.Model):
+    objects = ProductManager()
     name = models.CharField(max_length=20, null=True)
     product_estimate = models.OneToOneField(ProductEstimate, on_delete=models.CASCADE,
         null=True, blank=True)
@@ -51,15 +67,13 @@ class ComponentManager(models.Manager):
             component_template.machine_option is not None and \
             component_template.machine_option.machine is not None else None
         component = Component.objects.create(name=name, 
-            component_template=component_template,
             machine=machine, product=product,
             quantity=component_template.quantity)
 
         for material_template in component_template.material_templates.all():
             material = Material.objects.create_material(component, 
                 material_template.type, material_template.item,
-                material_template.label, material_template.item.price,
-                **component_template.prop_args)
+                material_template.item.price, **component_template.prop_args)
         
         return component
 
@@ -67,12 +81,10 @@ class ComponentManager(models.Manager):
 class Component(models.Model):
     objects = ComponentManager()
     name = models.CharField(max_length=20, null=True)
-    component_template = models.ForeignKey(ComponentTemplate, 
-        on_delete=models.RESTRICT)
     product = models.ForeignKey(Product, on_delete=models.CASCADE,
         related_name='components')
-    machine = models.OneToOneField(Machine, on_delete=models.SET_NULL,
-        null=True, related_name='component')
+    machine = models.ForeignKey(Machine, on_delete=models.SET_NULL,
+        null=True)
     quantity = models.IntegerField(default=1)
 
 
@@ -91,11 +103,11 @@ class MaterialManager(PolymorphicManager):
         clazz = mapping.get(type, Material)
         return clazz
 
-    def create_material(self, component, type, item, name=None, price=0, **kwargs):
+    def create_material(self, component, type, item, price=0, **kwargs):
         if item.type != type:
             raise MaterialTypeMismatch(item.type, type)
         clazz = MaterialManager.get_class(type)
-        material = clazz.objects.create(component=component, name=name, 
+        material = clazz.objects.create(component=component, 
             item=item, **kwargs)
         return material
 
@@ -157,7 +169,6 @@ class Material(PolymorphicModel, Shape):
     component = models.ForeignKey(Component, on_delete=models.CASCADE,
         related_name='materials', null=True, blank=True)
     material_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=20, null=True)
     item = models.ForeignKey(Item, on_delete=models.RESTRICT, 
         related_name='materials')
 
@@ -389,27 +400,30 @@ class LiquidMaterial(Material, Liquid):
 
 
 class ServiceManager(models.Manager):
-    def create_service(self, service_template, product):
+    def create_service(self, service_template, product, component=None):
         name = service_template.name
         sequence = service_template.sequence
         costing_measure = service_template.costing_measure
         estimate_variable_type = service_template.estimate_variable_type
 
-        component = None
-        component_template = service_template.component_template
-        if component_template is not None:
-            component = product.components.get(component_template__pk=component_template.pk)
-
         service = Service.objects.create(name=name, product=product, 
             sequence=sequence, component=component, costing_measure=costing_measure,
             estimate_variable_type=estimate_variable_type)
+
+        component_materials = component.materials.all()
+
+        for component_material in component_materials:
+            for operation_template in service_template.operation_templates.all():
+                OperationEstimate.objects.create_operation_estimate(
+                    operation_template, service, component_material)
 
         return service
         
 
 class Service(models.Model):
+    objects = ServiceManager()
     name = models.CharField(max_length=50, null=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='services')
     component = models.ForeignKey(Component, on_delete=models.SET_NULL, 
         null=True, blank=True)
     sequence = models.IntegerField(default=1)
@@ -421,14 +435,54 @@ class Service(models.Model):
         max_length=30, blank=True, null=True)
 
 
+class OperationEstimateManager(models.Manager):
+    def create_operation_estimate(self, operation_template, service, material=None):
+        name = operation_template.name
+        operation_options = operation_template.operation_option_templates.all()
+
+        operation_estimate = OperationEstimate.objects.create(
+            name=name, service=service, material=material)
+
+        for operation_option in operation_options:
+            for step in operation_option.meta_operation_option.operation_steps:
+                ActivityExpense.objects.create_activity_estimate(
+                    step.activity, step.sequence, step.notes,
+                    operation_estimate)
+
+
 class OperationEstimate(models.Model):
+    objects = OperationEstimateManager()
     name = models.CharField(max_length=50, null=True)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
     material = models.ForeignKey(Material, on_delete=models.SET_NULL,
         null=True, blank=True)
 
 
+class ActivityEstimateManager(models.Manager):
+    def create_activity_estimate(self, activity, sequence, notes, operation_estimate):
+        name = activity.name
+        measure_unit = activity.measure_unit
+        activity_speed = activity.speed
+
+        activity_estimate = ActivityEstimate.objects.create(
+            operation_estimate=operation_estimate,
+            name=name, sequeunce=sequence, measure_unit=measure_unit, notes=notes)
+        
+        SpeedEstimate.objects.create(activity_estimate=activity_estimate,
+            measure_value=activity_speed.measure_value, 
+            measure_unit=activity_speed.measure_unit, 
+            speed_unit=activity_speed.speed_unit)
+
+        for activity_expense in activity.activity_expenses.all():
+            ActivityExpenseEstimate.objects.create(
+                activity_estimate=activity_estimate,
+                name=activity_expense.name,
+                type=activity_expense.type,
+                rate=activity_expense.rate)
+
+
 class ActivityEstimate(models.Model):
+    objects = ActivityEstimateManager()
     name = models.CharField(max_length=50, null=True)
     operation_estimate = models.ForeignKey(OperationEstimate, on_delete=models.CASCADE)
     sequence = models.IntegerField(default=0)

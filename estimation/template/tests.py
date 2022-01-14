@@ -76,10 +76,10 @@ def meta_product(db, gto_machine, gto_workstation, item_factory):
         costing_measure=CostingMeasure.QUANTITY, 
         meta_component=meta_component,
         estimate_variable_type=MetaEstimateVariable.RAW_TO_RUNNING_CUT)
+    gto_2color_printing_operation = gto_workstation.operations.filter(name='GTO 2-color Printing').first()
     front_print_operation = meta_service.add_meta_operation('Front Print', 
         MetaOperation.SINGLE_OPTION)
-    gto_2color_printing_operation = gto_workstation.operations.filter(name='GTO 2-color Printing').first()
-    front_print_operation.add_option(gto_2color_printing_operation)
+    meta_operation_option = front_print_operation.add_option(gto_2color_printing_operation)
 
     return meta_product
 

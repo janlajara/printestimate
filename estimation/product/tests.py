@@ -83,6 +83,35 @@ def test_product_estimate__create_product_by_template(db, product_template):
     assert printing_service.costing_measure == 'quantity'
     assert printing_service.estimate_variable_type == 'Parent-to-Runsheet Cut'
 
+    operation_estimates = printing_service.operation_estimates.all()
+    assert operation_estimates is not None
+    assert len(operation_estimates) == 3
+
+    for operation_estimate in operation_estimates:
+        assert operation_estimate.name == 'Front Print'
+        assert operation_estimate.material.label in ['Carbonless White 8.5x11inch', 
+            'Carbonless Blue 8.5x11inch', 'Carbonless Yellow 8.5x11inch']
+        activity_estimates = operation_estimate.activity_estimates.all()
+        assert activity_estimates is not None
+        assert len(activity_estimates) == 2
+
+        for (index, activity_estimate) in enumerate(activity_estimates):
+            activity_estimate.name == 'Spot Color Printing'
+            activity_estimate.sequence == index
+            activity_estimate.notes in ['1st color', '2nd color']
+
+            activity_expense_estimates = activity_estimate.activity_expense_estimates.all()
+            assert activity_expense_estimates is not None
+            assert len(activity_expense_estimates) == 2
+
+            for activity_expense_estimate in activity_expense_estimates:
+                assert activity_expense_estimate.name in ['Electricity', 'Depreciation']
+                assert activity_expense_estimate.type == 'hour'
+                if activity_expense_estimate.name == 'Electricity':
+                    assert activity_expense_estimate.rate.amount == 100
+                else:
+                    assert activity_expense_estimate.rate.amount == 200
+
 
 def test_material_estimate__with_machine(db, carbonless_item, gto_machine):
     product = Product.objects.create(name='Carbonless Form')

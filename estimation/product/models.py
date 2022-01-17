@@ -453,9 +453,10 @@ class OperationEstimateManager(models.Manager):
 class OperationEstimate(models.Model):
     objects = OperationEstimateManager()
     name = models.CharField(max_length=50, null=True)
-    service = models.ForeignKey(Service, on_delete=models.CASCADE)
+    service = models.ForeignKey(Service, on_delete=models.CASCADE, 
+        related_name='operation_estimates')
     material = models.ForeignKey(Material, on_delete=models.SET_NULL,
-        null=True, blank=True)
+        null=True, blank=True, related_name='operation_estimates')
 
 
 class ActivityEstimateManager(models.Manager):
@@ -484,7 +485,8 @@ class ActivityEstimateManager(models.Manager):
 class ActivityEstimate(models.Model):
     objects = ActivityEstimateManager()
     name = models.CharField(max_length=50, null=True)
-    operation_estimate = models.ForeignKey(OperationEstimate, on_delete=models.CASCADE)
+    operation_estimate = models.ForeignKey(OperationEstimate, on_delete=models.CASCADE,
+        related_name='activity_estimates')
     sequence = models.IntegerField(default=0)
     measure_unit = models.CharField(max_length=20, blank=True, null=True)
     notes = models.CharField(max_length=20, blank=True, null=True)
@@ -496,7 +498,8 @@ class SpeedEstimate(Speed):
 
 class ActivityExpenseEstimate(models.Model):
     name = models.CharField(max_length=50, null=True)
-    activity_estimate = models.ForeignKey(ActivityEstimate, on_delete=models.CASCADE)
+    activity_estimate = models.ForeignKey(ActivityEstimate, on_delete=models.CASCADE,
+        related_name='activity_expense_estimates')
     type = models.CharField(max_length=7, choices=ActivityExpense.TYPES)
     rate = MoneyField(default=0, max_digits=14, decimal_places=2, 
         default_currency='PHP')
@@ -516,5 +519,3 @@ class ActivityExpenseEstimate(models.Model):
         if self.type == ActivityExpense.HOUR_BASED or self.type == ActivityExpense.MEASURE_BASED:
             label = '%s / %s' % (self.rate, self.uom)
         return label
-        
-

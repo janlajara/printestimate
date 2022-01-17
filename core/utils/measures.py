@@ -124,7 +124,8 @@ class Quantity(MeasureBase):
         'pad': 1.0,
         'box': 1.0,
         'booklet': 1.0,
-        'ream': 1.0
+        'ream': 1.0,
+        'count': 1.0
     }
 
 

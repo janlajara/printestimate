@@ -1,24 +1,28 @@
 import math
 from django.db import models
-from core.utils.measures import Quantity, CostingMeasure
+from django_measurement.models import MeasurementField
+from core.utils.measures import Quantity, CostingMeasure, Measure
+from measurement.measures import Time
 from inventory.models import Item
 from inventory.properties.models import Shape, Tape, Line, Paper, Panel, Liquid
 from estimation.metaproduct.models import MetaEstimateVariable
 from estimation.process.models import ActivityExpense, Speed
 from estimation.template.models import ProductTemplate, ComponentTemplate
 from estimation.machine.models import Machine, ChildSheet
-from estimation.exceptions import MaterialTypeMismatch
+from estimation.exceptions import MaterialTypeMismatch, MeasurementMismatch
 from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
 from djmoney.models.fields import MoneyField
 
 
+
 class ProductEstimateManager(models.Manager):
 
-    def create_product_estimate(self, product_template, quantities):
+    def create_product_estimate(self, product_template, quantities=None):
         product_estimate = ProductEstimate.objects.create(product_template=product_template)
-        for quantity in quantities:
-            EstimateQuantity.objects.create(product_estimate=product_estimate, quantity=quantity)
+        if quantities is not None:
+            for quantity in quantities:
+                EstimateQuantity.objects.create(product_estimate=product_estimate, quantity=quantity)
 
         product = Product.objects.create_product(product_template, product_estimate)
 
@@ -165,6 +169,15 @@ class Material(PolymorphicModel, Shape):
         def output_per_item(self):
             return 1
 
+        @property
+        def costing_measurements_map(self):
+            return {
+                MetaEstimateVariable.RAW_MATERIAL: self.raw_material_measures,
+                MetaEstimateVariable.SET_MATERIAL: self.set_material_measures,
+                MetaEstimateVariable.TOTAL_MATERIAL: self.total_material_measures,
+                MetaEstimateVariable.MACHINE_RUN: self.machine_run_measures
+            }
+
     objects = MaterialManager()
     component = models.ForeignKey(Component, on_delete=models.CASCADE,
         related_name='materials', null=True, blank=True)
@@ -302,6 +315,18 @@ class PaperMaterial(Material, Paper):
             return measures
 
         @property
+        def raw_to_running_measures(self):
+            return {CostingMeasure.QUANTITY: Quantity(count=self.raw_to_running_cut)}
+
+        @property
+        def running_to_final_measures(self):
+            return {CostingMeasure.QUANTITY: Quantity(count=self.running_to_final_cut)}
+
+        @property
+        def raw_to_final_measures(self):
+            return {CostingMeasure.QUANTITY: Quantity(count=self.raw_to_final_cut)}
+
+        @property
         def raw_to_running_cut(self):
             cut_count = 0
 
@@ -365,6 +390,17 @@ class PaperMaterial(Material, Paper):
 
             return output_per_item
 
+        @property
+        def costing_measurements_map(self):
+            map = super().costing_measurements_map
+            to_add = {
+                MetaEstimateVariable.RAW_TO_RUNNING_CUT: self.raw_to_running_measures,
+                MetaEstimateVariable.RUNNING_TO_FINAL_CUT: self.running_to_final_measures,
+                MetaEstimateVariable.RAW_TO_FINAL_CUT: self.raw_to_final_measures
+            }
+            map.update(to_add)
+            return map
+
         def _get_additional_measures(self, layout, quantity=0):
             measures = {}
             if layout is not None:
@@ -421,9 +457,15 @@ class ServiceManager(models.Manager):
         
 
 class Service(models.Model):
+    class Estimate:
+        def __init__(self, order_quantity, operation_estimates):
+            self.order_quantity = order_quantity
+            self.operation_estimates = operation_estimates
+
     objects = ServiceManager()
     name = models.CharField(max_length=50, null=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='services')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, 
+        related_name='services')
     component = models.ForeignKey(Component, on_delete=models.SET_NULL, 
         null=True, blank=True)
     sequence = models.IntegerField(default=1)
@@ -433,6 +475,61 @@ class Service(models.Model):
     estimate_variable_type = models.CharField(
         choices=MetaEstimateVariable.TYPE_CHOICES,
         max_length=30, blank=True, null=True)
+
+    def estimate(self, order_quantity):
+        def _get_costing_measurement(material, quantity):
+            if material is not None and self.estimate_variable_type is not None:
+                material_estimate = material.estimate(quantity)
+                measures_mapping = material_estimate.costing_measurements_map                
+                measures = measures_mapping.get(self.estimate_variable_type)
+                if measures is not None:
+                    result = measures.get(self.costing_measure, None)
+                    return result
+
+        def _get_activity_expense_estimates(costing_measurement, 
+                duration, activity_expense_estimates):
+            results = []
+            for activity_expense_estimate in activity_expense_estimates:
+                aee = ActivityExpenseEstimate.Estimate(
+                    activity_expense_estimate.name,
+                    activity_expense_estimate.uom, 
+                    activity_expense_estimate.type,
+                    activity_expense_estimate.rate, 
+                    activity_expense_estimate.rate_label,
+                    costing_measurement, duration)
+                results.append(aee)
+            return results
+
+        def _get_activity_estimates(costing_measurement, activity_estimates):
+            results = []
+            for activity_estimate in activity_estimates:
+                duration = activity_estimate.get_duration(costing_measurement)
+                activity_expense_estimates = _get_activity_expense_estimates(
+                    costing_measurement, duration, 
+                    activity_estimate.activity_expense_estimates.all())
+                ae = ActivityEstimate.Estimate(activity_estimate.name,
+                    activity_estimate.notes, activity_expense_estimates)
+                results.append(ae)
+            return results
+
+        def _get_operation_estimates(material, quantity, operation_estimates):
+            costing_measurement = _get_costing_measurement(material, quantity)
+            results = []
+            for operation_estimate in operation_estimates:
+                activity_estimates = _get_activity_estimates(
+                    costing_measurement, operation_estimate.activity_estimates.all())
+                oe = OperationEstimate.Estimate(operation_estimate.name, activity_estimates)
+                results.append(oe)
+            return results
+
+        operation_estimates = []
+        for material in self.component.materials.all():    
+            oe = _get_operation_estimates(material, order_quantity, self.operation_estimates.all())
+            operation_estimates.append(oe)
+
+        service_estimate = Service.Estimate(order_quantity, operation_estimates)
+
+        return service_estimate
 
 
 class OperationEstimateManager(models.Manager):
@@ -445,12 +542,19 @@ class OperationEstimateManager(models.Manager):
 
         for operation_option in operation_options:
             for step in operation_option.meta_operation_option.operation_steps:
+                activity = step.activity
                 ActivityEstimate.objects.create_activity_estimate(
-                    step.activity, step.sequence, step.notes,
-                    operation_estimate)
+                    activity, step.sequence, 
+                    activity.set_up, activity.tear_down,
+                    step.notes, operation_estimate)
 
 
 class OperationEstimate(models.Model):
+    class Estimate:
+        def __init__(self, name, activity_estimates):
+            self.name = name
+            self.activity_estimates = activity_estimates
+            
     objects = OperationEstimateManager()
     name = models.CharField(max_length=50, null=True)
     service = models.ForeignKey(Service, on_delete=models.CASCADE, 
@@ -460,14 +564,17 @@ class OperationEstimate(models.Model):
 
 
 class ActivityEstimateManager(models.Manager):
-    def create_activity_estimate(self, activity, sequence, notes, operation_estimate):
+    def create_activity_estimate(self, activity, sequence, set_up, tear_down, 
+            notes, operation_estimate):
         name = activity.name
         measure_unit = activity.measure_unit
         activity_speed = activity.speed
 
         activity_estimate = ActivityEstimate.objects.create(
             operation_estimate=operation_estimate,
-            name=name, sequence=sequence, measure_unit=measure_unit, notes=notes)
+            name=name, sequence=sequence, 
+            set_up=set_up, tear_down=tear_down,
+            measure_unit=measure_unit, notes=notes)
         
         SpeedEstimate.objects.create(activity_estimate=activity_estimate,
             measure_value=activity_speed.measure_value, 
@@ -483,20 +590,101 @@ class ActivityEstimateManager(models.Manager):
 
 
 class ActivityEstimate(models.Model):
+    class Estimate:
+        def __init__(self, name, notes, activity_expense_estimates):
+            self.name = name
+            self.notes = notes
+            self.activity_expense_estimates = activity_expense_estimates
+
     objects = ActivityEstimateManager()
     name = models.CharField(max_length=50, null=True)
     operation_estimate = models.ForeignKey(OperationEstimate, on_delete=models.CASCADE,
         related_name='activity_estimates')
     sequence = models.IntegerField(default=0)
+    set_up = MeasurementField(measurement=Time, null=True, blank=False)
+    tear_down = MeasurementField(measurement=Time, null=True, blank=False)
     measure_unit = models.CharField(max_length=20, blank=True, null=True)
     notes = models.CharField(max_length=20, blank=True, null=True)
 
+    def get_duration(self, measurement, contingency=0, hours_per_day=10):
+        self._validate_measurement(measurement)
+
+        if self.speed_estimate is None:
+            raise Exception('Activity speed is currently null and has not been initialized.')
+
+        # factor hours for setup and teardown, multiplied by estimate num of days
+        def __compute_overall(base_duration):
+            overall = base_duration
+            if self.set_up is not None and self.tear_down is not None:
+                misc_hrs = (self.set_up.hr + self.tear_down.hr)
+                run_hours = hours_per_day - misc_hrs
+                estimate_days = math.ceil(base_duration / run_hours)
+                overall = base_duration + (misc_hrs * estimate_days)
+            return round(overall, 2)
+
+        duration = 0
+        measure_uom = Measure.STANDARD_UNITS[self.speed_estimate.measure]
+        speed_uom = Measure.STANDARD_SPEED_UNITS[self.speed_estimate.measure]
+
+        if measure_uom is not None and speed_uom is not None and \
+                measurement is not None and self.speed_estimate is not None:
+            mval = getattr(measurement, measure_uom)
+            sval = getattr(self.speed_estimate.rate, speed_uom)
+
+            if mval is not None and sval is not None:
+                base = mval / sval
+                multiplier = (contingency / 100) + 1
+                duration = __compute_overall(base * multiplier)
+
+        return Time(hr=duration)
+
+    def _validate_measurement(self, measurement):
+        try:
+            if measurement is not None:
+                uom = self.speed_estimate.measure_unit
+                converted = getattr(measurement, uom)
+                # if still successful at this point, then validation is done
+                return
+            else:
+                raise Exception("Expected parameter 'measurement' is null")
+        except AttributeError as e:
+            uom = self.speed_estimate.measure_unit
+            measure = Measure.get_measure(uom)
+            raise MeasurementMismatch(measurement, measure)
+
 
 class SpeedEstimate(Speed):
-    activity_estimate = models.OneToOneField(ActivityEstimate, on_delete=models.CASCADE)
+    activity_estimate = models.OneToOneField(ActivityEstimate, on_delete=models.CASCADE,
+        related_name='speed_estimate')
 
 
 class ActivityExpenseEstimate(models.Model):
+    class Estimate:
+        def __init__(self, name, uom, type, rate, rate_label, 
+                measurement, duration):
+            self.name = name
+            self.uom = uom
+            self.type = type
+            self.rate = rate
+            self.rate_label = rate_label
+            self.measurement = measurement
+            self.duration = duration
+        
+        @property
+        def quantity(self):
+            if self.type == ActivityExpense.HOUR_BASED:
+                return self.duration.hr
+            elif self.type == ActivityExpense.MEASURE_BASED:
+                measurement = getattr(self.measurement, self.uom)
+                return measurement
+        
+        @property
+        def cost(self):
+            total = self.rate
+            if self.type in [ActivityExpense.HOUR_BASED, ActivityExpense.MEASURE_BASED]:
+                total = self.rate * self.quantity
+            return total
+            
     name = models.CharField(max_length=50, null=True)
     activity_estimate = models.ForeignKey(ActivityEstimate, on_delete=models.CASCADE,
         related_name='activity_expense_estimates')

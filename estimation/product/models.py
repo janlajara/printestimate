@@ -15,8 +15,6 @@ from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
 from djmoney.models.fields import MoneyField
 
-
-
 class ProductEstimateManager(models.Manager):
 
     def create_product_estimate(self, product_template, quantities=None):
@@ -31,12 +29,48 @@ class ProductEstimateManager(models.Manager):
 
 
 class ProductEstimate(models.Model):
+    class Estimate:
+        def __init__(self, order_quantity, material_estimates, service_estimates):
+            self.order_quantity = order_quantity
+            self.material_estimates = material_estimates
+            self.service_estimates = service_estimates
+
     objects = ProductEstimateManager()
     product_template = models.ForeignKey(ProductTemplate, null=True, on_delete=models.SET_NULL)
 
+    @property
+    def estimates(self):
+        def _get_material_estimates(components, quantity):
+            material_estimates = []
+            for component in components:
+                for material in component.materials.all():
+                    me = material.estimate(quantity)
+                    material_estimates.append(me)
+            return material_estimates
+
+        def _get_service_estimates(services, quantity):
+            service_estimates = []
+            for service in services:
+                se = service.estimate(quantity)
+                service_estimates.append(se)
+            return service_estimates
+
+        product_estimates = []
+        for estimate_quantity in self.estimate_quantities.all():
+            product = self.product
+            quantity = estimate_quantity.quantity
+            material_estimates = _get_material_estimates(product.components.all(), quantity)
+            service_estimates = _get_service_estimates(product.services.all(), quantity)
+            product_estimate = ProductEstimate.Estimate(quantity,
+                material_estimates, service_estimates)
+            product_estimates.append(product_estimate)
+        
+        return product_estimates
+
 
 class EstimateQuantity(models.Model):
-    product_estimate = models.ForeignKey(ProductEstimate, on_delete=models.CASCADE)
+    product_estimate = models.ForeignKey(ProductEstimate, on_delete=models.CASCADE,
+        related_name='estimate_quantities')
     quantity = models.IntegerField(default=1)
 
 
@@ -62,7 +96,7 @@ class Product(models.Model):
     objects = ProductManager()
     name = models.CharField(max_length=20, null=True)
     product_estimate = models.OneToOneField(ProductEstimate, on_delete=models.CASCADE,
-        null=True, blank=True)
+        null=True, blank=True, related_name='product')
 
 
 class ComponentManager(models.Manager):

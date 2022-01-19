@@ -117,6 +117,30 @@ def test_product_estimate__create_product_by_template(db, product_template):
                     assert activity_expense_estimate.type == 'measure'
 
 
+
+def test_product__estimate(db, product_template):
+    product_estimate = ProductEstimate.objects.create_product_estimate(
+        product_template, [100, 200, 300])
+
+    assert product_estimate.estimates is not None
+    assert len(product_estimate.estimates) == 3
+
+    estimate_100 = product_estimate.estimates[0]
+    assert estimate_100.order_quantity == 100
+    assert estimate_100.material_estimates is not None
+    assert len(estimate_100.material_estimates) == 3
+
+    estimate_200 = product_estimate.estimates[1]
+    assert estimate_200.order_quantity == 200
+    assert estimate_200.material_estimates is not None
+    assert len(estimate_200.material_estimates) == 3
+
+    estimate_300 = product_estimate.estimates[2]
+    assert estimate_300.order_quantity == 300
+    assert estimate_300.material_estimates is not None
+    assert len(estimate_300.material_estimates) == 3
+    
+
 def test_material_estimate__with_machine(db, carbonless_item, gto_machine):
     product = Product.objects.create(name='Carbonless Form')
     component = Component.objects.create(name='Sheets', 

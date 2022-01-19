@@ -24,6 +24,8 @@ def gto_workstation(db, gto_machine):
         description='', machine=gto_machine)
     korse_ws.add_expense('Electricity', 'hour', 100)
     korse_ws.add_expense('Depreciation', 'hour', 200)
+    korse_ws.add_expense('Ink', 'measure', 0.75)
+
     spot_printing = korse_ws.add_activity('Spot Color Printing', 1, 1, 
         (10000, 'sheet', 'hr'), True)
 
@@ -75,7 +77,7 @@ def meta_product(db, gto_machine, gto_workstation, item_factory):
         name='Printing', type=Item.PAPER, 
         costing_measure=CostingMeasure.QUANTITY, 
         meta_component=meta_component,
-        estimate_variable_type=MetaEstimateVariable.RAW_TO_RUNNING_CUT)
+        estimate_variable_type=MetaEstimateVariable.MACHINE_RUN)
     gto_2color_printing_operation = gto_workstation.operations.filter(name='GTO 2-color Printing').first()
     front_print_operation = meta_service.add_meta_operation('Front Print', 
         MetaOperation.SINGLE_OPTION)

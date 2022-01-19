@@ -81,7 +81,7 @@ def test_product_estimate__create_product_by_template(db, product_template):
     assert printing_service.component == sheet_component
     assert printing_service.sequence == 1
     assert printing_service.costing_measure == 'quantity'
-    assert printing_service.estimate_variable_type == 'Parent-to-Runsheet Cut'
+    assert printing_service.estimate_variable_type == 'Running Material'
 
     operation_estimates = printing_service.operation_estimates.all()
     assert operation_estimates is not None
@@ -102,15 +102,19 @@ def test_product_estimate__create_product_by_template(db, product_template):
 
             activity_expense_estimates = activity_estimate.activity_expense_estimates.all()
             assert activity_expense_estimates is not None
-            assert len(activity_expense_estimates) == 2
+            assert len(activity_expense_estimates) == 3
 
             for activity_expense_estimate in activity_expense_estimates:
-                assert activity_expense_estimate.name in ['Electricity', 'Depreciation']
-                assert activity_expense_estimate.type == 'hour'
+                assert activity_expense_estimate.name in ['Electricity', 'Depreciation', 'Ink']
                 if activity_expense_estimate.name == 'Electricity':
                     assert activity_expense_estimate.rate.amount == 100
-                else:
+                    assert activity_expense_estimate.type == 'hour'
+                elif activity_expense_estimate.name == 'Depreciation':
                     assert activity_expense_estimate.rate.amount == 200
+                    assert activity_expense_estimate.type == 'hour'
+                else:
+                    assert activity_expense_estimate.rate.amount == 0.75
+                    assert activity_expense_estimate.type == 'measure'
 
 
 def test_material_estimate__with_machine(db, carbonless_item, gto_machine):
@@ -235,3 +239,57 @@ def test_material_estimate__without_machine(db, carbonless_item):
     assert estimate.running_to_final_cut == 0
     assert estimate.raw_to_final_cut == 15
 
+
+def test_service__estimate(db, product_template):
+    product_estimate = ProductEstimate.objects.create_product_estimate(product_template)
+    product = product_estimate.product
+    service = product.services.first()
+
+    service_estimate = service.estimate(100)
+
+    assert service_estimate.order_quantity == 100
+    assert service_estimate.operation_estimates is not None
+    assert len(service_estimate.operation_estimates) == 3
+
+    for operation_estimate in service_estimate.operation_estimates:
+        assert operation_estimate.name == 'Front Print'
+        assert operation_estimate.item_name in \
+            ['Carbonless White', 'Carbonless Blue', 'Carbonless Yellow']
+        assert operation_estimate.activity_estimates is not None
+        assert len(operation_estimate.activity_estimates) == 2
+
+        for activity_estimate in operation_estimate.activity_estimates:
+            assert activity_estimate.name == 'Spot Color Printing'
+            assert activity_estimate.notes in ['1st color', '2nd color'] 
+            assert activity_estimate.activity_expense_estimates is not None
+            assert len(activity_estimate.activity_expense_estimates) == 3
+
+            electricity_expense = activity_estimate.activity_expense_estimates[2]
+            assert electricity_expense.name == 'Electricity'
+            assert electricity_expense.uom == 'hr'
+            assert electricity_expense.type == 'hour'
+            assert electricity_expense.rate.amount == 100
+            assert electricity_expense.rate_label == '₱100.00 / hr'
+            assert electricity_expense.quantity == 2.25
+            assert electricity_expense.duration.hr == 2.25
+            assert electricity_expense.cost.amount == 225
+
+            ink_expense = activity_estimate.activity_expense_estimates[1]
+            assert ink_expense.name == 'Ink'
+            assert ink_expense.uom == 'sheet'
+            assert ink_expense.type == 'measure'
+            assert ink_expense.rate.amount == 0.75
+            assert ink_expense.rate_label == '₱0.75 / sheet'
+            assert ink_expense.quantity == 2500
+            assert ink_expense.duration.hr == 2.25
+            assert ink_expense.cost.amount == 1875
+
+            depreciation_expense = activity_estimate.activity_expense_estimates[0]
+            assert depreciation_expense.name == 'Depreciation'
+            assert depreciation_expense.uom == 'hr'
+            assert depreciation_expense.type == 'hour'
+            assert depreciation_expense.rate.amount == 200
+            assert depreciation_expense.rate_label == '₱200.00 / hr'
+            assert depreciation_expense.quantity == 2.25
+            assert depreciation_expense.duration.hr == 2.25
+            assert depreciation_expense.cost.amount == 450

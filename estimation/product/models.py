@@ -1,4 +1,5 @@
 import math
+from decimal import Decimal
 from django.db import models
 from django_measurement.models import MeasurementField
 from core.utils.measures import Quantity, CostingMeasure, Measure
@@ -480,7 +481,7 @@ class Service(models.Model):
         def _get_costing_measurement(material, quantity):
             if material is not None and self.estimate_variable_type is not None:
                 material_estimate = material.estimate(quantity)
-                measures_mapping = material_estimate.costing_measurements_map                
+                measures_mapping = material_estimate.costing_measurements_map   
                 measures = measures_mapping.get(self.estimate_variable_type)
                 if measures is not None:
                     result = measures.get(self.costing_measure, None)
@@ -512,21 +513,24 @@ class Service(models.Model):
                 results.append(ae)
             return results
 
-        def _get_operation_estimates(material, quantity, operation_estimates):
-            costing_measurement = _get_costing_measurement(material, quantity)
+        def _get_operation_estimates(quantity, operation_estimates):
             results = []
             for operation_estimate in operation_estimates:
+                costing_measurement = _get_costing_measurement(
+                    operation_estimate.material, quantity)
                 activity_estimates = _get_activity_estimates(
                     costing_measurement, operation_estimate.activity_estimates.all())
-                oe = OperationEstimate.Estimate(operation_estimate.name, activity_estimates)
+                item_name = operation_estimate.material.item.name if \
+                    operation_estimate.material is not None and \
+                    operation_estimate.material.item is not None else None
+                oe = OperationEstimate.Estimate(
+                    operation_estimate.name, item_name,
+                    activity_estimates)
                 results.append(oe)
             return results
 
-        operation_estimates = []
-        for material in self.component.materials.all():    
-            oe = _get_operation_estimates(material, order_quantity, self.operation_estimates.all())
-            operation_estimates.append(oe)
-
+        operation_estimates = _get_operation_estimates(
+            order_quantity, self.operation_estimates.all())
         service_estimate = Service.Estimate(order_quantity, operation_estimates)
 
         return service_estimate
@@ -551,8 +555,9 @@ class OperationEstimateManager(models.Manager):
 
 class OperationEstimate(models.Model):
     class Estimate:
-        def __init__(self, name, activity_estimates):
+        def __init__(self, name, item_name, activity_estimates):
             self.name = name
+            self.item_name = item_name
             self.activity_estimates = activity_estimates
             
     objects = OperationEstimateManager()
@@ -682,7 +687,7 @@ class ActivityExpenseEstimate(models.Model):
         def cost(self):
             total = self.rate
             if self.type in [ActivityExpense.HOUR_BASED, ActivityExpense.MEASURE_BASED]:
-                total = self.rate * self.quantity
+                total = self.rate * Decimal(self.quantity)
             return total
             
     name = models.CharField(max_length=50, null=True)

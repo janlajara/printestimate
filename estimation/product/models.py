@@ -30,8 +30,8 @@ class ProductEstimateManager(models.Manager):
 
 class ProductEstimate(models.Model):
     class Estimate:
-        def __init__(self, order_quantity, material_estimates, service_estimates):
-            self.order_quantity = order_quantity
+        def __init__(self, order_quantities, material_estimates, service_estimates):
+            self.order_quantities = order_quantities
             self.material_estimates = material_estimates
             self.service_estimates = service_estimates
 
@@ -40,32 +40,32 @@ class ProductEstimate(models.Model):
 
     @property
     def estimates(self):
-        def _get_material_estimates(components, quantity):
+        def _get_material_estimates(components):
             material_estimates = []
             for component in components:
                 for material in component.materials.all():
-                    me = material.estimate(quantity)
+                    me = material.estimates
                     material_estimates.append(me)
             return material_estimates
 
-        def _get_service_estimates(services, quantity):
+        def _get_service_estimates(services):
             service_estimates = []
             for service in services:
-                se = service.estimate(quantity)
+                se = service.estimates
                 service_estimates.append(se)
             return service_estimates
 
         product_estimates = []
-        for estimate_quantity in self.estimate_quantities.all():
-            product = self.product
-            quantity = estimate_quantity.quantity
-            material_estimates = _get_material_estimates(product.components.all(), quantity)
-            service_estimates = _get_service_estimates(product.services.all(), quantity)
-            product_estimate = ProductEstimate.Estimate(quantity,
-                material_estimates, service_estimates)
-            product_estimates.append(product_estimate)
+        order_quantities = [estimate_quantity.quantity 
+            for estimate_quantity in self.estimate_quantities.all()]
+
+        product = self.product
+        material_estimates = _get_material_estimates(product.components.all())
+        service_estimates = _get_service_estimates(product.services.all())
+        product_estimate = ProductEstimate.Estimate(order_quantities,
+            material_estimates, service_estimates)
         
-        return product_estimates
+        return product_estimate
 
 
 class EstimateQuantity(models.Model):
@@ -152,6 +152,14 @@ class MaterialManager(PolymorphicManager):
 
 
 class Material(PolymorphicModel, Shape):
+
+    class Material:
+        def __init__(self, name, rate, uom, spoilage_rate, estimates=[]):
+            self.name = name
+            self.rate = rate
+            self.uom = uom
+            self.spoilage_rate = spoilage_rate
+            self.estimates = estimates
 
     class Estimate:
         def __init__(self, order_quantity, material_quantity, 
@@ -243,8 +251,24 @@ class Material(PolymorphicModel, Shape):
     def item_properties(self):
         return self.item.properties
 
-    def estimate(self, quantity):
-        pass
+    @property
+    def estimates(self):
+        product_estimate = self.component.product.product_estimate
+        quantities = [
+            estimate_quantity.quantity
+            for estimate_quantity 
+            in product_estimate.estimate_quantities.all()]
+        material_estimate = self.estimate(quantities)
+
+        return material_estimate
+
+    def estimate(self, order_quantities, spoilage_rate=0):
+        if not isinstance(order_quantities, list):
+            raise Exception("Provided argument to method 'estimate' must be a list of integers.")
+        material = Material.Material(self.label, self.price, 
+            self.item.base_uom, spoilage_rate)
+        
+        return material
         
 
 class TapeMaterial(Material, Tape):
@@ -445,8 +469,8 @@ class PaperMaterial(Material, Paper):
                 }
             return measures
 
-    def estimate(self, quantity, spoilage_rate=0, rotate=True):
-        estimate = None
+    def estimate(self, order_quantities, spoilage_rate=0, rotate=True):
+        paper_estimate = super().estimate(order_quantities, spoilage_rate)
 
         if self.item is not None:
             layouts = []
@@ -456,10 +480,14 @@ class PaperMaterial(Material, Paper):
             else:
                 layouts = [ChildSheet.get_layout(self.item_properties.layout, self.layout, rotate)]
        
-            estimate = PaperMaterial.Estimate(quantity, self.component.quantity,
-                spoilage_rate, layouts)
+            estimates = []
+            for quantity in order_quantities:
+                estimate = PaperMaterial.Estimate(quantity, self.component.quantity,
+                    spoilage_rate, layouts)
+                estimates.append(estimate)
+            paper_estimate.estimates = estimates
         
-        return estimate
+        return paper_estimate
  
  
 class PanelMaterial(Material, Panel):
@@ -493,8 +521,7 @@ class ServiceManager(models.Manager):
 
 class Service(models.Model):
     class Estimate:
-        def __init__(self, order_quantity, operation_estimates):
-            self.order_quantity = order_quantity
+        def __init__(self, operation_estimates):
             self.operation_estimates = operation_estimates
 
     objects = ServiceManager()
@@ -511,49 +538,49 @@ class Service(models.Model):
         choices=MetaEstimateVariable.TYPE_CHOICES,
         max_length=30, blank=True, null=True)
 
-    def estimate(self, order_quantity):
-        def _get_costing_measurement(material, quantity):
-            if material is not None and self.estimate_variable_type is not None:
-                material_estimate = material.estimate(quantity)
-                measures_mapping = material_estimate.costing_measurements_map   
-                measures = measures_mapping.get(self.estimate_variable_type)
-                if measures is not None:
-                    result = measures.get(self.costing_measure, None)
-                    return result
+    @property
+    def estimates(self):
+        product_estimate = self.component.product.product_estimate
+        quantities = [
+            estimate_quantity.quantity
+            for estimate_quantity 
+            in product_estimate.estimate_quantities.all()]
+        material_estimate = self.estimate(quantities)
 
-        def _get_activity_expense_estimates(costing_measurement, 
-                duration, activity_expense_estimates):
+        return material_estimate
+
+    def estimate(self, order_quantities):
+        if not isinstance(order_quantities, list):
+            raise Exception("Provided argument to method 'estimate' must be a list of integers.")
+
+        def _get_activity_expense_estimates(activity_expense_estimates):
             results = []
             for activity_expense_estimate in activity_expense_estimates:
-                aee = ActivityExpenseEstimate.Estimate(
+                expense_estimates = [
+                    activity_expense_estimate.estimate(quantity) 
+                    for quantity in order_quantities]
+                aee = ActivityExpenseEstimate.Expense(
                     activity_expense_estimate.name,
-                    activity_expense_estimate.uom, 
-                    activity_expense_estimate.type,
-                    activity_expense_estimate.rate, 
                     activity_expense_estimate.rate_label,
-                    costing_measurement, duration)
+                    expense_estimates)
                 results.append(aee)
             return results
 
-        def _get_activity_estimates(costing_measurement, activity_estimates):
+        def _get_activity_estimates(activity_estimates):
             results = []
             for activity_estimate in activity_estimates:
-                duration = activity_estimate.get_duration(costing_measurement)
                 activity_expense_estimates = _get_activity_expense_estimates(
-                    costing_measurement, duration, 
                     activity_estimate.activity_expense_estimates.all())
                 ae = ActivityEstimate.Estimate(activity_estimate.name,
                     activity_estimate.notes, activity_expense_estimates)
                 results.append(ae)
             return results
 
-        def _get_operation_estimates(quantity, operation_estimates):
+        def _get_operation_estimates(operation_estimates):
             results = []
             for operation_estimate in operation_estimates:
-                costing_measurement = _get_costing_measurement(
-                    operation_estimate.material, quantity)
                 activity_estimates = _get_activity_estimates(
-                    costing_measurement, operation_estimate.activity_estimates.all())
+                    operation_estimate.activity_estimates.all())
                 item_name = operation_estimate.material.item.name if \
                     operation_estimate.material is not None and \
                     operation_estimate.material.item is not None else None
@@ -563,9 +590,8 @@ class Service(models.Model):
                 results.append(oe)
             return results
 
-        operation_estimates = _get_operation_estimates(
-            order_quantity, self.operation_estimates.all())
-        service_estimate = Service.Estimate(order_quantity, operation_estimates)
+        operation_estimates = _get_operation_estimates(self.operation_estimates.all())
+        service_estimate = Service.Estimate(operation_estimates)
 
         return service_estimate
 
@@ -600,6 +626,20 @@ class OperationEstimate(models.Model):
         related_name='operation_estimates')
     material = models.ForeignKey(Material, on_delete=models.SET_NULL,
         null=True, blank=True, related_name='operation_estimates')
+
+    def get_costing_measurement(self, order_quantity):
+        estimate_variable_type = self.service.estimate_variable_type
+        if self.material is not None and estimate_variable_type is not None and \
+                self.service.costing_measure is not None:
+            material_estimate = next(
+                (estimate for estimate in self.material.estimates.estimates
+                if estimate.order_quantity == order_quantity), None)
+            if material_estimate is not None:
+                measures_mapping = material_estimate.costing_measurements_map   
+                measures = measures_mapping.get(estimate_variable_type)
+                if measures is not None:
+                    result = measures.get(self.service.costing_measure, None)
+                    return result
 
 
 class ActivityEstimateManager(models.Manager):
@@ -698,17 +738,22 @@ class SpeedEstimate(Speed):
 
 
 class ActivityExpenseEstimate(models.Model):
-    class Estimate:
-        def __init__(self, name, uom, type, rate, rate_label, 
-                measurement, duration):
+    class Expense:
+        def __init__(self, name, rate_label, estimates):
             self.name = name
+            self.rate_label = rate_label
+            self.estimates = estimates
+
+    class Estimate:
+        def __init__(self, uom, type, rate, order_quantity, 
+                measurement, duration):
             self.uom = uom
             self.type = type
             self.rate = rate
-            self.rate_label = rate_label
+            self.order_quantity = order_quantity
             self.measurement = measurement
             self.duration = duration
-        
+
         @property
         def quantity(self):
             if self.type == ActivityExpense.HOUR_BASED:
@@ -723,7 +768,7 @@ class ActivityExpenseEstimate(models.Model):
             if self.type in [ActivityExpense.HOUR_BASED, ActivityExpense.MEASURE_BASED]:
                 total = self.rate * Decimal(self.quantity)
             return total
-            
+
     name = models.CharField(max_length=50, null=True)
     activity_estimate = models.ForeignKey(ActivityEstimate, on_delete=models.CASCADE,
         related_name='activity_expense_estimates')
@@ -746,3 +791,16 @@ class ActivityExpenseEstimate(models.Model):
         if self.type == ActivityExpense.HOUR_BASED or self.type == ActivityExpense.MEASURE_BASED:
             label = '%s / %s' % (self.rate, self.uom)
         return label
+
+    def estimate(self, order_quantity):
+        activity_estimate = self.activity_estimate
+        operation = activity_estimate.operation_estimate
+        costing_measurement = operation.get_costing_measurement(order_quantity)
+
+        if costing_measurement is not None:
+            duration = activity_estimate.get_duration(costing_measurement)
+            estimate = ActivityExpenseEstimate.Estimate(
+                self.uom, self.type, self.rate, 
+                order_quantity, costing_measurement, duration)
+
+            return estimate

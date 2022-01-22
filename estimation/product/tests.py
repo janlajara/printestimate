@@ -123,23 +123,32 @@ def test_product__estimate(db, product_template):
         product_template, [100, 200, 300])
 
     assert product_estimate.estimates is not None
-    assert len(product_estimate.estimates) == 3
 
-    estimate_100 = product_estimate.estimates[0]
+    material_estimates = product_estimate.estimates.material_estimates
+    material_estimate = material_estimates[0]
+    assert len(material_estimate.estimates) == 3
+
+    estimate_100 = material_estimate.estimates[0]
     assert estimate_100.order_quantity == 100
-    assert estimate_100.material_estimates is not None
-    assert len(estimate_100.material_estimates) == 3
+    assert estimate_100.material_quantity == 100
+    assert estimate_100.estimated_stock_quantity == 2500
+    assert estimate_100.spoilage_rate == 0
+    assert estimate_100.estimated_spoilage_quantity == 0
 
-    estimate_200 = product_estimate.estimates[1]
+    estimate_200 = material_estimate.estimates[1]
     assert estimate_200.order_quantity == 200
-    assert estimate_200.material_estimates is not None
-    assert len(estimate_200.material_estimates) == 3
+    assert estimate_200.material_quantity == 100
+    assert estimate_200.estimated_stock_quantity == 5000
+    assert estimate_200.spoilage_rate == 0
+    assert estimate_200.estimated_spoilage_quantity == 0
 
-    estimate_300 = product_estimate.estimates[2]
+    estimate_300 = material_estimate.estimates[2]
     assert estimate_300.order_quantity == 300
-    assert estimate_300.material_estimates is not None
-    assert len(estimate_300.material_estimates) == 3
-    
+    assert estimate_300.material_quantity == 100
+    assert estimate_300.estimated_stock_quantity == 7500
+    assert estimate_300.spoilage_rate == 0
+    assert estimate_300.estimated_spoilage_quantity == 0
+
 
 def test_material_estimate__with_machine(db, carbonless_item, gto_machine):
     product = Product.objects.create(name='Carbonless Form')
@@ -149,9 +158,13 @@ def test_material_estimate__with_machine(db, carbonless_item, gto_machine):
         component=component, type=Item.PAPER, item=carbonless_item,
         width_value=4, length_value=5, size_uom='inch')
 
-    estimate = sheet_material.estimate(75, 30, True)
+    material_estimate = sheet_material.estimate([75], 30, True)
 
-    assert estimate is not None
+    assert material_estimate is not None 
+    assert material_estimate.estimates is not None
+    assert len(material_estimate.estimates) == 1
+
+    estimate = material_estimate.estimates[0]
     assert estimate.total_material_measures is not None
 
     assert estimate.output_per_item == 44
@@ -210,9 +223,13 @@ def test_material_estimate__without_machine(db, carbonless_item):
     sheet_material = Material.objects.create_material(
         component=component, type=Item.PAPER, item=carbonless_item,
         width_value=4, length_value=5, size_uom='inch')
-    estimate = sheet_material.estimate(75, 30, True)
+    material_estimate = sheet_material.estimate([75], 30, True)
 
-    assert estimate is not None
+    assert material_estimate is not None 
+    assert material_estimate.estimates is not None
+    assert len(material_estimate.estimates) == 1
+
+    estimate = material_estimate.estimates[0]
 
     raw_material_quantity = estimate.raw_material_measures.get(CostingMeasure.QUANTITY)
     raw_material_area = estimate.raw_material_measures.get(CostingMeasure.AREA)
@@ -265,13 +282,13 @@ def test_material_estimate__without_machine(db, carbonless_item):
 
 
 def test_service__estimate(db, product_template):
-    product_estimate = ProductEstimate.objects.create_product_estimate(product_template)
+    product_estimate = ProductEstimate.objects.create_product_estimate(
+        product_template, [100])
     product = product_estimate.product
     service = product.services.first()
 
-    service_estimate = service.estimate(100)
+    service_estimate = service.estimates
 
-    assert service_estimate.order_quantity == 100
     assert service_estimate.operation_estimates is not None
     assert len(service_estimate.operation_estimates) == 3
 
@@ -290,30 +307,45 @@ def test_service__estimate(db, product_template):
 
             electricity_expense = activity_estimate.activity_expense_estimates[2]
             assert electricity_expense.name == 'Electricity'
-            assert electricity_expense.uom == 'hr'
-            assert electricity_expense.type == 'hour'
-            assert electricity_expense.rate.amount == 100
             assert electricity_expense.rate_label == '₱100.00 / hr'
-            assert electricity_expense.quantity == 2.25
-            assert electricity_expense.duration.hr == 2.25
-            assert electricity_expense.cost.amount == 225
+            assert electricity_expense.estimates is not None
+            assert len(electricity_expense.estimates) == 1
+            electricity_expense_estimate = electricity_expense.estimates[0]
+            assert electricity_expense_estimate is not None
+            assert electricity_expense_estimate.order_quantity == 100
+            assert electricity_expense_estimate.uom == 'hr'
+            assert electricity_expense_estimate.type == 'hour'
+            assert electricity_expense_estimate.rate.amount == 100
+            assert electricity_expense_estimate.quantity == 2.25
+            assert electricity_expense_estimate.duration.hr == 2.25
+            assert electricity_expense_estimate.cost.amount == 225
 
             ink_expense = activity_estimate.activity_expense_estimates[1]
             assert ink_expense.name == 'Ink'
-            assert ink_expense.uom == 'sheet'
-            assert ink_expense.type == 'measure'
-            assert ink_expense.rate.amount == 0.75
             assert ink_expense.rate_label == '₱0.75 / sheet'
-            assert ink_expense.quantity == 2500
-            assert ink_expense.duration.hr == 2.25
-            assert ink_expense.cost.amount == 1875
+            assert ink_expense.estimates is not None
+            assert len(ink_expense.estimates) == 1
+            ink_expense_estimate = ink_expense.estimates[0]
+            assert ink_expense_estimate is not None
+            assert ink_expense_estimate.order_quantity == 100
+            assert ink_expense_estimate.uom == 'sheet'
+            assert ink_expense_estimate.type == 'measure'
+            assert ink_expense_estimate.rate.amount == 0.75
+            assert ink_expense_estimate.quantity == 2500
+            assert ink_expense_estimate.duration.hr == 2.25
+            assert ink_expense_estimate.cost.amount == 1875
 
             depreciation_expense = activity_estimate.activity_expense_estimates[0]
             assert depreciation_expense.name == 'Depreciation'
-            assert depreciation_expense.uom == 'hr'
-            assert depreciation_expense.type == 'hour'
-            assert depreciation_expense.rate.amount == 200
             assert depreciation_expense.rate_label == '₱200.00 / hr'
-            assert depreciation_expense.quantity == 2.25
-            assert depreciation_expense.duration.hr == 2.25
-            assert depreciation_expense.cost.amount == 450
+            assert depreciation_expense.estimates is not None
+            assert len(depreciation_expense.estimates) == 1
+            depreciation_expense_estimate = depreciation_expense.estimates[0]
+            assert depreciation_expense_estimate is not None
+            assert depreciation_expense_estimate.order_quantity == 100
+            assert depreciation_expense_estimate.uom == 'hr'
+            assert depreciation_expense_estimate.type == 'hour'
+            assert depreciation_expense_estimate.rate.amount == 200
+            assert depreciation_expense_estimate.quantity == 2.25
+            assert depreciation_expense_estimate.duration.hr == 2.25
+            assert depreciation_expense_estimate.cost.amount == 450

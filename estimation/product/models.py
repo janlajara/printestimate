@@ -545,9 +545,9 @@ class Service(models.Model):
             estimate_quantity.quantity
             for estimate_quantity 
             in product_estimate.estimate_quantities.all()]
-        material_estimate = self.estimate(quantities)
+        service_estimate = self.estimate(quantities)
 
-        return material_estimate
+        return service_estimate
 
     def estimate(self, order_quantities):
         if not isinstance(order_quantities, list):

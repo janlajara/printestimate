@@ -4,7 +4,8 @@ from inventory.models import Item
 from inventory.tests import item_factory, base_unit__sheet, alt_unit__ream
 from estimation.template.tests import meta_product, gto_workstation, gto_machine
 from estimation.template.models import ProductTemplate
-from estimation.product.models import ProductEstimate, Product, Component, Material
+from estimation.product.models import ProductEstimate, Product, \
+    Component, Material, EstimateQuantity
 from estimation.machine.models import Machine
 
 
@@ -49,6 +50,21 @@ def product_template(db, item_factory, meta_product):
     operation_template.add_operation_option_template(meta_operation_option)
 
     return product_template
+
+
+def test_product_estimate__set_estimate_quantities(db, product_template):
+    product_estimate = ProductEstimate.objects.create_product_estimate(
+        product_template)
+    product_estimate.set_estimate_quantities([100, 200, 300])
+
+    order_quantities = product_estimate.order_quantities
+    assert order_quantities is not None
+    assert isinstance(order_quantities, list)
+    assert order_quantities == [100, 200, 300]
+    
+    estimate_quantities = EstimateQuantity.objects.filter(product_estimate=product_estimate).all()
+    assert estimate_quantities is not None
+    assert len(estimate_quantities) == 3
 
 
 def test_product_estimate__create_product_by_template(db, product_template):
@@ -123,6 +139,7 @@ def test_product__estimate(db, product_template):
         product_template, [100, 200, 300])
 
     assert product_estimate.estimates is not None
+    assert product_estimate.order_quantities == [100, 200, 300]
 
     material_estimates = product_estimate.estimates.material_estimates
     material_estimate = material_estimates[0]

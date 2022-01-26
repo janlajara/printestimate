@@ -1,7 +1,10 @@
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
+from djmoney.contrib.django_rest_framework import MoneyField
 from inventory.models import Item
-from estimation.product.models import Material, TapeMaterial, LineMaterial, \
+from estimation.product.models import ProductEstimate, \
+    EstimateQuantity, Product, Component, Service, \
+    Material, TapeMaterial, LineMaterial, \
     PaperMaterial, PanelMaterial, LiquidMaterial
 
 
@@ -39,7 +42,7 @@ class PaperMaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = PaperMaterial
         fields = ['material_id', 'component', 'name', 'item',
-            'width_value', 'length_value', 'size_uom', 'gsm', 'finish']
+            'width_value', 'length_value', 'size_uom', 'gsm', 'finish', 'estimates']
 
 
 class PanelMaterialSerializer(serializers.ModelSerializer):
@@ -78,3 +81,66 @@ class MaterialPolymorphicSerializer(PolymorphicSerializer):
         object_name = model_or_instance._meta.object_name
         resource_type = mapping.get(object_name, 'other')
         return resource_type
+
+
+class MaterialEstimateSerializer(serializers.Serializer):
+    order_quantity = serializers.IntegerField(min_value=1)
+    estimated_stock_quantity = serializers.IntegerField(min_value=1)
+    estimated_spoilage_quantity = serializers.IntegerField(min_value=1)
+    estimated_total_quantity = serializers.IntegerField(min_value=1)
+
+
+class MaterialSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    rate = MoneyField(max_digits=14, decimal_places=2, read_only=False, 
+        default_currency='PHP')
+    uom = serializers.CharField()
+    spoilage_rate = serializers.DecimalField(default=0, decimal_places=2)
+    estimates = MaterialEstimateSerializer(many=True)
+
+
+class ActivityExpenseEstimateEstimateSerializer(serializers.Serializer):
+    uom = serializers.CharField()
+    type = serializers.CharField()
+    rate = MoneyField(max_digits=14, decimal_places=2, read_only=False, 
+        default_currency='PHP')
+    order_quantity = serializers.IntegerField(min_value=1)
+    duration = serializers.DecimalField(default=0, decimal_places=2)
+    quantity = serializers.DecimalField(default=0, decimal_places=2)
+    cost = MoneyField(max_digits=14, decimal_places=2, read_only=False, 
+        default_currency='PHP')
+
+
+class ActivityExpenseEstimateSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    rate_label = serializers.CharField()
+    estimates = ActivityExpenseEstimateEstimateSerializer(many=True)
+
+
+class ActivityEstimateSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    notes = serializers.CharField()
+    activity_expense_estimates = ActivityExpenseEstimateSerializer(many=True)
+
+
+class OperationEstimateSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    item_name = serializers.CharField()
+    activity_estimates = ActivityEstimateSerializer(many=True)
+
+
+class ServiceEstimateSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    operation_estimates = OperationEstimateSerializer(many=True)
+
+
+class ProductEstimateInputSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=False)
+    product_template_id = serializers.IntegerField()
+    estimate_quantities = serializers.ListField(child=serializers.IntegerField(min_value = 1))
+
+
+class ProductEstimateOutputSerializer(ProductEstimateInputSerializer):
+    material_estimates = MaterialSerializer(many=True, required=False)
+    service_estimates = ServiceEstimateSerializer(many=True, required=False)
+

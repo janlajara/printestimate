@@ -30,13 +30,23 @@ class ProductEstimateManager(models.Manager):
 
 class ProductEstimate(models.Model):
     class Estimate:
-        def __init__(self, order_quantities, material_estimates, service_estimates):
+        def __init__(self, id, product_template_id, order_quantities, 
+                material_estimates, service_estimates):
+            self.id = id
+            self.product_template_id = product_template_id
             self.order_quantities = order_quantities
             self.material_estimates = material_estimates
             self.service_estimates = service_estimates
 
     objects = ProductEstimateManager()
     product_template = models.ForeignKey(ProductTemplate, null=True, on_delete=models.SET_NULL)
+
+    @property
+    def order_quantities(self):
+        quantities = [estimate_quantity.quantity 
+            for estimate_quantity 
+            in self.estimate_quantities.order_by('quantity').all()]
+        return quantities
 
     @property
     def estimates(self):
@@ -62,10 +72,28 @@ class ProductEstimate(models.Model):
         product = self.product
         material_estimates = _get_material_estimates(product.components.all())
         service_estimates = _get_service_estimates(product.services.all())
-        product_estimate = ProductEstimate.Estimate(order_quantities,
+        product_estimate = ProductEstimate.Estimate(
+            self.pk, self.product_template.pk, order_quantities,
             material_estimates, service_estimates)
         
         return product_estimate
+
+    def set_estimate_quantities(self, order_quantities):
+        if order_quantities is not None and not isinstance(order_quantities, list):
+            raise Exception("Provided argument 'order_quantities' must be a list of integers")
+
+        order_quantities.sort()
+
+        if order_quantities != self.order_quantities:
+            to_delete = EstimateQuantity.objects.filter(
+                product_estimate=self).exclude(
+                    quantity__in=order_quantities)
+            to_delete.delete()
+
+            for order_quantity in order_quantities:
+                if order_quantity not in self.order_quantities:
+                    EstimateQuantity.objects.create(product_estimate=self, 
+                        quantity=order_quantity)
 
 
 class EstimateQuantity(models.Model):
@@ -521,7 +549,8 @@ class ServiceManager(models.Manager):
 
 class Service(models.Model):
     class Estimate:
-        def __init__(self, operation_estimates):
+        def __init__(self, name, operation_estimates):
+            self.name = name
             self.operation_estimates = operation_estimates
 
     objects = ServiceManager()
@@ -591,7 +620,7 @@ class Service(models.Model):
             return results
 
         operation_estimates = _get_operation_estimates(self.operation_estimates.all())
-        service_estimate = Service.Estimate(operation_estimates)
+        service_estimate = Service.Estimate(self.name, operation_estimates)
 
         return service_estimate
 

@@ -64,7 +64,6 @@ class ProductEstimate(models.Model):
                 se = service.estimates
                 service_estimates.append(se)
             return service_estimates
-
         product_estimates = []
         order_quantities = [estimate_quantity.quantity 
             for estimate_quantity in self.estimate_quantities.all()]
@@ -75,7 +74,6 @@ class ProductEstimate(models.Model):
         product_estimate = ProductEstimate.Estimate(
             self.pk, self.product_template.pk, order_quantities,
             material_estimates, service_estimates)
-        
         return product_estimate
 
     def set_estimate_quantities(self, order_quantities):
@@ -528,6 +526,10 @@ class LiquidMaterial(Material, Liquid):
 
 class ServiceManager(models.Manager):
     def create_service(self, service_template, product, component=None):
+        def _create_operation_estimate(operation_template, service, component_material=None):
+            OperationEstimate.objects.create_operation_estimate(
+                    operation_template, service, component_material)
+
         name = service_template.name
         sequence = service_template.sequence
         costing_measure = service_template.costing_measure
@@ -536,13 +538,11 @@ class ServiceManager(models.Manager):
         service = Service.objects.create(name=name, product=product, 
             sequence=sequence, component=component, costing_measure=costing_measure,
             estimate_variable_type=estimate_variable_type)
-
         component_materials = component.materials.all()
 
         for component_material in component_materials:
             for operation_template in service_template.operation_templates.all():
-                OperationEstimate.objects.create_operation_estimate(
-                    operation_template, service, component_material)
+                _create_operation_estimate(operation_template, service, component_material)
 
         return service
         
@@ -658,17 +658,20 @@ class OperationEstimate(models.Model):
 
     def get_costing_measurement(self, order_quantity):
         estimate_variable_type = self.service.estimate_variable_type
-        if self.material is not None and estimate_variable_type is not None and \
+        if estimate_variable_type is not None and \
                 self.service.costing_measure is not None:
-            material_estimate = next(
-                (estimate for estimate in self.material.estimates.estimates
-                if estimate.order_quantity == order_quantity), None)
-            if material_estimate is not None:
-                measures_mapping = material_estimate.costing_measurements_map   
-                measures = measures_mapping.get(estimate_variable_type)
-                if measures is not None:
-                    result = measures.get(self.service.costing_measure, None)
-                    return result
+            if self.material is not None:
+                material_estimate = next(
+                    (estimate for estimate in self.material.estimates.estimates
+                    if estimate.order_quantity == order_quantity), None)
+                if material_estimate is not None:
+                    measures_mapping = material_estimate.costing_measurements_map   
+                    measures = measures_mapping.get(estimate_variable_type)
+                    if measures is not None:
+                        result = measures.get(self.service.costing_measure, None)
+                        return result
+            else:
+                pass
 
 
 class ActivityEstimateManager(models.Manager):
@@ -782,6 +785,9 @@ class ActivityExpenseEstimate(models.Model):
             self.order_quantity = order_quantity
             self.measurement = measurement
             self.duration = duration
+
+        def __str__(self):
+            return '%s %s %s %s' % (self.uom, self.type, self.rate, self.order_quantity)
 
         @property
         def quantity(self):

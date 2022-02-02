@@ -107,7 +107,7 @@ class ProductManager(models.Manager):
         components_map = {}
 
         for component_template in product_template.component_templates.all():
-            component = Component.objects.create_component(component_template, product)
+            component = Component.objects.create_component_by_template(component_template, product)
             components_map[component_template.pk] = component
     
         for service_template in product_template.service_templates.all():
@@ -125,25 +125,47 @@ class Product(models.Model):
         null=True, blank=True, related_name='product')
 
 
-class ComponentManager(models.Manager):
-    def create_component(self, component_template, product):
+class ComponentManager(PolymorphicManager):
+
+    @classmethod
+    def get_class(cls, type):
+        mapping = {
+            Item.TAPE: TapeComponent,
+            Item.LINE: LineComponent,
+            Item.PAPER: PaperComponent,
+            Item.PANEL: PanelComponent,
+            Item.LIQUID: LiquidComponent,
+            Item.OTHER: Component
+        }
+        clazz = mapping.get(type, Component)
+        return clazz
+
+    def create_component(self, name, type, product, quantity, **kwargs):
+        clazz = ComponentManager.get_class(type)
+        return clazz.objects.create(name=name, product=product, 
+            quantity=quantity, **kwargs)
+
+
+    def create_component_by_template(self, component_template, product):
         name = component_template.name
         machine = component_template.machine_option.machine if \
             component_template.machine_option is not None and \
             component_template.machine_option.machine is not None else None
-        component = Component.objects.create(name=name, 
+        clazz = ComponentManager.get_class(component_template.type)
+        component = clazz.objects.create(name=name, 
             machine=machine, product=product,
-            quantity=component_template.quantity)
+            quantity=component_template.quantity,
+            **component_template.prop_args)
 
         for material_template in component_template.material_templates.all():
             material = Material.objects.create_material(component, 
                 material_template.type, material_template.item,
-                material_template.item.price, **component_template.prop_args)
+                material_template.item.price)
         
         return component
 
 
-class Component(models.Model):
+class Component(PolymorphicModel):
     objects = ComponentManager()
     name = models.CharField(max_length=20, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE,
@@ -151,6 +173,55 @@ class Component(models.Model):
     machine = models.ForeignKey(Machine, on_delete=models.SET_NULL,
         null=True)
     quantity = models.IntegerField(default=1)
+
+    def get_costing_measurements_map(self, order_quantity):
+        set_material_measures = {
+            CostingMeasure.QUANTITY: Quantity(pc=order_quantity)}
+        total_material_measures = {
+            CostingMeasure.QUANTITY: Quantity(pc=order_quantity * self.quantity)}
+
+        return {
+            MetaEstimateVariable.SET_MATERIAL: set_material_measures,
+            MetaEstimateVariable.TOTAL_MATERIAL: total_material_measures
+        }
+
+
+class TapeComponent(Component, Tape):
+    pass
+
+
+class LineComponent(Component, Line):
+    pass
+
+
+class PaperComponent(Component, Paper):
+
+    def get_costing_measurements_map(self, order_quantity):
+        layout = self.layout 
+
+        set_material_measures = {
+            CostingMeasure.QUANTITY: Quantity(pc=order_quantity),
+            CostingMeasure.AREA: layout.area_measurement * order_quantity,
+            CostingMeasure.PERIMETER: layout.perimeter_measurement * order_quantity}
+
+        total_quantity = order_quantity * self.quantity
+        total_material_measures = {
+            CostingMeasure.QUANTITY: Quantity(pc=total_quantity),
+            CostingMeasure.AREA: layout.area_measurement * total_quantity,
+            CostingMeasure.PERIMETER: layout.perimeter_measurement * total_quantity}
+
+        return {
+            MetaEstimateVariable.SET_MATERIAL: set_material_measures,
+            MetaEstimateVariable.TOTAL_MATERIAL: total_material_measures
+        }
+
+
+class PanelComponent(Component, Panel):
+    pass
+
+
+class LiquidComponent(Component, Liquid):
+    pass
 
 
 class MaterialManager(PolymorphicManager):
@@ -168,16 +239,16 @@ class MaterialManager(PolymorphicManager):
         clazz = mapping.get(type, Material)
         return clazz
 
-    def create_material(self, component, type, item, price=0, **kwargs):
+    def create_material(self, component, type, item, price=0):
         if item.type != type:
             raise MaterialTypeMismatch(item.type, type)
         clazz = MaterialManager.get_class(type)
         material = clazz.objects.create(component=component, 
-            item=item, **kwargs)
+            item=item)
         return material
 
 
-class Material(PolymorphicModel, Shape):
+class Material(PolymorphicModel):
 
     class Material:
         def __init__(self, name, rate, uom, spoilage_rate, estimates=[]):
@@ -264,7 +335,7 @@ class Material(PolymorphicModel, Shape):
 
     @property
     def label(self):
-        return '%s %s' % (self.item.name, self)
+        return '%s %s' % (self.item.name, self.component)
 
     @property
     def quantity(self):
@@ -297,17 +368,15 @@ class Material(PolymorphicModel, Shape):
         return material
         
 
-class TapeMaterial(Material, Tape):
-    type = Item.TAPE
+class TapeMaterial(Material):
+    pass
 
 
-class LineMaterial(Material, Line):
-    type = Item.LINE
+class LineMaterial(Material):
+    pass
 
 
-class PaperMaterial(Material, Paper):
-    type = Item.PAPER
-
+class PaperMaterial(Material):
     class Estimate(Material.Estimate):
 
         @property
@@ -501,10 +570,13 @@ class PaperMaterial(Material, Paper):
         if self.item is not None:
             layouts = []
             machine = self.component.machine
+            component_layout = self.component.layout
             if self.component is not None and machine is not None:
-                layouts = machine.get_sheet_layouts(self.item_properties.layout, self.layout, rotate)
+                layouts = machine.get_sheet_layouts(self.item_properties.layout, 
+                    component_layout, rotate)
             else:
-                layouts = [ChildSheet.get_layout(self.item_properties.layout, self.layout, rotate)]
+                layouts = [ChildSheet.get_layout(self.item_properties.layout, 
+                    component_layout, rotate)]
        
             estimates = []
             for quantity in order_quantities:
@@ -516,12 +588,12 @@ class PaperMaterial(Material, Paper):
         return paper_estimate
  
  
-class PanelMaterial(Material, Panel):
-    type = Item.PANEL
+class PanelMaterial(Material):
+    pass
 
 
-class LiquidMaterial(Material, Liquid):
-    type = Item.LIQUID
+class LiquidMaterial(Material):
+    pass
 
 
 class ServiceManager(models.Manager):
@@ -540,9 +612,16 @@ class ServiceManager(models.Manager):
             estimate_variable_type=estimate_variable_type)
         component_materials = component.materials.all()
 
-        for component_material in component_materials:
-            for operation_template in service_template.operation_templates.all():
-                _create_operation_estimate(operation_template, service, component_material)
+        for operation_template in service_template.operation_templates.all():
+            if estimate_variable_type in [MetaEstimateVariable.RAW_MATERIAL,
+                    MetaEstimateVariable.MACHINE_RUN, 
+                    MetaEstimateVariable.RAW_TO_RUNNING_CUT,
+                    MetaEstimateVariable.RUNNING_TO_FINAL_CUT,
+                    MetaEstimateVariable.RAW_TO_FINAL_CUT]:
+                for component_material in component_materials:
+                    _create_operation_estimate(operation_template, service, component_material)
+            else:
+                _create_operation_estimate(operation_template, service)
 
         return service
         
@@ -585,9 +664,12 @@ class Service(models.Model):
         def _get_activity_expense_estimates(activity_expense_estimates):
             results = []
             for activity_expense_estimate in activity_expense_estimates:
-                expense_estimates = [
-                    activity_expense_estimate.estimate(quantity) 
-                    for quantity in order_quantities]
+                expense_estimates = []
+                for quantity in order_quantities:
+                    expense_estimate = activity_expense_estimate.estimate(quantity)
+                    if expense_estimate is not None:
+                        expense_estimates.append(expense_estimate)
+
                 aee = ActivityExpenseEstimate.Expense(
                     activity_expense_estimate.name,
                     activity_expense_estimate.rate_label,
@@ -660,18 +742,19 @@ class OperationEstimate(models.Model):
         estimate_variable_type = self.service.estimate_variable_type
         if estimate_variable_type is not None and \
                 self.service.costing_measure is not None:
+            measures_mapping = self.service.component.get_costing_measurements_map(order_quantity)
+            
             if self.material is not None:
                 material_estimate = next(
                     (estimate for estimate in self.material.estimates.estimates
                     if estimate.order_quantity == order_quantity), None)
                 if material_estimate is not None:
                     measures_mapping = material_estimate.costing_measurements_map   
-                    measures = measures_mapping.get(estimate_variable_type)
-                    if measures is not None:
-                        result = measures.get(self.service.costing_measure, None)
-                        return result
-            else:
-                pass
+
+            measures = measures_mapping.get(estimate_variable_type)
+            if measures is not None:
+                result = measures.get(self.service.costing_measure, None)
+                return result
 
 
 class ActivityEstimateManager(models.Manager):

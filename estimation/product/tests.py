@@ -1,11 +1,13 @@
-import pytest, math
+import pytest, math, time
 from core.utils.measures import CostingMeasure
 from inventory.models import Item
 from inventory.tests import item_factory, base_unit__sheet, alt_unit__ream
-from estimation.template.tests import meta_product, gto_workstation, gto_machine
+from estimation.template.tests import meta_product, gto_workstation, \
+    gto_machine, finishing_workstation
 from estimation.template.models import ProductTemplate
 from estimation.product.models import ProductEstimate, Product, \
     Component, Material, EstimateQuantity
+from estimation.product import serializers
 from estimation.machine.models import Machine
 
 
@@ -39,15 +41,21 @@ def product_template(db, item_factory, meta_product):
     for meta_material_option in meta_component.meta_material_options.all():
         component_template.add_material_template(meta_material_option)
 
-    meta_service = meta_product.meta_product_datas.filter(name='Printing').first()
-    service_template = product_template.add_service_template(meta_service=meta_service)
-
-    meta_operation = meta_service.meta_operations.filter(name='Front Print').first()
-    operation_template = service_template.add_operation_template(meta_operation)
-
-    meta_operation_option = meta_operation.meta_operation_options.filter(
+    print_service = meta_product.meta_product_datas.filter(name='Printing').first()
+    print_service_template = product_template.add_service_template(meta_service=print_service)
+    print_meta_operation = print_service.meta_operations.filter(name='Front Print').first()
+    print_operation_template = print_service_template.add_operation_template(print_meta_operation)
+    print_meta_operation_option = print_meta_operation.meta_operation_options.filter(
         operation__name='GTO 2-color Printing').first()
-    operation_template.add_operation_option_template(meta_operation_option)
+    print_operation_template.add_operation_option_template(print_meta_operation_option)
+
+    gathering_service = meta_product.meta_product_datas.filter(name='Gathering').first()
+    gathering_service_template = product_template.add_service_template(meta_service=gathering_service)
+    gathering_meta_operation = gathering_service.meta_operations.filter(name='Gathering').first()
+    gathering_operation_template = gathering_service_template.add_operation_template(gathering_meta_operation)
+    gathering_meta_operation_option = gathering_meta_operation.meta_operation_options.filter(
+        operation__name='Gathering Operation').first()
+    gathering_operation_template.add_operation_option_template(gathering_meta_operation_option)
 
     return product_template
 
@@ -169,11 +177,11 @@ def test_product__estimate(db, product_template):
 
 def test_material_estimate__with_machine(db, carbonless_item, gto_machine):
     product = Product.objects.create(name='Carbonless Form')
-    component = Component.objects.create(name='Sheets', 
-        product=product, machine=gto_machine, quantity=100)
-    sheet_material = Material.objects.create_material(
-        component=component, type=Item.PAPER, item=carbonless_item,
+    component = Component.objects.create_component(name='Sheets', type=Item.PAPER,
+        product=product, machine=gto_machine, quantity=100,
         width_value=4, length_value=5, size_uom='inch')
+    sheet_material = Material.objects.create_material(
+        component=component, type=Item.PAPER, item=carbonless_item)
 
     material_estimate = sheet_material.estimate([75], 30, True)
 
@@ -235,11 +243,10 @@ def test_material_estimate__with_machine(db, carbonless_item, gto_machine):
 
 def test_material_estimate__without_machine(db, carbonless_item):
     product = Product.objects.create(name='Carbonless Form')
-    component = Component.objects.create(name='Sheets', 
-        product=product, quantity=100)
+    component = Component.objects.create_component(name='Sheets', type=Item.PAPER,
+        product=product, quantity=100, width_value=4, length_value=5, size_uom='inch')
     sheet_material = Material.objects.create_material(
-        component=component, type=Item.PAPER, item=carbonless_item,
-        width_value=4, length_value=5, size_uom='inch')
+        component=component, type=Item.PAPER, item=carbonless_item)
     material_estimate = sheet_material.estimate([75], 30, True)
 
     assert material_estimate is not None 
@@ -302,14 +309,14 @@ def test_service__estimate(db, product_template):
     product_estimate = ProductEstimate.objects.create_product_estimate(
         product_template, [100])
     product = product_estimate.product
-    service = product.services.first()
+    assert len(product.services.all()) == 2
 
-    service_estimate = service.estimates
+    print_service = product.services.filter(name='Printing').first()
+    print_service_estimate = print_service.estimates
+    assert print_service_estimate.operation_estimates is not None
+    assert len(print_service_estimate.operation_estimates) == 3
 
-    assert service_estimate.operation_estimates is not None
-    assert len(service_estimate.operation_estimates) == 3
-
-    for operation_estimate in service_estimate.operation_estimates:
+    for operation_estimate in print_service_estimate.operation_estimates:
         assert operation_estimate.name == 'Front Print'
         assert operation_estimate.item_name in \
             ['Carbonless White', 'Carbonless Blue', 'Carbonless Yellow']
@@ -366,3 +373,63 @@ def test_service__estimate(db, product_template):
             assert depreciation_expense_estimate.quantity == 2.25
             assert depreciation_expense_estimate.duration.hr == 2.25
             assert depreciation_expense_estimate.cost.amount == 450
+
+    gathering_service = product.services.filter(name='Gathering').first()
+    gathering_service_estimate = gathering_service.estimates
+    assert gathering_service_estimate.operation_estimates is not None    
+    assert len(gathering_service_estimate.operation_estimates) == 1
+
+    gathering_operation_estimate = gathering_service_estimate.operation_estimates[0]
+    assert gathering_operation_estimate.item_name is None
+    assert gathering_operation_estimate.activity_estimates is not None
+    assert len(gathering_operation_estimate.activity_estimates) == 1
+
+    gathering_activity_estimate = gathering_operation_estimate.activity_estimates[0]
+    assert gathering_activity_estimate.name == 'Gathering'
+    assert gathering_activity_estimate.notes is None
+    assert gathering_activity_estimate.activity_expense_estimates is not None
+    assert len(gathering_activity_estimate.activity_expense_estimates) == 2
+
+    labor_expense = gathering_activity_estimate.activity_expense_estimates[0]
+    assert labor_expense.name == 'Labor'
+    assert labor_expense.rate_label == '₱75.00 / hr'
+    assert labor_expense.estimates is not None
+    assert len(labor_expense.estimates) == 1
+    labor_expense_estimate = labor_expense.estimates[0]
+    assert labor_expense_estimate is not None
+    assert labor_expense_estimate.order_quantity == 100
+    assert labor_expense_estimate.uom == 'hr'
+    assert labor_expense_estimate.type == 'hour'
+    assert labor_expense_estimate.rate.amount == 75
+    assert labor_expense_estimate.quantity == 2.06
+    assert labor_expense_estimate.duration.hr == 2.06
+    assert math.isclose(labor_expense_estimate.cost.amount, 154.5)
+
+'''
+def test_product_estimate_output_serializer(db, product_template):
+    start_time = time.time()
+    product_estimate = ProductEstimate.objects.create_product_estimate(
+        product_template, [100])
+
+    duration = time.time() - start_time
+    assert duration <= 1
+
+    for se in product_estimate.estimates.service_estimates:
+        for oe in se.operation_estimates:
+            for ae in oe.activity_estimates:
+                for aee in ae.activity_expense_estimates:
+                    for estimate in aee.estimates:
+                        s = serializers.ActivityExpenseEstimateEstimateSerializer(estimate)
+                        #print(f'{s.uom}, {s.type}, {s.rate}, {s.order_quantity}, {s.quantity}, {s.cost}')
+                        print(s.to_representation(estimate))
+                        #for ee in aee.estimates:
+                        #    print(se.name, oe.name, oe.item_name, ee.uom, ee.type, ee.rate)
+
+    assert False
+    
+    serializer = ProductEstimateOutputSerializer(product_estimate.estimates)
+    assert serializer.data is not None
+
+    duration = time.time() - start_time
+    assert duration <= 1
+'''

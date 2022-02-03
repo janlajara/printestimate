@@ -47,7 +47,7 @@ def finishing_workstation(db):
         (30, 'set', 'min'), True)
 
     operation = fin_ws.add_operation('Gathering Operation', Item.PAPER)
-    operation.add_step(gathering_activity, 'Gathering')
+    operation.add_step(gathering_activity, None)
 
     return fin_ws
 

@@ -20,20 +20,36 @@ def gto_machine(db):
 
 @pytest.fixture
 def gto_workstation(db, gto_machine):
-    korse_ws = Workstation.objects.create(name='GTO', 
+    gto_ws = Workstation.objects.create(name='GTO', 
         description='', machine=gto_machine)
-    korse_ws.add_expense('Electricity', 'hour', 100)
-    korse_ws.add_expense('Depreciation', 'hour', 200)
-    korse_ws.add_expense('Ink', 'measure', 0.75)
+    gto_ws.add_expense('Electricity', 'hour', 100)
+    gto_ws.add_expense('Depreciation', 'hour', 200)
+    gto_ws.add_expense('Ink', 'measure', 0.75)
 
-    spot_printing = korse_ws.add_activity('Spot Color Printing', 1, 1, 
+    spot_printing = gto_ws.add_activity('Spot Color Printing', 1, 1, 
         (10000, 'sheet', 'hr'), True)
 
-    operation = korse_ws.add_operation('GTO 2-color Printing', Item.PAPER)
+    operation = gto_ws.add_operation('GTO 2-color Printing', Item.PAPER)
     operation.add_step(spot_printing, '1st color')
     operation.add_step(spot_printing, '2nd color')
 
-    return korse_ws
+    return gto_ws
+
+
+@pytest.fixture
+def finishing_workstation(db):
+    fin_ws = Workstation.objects.create(name='Finishing', 
+        description='')
+    fin_ws.add_expense('Labor', 'hour', 75)
+    fin_ws.add_expense('Gathering Fee', 'flat', 200)
+
+    gathering_activity = fin_ws.add_activity('Gathering', 1, 1, 
+        (30, 'set', 'min'), True)
+
+    operation = fin_ws.add_operation('Gathering Operation', Item.PAPER)
+    operation.add_step(gathering_activity, 'Gathering')
+
+    return fin_ws
 
 
 @pytest.fixture
@@ -50,7 +66,7 @@ def item_factory(db):
 
 
 @pytest.fixture
-def meta_product(db, gto_machine, gto_workstation, item_factory):
+def meta_product(db, gto_machine, gto_workstation, finishing_workstation, item_factory):
     def _create_paper_item(name, length, width, uom):
         item = item_factory(name=name, type=Item.PAPER)
         item.properties.length_value = length
@@ -73,15 +89,25 @@ def meta_product(db, gto_machine, gto_workstation, item_factory):
     meta_component.add_meta_material_option(blue_carbonless)
     meta_component.add_meta_material_option(yellow_carbonless)
 
-    meta_service = meta_product.add_meta_service(
+    print_service = meta_product.add_meta_service(
         name='Printing', type=Item.PAPER, 
         costing_measure=CostingMeasure.QUANTITY, 
         meta_component=meta_component,
         estimate_variable_type=MetaEstimateVariable.MACHINE_RUN)
     gto_2color_printing_operation = gto_workstation.operations.filter(name='GTO 2-color Printing').first()
-    front_print_operation = meta_service.add_meta_operation('Front Print', 
+    front_print_operation = print_service.add_meta_operation('Front Print', 
         MetaOperation.SINGLE_OPTION)
-    meta_operation_option = front_print_operation.add_option(gto_2color_printing_operation)
+    front_print_operation.add_option(gto_2color_printing_operation)
+
+    gathering_service = meta_product.add_meta_service(
+        name='Gathering', type=Item.PAPER,
+        costing_measure=CostingMeasure.QUANTITY,
+        meta_component=meta_component,
+        estimate_variable_type=MetaEstimateVariable.SET_MATERIAL)
+    gathering_operation = finishing_workstation.operations.filter(name='Gathering Operation').first()
+    gathering_meta_operation = gathering_service.add_meta_operation('Gathering',
+        MetaOperation.SINGLE_OPTION)
+    gathering_meta_operation.add_option(gathering_operation)
 
     return meta_product
 

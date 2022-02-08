@@ -1,4 +1,4 @@
-import pytest, math, time
+import pytest, math, time, multiprocessing
 from core.utils.measures import CostingMeasure
 from inventory.models import Item
 from inventory.tests import item_factory, base_unit__sheet, alt_unit__ream
@@ -98,7 +98,7 @@ def test_product_estimate__create_product_by_template(db, product_template):
 
     product_services = product.services.all()
     assert product_services is not None and \
-        len(product_services) == 1
+        len(product_services) == 2
 
     printing_service = product.services.filter(name='Printing').first()
     assert printing_service is not None 
@@ -405,31 +405,13 @@ def test_service__estimate(db, product_template):
     assert labor_expense_estimate.duration.hr == 2.06
     assert math.isclose(labor_expense_estimate.cost.amount, 154.5)
 
-'''
-def test_product_estimate_output_serializer(db, product_template):
+
+def test_product_estimate_output_json(db, product_template):
     start_time = time.time()
     product_estimate = ProductEstimate.objects.create_product_estimate(
-        product_template, [100])
-
-    duration = time.time() - start_time
-    assert duration <= 1
-
-    for se in product_estimate.estimates.service_estimates:
-        for oe in se.operation_estimates:
-            for ae in oe.activity_estimates:
-                for aee in ae.activity_expense_estimates:
-                    for estimate in aee.estimates:
-                        s = serializers.ActivityExpenseEstimateEstimateSerializer(estimate)
-                        #print(f'{s.uom}, {s.type}, {s.rate}, {s.order_quantity}, {s.quantity}, {s.cost}')
-                        print(s.to_representation(estimate))
-                        #for ee in aee.estimates:
-                        #    print(se.name, oe.name, oe.item_name, ee.uom, ee.type, ee.rate)
-
-    assert False
+        product_template, [100, 200, 300, 400, 500])
     
-    serializer = ProductEstimateOutputSerializer(product_estimate.estimates)
-    assert serializer.data is not None
+    assert product_estimate.estimates.to_json() is not None
 
     duration = time.time() - start_time
     assert duration <= 1
-'''

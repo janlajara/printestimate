@@ -1,4 +1,4 @@
-import math
+import math, time
 from decimal import Decimal
 from django.db import models
 from django_measurement.models import MeasurementField
@@ -19,6 +19,7 @@ class ProductEstimateManager(models.Manager):
 
     def create_product_estimate(self, product_template, quantities=None):
         product_estimate = ProductEstimate.objects.create(product_template=product_template)
+
         if quantities is not None:
             for quantity in quantities:
                 EstimateQuantity.objects.create(product_estimate=product_estimate, quantity=quantity)
@@ -37,6 +38,15 @@ class ProductEstimate(models.Model):
             self.order_quantities = order_quantities
             self.material_estimates = material_estimates
             self.service_estimates = service_estimates
+        
+        def to_json(self):
+            return {
+                "id": self.id,
+                "product_template_id": self.product_template_id,
+                "order_quantities": self.order_quantities,
+                "material_estimates": [estimate.to_json() for estimate in self.material_estimates],
+                "service_estimates": [estimate.to_json() for estimate in self.service_estimates]
+            }
 
     objects = ProductEstimateManager()
     product_template = models.ForeignKey(ProductTemplate, null=True, on_delete=models.SET_NULL)
@@ -50,6 +60,7 @@ class ProductEstimate(models.Model):
 
     @property
     def estimates(self):
+
         def _get_material_estimates(components):
             material_estimates = []
             for component in components:
@@ -60,10 +71,16 @@ class ProductEstimate(models.Model):
 
         def _get_service_estimates(services):
             service_estimates = []
+
+            def __append_to_service_estimates(estimate):
+                service_estimates.append(estimate)
+            
             for service in services:
                 se = service.estimates
                 service_estimates.append(se)
+
             return service_estimates
+
         product_estimates = []
         order_quantities = [estimate_quantity.quantity 
             for estimate_quantity in self.estimate_quantities.all()]
@@ -71,9 +88,11 @@ class ProductEstimate(models.Model):
         product = self.product
         material_estimates = _get_material_estimates(product.components.all())
         service_estimates = _get_service_estimates(product.services.all())
+
         product_estimate = ProductEstimate.Estimate(
             self.pk, self.product_template.pk, order_quantities,
             material_estimates, service_estimates)
+
         return product_estimate
 
     def set_estimate_quantities(self, order_quantities):
@@ -258,6 +277,15 @@ class Material(PolymorphicModel):
             self.spoilage_rate = spoilage_rate
             self.estimates = estimates
 
+        def to_json(self):
+            return {
+                "name": self.name,
+                "rate": self.rate.amount,
+                "uom": self.uom,
+                "spoilage_rate": self.spoilage_rate,
+                "estimates": [estimate.to_json() for estimate in self.estimates]
+            }
+
     class Estimate:
         def __init__(self, order_quantity, material_quantity, 
                 spoilage_rate=0, layouts_meta=None):
@@ -265,6 +293,14 @@ class Material(PolymorphicModel):
             self.material_quantity = material_quantity
             self.spoilage_rate = spoilage_rate
             self.layouts_meta = layouts_meta 
+
+        def to_json(self):
+            return {
+                "order_quantity": self.order_quantity,
+                "estimated_stock_quantity": self.estimated_stock_quantity,
+                "estimated_spoilage_quantity": self.estimated_spoilage_quantity,
+                "estimated_total_quantity": self.estimated_total_quantity
+            }
         
         @property
         def layouts(self):
@@ -363,7 +399,7 @@ class Material(PolymorphicModel):
         if not isinstance(order_quantities, list):
             raise Exception("Provided argument to method 'estimate' must be a list of integers.")
         material = Material.Material(self.label, self.price, 
-            self.item.base_uom, spoilage_rate)
+            self.item.base_uom.name, spoilage_rate)
         
         return material
         
@@ -632,6 +668,13 @@ class Service(models.Model):
             self.name = name
             self.operation_estimates = operation_estimates
 
+        def to_json(self):
+            return {
+                "name": self.name,
+                "operation_estimates": [
+                    estimate.to_json() for estimate in self.operation_estimates]
+            }
+
     objects = ServiceManager()
     name = models.CharField(max_length=50, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, 
@@ -663,18 +706,20 @@ class Service(models.Model):
 
         def _get_activity_expense_estimates(activity_expense_estimates):
             results = []
+
             for activity_expense_estimate in activity_expense_estimates:
                 expense_estimates = []
-                for quantity in order_quantities:
-                    expense_estimate = activity_expense_estimate.estimate(quantity)
-                    if expense_estimate is not None:
-                        expense_estimates.append(expense_estimate)
 
+                for quantity in order_quantities:
+                    estimate = activity_expense_estimate.estimate(quantity)
+                    expense_estimates.append(estimate)
+                
                 aee = ActivityExpenseEstimate.Expense(
                     activity_expense_estimate.name,
                     activity_expense_estimate.rate_label,
                     expense_estimates)
                 results.append(aee)
+
             return results
 
         def _get_activity_estimates(activity_estimates):
@@ -689,6 +734,7 @@ class Service(models.Model):
 
         def _get_operation_estimates(operation_estimates):
             results = []
+
             for operation_estimate in operation_estimates:
                 activity_estimates = _get_activity_estimates(
                     operation_estimate.activity_estimates.all())
@@ -699,6 +745,7 @@ class Service(models.Model):
                     operation_estimate.name, item_name,
                     activity_estimates)
                 results.append(oe)
+            
             return results
 
         operation_estimates = _get_operation_estimates(self.operation_estimates.all())
@@ -730,6 +777,14 @@ class OperationEstimate(models.Model):
             self.name = name
             self.item_name = item_name
             self.activity_estimates = activity_estimates
+
+        def to_json(self):
+            return {
+                "name": self.name,
+                "item_name": self.item_name,
+                "activity_estimates": [
+                    estimate.to_json() for estimate in self.activity_estimates]
+            }
             
     objects = OperationEstimateManager()
     name = models.CharField(max_length=50, null=True)
@@ -737,20 +792,25 @@ class OperationEstimate(models.Model):
         related_name='operation_estimates')
     material = models.ForeignKey(Material, on_delete=models.SET_NULL,
         null=True, blank=True, related_name='operation_estimates')
+    measures_mapping_cache = {}
 
     def get_costing_measurement(self, order_quantity):
         estimate_variable_type = self.service.estimate_variable_type
         if estimate_variable_type is not None and \
                 self.service.costing_measure is not None:
-            measures_mapping = self.service.component.get_costing_measurements_map(order_quantity)
-            
-            if self.material is not None:
-                material_estimate = next(
-                    (estimate for estimate in self.material.estimates.estimates
-                    if estimate.order_quantity == order_quantity), None)
-                if material_estimate is not None:
-                    measures_mapping = material_estimate.costing_measurements_map   
+            measures_mapping = self.measures_mapping_cache.get(order_quantity)
+            if measures_mapping is None:
+                measures_mapping = self.service.component.get_costing_measurements_map(order_quantity)
+                
+                if self.material is not None:
+                    material_estimate = next(
+                        (estimate for estimate in self.material.estimates.estimates
+                        if estimate.order_quantity == order_quantity), None)
+                    if material_estimate is not None:
+                        measures_mapping = material_estimate.costing_measurements_map
 
+                self.measures_mapping_cache[order_quantity] = measures_mapping
+            
             measures = measures_mapping.get(estimate_variable_type)
             if measures is not None:
                 result = measures.get(self.service.costing_measure, None)
@@ -789,6 +849,14 @@ class ActivityEstimate(models.Model):
             self.name = name
             self.notes = notes
             self.activity_expense_estimates = activity_expense_estimates
+
+        def to_json(self):
+            return {
+                "name": self.name,
+                "notes": self.notes,
+                "activity_expense_estimates": [
+                    estimate.to_json() for estimate in self.activity_expense_estimates]
+            }
 
     objects = ActivityEstimateManager()
     name = models.CharField(max_length=50, null=True)
@@ -854,10 +922,17 @@ class SpeedEstimate(Speed):
 
 class ActivityExpenseEstimate(models.Model):
     class Expense:
-        def __init__(self, name, rate_label, estimates):
+        def __init__(self, name, rate_label, estimates=[]):
             self.name = name
             self.rate_label = rate_label
             self.estimates = estimates
+
+        def to_json(self):
+            return {
+                "name": self.name,
+                "rate_label": self.rate_label,
+                "estimates": [estimate.to_json() for estimate in self.estimates]
+            }
 
     class Estimate:
         def __init__(self, uom, type, rate, order_quantity, 
@@ -871,6 +946,16 @@ class ActivityExpenseEstimate(models.Model):
 
         def __str__(self):
             return '%s %s %s %s' % (self.uom, self.type, self.rate, self.order_quantity)
+
+        def to_json(self):
+            return {
+                "uom": self.uom,
+                "type": self.type,
+                "rate": self.rate.amount,
+                "order_quantity": self.order_quantity,
+                "quantity": self.quantity,
+                "cost": self.cost.amount
+            }
 
         @property
         def quantity(self):
@@ -905,7 +990,7 @@ class ActivityExpenseEstimate(models.Model):
 
     @property
     def rate_label(self):
-        label = self.rate
+        label = str(self.rate)
         if self.type == ActivityExpense.HOUR_BASED or self.type == ActivityExpense.MEASURE_BASED:
             label = '%s / %s' % (self.rate, self.uom)
         return label
@@ -920,5 +1005,4 @@ class ActivityExpenseEstimate(models.Model):
             estimate = ActivityExpenseEstimate.Estimate(
                 self.uom, self.type, self.rate, 
                 order_quantity, costing_measurement, duration)
-
             return estimate

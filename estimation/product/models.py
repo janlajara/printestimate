@@ -1,4 +1,5 @@
-import math, time
+import math
+from cached_property import cached_property
 from decimal import Decimal
 from django.db import models
 from django_measurement.models import MeasurementField
@@ -229,10 +230,12 @@ class PaperComponent(Component, Paper):
             CostingMeasure.AREA: layout.area_measurement * total_quantity,
             CostingMeasure.PERIMETER: layout.perimeter_measurement * total_quantity}
 
-        return {
+        measurements_map = {
             MetaEstimateVariable.SET_MATERIAL: set_material_measures,
             MetaEstimateVariable.TOTAL_MATERIAL: total_material_measures
         }
+        
+        return measurements_map
 
 
 class PanelComponent(Component, Panel):
@@ -277,6 +280,10 @@ class Material(PolymorphicModel):
             self.spoilage_rate = spoilage_rate
             self.estimates = estimates
 
+        @cached_property
+        def estimates_map(self):
+            return {estimate.order_quantity: estimate for estimate in self.estimates}
+
         def to_json(self):
             return {
                 "name": self.name,
@@ -293,6 +300,7 @@ class Material(PolymorphicModel):
             self.material_quantity = material_quantity
             self.spoilage_rate = spoilage_rate
             self.layouts_meta = layouts_meta 
+            self._output_per_item = None
 
         def to_json(self):
             return {
@@ -341,7 +349,7 @@ class Material(PolymorphicModel):
         def machine_run_measures(self):
             pass
 
-        @property
+        @cached_property
         def output_per_item(self):
             return 1
 
@@ -391,7 +399,7 @@ class Material(PolymorphicModel):
             estimate_quantity.quantity
             for estimate_quantity 
             in product_estimate.estimate_quantities.all()]
-        material_estimate = self.estimate(quantities)
+        material_estimate = self.estimate(quantities, self.spoilage_rate)
 
         return material_estimate
 
@@ -399,7 +407,7 @@ class Material(PolymorphicModel):
         if not isinstance(order_quantities, list):
             raise Exception("Provided argument to method 'estimate' must be a list of integers.")
         material = Material.Material(self.label, self.price, 
-            self.item.base_uom.name, spoilage_rate)
+            self.item.base_uom, spoilage_rate)
         
         return material
         
@@ -555,7 +563,7 @@ class PaperMaterial(Material):
 
             return cut_count
 
-        @property
+        @cached_property
         def output_per_item(self):
             output_per_item = 0
 
@@ -803,9 +811,8 @@ class OperationEstimate(models.Model):
                 measures_mapping = self.service.component.get_costing_measurements_map(order_quantity)
                 
                 if self.material is not None:
-                    material_estimate = next(
-                        (estimate for estimate in self.material.estimates.estimates
-                        if estimate.order_quantity == order_quantity), None)
+                    material_estimate = self.material.estimates.estimates_map.get(
+                        order_quantity, None)      
                     if material_estimate is not None:
                         measures_mapping = material_estimate.costing_measurements_map
 
@@ -990,7 +997,7 @@ class ActivityExpenseEstimate(models.Model):
 
     @property
     def rate_label(self):
-        label = str(self.rate)
+        label = self.rate
         if self.type == ActivityExpense.HOUR_BASED or self.type == ActivityExpense.MEASURE_BASED:
             label = '%s / %s' % (self.rate, self.uom)
         return label
@@ -1005,4 +1012,5 @@ class ActivityExpenseEstimate(models.Model):
             estimate = ActivityExpenseEstimate.Estimate(
                 self.uom, self.type, self.rate, 
                 order_quantity, costing_measurement, duration)
+            
             return estimate

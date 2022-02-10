@@ -410,8 +410,21 @@ def test_product_estimate_output_json(db, product_template):
     start_time = time.time()
     product_estimate = ProductEstimate.objects.create_product_estimate(
         product_template, [100, 200, 300, 400, 500])
-    
-    assert product_estimate.estimates.to_json() is not None
-
     duration = time.time() - start_time
+    print('created', duration)
+    
+    es = time.time()
+    estimates = product_estimate.estimates
+    assert estimates is not None
+    duration = (time.time() - es)
+    print('estimated', duration)
+
+    ss = time.time()
+    serializer = serializers.ProductEstimateOutputSerializer(estimates)
+    assert serializer.data is not None
+    duration = time.time() - ss
+    print('serialized', duration)
+
+    print('runtime', time.time() - start_time)
     assert duration <= 1
+    assert False

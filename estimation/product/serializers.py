@@ -134,6 +134,28 @@ class ServiceEstimateSerializer(serializers.Serializer):
     operation_estimates = OperationEstimateSerializer(many=True, read_only=True)
 
 
+class ProductEstimateListSerializer(serializers.ModelSerializer):
+    product_name = serializers.SerializerMethodField()
+    product_description = serializers.SerializerMethodField()
+    product_template_code = serializers.SerializerMethodField()
+    order_quantities = serializers.ListField(child=serializers.IntegerField(), 
+        read_only=True)
+
+    class Meta:
+        model = ProductEstimate
+        fields = ['id', 'product_name', 'product_template_code', 
+            'product_description', 'order_quantities']
+
+    def get_product_name(self, instance):
+        return instance.product.name
+
+    def get_product_description(self, instance):
+        return instance.product.description
+
+    def get_product_template_code(self, instance):
+        return instance.product_template.code
+
+
 class ProductEstimateInputSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False)
     product_template_id = serializers.IntegerField()

@@ -6,8 +6,16 @@ from estimation.product.models import ProductEstimate
 from estimation.template.models import ProductTemplate
 
 
-class ProductEstimateView(mixins.CreateModelMixin, viewsets.GenericViewSet):
-    serializer_class = serializers.ProductEstimateInputSerializer
+class ProductEstimateView(mixins.CreateModelMixin, 
+        mixins.ListModelMixin,mixins.RetrieveModelMixin,
+        viewsets.GenericViewSet):
+    queryset = ProductEstimate.objects.all()
+
+    def get_serializer_class(self):
+        if self.action in ['retrieve']:
+            return serializers.ProductEstimateOutputSerializer
+        else:
+            return serializers.ProductEstimateListSerializer
 
     def create(self, request):
         serializer = serializers.ProductEstimateInputSerializer(data=request.data)
@@ -26,9 +34,7 @@ class ProductEstimateView(mixins.CreateModelMixin, viewsets.GenericViewSet):
                 product_estimate = ProductEstimate.objects.create_product_estimate(
                     product_template, order_quantities)
 
-            # WORKAROUND FOR SERIALIZER'S SLOW PERFORMANCE
-            #serializer = serializers.ProductEstimateOutputSerializer(product_estimate.estimates)
-            #return Response(serializer.data)
-            return Response(product_estimate.estimates.to_json())
+            serializer = serializers.ProductEstimateOutputSerializer(product_estimate.estimates)
+            return Response(serializer.data)
         else:
             return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)

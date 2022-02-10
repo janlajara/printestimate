@@ -39,15 +39,6 @@ class ProductEstimate(models.Model):
             self.order_quantities = order_quantities
             self.material_estimates = material_estimates
             self.service_estimates = service_estimates
-        
-        def to_json(self):
-            return {
-                "id": self.id,
-                "product_template_id": self.product_template_id,
-                "order_quantities": self.order_quantities,
-                "material_estimates": [estimate.to_json() for estimate in self.material_estimates],
-                "service_estimates": [estimate.to_json() for estimate in self.service_estimates]
-            }
 
     objects = ProductEstimateManager()
     product_template = models.ForeignKey(ProductTemplate, null=True, on_delete=models.SET_NULL)
@@ -123,6 +114,7 @@ class EstimateQuantity(models.Model):
 class ProductManager(models.Manager):
     def create_product(self, product_template, product_estimate=None):
         product = Product.objects.create(name=product_template.name, 
+            description=product_template.description,
             product_estimate=product_estimate)
         components_map = {}
 
@@ -141,6 +133,7 @@ class ProductManager(models.Manager):
 class Product(models.Model):
     objects = ProductManager()
     name = models.CharField(max_length=20, null=True)
+    description = models.CharField(max_length=100, null=True)
     product_estimate = models.OneToOneField(ProductEstimate, on_delete=models.CASCADE,
         null=True, blank=True, related_name='product')
 
@@ -284,15 +277,6 @@ class Material(PolymorphicModel):
         def estimates_map(self):
             return {estimate.order_quantity: estimate for estimate in self.estimates}
 
-        def to_json(self):
-            return {
-                "name": self.name,
-                "rate": self.rate.amount,
-                "uom": self.uom,
-                "spoilage_rate": self.spoilage_rate,
-                "estimates": [estimate.to_json() for estimate in self.estimates]
-            }
-
     class Estimate:
         def __init__(self, order_quantity, material_quantity, 
                 spoilage_rate=0, layouts_meta=None):
@@ -301,14 +285,6 @@ class Material(PolymorphicModel):
             self.spoilage_rate = spoilage_rate
             self.layouts_meta = layouts_meta 
             self._output_per_item = None
-
-        def to_json(self):
-            return {
-                "order_quantity": self.order_quantity,
-                "estimated_stock_quantity": self.estimated_stock_quantity,
-                "estimated_spoilage_quantity": self.estimated_spoilage_quantity,
-                "estimated_total_quantity": self.estimated_total_quantity
-            }
         
         @property
         def layouts(self):
@@ -676,13 +652,6 @@ class Service(models.Model):
             self.name = name
             self.operation_estimates = operation_estimates
 
-        def to_json(self):
-            return {
-                "name": self.name,
-                "operation_estimates": [
-                    estimate.to_json() for estimate in self.operation_estimates]
-            }
-
     objects = ServiceManager()
     name = models.CharField(max_length=50, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, 
@@ -785,14 +754,6 @@ class OperationEstimate(models.Model):
             self.name = name
             self.item_name = item_name
             self.activity_estimates = activity_estimates
-
-        def to_json(self):
-            return {
-                "name": self.name,
-                "item_name": self.item_name,
-                "activity_estimates": [
-                    estimate.to_json() for estimate in self.activity_estimates]
-            }
             
     objects = OperationEstimateManager()
     name = models.CharField(max_length=50, null=True)
@@ -856,14 +817,6 @@ class ActivityEstimate(models.Model):
             self.name = name
             self.notes = notes
             self.activity_expense_estimates = activity_expense_estimates
-
-        def to_json(self):
-            return {
-                "name": self.name,
-                "notes": self.notes,
-                "activity_expense_estimates": [
-                    estimate.to_json() for estimate in self.activity_expense_estimates]
-            }
 
     objects = ActivityEstimateManager()
     name = models.CharField(max_length=50, null=True)
@@ -934,13 +887,6 @@ class ActivityExpenseEstimate(models.Model):
             self.rate_label = rate_label
             self.estimates = estimates
 
-        def to_json(self):
-            return {
-                "name": self.name,
-                "rate_label": self.rate_label,
-                "estimates": [estimate.to_json() for estimate in self.estimates]
-            }
-
     class Estimate:
         def __init__(self, uom, type, rate, order_quantity, 
                 measurement, duration):
@@ -950,19 +896,6 @@ class ActivityExpenseEstimate(models.Model):
             self.order_quantity = order_quantity
             self.measurement = measurement
             self.duration = duration
-
-        def __str__(self):
-            return '%s %s %s %s' % (self.uom, self.type, self.rate, self.order_quantity)
-
-        def to_json(self):
-            return {
-                "uom": self.uom,
-                "type": self.type,
-                "rate": self.rate.amount,
-                "order_quantity": self.order_quantity,
-                "quantity": self.quantity,
-                "cost": self.cost.amount
-            }
 
         @property
         def quantity(self):

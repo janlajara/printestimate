@@ -102,7 +102,6 @@ class MaterialSerializer(serializers.Serializer):
 
 class ActivityExpenseEstimateEstimateSerializer(serializers.Serializer):
     uom = serializers.CharField()
-    type = serializers.CharField()
     rate = MoneyField(max_digits=14, decimal_places=2, read_only=False, 
         default_currency='PHP')
     order_quantity = serializers.IntegerField(min_value=1)
@@ -113,6 +112,9 @@ class ActivityExpenseEstimateEstimateSerializer(serializers.Serializer):
 
 class ActivityExpenseEstimateSerializer(serializers.Serializer):
     name = serializers.CharField()
+    rate = MoneyField(max_digits=14, decimal_places=2, read_only=False, 
+        default_currency='PHP')
+    type = serializers.CharField()
     rate_label = serializers.CharField()
     estimates = ActivityExpenseEstimateEstimateSerializer(many=True, read_only=True)
 
@@ -134,34 +136,29 @@ class ServiceEstimateSerializer(serializers.Serializer):
     operation_estimates = OperationEstimateSerializer(many=True, read_only=True)
 
 
-class ProductEstimateListSerializer(serializers.ModelSerializer):
-    product_name = serializers.SerializerMethodField()
-    product_description = serializers.SerializerMethodField()
-    product_template_code = serializers.SerializerMethodField()
-    order_quantities = serializers.ListField(child=serializers.IntegerField(), 
-        read_only=True)
-
-    class Meta:
-        model = ProductEstimate
-        fields = ['id', 'product_name', 'product_template_code', 
-            'product_description', 'order_quantities']
-
-    def get_product_name(self, instance):
-        return instance.product.name
-
-    def get_product_description(self, instance):
-        return instance.product.description
-
-    def get_product_template_code(self, instance):
-        return instance.product_template.code
-
-
 class ProductEstimateInputSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False)
     product_template_id = serializers.IntegerField()
     order_quantities = serializers.ListField(child=serializers.IntegerField(min_value = 1))
 
 
-class ProductEstimateOutputSerializer(ProductEstimateInputSerializer):
+class ProductEstimateOutputSerializer(serializers.Serializer):
     material_estimates = MaterialSerializer(many=True, required=False, read_only=True)
     service_estimates = ServiceEstimateSerializer(many=True, required=False, read_only=True)
+
+
+class ProductEstimateListSerializer(serializers.ModelSerializer):
+    order_quantities = serializers.ListField(child=serializers.IntegerField(), 
+        read_only=True)
+
+    class Meta:
+        model = ProductEstimate
+        fields = ['id', 'name', 'description', 'template_code', 'order_quantities']
+
+
+class ProductEstimateRetrieveSerializer(ProductEstimateListSerializer):
+    estimates = ProductEstimateOutputSerializer(read_only=True)
+
+    class Meta:
+        model = ProductEstimate
+        fields = ['id', 'name', 'description', 'template_code', 'order_quantities', 'estimates']

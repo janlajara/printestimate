@@ -12,10 +12,19 @@ class ProductEstimateView(mixins.CreateModelMixin,
     queryset = ProductEstimate.objects.all()
 
     def get_serializer_class(self):
-        if self.action in ['retrieve']:
-            return serializers.ProductEstimateOutputSerializer
+        if self.action in ['create']:
+            return serializers.ProductEstimateInputSerializer
         else:
             return serializers.ProductEstimateListSerializer
+
+    def retrieve(self, request, pk=None):
+        if pk is not None:
+            product_estimate = get_object_or_404(ProductEstimate, pk=pk)
+            serializer = serializers.ProductEstimateRetrieveSerializer(product_estimate)
+            return Response(serializer.data)
+        else:
+            return Response({'errors': 'estimate pk is not provided'},
+                status.HTTP_400_BAD_REQUEST)
 
     def create(self, request):
         serializer = serializers.ProductEstimateInputSerializer(data=request.data)
@@ -34,7 +43,7 @@ class ProductEstimateView(mixins.CreateModelMixin,
                 product_estimate = ProductEstimate.objects.create_product_estimate(
                     product_template, order_quantities)
 
-            serializer = serializers.ProductEstimateOutputSerializer(product_estimate.estimates)
+            serializer = serializers.ProductEstimateRetrieveSerializer(product_estimate)
             return Response(serializer.data)
         else:
             return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)

@@ -44,6 +44,21 @@ class ProductEstimate(models.Model):
     product_template = models.ForeignKey(ProductTemplate, null=True, on_delete=models.SET_NULL)
 
     @property
+    def name(self):
+        if self.product is not None:
+            return self.product.name
+    
+    @property
+    def description(self):
+        if self.product is not None:
+            return self.product.description
+
+    @property
+    def template_code(self):
+        if self.product is not None:
+            return self.product_template.code
+
+    @property
     def order_quantities(self):
         quantities = [estimate_quantity.quantity 
             for estimate_quantity 
@@ -259,7 +274,7 @@ class MaterialManager(PolymorphicManager):
             raise MaterialTypeMismatch(item.type, type)
         clazz = MaterialManager.get_class(type)
         material = clazz.objects.create(component=component, 
-            item=item)
+            item=item, price=price)
         return material
 
 
@@ -693,6 +708,8 @@ class Service(models.Model):
                 
                 aee = ActivityExpenseEstimate.Expense(
                     activity_expense_estimate.name,
+                    activity_expense_estimate.rate,
+                    activity_expense_estimate.type,
                     activity_expense_estimate.rate_label,
                     expense_estimates)
                 results.append(aee)
@@ -882,8 +899,10 @@ class SpeedEstimate(Speed):
 
 class ActivityExpenseEstimate(models.Model):
     class Expense:
-        def __init__(self, name, rate_label, estimates=[]):
+        def __init__(self, name, rate, type, rate_label, estimates=[]):
             self.name = name
+            self.type = type
+            self.rate = rate
             self.rate_label = rate_label
             self.estimates = estimates
 

@@ -57,7 +57,7 @@ const routes = [
       {
         path: 'sales/quotes/estimates',
         name: 'sales-quotes-estimates',
-        component: ()=>import('../views/pages/sales/quotes/estimates/EstimateDetail.vue'),
+        component: ()=>import('../views/pages/sales/quotes/estimates/EstimateList.vue'),
         meta: {label: 'Estimates', group: 'Sales'}
       },
       {

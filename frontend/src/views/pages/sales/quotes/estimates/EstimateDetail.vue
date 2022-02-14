@@ -26,7 +26,7 @@
                 <DescriptionItem  
                     name="Template" :loader="state.isProcessing" 
                     :value="`[${state.data.templateCode}] ${state.data.templateName}`"/>
-                <DescriptionItem :loader="state.isProcecssing"
+                <DescriptionItem :loader="state.isProcessing"
                     name="Description" :value="state.data.templateDescription"/>
             </DescriptionList>
         </Section>
@@ -35,23 +35,40 @@
                 <!-- Table Header -->
                 <div class="border-b grid grid-cols-2">
                     <div class="font-bold text-lg text-left"></div>
-                    <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength}`">
-                        <div v-for="(quantity, key) in state.data.quantities" :key="key"
-                            class="flex justify-center">
-                            <span class="font-bold">{{quantity}}</span>
+                    <div class="flex relative">
+                        <div class="absolute">
+                            <span class="material-icons text-sm cursor-pointer"
+                                :class="state.components.paginator.offset == 0? 
+                                    'hidden': ''"
+                                @click="state.components.paginator.left">chevron_left</span>
+                        </div>
+                        <div :class="`w-full grid grid-cols-${state.meta.quantitiesColumnLength}`">
+                            <div v-for="(quantity, key) in 
+                                    state.components.paginator.paginate(state.data.quantities)" :key="key"
+                                class="flex justify-center">
+                                <span class="font-bold">{{quantity}}</span>
+                            </div>
+                        </div>
+                        <div class="absolute right-0">
+                            <span class="material-icons text-sm cursor-pointer"
+                                :class="state.components.paginator.offset == state.components.paginator.limit? 
+                                    'hidden': ''"
+                                @click="state.components.paginator.right">chevron_right</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Table Rows for Bill of Materials -->
-                <EstimateBillOfMaterials class="py-2"
+                <EstimateDetailBillOfMaterials class="py-2"
                     :quantities="state.data.quantities"
                     :bill-of-materials="state.data.billOfMaterials"/>
 
                 <!-- Table Rows for Services -->
-                <EstimateServices class="py-2 pb-4"
+                <EstimateDetailServices class="py-2 pb-4"
                     :quantities="state.data.quantities"
-                    :services="state.data.services"/>
+                    :services="state.data.services"
+                    :quantity-viewable-offset="state.components.paginator.offset"
+                    :max-quantity-viewable="3"/>
 
             </div>
         </Section>
@@ -65,28 +82,36 @@ import Section from '@/components/Section.vue';
 import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
-import EstimateBillOfMaterials from './EstimateBillOfMaterials.vue';
-import EstimateServices from './EstimateServices.vue';
+import EstimateDetailBillOfMaterials from './EstimateDetailBillOfMaterials.vue';
+import EstimateDetailServices from './EstimateDetailServices.vue';
 
 import {reactive, computed, onBeforeMount} from 'vue';
+import {useRoute} from 'vue-router';
+import {EstimateApi} from '@/utils/apis.js';
 
 export default {
     components: {
         Page, Button, Section, DeleteRecordDialog, 
-        DescriptionList, DescriptionItem, EstimateBillOfMaterials, EstimateServices
+        DescriptionList, DescriptionItem, 
+        EstimateDetailBillOfMaterials, EstimateDetailServices
     },
     setup() {
+        const route = useRoute();
         const state = reactive({
             isProcessing: false,
             meta: {
-                quantitiesColumnLength: computed(()=> Math.max(state.data.quantities.length, 1)),
+                maxQuantitiesColumnLength: 3,
+                quantitiesColumnLength: computed(()=> 
+                    Math.min(state.data.quantities.length, 
+                        state.meta.maxQuantitiesColumnLength)),
             },
             data: {
+                id: route.params.id,
                 estimateCode: 'CE-1234',
-                templateCode: 'PT-9876',
-                templateName: 'Carbonless Form',
-                templateDescription: '8.5x11" Carbonless Form (White, Yellow, Blue)',
-                quantities: [100, 200, 300],
+                templateCode: '',
+                templateName: '',
+                templateDescription: '',
+                quantities: [],
                 billOfMaterials: [],
                 services: []
             },
@@ -99,180 +124,75 @@ export default {
                     toggle: value => state.components.deleteDialog.isOpen = value,
                     open: ()=> state.components.deleteDialog.toggle(true),
                     delete: ()=> {}
+                },
+                paginator: {
+                    offset: 0,
+                    limit: computed(()=>
+                        state.data.quantities.length - state.meta.quantitiesColumnLength),
+                    paginate: (array)=> {
+                        let spliced = [...array];
+                        if (array) spliced = spliced.splice(
+                            state.components.paginator.offset, 
+                            state.meta.quantitiesColumnLength);
+                        return spliced;
+                    },
+                    left: ()=> {
+                        let offset = state.components.paginator.offset - 1;
+                        state.components.paginator.offset = Math.max(offset, 0);
+                    },
+                    right: ()=> {
+                        let offset = state.components.paginator.offset + 1;
+                        let limit = state.components.paginator.limit;
+                        state.components.paginator.offset = Math.min(offset, limit);
+                    }
                 }
             }
         });
 
         onBeforeMount(()=> {
-            const mockBillOfMaterials = [
-                {name: 'Generic Carbonless White 32x24inch', 
-                rate: 30.00, 
-                uom: 'sheet', 
-                spoilageRate: 10, isExpanded: false,
-                estimates: [
-                {itemQuantity: 100, 
-                    estimatedMaterialQuantity: 300,
-                    spoilageMaterialQuantity: 30},
-                {itemQuantity: 200, 
-                    estimatedMaterialQuantity: 600,
-                    spoilageMaterialQuantity: 60},
-                {itemQuantity: 300, 
-                    estimatedMaterialQuantity: 900,
-                    spoilageMaterialQuantity: 90}
-                ]},
-                {name: 'Carbonless Blue 32x24', 
-                rate: 30.00, 
-                uom: 'sheet', 
-                spoilageRate: 0, isExpanded: false,
-                estimates: [
-                {itemQuantity: 100, 
-                    estimatedMaterialQuantity: 300,
-                    spoilageMaterialQuantity: 0},
-                {itemQuantity: 200, 
-                    estimatedMaterialQuantity: 600,
-                    spoilageMaterialQuantity: 0},
-                {itemQuantity: 300, 
-                    estimatedMaterialQuantity: 900,
-                    spoilageMaterialQuantity: 0}
-                ]}
-            ];
-
-            const mockServicesData = [
-                {name: 'Raw-to-running cut',
-                uom: 'count', 
-                isExpanded: false,
-                operations: [
-                    {name: 'Cutting',
-                    activities: [
-                        {name: 'Polar Cutter Cutting',
-                        expenses: [
-                            {name: 'Cut fee', type: 'measure', rate: 50, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 4},
-                                {itemQuantity: 200, estimate: 4},
-                                {itemQuantity: 300, estimate: 4},
-                            ]},
-                            {name: 'Electricity', type: 'hour', rate: 67, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 8},
-                                {itemQuantity: 200, estimate: 16},
-                                {itemQuantity: 300, estimate: 24},
-                            ]},
-                            {name: 'Depreciation', type: 'hour', rate: 120, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 8},
-                                {itemQuantity: 200, estimate: 16},
-                                {itemQuantity: 300, estimate: 24},
-                            ]},
-                            {name: 'Usage fee', type: 'flat', rate: 400, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: null},
-                                {itemQuantity: 200, estimate: null},
-                                {itemQuantity: 300, estimate: null},
-                            ]},
-                        ]}
-                    ]}
-                ]},
-                {name: 'Printing',
-                uom: 'sheet', 
-                isExpanded: false,
-                operations: [
-                    {name: 'Front Print',
-                    activities: [
-                        {name: 'Spot Color Printing : 1st Color',
-                        expenses: [
-                            {name: 'Ink', type: 'measure', rate: 0.50, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 500},
-                                {itemQuantity: 200, estimate: 750},
-                                {itemQuantity: 300, estimate: 1000},
-                            ]},
-                            {name: 'Electricity', type: 'hour', rate: 66.67, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 16},
-                                {itemQuantity: 200, estimate: 18},
-                                {itemQuantity: 300, estimate: 20},
-                            ]},
-                            {name: 'Labor', type: 'hour', rate: 75, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 16},
-                                {itemQuantity: 200, estimate: 18},
-                                {itemQuantity: 300, estimate: 20},
-                            ]},
-                        ]},
-                        {name: 'Spot Color Printing : 2nd Color',
-                        expenses: [
-                            {name: 'Ink', type: 'measure', rate: 0.50, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 500},
-                                {itemQuantity: 200, estimate: 750},
-                                {itemQuantity: 300, estimate: 1000},
-                            ]},
-                            {name: 'Electricity', type: 'hour', rate: 66.67, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 16},
-                                {itemQuantity: 200, estimate: 18},
-                                {itemQuantity: 300, estimate: 20},
-                            ]},
-                            {name: 'Labor', type: 'hour', rate: 75, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 16},
-                                {itemQuantity: 200, estimate: 18},
-                                {itemQuantity: 300, estimate: 20},
-                            ]},
-                        ]},
-                    ]},
-                    {name: 'Back Print',
-                    activities: [
-                        {name: 'Spot Color Printing : 1st Color',
-                        expenses: [
-                            {name: 'Ink', type: 'measure', rate: 0.50, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 500},
-                                {itemQuantity: 200, estimate: 750},
-                                {itemQuantity: 300, estimate: 1000},
-                            ]},
-                            {name: 'Electricity', type: 'hour', rate: 66.67, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 16},
-                                {itemQuantity: 200, estimate: 18},
-                                {itemQuantity: 300, estimate: 20},
-                            ]},
-                            {name: 'Labor', type: 'hour', rate: 75, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 16},
-                                {itemQuantity: 200, estimate: 18},
-                                {itemQuantity: 300, estimate: 20},
-                            ]},
-                        ]},
-                        {name: 'Spot Color Printing : 2nd Color',
-                        expenses: [
-                            {name: 'Ink', type: 'measure', rate: 0.50, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 500},
-                                {itemQuantity: 200, estimate: 750},
-                                {itemQuantity: 300, estimate: 1000},
-                            ]},
-                            {name: 'Electricity', type: 'hour', rate: 66.67, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 16},
-                                {itemQuantity: 200, estimate: 18},
-                                {itemQuantity: 300, estimate: 20},
-                            ]},
-                            {name: 'Labor', type: 'hour', rate: 75, 
-                            estimates: [
-                                {itemQuantity: 100, estimate: 16},
-                                {itemQuantity: 200, estimate: 18},
-                                {itemQuantity: 300, estimate: 20},
-                            ]},
-                        ]},
-                    ]}
-                ]}
-            ];
-            
-            state.data.billOfMaterials = mockBillOfMaterials;
-            state.data.services = mockServicesData;
+            retrieveEstimateById(state.data.id);
         });
+
+        const retrieveEstimateById = async (id)=> {
+            state.isProcessing = true;
+            if (id != null) {
+                const response = await EstimateApi.retrieveEstimate(id);
+
+                state.data.templateCode = response.template_code;
+                state.data.templateName = response.name;
+                state.data.templateDescription = response.description;
+                state.data.quantities = response.order_quantities,
+                state.data.billOfMaterials = response.estimates.material_estimates.map(me => ({
+                    name: me.name, rate: parseFloat(me.rate), uom: me.uom, 
+                    spoilageRate: parseFloat(me.spoilage_rate), isExpanded: false,
+                    estimates: me.estimates.map(es => ({
+                        itemQuantity: es.order_quantity,
+                        estimatedMaterialQuantity: es.estimated_stock_quantity,
+                        spoilageMaterialQuantity: es.estimated_spoilage_quantity
+                    }))
+                }));
+                
+                state.data.services = response.estimates.service_estimates.map(se => ({
+                    name: se.name, isExpanded: false,
+                    operations: se.operation_estimates.map(oe => ({
+                        name: [oe.name, oe.item_name].join(' '), 
+                        activities: oe.activity_estimates.map(ae => ({
+                            name: (ae.name + " " + ae.notes).trim(),
+                            expenses: ae.activity_expense_estimates.map(aee => ({
+                                name: aee.name,  type: aee.type, rate: aee.rate,
+                                rateLabel: aee.rate_label,
+                                estimates: aee.estimates.map(e => ({
+                                    itemQuantity: parseFloat(e.order_quantity),
+                                    estimate: e.quantity? parseFloat(e.quantity) : null
+                                }))
+                            }))
+                        }))
+                    }))
+                }));
+
+            }
+            state.isProcessing = false;
+        }
 
         return {
             state

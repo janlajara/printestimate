@@ -19,10 +19,10 @@
                         </div>
                     </div>
                 </div>
-                <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength}`"
+                <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`"
                     v-show="!service.isExpanded">
-                    <div v-for="(quantity, a) in state.data.quantities" :key="a" class="my-auto">
-                        <div class="flex text-xs">
+                    <div v-for="(quantity, a) in state.paginate(state.data.quantities)" :key="a" class="grid">
+                        <div class="flex text-xs my-auto">
                             <div class="text-right w-2/5">
                             </div>
                             <div class="ml-1 w-3/5 flex justify-between">
@@ -47,15 +47,12 @@
                                 <div class="ml-16">{{expense.name}}</div>
                                 <div class="ml-4 flex-auto text-right">
                                     <span class="text-xs inline-block align-middle">
-                                        {{formatMoney(expense.rate)}} 
-                                        {{({hour: '/ hr', 
-                                            measure: `/ ${service.uom}`, 
-                                            flat: ''})[expense.type]}}</span>    
+                                        {{expense.rateLabel}}</span>    
                                 </div>
                             </div>
-                            <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength}`">
-                                <div v-for="(estimate, a) in expense.estimates" :key="a" class="my-auto">
-                                    <div class="flex text-xs">
+                            <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
+                                <div v-for="(estimate, a) in state.paginate(expense.estimates)" :key="a" class="grid">
+                                    <div class="flex text-xs my-auto">
                                         <div class="text-right w-2/5"
                                             :class="estimate.estimate == null? 'invisible' : ''">
                                             <span>x</span>
@@ -75,7 +72,7 @@
                     <div>
                     </div>
                     <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength}`">
-                        <div v-for="(quantity, y) in state.data.quantities" :key="y" class="my-auto">
+                        <div v-for="(quantity, y) in state.meta.displayedQuantities" :key="y" class="my-auto">
                             <div class="text-xs flex py-1">
                                 <div class="w-2/5"></div>
                                 <div class="ml-1 w-3/5 flex justify-between">
@@ -91,12 +88,12 @@
         </div>
         
         <!-- Total for all Services -->
-        <div class="grid grid-cols-2 mt-1">
+        <div class="grid grid-cols-2">
             <div>
             </div>
-            <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength}`">
-                <div v-for="(quantity, x) in state.data.quantities" :key="x">
-                    <div class="text-xs flex">
+            <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
+                <div v-for="(quantity, x) in state.meta.displayedQuantities" :key="x">
+                    <div class="text-xs flex py-1">
                         <div class="w-2/5 text-right italic">Total</div>
                         <div class="ml-1 w-3/5 flex justify-between">
                             <span class="mr-1">=</span>
@@ -110,7 +107,7 @@
     </div>
 </template>
 <script>
-import {reactive, inject, computed, onBeforeMount} from 'vue';
+import {reactive, inject, computed, watch} from 'vue';
 import {formatQuantity, formatMoney as formatCurrency} from '@/utils/format.js';
 
 class Service {
@@ -180,9 +177,9 @@ class Activity {
 }
 
 class Expense {
-    constructor(name, type, rate, estimates) {
+    constructor(name, type, rate, rateLabel, estimates) {
         this._state = reactive({
-            name, type, rate, estimates
+            name, type, rate, rateLabel, estimates
         })
     }
 
@@ -195,12 +192,16 @@ class Expense {
     set rate(value){this._state.rate = value}
     get rate(){return this._state.rate}
 
+    set rateLabel(value){this._state.rateLabel = value}
+    get rateLabel(){return this._state.rateLabel}
+
     set estimates(value){this._state.estimates = value}
     get estimates(){return this._state.estimates}  
 
     getEstimatePriceByQuantity(quantity) {
         const estimate = this.estimates.find(x=>x.itemQuantity == quantity);
-        return (estimate.estimate || 1) * this.rate;
+        if (estimate) return (estimate.estimate || 1) * this.rate;
+        else return 0;
     } 
 }
 
@@ -221,13 +222,24 @@ class ExpenseEstimate {
 export default {
     props: {
         quantities: Array,
-        services: Array
+        services: Array,
+        quantityViewableOffset: {
+            type: Number,
+            default: 0
+        },
+        maxQuantityViewable: {
+            type: Number,
+            default: 2
+        }
     },
     setup(props) {
         const currency = inject('currency').abbreviation;
         const state = reactive({
             meta: {
-                quantitiesColumnLength: computed(()=> Math.max(state.data.quantities.length, 1)),
+                quantitiesColumnLength: computed(()=> 
+                    Math.min(state.data.quantities.length, 
+                        props.maxQuantityViewable)
+                ),
                 totals: {
                     services: computed(()=> {
                         let estimates = state.data.quantities.map(x=> {
@@ -240,7 +252,9 @@ export default {
                         });
                         return estimates;
                     })
-                }
+                },
+                displayedQuantities: computed(()=>
+                    state.paginate(state.data.quantities))
             },
             data: {
                 quantities: computed(()=> props.quantities),
@@ -253,7 +267,14 @@ export default {
                     if (service) price = service.price;
                 }
                 return formatMoney(price);
-            } 
+            },
+            paginate: (array) => {
+                let spliced = [...array];
+                if (array) spliced = spliced.splice(
+                    props.quantityViewableOffset, 
+                    state.meta.quantitiesColumnLength);
+                return spliced;
+            }
         });
 
         const formatMoney = (amount)=> {
@@ -271,7 +292,7 @@ export default {
                             const expenses = c.expenses.map(d => {
                                 const estimates = d.estimates.map(e =>
                                     new ExpenseEstimate(e.itemQuantity, e.estimate));
-                                return new Expense(d.name, d.type, d.rate, estimates);
+                                return new Expense(d.name, d.type, d.rate, d.rateLabel, estimates);
                             })
                             return new Activity(c.name, expenses);
                         })
@@ -283,7 +304,7 @@ export default {
             }
         }
 
-        onBeforeMount(initializeServices);
+        watch(()=>props.services, initializeServices);
 
         return {
             state, formatMoney, formatQuantity

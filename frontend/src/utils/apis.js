@@ -11,3 +11,5 @@ export {MachineApi, SheetFedPressMachineApi,
 export {MetaProductApi, MetaComponentApi, MetaServiceApi} from '@/utils/apis/estimation.metaproduct.js'
 
 export {ProductTemplateApi, ComponentTemplateApi} from '@/utils/apis/estimation.templates.js'
+
+export {EstimateApi} from '@/utils/apis/estimation.quotes.js'

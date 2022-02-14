@@ -24,10 +24,10 @@
                         </div>
                     </div>
                 </div>
-                <div :class="`grid md:grid-cols-${state.meta.quantitiesColumnLength}`"
+                <div :class="`grid md:grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`"
                     v-show="!material.isExpanded">
-                    <div v-for="(estimate, y) in material.estimates" :key="y" class="my-auto">
-                        <div class="text-xs flex">
+                    <div v-for="(estimate, y) in material.estimates" :key="y" class="grid">
+                        <div class="text-xs flex my-auto">
                             <div class="text-right w-2/5">
                                 <span class="text-gray-500">x</span>
                                 {{estimate.totalQuantity}}</div>
@@ -50,9 +50,9 @@
                             </div>
                         </div>                              
                     </div>
-                    <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength}`">
-                        <div v-for="(estimate, y) in material.estimates" :key="y" class="my-auto">
-                            <div class="text-xs flex">
+                    <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
+                        <div v-for="(estimate, y) in material.estimates" :key="y" class="grid">
+                            <div class="text-xs flex my-auto">
                                 <div class="text-right w-2/5">
                                     <span>x</span>
                                     {{estimate.estimatedQuantity}}</div>
@@ -74,9 +74,9 @@
                             </div>
                         </div>
                     </div>
-                    <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength}`">
-                        <div v-for="(estimate, y) in material.estimates" :key="y" class="my-auto">
-                            <div class="text-xs flex">
+                    <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
+                        <div v-for="(estimate, y) in material.estimates" :key="y" class="grid">
+                            <div class="text-xs flex my-auto">
                                 <div class="text-right w-2/5">
                                     <span>x</span>
                                     {{estimate.spoilageQuantity}}</div>
@@ -92,9 +92,9 @@
                 <div class="border-t-2 border-dotted grid grid-cols-2 mb-4">
                     <div>
                     </div>
-                    <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength}`">
-                        <div v-for="(estimate, y) in material.estimates" :key="y" class="my-auto">
-                            <div class="text-xs flex py-1">
+                    <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
+                        <div v-for="(estimate, y) in material.estimates" :key="y" class="grid">
+                            <div class="text-xs flex py-1 my-auto">
                                 <div class="text-right w-2/5">
                                     <span>x</span>
                                     {{estimate.totalQuantity}}</div>
@@ -110,12 +110,12 @@
             </div>
         </div>
         <!-- Total for all materials -->
-        <div class="grid grid-cols-2 mt-1">
+        <div class="grid grid-cols-2">
             <div>
             </div>
-            <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength}`">
+            <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
                 <div v-for="(quantity, x) in state.data.quantities" :key="x">
-                    <div class="text-xs flex">
+                    <div class="text-xs flex py-1">
                         <div class="w-2/5 text-right italic">Total</div>
                         <div class="ml-1 w-3/5 flex justify-between">
                             <span class="mr-1">=</span>
@@ -130,7 +130,7 @@
 </template>
 
 <script>
-import {reactive, inject, computed, onBeforeMount} from 'vue';
+import {reactive, inject, computed, watch} from 'vue';
 import {formatMoney as formatCurrency} from '@/utils/format.js'
 
 class Material {
@@ -198,7 +198,11 @@ export default {
             type: Array,
             default: ()=>[]
         },
-        billOfMaterials: Array
+        billOfMaterials: Array,
+        maxColumnCount: {
+            type: Number,
+            default: 3
+        }
     },
     setup(props) {
         const currency = inject('currency').abbreviation;
@@ -254,7 +258,7 @@ export default {
             else return ''
         }
 
-        onBeforeMount(initializeBillOfMaterials);
+        watch(()=>props.billOfMaterials, initializeBillOfMaterials);
 
         return {
             state, 

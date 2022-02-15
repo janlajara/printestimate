@@ -199,9 +199,13 @@ class Expense {
     get estimates(){return this._state.estimates}  
 
     getEstimatePriceByQuantity(quantity) {
+        let price = 0
         const estimate = this.estimates.find(x=>x.itemQuantity == quantity);
-        if (estimate) return (estimate.estimate || 1) * this.rate;
-        else return 0;
+        if (estimate) {
+            if (estimate.estimate != null) price = estimate.estimate * this.rate;
+            else price = this.rate;
+        }
+        return price;
     } 
 }
 

@@ -183,7 +183,8 @@ export default {
                             activities: oe.activity_estimates.map(ae => ({
                                 name: (ae.name + " " + ae.notes).trim(),
                                 expenses: ae.activity_expense_estimates.map(aee => ({
-                                    name: aee.name,  type: aee.type, rate: aee.rate,
+                                    name: aee.name,  type: aee.type, 
+                                    rate: parseFloat(aee.rate),
                                     rateLabel: aee.rate_label,
                                     estimates: aee.estimates.map(e => ({
                                         itemQuantity: parseFloat(e.order_quantity),

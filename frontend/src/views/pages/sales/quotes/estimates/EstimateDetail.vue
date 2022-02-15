@@ -61,7 +61,9 @@
                 <!-- Table Rows for Bill of Materials -->
                 <EstimateDetailBillOfMaterials class="py-2"
                     :quantities="state.data.quantities"
-                    :bill-of-materials="state.data.billOfMaterials"/>
+                    :bill-of-materials="state.data.billOfMaterials"
+                    :quantity-viewable-offset="state.components.paginator.offset"
+                    :max-quantity-viewable="3"/>
 
                 <!-- Table Rows for Services -->
                 <EstimateDetailServices class="py-2 pb-4"
@@ -161,34 +163,37 @@ export default {
                 state.data.templateCode = response.template_code;
                 state.data.templateName = response.name;
                 state.data.templateDescription = response.description;
-                state.data.quantities = response.order_quantities,
-                state.data.billOfMaterials = response.estimates.material_estimates.map(me => ({
-                    name: me.name, rate: parseFloat(me.rate), uom: me.uom, 
-                    spoilageRate: parseFloat(me.spoilage_rate), isExpanded: false,
-                    estimates: me.estimates.map(es => ({
-                        itemQuantity: es.order_quantity,
-                        estimatedMaterialQuantity: es.estimated_stock_quantity,
-                        spoilageMaterialQuantity: es.estimated_spoilage_quantity
-                    }))
-                }));
-                
-                state.data.services = response.estimates.service_estimates.map(se => ({
-                    name: se.name, isExpanded: false,
-                    operations: se.operation_estimates.map(oe => ({
-                        name: [oe.name, oe.item_name].join(' '), 
-                        activities: oe.activity_estimates.map(ae => ({
-                            name: (ae.name + " " + ae.notes).trim(),
-                            expenses: ae.activity_expense_estimates.map(aee => ({
-                                name: aee.name,  type: aee.type, rate: aee.rate,
-                                rateLabel: aee.rate_label,
-                                estimates: aee.estimates.map(e => ({
-                                    itemQuantity: parseFloat(e.order_quantity),
-                                    estimate: e.quantity? parseFloat(e.quantity) : null
+                state.data.quantities = response.order_quantities;
+
+                if (response.estimates) {
+                    state.data.billOfMaterials = response.estimates.material_estimates.map(me => ({
+                        name: me.name, rate: parseFloat(me.rate), uom: me.uom, 
+                        spoilageRate: parseFloat(me.spoilage_rate), isExpanded: false,
+                        estimates: me.estimates.map(es => ({
+                            itemQuantity: es.order_quantity,
+                            estimatedMaterialQuantity: es.estimated_stock_quantity,
+                            spoilageMaterialQuantity: es.estimated_spoilage_quantity
+                        }))
+                    }));
+                    
+                    state.data.services = response.estimates.service_estimates.map(se => ({
+                        name: se.name, isExpanded: false,
+                        operations: se.operation_estimates.map(oe => ({
+                            name: [oe.name, oe.item_name].join(' '), 
+                            activities: oe.activity_estimates.map(ae => ({
+                                name: (ae.name + " " + ae.notes).trim(),
+                                expenses: ae.activity_expense_estimates.map(aee => ({
+                                    name: aee.name,  type: aee.type, rate: aee.rate,
+                                    rateLabel: aee.rate_label,
+                                    estimates: aee.estimates.map(e => ({
+                                        itemQuantity: parseFloat(e.order_quantity),
+                                        estimate: e.quantity? parseFloat(e.quantity) : null
+                                    }))
                                 }))
                             }))
                         }))
-                    }))
-                }));
+                    }));
+                }
 
             }
             state.isProcessing = false;

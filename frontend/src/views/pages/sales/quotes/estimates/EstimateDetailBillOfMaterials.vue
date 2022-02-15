@@ -26,7 +26,7 @@
                 </div>
                 <div :class="`grid md:grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`"
                     v-show="!material.isExpanded">
-                    <div v-for="(estimate, y) in material.estimates" :key="y" class="grid">
+                    <div v-for="(estimate, y) in state.paginate(material.estimates)" :key="y" class="grid">
                         <div class="text-xs flex my-auto">
                             <div class="text-right w-2/5">
                                 <span class="text-gray-500">x</span>
@@ -51,7 +51,7 @@
                         </div>                              
                     </div>
                     <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
-                        <div v-for="(estimate, y) in material.estimates" :key="y" class="grid">
+                        <div v-for="(estimate, y) in state.paginate(material.estimates)" :key="y" class="grid">
                             <div class="text-xs flex my-auto">
                                 <div class="text-right w-2/5">
                                     <span>x</span>
@@ -75,7 +75,7 @@
                         </div>
                     </div>
                     <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
-                        <div v-for="(estimate, y) in material.estimates" :key="y" class="grid">
+                        <div v-for="(estimate, y) in state.paginate(material.estimates)" :key="y" class="grid">
                             <div class="text-xs flex my-auto">
                                 <div class="text-right w-2/5">
                                     <span>x</span>
@@ -93,7 +93,7 @@
                     <div>
                     </div>
                     <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
-                        <div v-for="(estimate, y) in material.estimates" :key="y" class="grid">
+                        <div v-for="(estimate, y) in state.paginate(material.estimates)" :key="y" class="grid">
                             <div class="text-xs flex py-1 my-auto">
                                 <div class="text-right w-2/5">
                                     <span>x</span>
@@ -114,7 +114,7 @@
             <div>
             </div>
             <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
-                <div v-for="(quantity, x) in state.data.quantities" :key="x">
+                <div v-for="(quantity, x) in state.paginate(state.data.quantities)" :key="x">
                     <div class="text-xs flex py-1">
                         <div class="w-2/5 text-right italic">Total</div>
                         <div class="ml-1 w-3/5 flex justify-between">
@@ -199,16 +199,23 @@ export default {
             default: ()=>[]
         },
         billOfMaterials: Array,
-        maxColumnCount: {
+        quantityViewableOffset: {
             type: Number,
-            default: 3
+            default: 0
+        },
+        maxQuantityViewable: {
+            type: Number,
+            default: 2
         }
     },
     setup(props) {
         const currency = inject('currency').abbreviation;
         const state = reactive({
             meta: {
-                quantitiesColumnLength: computed(()=> Math.max(state.data.quantities.length, 1)),
+                quantitiesColumnLength: computed(()=> 
+                    Math.min(state.data.quantities.length, 
+                        props.maxQuantityViewable)
+                ),
                 totals: {
                     materials: computed(()=> {
                         let estimates = state.data.quantities.map(x=> {
@@ -221,7 +228,9 @@ export default {
                         });
                         return estimates;
                     })
-                }
+                },
+                displayedQuantities: computed(()=>
+                    state.paginate(state.data.quantities))
             },
             data: {
                 quantities: computed(()=>props.quantities),
@@ -235,6 +244,13 @@ export default {
                 }
                 return formatMoney(price);
             },
+            paginate: (array) => {
+                let spliced = [...array];
+                if (array) spliced = spliced.splice(
+                    props.quantityViewableOffset, 
+                    state.meta.quantitiesColumnLength);
+                return spliced;
+            }
         });
 
         const initializeBillOfMaterials = ()=> {

@@ -223,9 +223,9 @@ def test_material_estimate__with_machine(db, carbonless_item, gto_machine):
     assert set_material_quantity is not None and \
         total_material_area is not None and \
         total_material_perimeter is not None
-    assert set_material_quantity.pc == 100
-    assert math.isclose(set_material_area.sq_inch, 2000)
-    assert set_material_perimeter.inch == 900
+    assert set_material_quantity.pc == 75
+    assert math.isclose(set_material_area.sq_inch, 1500)
+    assert set_material_perimeter.inch == 675
 
     machine_run_quantity = estimate.machine_run_measures.get(CostingMeasure.QUANTITY)
     machine_run_area = estimate.machine_run_measures.get(CostingMeasure.AREA)

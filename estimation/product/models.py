@@ -328,7 +328,7 @@ class Material(PolymorphicModel):
 
         @property
         def set_material_measures(self):
-            value = self.material_quantity
+            value = self.order_quantity
             return {CostingMeasure.QUANTITY: Quantity(pc=value)}
         
         @property

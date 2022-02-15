@@ -70,17 +70,25 @@ class MetaEstimateVariable:
     @classmethod
     def material_derived_variables(cls, material_type):
         variable_types = [cls.RAW_MATERIAL, cls.SET_MATERIAL, cls.TOTAL_MATERIAL]
+
         return cls._get_variables(material_type, variable_types)
     
     @classmethod
     def machine_derived_variables(cls, material_type):
         variable_types = [cls.MACHINE_RUN]
-        variables = cls._get_variables(material_type, variable_types)
+
+        return cls._get_variables(material_type, variable_types)
+
+    @classmethod
+    def cutter_derived_variables(cls, material_type, has_machine=False):
+        variables = []
 
         if (material_type in [Item.PAPER, Item.PANEL]):
-            variable_types = [cls.RAW_TO_RUNNING_CUT, cls.RUNNING_TO_FINAL_CUT, cls.RAW_TO_FINAL_CUT]
-            variables += cls._get_variables(Item.OTHER, variable_types)
-        
+            variable_types = [cls.RAW_TO_FINAL_CUT]
+            if (has_machine):
+                variable_types.extend([cls.RAW_TO_RUNNING_CUT, cls.RUNNING_TO_FINAL_CUT])
+            variables = cls._get_variables(Item.OTHER, variable_types)
+
         return variables
 
     @classmethod
@@ -103,15 +111,17 @@ class MetaComponent(MetaProductData):
     def meta_estimate_variables(self):
         material_type = self.type
         variables = []
+        has_machine = self.meta_machine_options.all()
+
+        if len(has_machine) > 0:
+            machine_variables = MetaEstimateVariable.machine_derived_variables(material_type)
+            variables.extend(machine_variables)
 
         if len(self.meta_material_options.all()) > 0:
             material_variables = MetaEstimateVariable.material_derived_variables(material_type)
-            variables = material_variables
-
-        if len(self.meta_machine_options.all()) > 0:
-            machine_variables = MetaEstimateVariable.machine_derived_variables(material_type)
-            variables  += machine_variables
-
+            cutter_variables = MetaEstimateVariable.cutter_derived_variables(material_type, has_machine)
+            variables.extend(material_variables + cutter_variables)
+            
         return variables
 
     def add_meta_operation(self, name, options_type, **kwargs):

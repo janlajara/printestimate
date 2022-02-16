@@ -272,6 +272,9 @@ class MaterialManager(PolymorphicManager):
     def create_material(self, component, type, item, price=0):
         if item.type != type:
             raise MaterialTypeMismatch(item.type, type)
+        if price is None:
+            price = 0
+
         clazz = MaterialManager.get_class(type)
         material = clazz.objects.create(component=component, 
             item=item, price=price)
@@ -795,7 +798,7 @@ class OperationEstimate(models.Model):
                         measures_mapping = material_estimate.costing_measurements_map
 
                 self.measures_mapping_cache[order_quantity] = measures_mapping
-            
+        
             measures = measures_mapping.get(estimate_variable_type)
             if measures is not None:
                 result = measures.get(self.service.costing_measure, None)

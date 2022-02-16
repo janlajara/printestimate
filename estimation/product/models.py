@@ -93,11 +93,13 @@ class ProductEstimate(models.Model):
             for estimate_quantity in self.estimate_quantities.all()]
 
         product = self.product
+        product_template_id = (self.product_template.pk 
+            if self.product_template is not None else None)
         material_estimates = _get_material_estimates(product.components.all())
         service_estimates = _get_service_estimates(product.services.all())
 
         product_estimate = ProductEstimate.Estimate(
-            self.pk, self.product_template.pk, order_quantities,
+            self.pk, product_template_id, order_quantities,
             material_estimates, service_estimates)
 
         return product_estimate

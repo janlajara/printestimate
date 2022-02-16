@@ -615,7 +615,7 @@ class PaperMaterial(Material):
             else:
                 layouts = [ChildSheet.get_layout(self.item_properties.layout, 
                     component_layout, rotate)]
-       
+                    
             estimates = []
             for quantity in order_quantities:
                 estimate = PaperMaterial.Estimate(quantity, self.component.quantity,
@@ -785,20 +785,27 @@ class OperationEstimate(models.Model):
 
     def get_costing_measurement(self, order_quantity):
         estimate_variable_type = self.service.estimate_variable_type
+
         if estimate_variable_type is not None and \
                 self.service.costing_measure is not None:
-            measures_mapping = self.measures_mapping_cache.get(order_quantity)
-            if measures_mapping is None:
-                measures_mapping = self.service.component.get_costing_measurements_map(order_quantity)
-                
-                if self.material is not None:
-                    material_estimate = self.material.estimates.estimates_map.get(
-                        order_quantity, None)      
-                    if material_estimate is not None:
-                        measures_mapping = material_estimate.costing_measurements_map
 
-                self.measures_mapping_cache[order_quantity] = measures_mapping
-        
+            is_material_based = self.material is not None
+            prefix = ('m%s' % (self.material.pk) if is_material_based
+                else 'c%s' % (self.service.component.pk) )
+            key = '%s-%s' % (prefix, order_quantity)
+            measures_mapping = self.measures_mapping_cache.get(key)
+
+            if measures_mapping is None:
+                
+                if is_material_based:
+                    material_estimate = self.material.estimates.estimates_map.get(
+                        order_quantity)      
+                    measures_mapping = material_estimate.costing_measurements_map
+                else:
+                    measures_mapping = self.service.component.get_costing_measurements_map(order_quantity)
+
+                self.measures_mapping_cache[key] = measures_mapping
+            
             measures = measures_mapping.get(estimate_variable_type)
             if measures is not None:
                 result = measures.get(self.service.costing_measure, None)

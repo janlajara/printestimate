@@ -207,6 +207,8 @@ class ServiceTemplateSerializerField(serializers.Field):
         deserialized = ServiceTemplateSerializer(data=data, many=True)
         if deserialized.is_valid():
             return deserialized.validated_data
+        else:
+            raise Exception(deserialized.errors)
 
 
 class ProductTemplateSerializer(serializers.ModelSerializer):

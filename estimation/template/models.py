@@ -172,7 +172,7 @@ class ServiceTemplate(models.Model):
 class OperationTemplate(models.Model):
     service_template = models.ForeignKey(ServiceTemplate, on_delete=models.CASCADE,
         related_name='operation_templates')
-    meta_operation = models.ForeignKey(MetaOperation, on_delete=models.RESTRICT)
+    meta_operation = models.ForeignKey(MetaOperation, on_delete=models.CASCADE)
 
     @property
     def name(self):
@@ -187,7 +187,8 @@ class OperationTemplate(models.Model):
 class OperationOptionTemplate(models.Model):
     operation_template = models.ForeignKey(OperationTemplate, on_delete=models.CASCADE,
         related_name='operation_option_templates')
-    meta_operation_option = models.ForeignKey(MetaOperationOption, on_delete=models.RESTRICT)
+    meta_operation_option = models.ForeignKey(MetaOperationOption, 
+        on_delete=models.RESTRICT, blank=True, null=True)
 
     @property
     def label(self):

@@ -29,6 +29,9 @@ def gto_workstation(db, gto_machine):
     spot_printing = gto_ws.add_activity('Spot Color Printing', 1, 1, 
         (10000, 'sheet', 'hr'), True)
 
+    operation = gto_ws.add_operation('GTO 1-color Printing', Item.PAPER)
+    operation.add_step(spot_printing, '1st color')
+
     operation = gto_ws.add_operation('GTO 2-color Printing', Item.PAPER)
     operation.add_step(spot_printing, '1st color')
     operation.add_step(spot_printing, '2nd color')
@@ -94,10 +97,16 @@ def meta_product(db, gto_machine, gto_workstation, finishing_workstation, item_f
         costing_measure=CostingMeasure.QUANTITY, 
         meta_component=meta_component,
         estimate_variable_type=MetaEstimateVariable.MACHINE_RUN)
+        
     gto_2color_printing_operation = gto_workstation.operations.filter(name='GTO 2-color Printing').first()
     front_print_operation = print_service.add_meta_operation('Front Print', 
         MetaOperation.SINGLE_OPTION)
     front_print_operation.add_option(gto_2color_printing_operation)
+
+    gto_1color_printing_operation = gto_workstation.operations.filter(name='GTO 1-color Printing').first()
+    back_print_operation = print_service.add_meta_operation('Front Print', 
+        MetaOperation.SINGLE_OPTION)
+    back_print_operation.add_option(gto_1color_printing_operation)
 
     gathering_service = meta_product.add_meta_service(
         name='Gathering', type=Item.PAPER,
@@ -158,3 +167,16 @@ def test_delete_product_template(db, meta_product):
     product_template.delete()
     assert ComponentTemplate.objects.count() == 0
     
+
+def test_delete_meta_operation_option__template_option_restrict_delete(db, meta_product):
+    product_template = ProductTemplate.objects.create(meta_product=meta_product,
+        name=meta_product.name, description=meta_product.description)
+
+    sheet_component = meta_product.meta_product_datas.filter(name='Sheets').first()
+    sheet_template = product_template.add_component_template(
+        sheet_component, 100, length_value=11, width_value=8.5, size_uom='inch')
+    for meta_material_option in sheet_component.meta_material_options.all():
+        sheet_template.add_material_template(meta_material_option)
+
+    meta_service = meta_product.meta_product_datas.filter(name='Printing').first()
+    service_template = product_template.add_service_template(meta_service=meta_service)

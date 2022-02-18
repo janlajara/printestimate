@@ -104,7 +104,8 @@ class ProductTemplateViewUtils:
             if oot_id is not None:
                 OperationOptionTemplate.objects.filter(pk=oot_id).update(**oot_data)
             else:
-                operation_template.add_operation_option_template(**oot_data)
+                if oot_data:
+                    operation_template.add_operation_option_template(**oot_data)
 
 
 class ProductTemplateViewSet(viewsets.ModelViewSet):
@@ -140,13 +141,14 @@ class ProductTemplateViewSet(viewsets.ModelViewSet):
     def update(self, request, pk=None):
         if pk is not None:
             deserialized = serializers.ProductTemplateSerializer(data=request.data)
-
+            print(request.data)
             if deserialized.is_valid():
                 validated_data = deserialized.validated_data
                 component_templates_data = validated_data.pop('component_templates', None)
                 service_templates_data = validated_data.pop('service_templates', None)
                 product_template = get_object_or_404(ProductTemplate, pk=pk)
 
+                print(service_templates_data)
                 ProductTemplate.objects.filter(pk=pk).update(**validated_data)
                 ProductTemplateViewUtils.save_component_templates(
                     product_template, component_templates_data)

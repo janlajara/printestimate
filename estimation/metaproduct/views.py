@@ -234,15 +234,15 @@ class MetaServiceViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
     serializer_class = serializers.MetaServiceSerializer
 
     def update(self, request, pk=None):
-        if pk is not None:
+        if pk is not None:            
             meta_service = get_object_or_404(MetaService, pk=pk)
             deserialized = serializers.MetaServiceSerializer(data=request.data)
-
+            
             if deserialized.is_valid():
                 validated_data = deserialized.validated_data
                 meta_operations = validated_data.pop('meta_operations')
                 MetaOperationViewUtils.update_or_create_meta_operations(meta_service, meta_operations)
-                
+
                 if validated_data.get('meta_component') is None:
                     validated_data['estimate_variable_type'] = None
 

@@ -113,6 +113,14 @@ export default {
             },
             meta: {
                 metaOperationOptionChoices: [],
+                selectedEditMetaOperationOptions: computed(()=> {
+                    const selected = state.operationList[state.operationForm.editIndex];
+                    let options = []
+                    if (selected && selected.metaOperationOptions) {
+                        options = selected.metaOperationOptions;
+                    }
+                    return options;
+                })
             },
             validate: ()=> {
                 let errors = [];
@@ -136,7 +144,7 @@ export default {
                     metaOperationOptions: []
                 }
             },
-            saveOperation: ()=> {
+            saveOperation: ()=> {                
                 if (state.validate()) return;
                 const editIndex = state.operationForm.editIndex;
                 const operationForm = {
@@ -145,6 +153,9 @@ export default {
                     optionsType: state.operationForm.optionsType,
                     isRequired: state.operationForm.isRequired,
                     metaOperationOptions: state.operationForm.metaOperationOptions.map( x=> ({
+                        id: (state.meta.selectedEditMetaOperationOptions
+                            .find(y=> y.operation == x) || {})
+                            .id,
                         operation: x,
                         label: state.meta.metaOperationOptionChoices.find(y => y.value == x).label
                     }))
@@ -189,7 +200,6 @@ export default {
         } 
         watch(()=> props.value, ()=> {
             state.operationList = props.value;
-
             listOperations();
         })
         watch(()=> props.costingMeasure, ()=> {

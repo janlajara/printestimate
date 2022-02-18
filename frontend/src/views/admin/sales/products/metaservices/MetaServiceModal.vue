@@ -204,7 +204,7 @@ export default {
                                 workstation: x.workstation,
                             }))
                         }))
-                    }
+                    };
                 }
             }
             state.isProcessing = false;

@@ -3,13 +3,13 @@
         <div v-for="(service, key) in state.meta.services" :key="key">
             <ProductServiceForm
                 :service="service"
-                :value="state.data.serviceTemplates[key]"
+                :value="state.getTemplateByMetaserviceId(service.id)"
                 @input="data => {
-                    state.data.serviceTemplates[key] = data;
+                    state.setTemplateByMetaserviceId(service.id, data, key);
                     $emit('input', state.data.serviceTemplates);
                 }"
                 @load="event => {
-                    state.data.serviceTemplates[key] = event.data;
+                    state.setTemplateByMetaserviceId(service.id, event.data, key);
                     state.validators[key] = event.validator;
                     state.emitLoad();
                 }"/> 
@@ -49,12 +49,24 @@ export default {
                 services: []
             },
             clear() {
+                state.data.serviceTemplates = []
             },
             emitLoad() {
                 emit('load', {
                     data: state.data.serviceTemplates,
                     validators: state.validators
                 });
+            },
+            getTemplateByMetaserviceId(metaServiceId) {
+                const template = state.data.serviceTemplates.find(
+                    x=>x.meta_service == metaServiceId);
+                return template;
+            },
+            setTemplateByMetaserviceId(metaServiceId, value, key) {
+                const index = state.data.serviceTemplates.findIndex(
+                    x=>x.meta_service == metaServiceId);
+                if (index >= 0) state.data.serviceTemplates[index] = value;
+                else state.data.serviceTemplates.splice(key, 0, value);
             }
         });
 
@@ -82,8 +94,8 @@ export default {
         }
 
         watchEffect(()=> { 
-            if (props.value) { 
-                state.data.serviceTemplates = props.value;
+            if (props.value && props.value.length > 0) { 
+                state.data.serviceTemplates = [...props.value];
                 if (state.id) retrieveMetaProductServices(state.id);
             } else {state.clear();}
         });

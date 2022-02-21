@@ -133,7 +133,7 @@ class MaterialTemplate(models.Model):
 class ServiceTemplate(models.Model):
     product_template = models.ForeignKey(ProductTemplate, on_delete=models.CASCADE,
         related_name='service_templates')
-    meta_service = models.ForeignKey(MetaService, on_delete=models.RESTRICT)
+    meta_service = models.ForeignKey(MetaService, on_delete=models.CASCADE)
 
     @property
     def name(self):

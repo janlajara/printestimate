@@ -32,15 +32,10 @@ class ProductEstimateView(mixins.ListModelMixin,
 
         if serializer.is_valid():
             request_data = serializer.validated_data
-            #product_estimate_id = request_data.get('id', None)
             product_template_id = request_data.get('product_template_id')
             order_quantities = request_data.get('order_quantities')
             product_template = get_object_or_404(ProductTemplate, pk=product_template_id)
 
-            #if product_estimate_id is not None:
-            #    product_estimate = get_object_or_404(ProductEstimate, pk=product_estimate_id)
-            #    product_estimate.set_estimate_quantities(order_quantities)
-            #else:
             product_estimate = ProductEstimate.objects.create_product_estimate(
                 product_template, order_quantities)
 

@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from inventory.models import Item
-from rest_framework import viewsets, mixins, status, metadata
+from rest_framework import viewsets, mixins, status, metadata, filters
 from rest_framework.response import Response
 from estimation.template import serializers
 from estimation.template.models import ProductTemplate, ComponentTemplate, \
@@ -110,6 +110,8 @@ class ProductTemplateViewUtils:
 
 class ProductTemplateViewSet(viewsets.ModelViewSet):
     queryset = ProductTemplate.objects.all()
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['id', 'name']
 
     def get_serializer_class(self):
         if self.action in ['create', 'retrieve', 'metadata']:

@@ -6,5 +6,6 @@ urlpatterns = [
     path('api/products/estimates', 
         views.ProductEstimateView.as_view({'get':'list', 'post':'create'})),
     path('api/products/estimates/<pk>/',
-        views.ProductEstimateView.as_view({'get':'retrieve'}))
+        views.ProductEstimateView.as_view({'get':'retrieve', 'put': 'update', 
+            'delete': 'destroy'})),
 ]

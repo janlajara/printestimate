@@ -42,7 +42,9 @@ class ProductEstimate(models.Model):
 
     objects = ProductEstimateManager()
     product_template = models.ForeignKey(ProductTemplate, null=True, on_delete=models.SET_NULL)
-
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+    
     @property
     def name(self):
         if self.product is not None:

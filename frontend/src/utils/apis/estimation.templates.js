@@ -3,8 +3,11 @@ import {AXIOS} from '@/utils/apis/core.js'
 export class ProductTemplateApi {
     static uri = '/estimation/api/templates/products'
 
-    static async listProductTemplates() {
-        const response = await AXIOS.execute(AXIOS.GET, ProductTemplateApi.uri);
+    static async listProductTemplates(limit=null, offset=null, search=null) {
+        const params = offset != null && limit != null? 
+            {limit, offset, search} : {search};
+        const response = await AXIOS.execute(AXIOS.GET, ProductTemplateApi.uri,
+            null, null, null, params);
         if (response) return response.data;
     }
 

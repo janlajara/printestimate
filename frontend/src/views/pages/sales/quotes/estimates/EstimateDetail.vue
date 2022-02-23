@@ -8,6 +8,11 @@
                 @click="state.components.editModal.open"/>
             <Button icon="delete" 
                 @click="state.components.deleteDialog.open"/>
+            <EstimateModal 
+                :product-estimate-id="state.data.id"
+                :is-open="state.components.editModal.isOpen"
+                @toggle="state.components.editModal.toggle" 
+                @saved="estimateId => retrieveEstimateById(estimateId)"/>
             <DeleteRecordDialog 
                 heading="Delete Quote"
                 :is-open="state.components.deleteDialog.isOpen"
@@ -84,6 +89,7 @@ import Section from '@/components/Section.vue';
 import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
+import EstimateModal from './EstimateModal.vue';
 import EstimateDetailBillOfMaterials from './EstimateDetailBillOfMaterials.vue';
 import EstimateDetailServices from './EstimateDetailServices.vue';
 
@@ -94,7 +100,7 @@ import {EstimateApi} from '@/utils/apis.js';
 export default {
     components: {
         Page, Button, Section, DeleteRecordDialog, 
-        DescriptionList, DescriptionItem, 
+        DescriptionList, DescriptionItem, EstimateModal,
         EstimateDetailBillOfMaterials, EstimateDetailServices
     },
     setup() {
@@ -119,13 +125,15 @@ export default {
             },
             components: {
                 editModal: {
-                    open: ()=> {}
+                    isOpen: false,
+                    toggle: value => state.components.editModal.isOpen = value,
+                    open: ()=> state.components.editModal.toggle(true),
                 },
                 deleteDialog: {
                     isOpen: false,
                     toggle: value => state.components.deleteDialog.isOpen = value,
                     open: ()=> state.components.deleteDialog.toggle(true),
-                    delete: ()=> {}
+                    delete: async ()=> {await deleteEstimate(state.data.id)}
                 },
                 paginator: {
                     offset: 0,
@@ -155,53 +163,57 @@ export default {
             retrieveEstimateById(state.data.id);
         });
 
+        const deleteEstimate = async (id)=> {
+            if (id) await EstimateApi.deleteEstimate(id); 
+        }
+
         const retrieveEstimateById = async (id)=> {
             state.isProcessing = true;
             if (id != null) {
-                const response = await EstimateApi.retrieveEstimate(id);
+                const response = await EstimateApi.retrieveEstimateCosts(id);
+                if (response) {
+                    state.data.templateCode = response.template_code;
+                    state.data.templateName = response.name;
+                    state.data.templateDescription = response.description;
+                    state.data.quantities = response.order_quantities;
 
-                state.data.templateCode = response.template_code;
-                state.data.templateName = response.name;
-                state.data.templateDescription = response.description;
-                state.data.quantities = response.order_quantities;
-
-                if (response.estimates) {
-                    state.data.billOfMaterials = response.estimates.material_estimates.map(me => ({
-                        name: me.name, rate: parseFloat(me.rate), uom: me.uom, 
-                        spoilageRate: parseFloat(me.spoilage_rate), isExpanded: false,
-                        estimates: me.estimates.map(es => ({
-                            itemQuantity: es.order_quantity,
-                            estimatedMaterialQuantity: es.estimated_stock_quantity,
-                            spoilageMaterialQuantity: es.estimated_spoilage_quantity
-                        }))
-                    }));
-                    
-                    state.data.services = response.estimates.service_estimates.map(se => ({
-                        name: se.name, isExpanded: false,
-                        operations: se.operation_estimates.map(oe => ({
-                            name: [oe.name, oe.item_name].join(' '), 
-                            activities: oe.activity_estimates.map(ae => ({
-                                name: (ae.name + " " + ae.notes).trim(),
-                                expenses: ae.activity_expense_estimates.map(aee => ({
-                                    name: aee.name,  type: aee.type, 
-                                    rate: parseFloat(aee.rate),
-                                    rateLabel: aee.rate_label,
-                                    estimates: aee.estimates.map(e => ({
-                                        itemQuantity: parseFloat(e.order_quantity),
-                                        estimate: e.quantity? parseFloat(e.quantity) : null
+                    if (response.estimates) {
+                        state.data.billOfMaterials = response.estimates.material_estimates.map(me => ({
+                            name: me.name, rate: parseFloat(me.rate), uom: me.uom, 
+                            spoilageRate: parseFloat(me.spoilage_rate), isExpanded: false,
+                            estimates: me.estimates.map(es => ({
+                                itemQuantity: es.order_quantity,
+                                estimatedMaterialQuantity: es.estimated_stock_quantity,
+                                spoilageMaterialQuantity: es.estimated_spoilage_quantity
+                            }))
+                        }));
+                        
+                        state.data.services = response.estimates.service_estimates.map(se => ({
+                            name: se.name, isExpanded: false,
+                            operations: se.operation_estimates.map(oe => ({
+                                name: [oe.name, oe.item_name].join(' '), 
+                                activities: oe.activity_estimates.map(ae => ({
+                                    name: (ae.name + " " + ae.notes).trim(),
+                                    expenses: ae.activity_expense_estimates.map(aee => ({
+                                        name: aee.name,  type: aee.type, 
+                                        rate: parseFloat(aee.rate),
+                                        rateLabel: aee.rate_label,
+                                        estimates: aee.estimates.map(e => ({
+                                            itemQuantity: parseFloat(e.order_quantity),
+                                            estimate: e.quantity? parseFloat(e.quantity) : null
+                                        }))
                                     }))
                                 }))
                             }))
-                        }))
-                    }));
+                        }));
+                    }
                 }
-
             }
             state.isProcessing = false;
         }
 
         return {
-            state
+            state, retrieveEstimateById
         }
     }
     

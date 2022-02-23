@@ -14,7 +14,7 @@ export class EstimateApi {
         const response = await AXIOS.execute(AXIOS.POST, 
             EstimateApi.uri, 'Estimate created successfully.', 
             'Create failed. Please try again.', estimate);
-        return response;
+        return response.data;
     }
 
     static async updateEstimate(id, estimate) {
@@ -26,6 +26,11 @@ export class EstimateApi {
 
     static async retrieveEstimate(id) {
         const response = await AXIOS.execute(AXIOS.GET, EstimateApi.uri + `/${id}/`)
+        return response.data
+    }
+
+    static async retrieveEstimateCosts(id) {
+        const response = await AXIOS.execute(AXIOS.GET, EstimateApi.uri + `/${id}/costs`)
         return response.data
     }
 

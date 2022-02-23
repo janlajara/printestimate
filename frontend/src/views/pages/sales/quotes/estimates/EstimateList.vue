@@ -9,7 +9,7 @@
                 <EstimateModal 
                     :is-open="state.createModal.isOpen"
                     @toggle="state.createModal.toggle" 
-                    :on-after-save="()=>populateEstimateList(state.listLimit, 0)"/>
+                    @saved="estimateId => goToDetail(estimateId)"/>
             </div>
         </div>
         <Section>
@@ -86,8 +86,8 @@ export default {
                 params: {id}});
         };
 
-        onBeforeMount(()=>{
-            populateEstimateList(state.listLimit, 0)
+        onBeforeMount(async ()=>{
+            await populateEstimateList(state.listLimit, 0);
         });
 
         return {

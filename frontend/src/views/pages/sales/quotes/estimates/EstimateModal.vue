@@ -8,7 +8,7 @@
         <Section heading="General Information" heading-position="side"> 
             <div class="md:grid md:gap-4 md:grid-cols-3">
                 <InputTextLookup name="Product Template" required
-                    :disabled="!state.isCreate"
+                    v-show="state.isCreate"
                     placeholder="Search..." class="flex-grow md:col-span-2"
                     :text="state.form.templateLookup.text"
                     @select="value => state.form.templateLookup.select(value)"
@@ -44,9 +44,9 @@ export default {
     },
     props: {
         isOpen: Boolean,
-        productEstimateId: String,
-        onAfterSave: Function
+        productEstimateId: String
     },
+    emits: ['toggle', 'saved'],
     setup(props, {emit}) {
         const state = reactive({ 
             id: props.productEstimateId,
@@ -89,7 +89,7 @@ export default {
             },
             validate: ()=> {
                 let errors = [];
-                if (state.data.template == null) errors.push('product template');
+                if (state.data.template == null && state.isCreate) errors.push('product template');
                 if (state.data.orderQuantities.length == 0) errors.push('order quantities')
                 if (errors.length > 0)
                     state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
@@ -99,7 +99,7 @@ export default {
             save: ()=> {
                 if (state.validate()) return;
                 const estimate = {
-                    product_template_id: state.data.template,
+                    product_template: state.data.template,
                     order_quantities: state.data.orderQuantities
                 };
                 saveEstimate(state.id, estimate);
@@ -110,6 +110,15 @@ export default {
                 state.form.quantitiesField.text = '';
             }
         });
+
+        const retrieveEstimateById = async (id)=> {
+            state.isProcessing = true;
+            if (id != null) {
+                const response = await EstimateApi.retrieveEstimate(id);
+                state.form.quantitiesField.text = response.order_quantities.join(',');
+            }
+            state.isProcessing = false;
+        }
 
         const populateProductTemplateList = async (search=null)=> {
             const response = await ProductTemplateApi.listProductTemplates(10, 0, search);
@@ -127,6 +136,7 @@ export default {
             state.isProcessing = true;
             if (estimate) {
                 let response = null;
+                let estimateId = null;
                 if (!state.isCreate && id) {
                     response = await EstimateApi.updateEstimate(
                         id, estimate);
@@ -135,8 +145,9 @@ export default {
                         estimate);
                 }
                 if (response) {
-                    if (props.onAfterSave) props.onAfterSave();
-                    emit('toggle', false);
+                    estimateId = response.id;
+                    emit('toggle', false); 
+                    emit('saved', estimateId);
                 }
             }
             state.isProcessing = false;
@@ -146,6 +157,7 @@ export default {
             if (props.isOpen) {
                 state.error = ''; 
                 populateProductTemplateList();
+                if (state.id) retrieveEstimateById(state.id);
             } else {
                 state.clear();
             }

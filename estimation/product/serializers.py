@@ -1,8 +1,10 @@
 from json import JSONEncoder
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
+from django.shortcuts import get_object_or_404
 from djmoney.contrib.django_rest_framework import MoneyField
 from inventory.models import Item
+from estimation.template.models import ProductTemplate
 from estimation.product.models import ProductEstimate, \
     EstimateQuantity, Product, Component, Service, \
     Material, TapeMaterial, LineMaterial, \
@@ -139,25 +141,45 @@ class ServiceEstimateSerializer(serializers.Serializer):
 class ProductEstimateInputSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False)
     product_template_id = serializers.IntegerField()
-    order_quantities = serializers.ListField(child=serializers.IntegerField(min_value = 1))
+    order_quantities = serializers.ListField(child=serializers.IntegerField(min_value=1))
 
 
-class ProductEstimateOutputSerializer(serializers.Serializer):
-    material_estimates = MaterialSerializer(many=True, required=False, read_only=True)
-    service_estimates = ServiceEstimateSerializer(many=True, required=False, read_only=True)
-
-
-class ProductEstimateListSerializer(serializers.ModelSerializer):
-    order_quantities = serializers.ListField(child=serializers.IntegerField(), 
-        read_only=True)
+class ProductEstimateSerializer(serializers.ModelSerializer):
+    order_quantities = serializers.ListField(child=serializers.IntegerField(min_value=1))
 
     class Meta:
         model = ProductEstimate
         fields = ['id', 'name', 'description', 'template_code', 'order_quantities']
 
 
-class ProductEstimateRetrieveSerializer(ProductEstimateListSerializer):
-    estimates = ProductEstimateOutputSerializer(read_only=True)
+class ProductEstimateInputSerializer(ProductEstimateSerializer):
+    id = serializers.IntegerField(required=False)
+
+    class Meta:
+        model = ProductEstimate
+        fields = ['id', 'product_template', 'order_quantities']
+
+    def create(self, validated_data):
+        product_template_id = validated_data.get('product_template')
+        order_quantities = validated_data.get('order_quantities')
+        product_template = get_object_or_404(ProductTemplate, pk=product_template_id)
+        product_estimate = ProductEstimate.objects.create_product_estimate(
+                product_template, order_quantities)
+        return product_estimate
+
+    def update(self, instance, validated_data):
+        order_quantities = validated_data.get('order_quantities')
+        instance.set_estimate_quantities(order_quantities)
+        return instance
+
+
+class ProductEstimateEstimatesSerializer(serializers.Serializer):
+    material_estimates = MaterialSerializer(many=True, required=False, read_only=True)
+    service_estimates = ServiceEstimateSerializer(many=True, required=False, read_only=True)
+
+
+class ProductEstimateCostsSerializer(ProductEstimateSerializer):
+    estimates = ProductEstimateEstimatesSerializer(read_only=True)
 
     class Meta:
         model = ProductEstimate

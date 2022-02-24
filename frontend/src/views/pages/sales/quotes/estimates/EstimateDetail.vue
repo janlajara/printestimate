@@ -68,14 +68,44 @@
                     :quantities="state.data.quantities"
                     :bill-of-materials="state.data.billOfMaterials"
                     :quantity-viewable-offset="state.components.paginator.offset"
-                    :max-quantity-viewable="3"/>
-
+                    :max-quantity-viewable="3"
+                    @initialized="value => state.meta.materialTotalsMap = value"/>
+                    
                 <!-- Table Rows for Services -->
                 <EstimateDetailServices class="py-2 pb-4"
                     :quantities="state.data.quantities"
                     :services="state.data.services"
                     :quantity-viewable-offset="state.components.paginator.offset"
-                    :max-quantity-viewable="3"/>
+                    :max-quantity-viewable="3"
+                    @initialized="value => state.meta.serviceTotalsMap = value"/>
+
+                 <!-- Table Footer Totals -->
+                <div class="border-t pt-2 grid grid-cols-2">
+                    <div class="text-right">
+                        <div class="text-xs py-1">Unit Price:</div>
+                        <div class="py-1">Total Price:</div>
+                    </div>
+                    <div :class="`w-full grid grid-cols-${state.meta.quantitiesColumnLength}`">
+                        <div v-for="(quantity, key) in 
+                                state.components.paginator.paginate(state.data.quantities)" :key="key"
+                            class="grid">
+                            <div class="text-xs flex justify-end my-auto">
+                                <div class="ml-1">
+                                    <span class="text-sm">
+                                        {{formatMoney(state.meta.totalsMap[quantity] / quantity)}}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-xs flex justify-end my-auto">
+                                <div class="ml-1">
+                                    <span class="font-bold text-lg">
+                                        {{formatMoney(state.meta.totalsMap[quantity])}}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
             </div>
         </Section>
@@ -93,9 +123,10 @@ import EstimateModal from './EstimateModal.vue';
 import EstimateDetailBillOfMaterials from './EstimateDetailBillOfMaterials.vue';
 import EstimateDetailServices from './EstimateDetailServices.vue';
 
-import {reactive, computed, onBeforeMount} from 'vue';
+import {reactive, inject, computed, onBeforeMount} from 'vue';
 import {useRoute} from 'vue-router';
 import {EstimateApi} from '@/utils/apis.js';
+import {formatMoney as formatCurrency} from '@/utils/format.js'
 
 export default {
     components: {
@@ -104,6 +135,7 @@ export default {
         EstimateDetailBillOfMaterials, EstimateDetailServices
     },
     setup() {
+        const currency = inject('currency').abbreviation;
         const route = useRoute();
         const state = reactive({
             isProcessing: false,
@@ -112,6 +144,18 @@ export default {
                 quantitiesColumnLength: computed(()=> 
                     Math.min(state.data.quantities.length, 
                         state.meta.maxQuantitiesColumnLength)),
+                materialTotalsMap: {},
+                serviceTotalsMap: {},
+                totalsMap: computed(()=> {
+                    let totals = {};
+                    state.data.quantities.forEach(q=> {
+                        const materialTotal = state.meta.materialTotalsMap[q] | 0;
+                        const serviceTotal = state.meta.serviceTotalsMap[q] | 0;
+                        const total = materialTotal + serviceTotal;
+                        totals[q] = total;
+                    });
+                    return totals;
+                })
             },
             data: {
                 id: route.params.id,
@@ -212,8 +256,14 @@ export default {
             state.isProcessing = false;
         }
 
+        const formatMoney = (amount)=> {
+            if (amount != null)
+                return formatCurrency(amount, currency)
+            else return ''
+        }
+
         return {
-            state, retrieveEstimateById
+            state, retrieveEstimateById, formatMoney
         }
     }
     

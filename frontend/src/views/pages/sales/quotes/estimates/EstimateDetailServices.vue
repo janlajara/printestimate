@@ -88,16 +88,17 @@
         </div>
         
         <!-- Total for all Services -->
-        <div class="grid grid-cols-2">
-            <div>
+        <div class="grid grid-cols-2 mt-2">
+            <div class="text-right text-xs">
+                <div class="py-1">Total Services:</div>
             </div>
-            <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
+            <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2`">
                 <div v-for="(quantity, x) in state.meta.displayedQuantities" :key="x">
                     <div class="text-xs flex py-1">
-                        <div class="w-2/5 text-right italic">Total</div>
+                        <div class="w-2/5"></div>
                         <div class="ml-1 w-3/5 flex justify-between">
                             <span class="mr-1">=</span>
-                            <span class="underline">
+                            <span class="font-bold">
                                 {{state.getServicePriceByQuantity(quantity)}}</span>
                         </div>
                     </div>
@@ -236,7 +237,8 @@ export default {
             default: 2
         }
     },
-    setup(props) {
+    emits: ['initialized'],
+    setup(props, {emit}) {
         const currency = inject('currency').abbreviation;
         const state = reactive({
             meta: {
@@ -264,13 +266,13 @@ export default {
                 quantities: computed(()=> props.quantities),
                 services: []
             },
-            getServicePriceByQuantity: (quantity=0) => {
+            getServicePriceByQuantity: (quantity=0, format=true) => {
                 let price = 0; 
                 if (quantity > 0) {
                     const service = state.meta.totals.services.find(x=>x.quantity == quantity);
                     if (service) price = service.price;
                 }
-                return formatMoney(price);
+                return (format)? formatMoney(price) : price;
             },
             paginate: (array) => {
                 let spliced = [...array];
@@ -304,7 +306,12 @@ export default {
                     });
                     const service = new Service(a.name, a.uom, operations);
                     state.data.services.push(service);
-                })
+                });
+
+                let totals = {};
+                state.data.quantities.forEach(q => 
+                    totals[q] = state.getServicePriceByQuantity(q, false))
+                emit('initialized', totals);
             }
         }
 

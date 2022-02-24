@@ -24,6 +24,11 @@
                     type="text" :value="state.form.quantitiesField.text" required
                     @keyup="state.form.quantitiesField.onkeyup"
                     @input="(value) => state.form.quantitiesField.text = value"/>
+                <InputText
+                    name="Material Spoilage Rate"  placeholder="0-100" 
+                    type="number" :min="0" :max="100" required
+                    :value="state.data.materialSpoilageRate" 
+                    @input="(value) => state.data.materialSpoilageRate = value"/>
             </div>
         </Section>
     </Modal>
@@ -64,7 +69,8 @@ export default {
                     let parsed = []
                     if (filtered.length > 0) parsed = filtered.map(x=>parseInt(x));
                     return parsed;
-                })
+                }),
+                materialSpoilageRate: 0,
             },
             form: {
                 templateLookup: {
@@ -100,12 +106,14 @@ export default {
                 if (state.validate()) return;
                 const estimate = {
                     product_template: state.data.template,
-                    order_quantities: state.data.orderQuantities
+                    order_quantities: state.data.orderQuantities,
+                    material_spoilage_rate: state.data.materialSpoilageRate
                 };
                 saveEstimate(state.id, estimate);
             },
             clear: ()=> {
                 state.data.template = null;
+                state.data.materialSpoilageRate = 0;
                 state.form.templateLookup.text = '';
                 state.form.quantitiesField.text = '';
             }

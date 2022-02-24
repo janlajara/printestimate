@@ -149,7 +149,8 @@ class ProductEstimateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductEstimate
-        fields = ['id', 'name', 'description', 'template_code', 'order_quantities']
+        fields = ['id', 'name', 'description', 'template_code', 
+            'order_quantities', 'material_spoilage_rate']
 
 
 class ProductEstimateInputSerializer(ProductEstimateSerializer):
@@ -157,19 +158,23 @@ class ProductEstimateInputSerializer(ProductEstimateSerializer):
 
     class Meta:
         model = ProductEstimate
-        fields = ['id', 'product_template', 'order_quantities']
+        fields = ['id', 'product_template', 'order_quantities', 
+            'material_spoilage_rate']
 
     def create(self, validated_data):
         product_template_id = validated_data.get('product_template')
         order_quantities = validated_data.get('order_quantities')
+        material_spoilage_rate = validated_data.get('material_spoilage_rate')
         product_template = get_object_or_404(ProductTemplate, pk=product_template_id)
         product_estimate = ProductEstimate.objects.create_product_estimate(
-                product_template, order_quantities)
+                product_template, order_quantities, material_spoilage_rate)
         return product_estimate
 
     def update(self, instance, validated_data):
         order_quantities = validated_data.get('order_quantities')
+        material_spoilage_rate = validated_data.get('material_spoilage_rate')
         instance.set_estimate_quantities(order_quantities)
+        instance.set_material_spoilage_rate(material_spoilage_rate)
         return instance
 
 

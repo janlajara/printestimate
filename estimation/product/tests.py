@@ -406,6 +406,19 @@ def test_service__estimate(db, product_template):
     assert math.isclose(labor_expense_estimate.cost.amount, 154.5)
 
 
+def test_product_estimate__set_material_spoilage_rate(db, product_template):
+    product_estimate = ProductEstimate.objects.create_product_estimate(
+        product_template, [100])
+    product_estimate.set_material_spoilage_rate(10)
+    product = product_estimate.product
+
+    assert product_estimate.material_spoilage_rate == 10
+
+    for component in product.components.all():
+        for material in component.materials.all():
+            assert material.spoilage_rate == 10
+
+
 def test_product_estimate_output_json(db, product_template):
     start_time = time.time()
     product_estimate = ProductEstimate.objects.create_product_estimate(
@@ -420,7 +433,7 @@ def test_product_estimate_output_json(db, product_template):
     print('estimated', duration)
 
     ss = time.time()
-    serializer = serializers.ProductEstimateOutputSerializer(estimates)
+    serializer = serializers.ProductEstimateEstimatesSerializer(estimates)
     assert serializer.data is not None
     duration = time.time() - ss
     print('serialized', duration)

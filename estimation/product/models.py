@@ -2,6 +2,7 @@ import math
 from cached_property import cached_property
 from decimal import Decimal
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django_measurement.models import MeasurementField
 from core.utils.measures import Quantity, CostingMeasure, Measure
 from measurement.measures import Time
@@ -18,8 +19,9 @@ from djmoney.models.fields import MoneyField
 
 class ProductEstimateManager(models.Manager):
 
-    def create_product_estimate(self, product_template, quantities=None):
-        product_estimate = ProductEstimate.objects.create(product_template=product_template)
+    def create_product_estimate(self, product_template, quantities=None, material_spoilage_rate=0):
+        product_estimate = ProductEstimate.objects.create(product_template=product_template,
+            material_spoilage_rate=material_spoilage_rate)
 
         if quantities is not None:
             for quantity in quantities:
@@ -42,6 +44,8 @@ class ProductEstimate(models.Model):
 
     objects = ProductEstimateManager()
     product_template = models.ForeignKey(ProductTemplate, null=True, on_delete=models.SET_NULL)
+    material_spoilage_rate = models.DecimalField(max_digits=5, decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)], default=0)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
     
@@ -105,6 +109,14 @@ class ProductEstimate(models.Model):
             material_estimates, service_estimates)
 
         return product_estimate
+
+    def set_material_spoilage_rate(self, spoilage_rate):
+        self.material_spoilage_rate = spoilage_rate
+        
+        for component in self.product.components.all():
+            for material in component.materials.all():
+                material.spoilage_rate = spoilage_rate
+                material.save()
 
     def set_estimate_quantities(self, order_quantities):
         if order_quantities is not None and not isinstance(order_quantities, list):
@@ -188,11 +200,12 @@ class ComponentManager(PolymorphicManager):
             machine=machine, product=product,
             quantity=component_template.quantity,
             **component_template.prop_args)
+        material_spoilage_rate = product.product_estimate.material_spoilage_rate
 
         for material_template in component_template.material_templates.all():
             material = Material.objects.create_material(component, 
                 material_template.type, material_template.item,
-                material_template.item.price)
+                material_template.item.price, material_spoilage_rate)
         
         return component
 
@@ -273,7 +286,7 @@ class MaterialManager(PolymorphicManager):
         clazz = mapping.get(type, Material)
         return clazz
 
-    def create_material(self, component, type, item, price=0):
+    def create_material(self, component, type, item, price=0, spoilage_rate=0):
         if item.type != type:
             raise MaterialTypeMismatch(item.type, type)
         if price is None:
@@ -281,7 +294,7 @@ class MaterialManager(PolymorphicManager):
 
         clazz = MaterialManager.get_class(type)
         material = clazz.objects.create(component=component, 
-            item=item, price=price)
+            item=item, price=price, spoilage_rate=spoilage_rate)
         return material
 
 
@@ -366,10 +379,10 @@ class Material(PolymorphicModel):
     material_id = models.AutoField(primary_key=True)
     item = models.ForeignKey(Item, on_delete=models.RESTRICT, 
         related_name='materials')
-
     price = MoneyField(default=0, max_digits=14, decimal_places=2, 
         default_currency='PHP')
-    spoilage_rate = models.FloatField(default=0)
+    spoilage_rate = models.DecimalField(max_digits=5, decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)], default=0)
 
     @classmethod
     def get_class(cls, type):

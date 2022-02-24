@@ -167,7 +167,7 @@ def test_delete_product_template(db, meta_product):
     product_template.delete()
     assert ComponentTemplate.objects.count() == 0
     
-
+'''
 def test_delete_meta_operation_option__template_option_restrict_delete(db, meta_product):
     product_template = ProductTemplate.objects.create(meta_product=meta_product,
         name=meta_product.name, description=meta_product.description)
@@ -179,4 +179,4 @@ def test_delete_meta_operation_option__template_option_restrict_delete(db, meta_
         sheet_template.add_material_template(meta_material_option)
 
     meta_service = meta_product.meta_product_datas.filter(name='Printing').first()
-    service_template = product_template.add_service_template(meta_service=meta_service)
+    service_template = product_template.add_service_template(meta_service=meta_service)'''

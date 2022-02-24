@@ -90,7 +90,7 @@ export default {
                     isOpen: false,
                     toggle: value => state.components.deleteDialog.isOpen = value,
                     open: ()=> state.components.deleteDialog.toggle(true),
-                    delete: ()=> deleteMetaProduct(state.id)
+                    delete: async ()=> await deleteMetaProduct(state.id)
                 }
             }
         });

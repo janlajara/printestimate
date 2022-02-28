@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
+from inventory.properties.models import Paper
 from core.utils.shapes import Rectangle, RectangleLayoutSerializer, RectangleLayoutMetaSerializer
 from estimation.models import Machine, SheetFedPressMachine, ParentSheet, ChildSheet
 from django.shortcuts import get_object_or_404
@@ -162,6 +163,7 @@ class ChildSheetLayoutSerializer(RectangleLayoutSerializer):
 class PolymorphicSheetLayoutSerializer(PolymorphicSerializer):
     model_serializer_mapping = {
         Rectangle.Layout: RectangleLayoutSerializer,
+        Paper.Layout:  RectangleLayoutSerializer,
         ChildSheet.Layout: ChildSheetLayoutSerializer,
         ParentSheet.Layout: ParentSheetLayoutSerializer
     }

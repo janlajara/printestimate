@@ -9,6 +9,7 @@ from estimation.product.models import ProductEstimate, \
     EstimateQuantity, Product, Component, Service, \
     Material, TapeMaterial, LineMaterial, \
     PaperMaterial, PanelMaterial, LiquidMaterial
+from estimation.machine.serializers import SheetLayoutMetaSerializer
 
 '''
 class MaterialSerializer(serializers.ModelSerializer):
@@ -91,6 +92,7 @@ class MaterialEstimateSerializer(serializers.Serializer):
     estimated_stock_quantity = serializers.IntegerField(min_value=1)
     estimated_spoilage_quantity = serializers.IntegerField(min_value=1)
     estimated_total_quantity = serializers.IntegerField(min_value=1)
+    layouts_meta = SheetLayoutMetaSerializer(many=True, read_only=True)
 
 
 class MaterialSerializer(serializers.Serializer):

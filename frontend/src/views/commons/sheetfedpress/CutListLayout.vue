@@ -1,6 +1,6 @@
 <template>
     <div class="mt-2 bg-gray-200 px-4 py-4 rounded-md">
-        <Svg :svg-height="250"
+        <Svg :svg-height="$props.svgHeight"
             :view-box-width="state.svgRect.width" 
             :view-box-height="state.svgRect.length">
             <Rectangle 
@@ -88,6 +88,10 @@ export default {
         layouts: {
             type: Array,
             default: ()=> []
+        },
+        svgHeight: {
+            type: Number,
+            default: 250
         }
     },
     components: {

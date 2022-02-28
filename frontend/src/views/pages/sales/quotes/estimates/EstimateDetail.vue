@@ -35,80 +35,11 @@
                     name="Description" :value="state.data.templateDescription"/>
             </DescriptionList>
         </Section>
-        <Section heading="Cost Estimation">
-            <div class="w-full">
-                <!-- Table Header -->
-                <div class="border-b grid grid-cols-2">
-                    <div class="font-bold text-lg text-left"></div>
-                    <div class="flex relative">
-                        <div class="absolute">
-                            <span class="material-icons text-sm cursor-pointer"
-                                :class="state.components.paginator.offset == 0? 
-                                    'hidden': ''"
-                                @click="state.components.paginator.left">chevron_left</span>
-                        </div>
-                        <div :class="`w-full grid grid-cols-${state.meta.quantitiesColumnLength}`">
-                            <div v-for="(quantity, key) in 
-                                    state.components.paginator.paginate(state.data.quantities)" :key="key"
-                                class="flex justify-center">
-                                <span class="font-bold">{{quantity}}</span>
-                            </div>
-                        </div>
-                        <div class="absolute right-0">
-                            <span class="material-icons text-sm cursor-pointer"
-                                :class="state.components.paginator.offset == state.components.paginator.limit? 
-                                    'hidden': ''"
-                                @click="state.components.paginator.right">chevron_right</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Table Rows for Bill of Materials -->
-                <EstimateDetailBillOfMaterials class="py-2"
-                    :quantities="state.data.quantities"
-                    :bill-of-materials="state.data.billOfMaterials"
-                    :quantity-viewable-offset="state.components.paginator.offset"
-                    :max-quantity-viewable="3"
-                    @initialized="value => state.meta.materialTotalsMap = value"/>
-                    
-                <!-- Table Rows for Services -->
-                <EstimateDetailServices class="py-2 pb-4"
-                    :quantities="state.data.quantities"
-                    :services="state.data.services"
-                    :quantity-viewable-offset="state.components.paginator.offset"
-                    :max-quantity-viewable="3"
-                    @initialized="value => state.meta.serviceTotalsMap = value"/>
-
-                 <!-- Table Footer Totals -->
-                <div class="border-t pt-2 grid grid-cols-2">
-                    <div class="text-right">
-                        <div class="text-xs py-1">Unit Price:</div>
-                        <div class="py-1">Total Price:</div>
-                    </div>
-                    <div :class="`w-full grid grid-cols-${state.meta.quantitiesColumnLength}`">
-                        <div v-for="(quantity, key) in 
-                                state.components.paginator.paginate(state.data.quantities)" :key="key"
-                            class="grid">
-                            <div class="text-xs flex justify-end my-auto">
-                                <div class="ml-1">
-                                    <span class="text-sm">
-                                        {{formatMoney(state.meta.totalsMap[quantity] / quantity)}}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="text-xs flex justify-end my-auto">
-                                <div class="ml-1">
-                                    <span class="font-bold text-lg">
-                                        {{formatMoney(state.meta.totalsMap[quantity])}}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </Section>
+        <EstimateDetailCosting
+            :is-processing="state.isProcessing"
+            :quantities="state.data.quantities"
+            :bill-of-materials="state.data.billOfMaterials"
+            :services="state.data.services"/>
     </Page>
     
 </template>
@@ -120,10 +51,9 @@ import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import EstimateModal from './EstimateModal.vue';
-import EstimateDetailBillOfMaterials from './EstimateDetailBillOfMaterials.vue';
-import EstimateDetailServices from './EstimateDetailServices.vue';
+import EstimateDetailCosting from './EstimateDetailCosting.vue';
 
-import {reactive, inject, computed, onBeforeMount} from 'vue';
+import {reactive, inject, onBeforeMount} from 'vue';
 import {useRoute} from 'vue-router';
 import {EstimateApi} from '@/utils/apis.js';
 import {formatMoney as formatCurrency} from '@/utils/format.js'
@@ -132,31 +62,13 @@ export default {
     components: {
         Page, Button, Section, DeleteRecordDialog, 
         DescriptionList, DescriptionItem, EstimateModal,
-        EstimateDetailBillOfMaterials, EstimateDetailServices
+        EstimateDetailCosting
     },
     setup() {
         const currency = inject('currency').abbreviation;
         const route = useRoute();
         const state = reactive({
             isProcessing: false,
-            meta: {
-                maxQuantitiesColumnLength: 3,
-                quantitiesColumnLength: computed(()=> 
-                    Math.min(state.data.quantities.length, 
-                        state.meta.maxQuantitiesColumnLength)),
-                materialTotalsMap: {},
-                serviceTotalsMap: {},
-                totalsMap: computed(()=> {
-                    let totals = {};
-                    state.data.quantities.forEach(q=> {
-                        const materialTotal = state.meta.materialTotalsMap[q] | 0;
-                        const serviceTotal = state.meta.serviceTotalsMap[q] | 0;
-                        const total = materialTotal + serviceTotal;
-                        totals[q] = total;
-                    });
-                    return totals;
-                })
-            },
             data: {
                 id: route.params.id,
                 estimateCode: 'CE-1234',
@@ -179,27 +91,6 @@ export default {
                     open: ()=> state.components.deleteDialog.toggle(true),
                     delete: async ()=> {await deleteEstimate(state.data.id)}
                 },
-                paginator: {
-                    offset: 0,
-                    limit: computed(()=>
-                        state.data.quantities.length - state.meta.quantitiesColumnLength),
-                    paginate: (array)=> {
-                        let spliced = [...array];
-                        if (array) spliced = spliced.splice(
-                            state.components.paginator.offset, 
-                            state.meta.quantitiesColumnLength);
-                        return spliced;
-                    },
-                    left: ()=> {
-                        let offset = state.components.paginator.offset - 1;
-                        state.components.paginator.offset = Math.max(offset, 0);
-                    },
-                    right: ()=> {
-                        let offset = state.components.paginator.offset + 1;
-                        let limit = state.components.paginator.limit;
-                        state.components.paginator.offset = Math.min(offset, limit);
-                    }
-                }
             }
         });
 
@@ -220,11 +111,12 @@ export default {
                     state.data.templateName = response.name;
                     state.data.templateDescription = response.description;
                     state.data.quantities = response.order_quantities;
-
+                    
                     if (response.estimates) {
                         state.data.billOfMaterials = response.estimates.material_estimates.map(me => ({
                             name: me.name, rate: parseFloat(me.rate), uom: me.uom, 
                             spoilageRate: parseFloat(me.spoilage_rate), isExpanded: false,
+                            layouts: me.layouts_meta,
                             estimates: me.estimates.map(es => ({
                                 itemQuantity: es.order_quantity,
                                 estimatedMaterialQuantity: es.estimated_stock_quantity,

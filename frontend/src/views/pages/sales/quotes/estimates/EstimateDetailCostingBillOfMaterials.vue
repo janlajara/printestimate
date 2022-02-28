@@ -40,6 +40,8 @@
                 </div>
             </div>
             <div v-show="material.isExpanded">
+                <EstimateDetailCostingBillOfMaterialsLayout 
+                    :layouts="material.layouts"/>
                 <div class="border-t-2 border-dotted text-gray-500 grid grid-cols-2">
                     <div>
                         <div class="flex">
@@ -131,13 +133,15 @@
 </template>
 
 <script>
+import EstimateDetailCostingBillOfMaterialsLayout from './EstimateDetailCostingBillOfMaterialsLayout.vue';
+
 import {reactive, inject, computed, watch} from 'vue';
 import {formatMoney as formatCurrency} from '@/utils/format.js'
 
 class Material {
-    constructor(name, rate, uom, spoilageRate, estimates, currency) {
+    constructor(name, rate, uom, spoilageRate, estimates, currency, layouts) {
         this._state = reactive({
-            name, rate, uom, spoilageRate, estimates, currency,
+            name, rate, uom, spoilageRate, estimates, currency, layouts,
             isExpanded: false
         })
     }
@@ -162,6 +166,9 @@ class Material {
 
     set currency(value){this._state.currency = value}
     get currency(){return this._state.currency}
+
+    set layouts(value){this._state.layouts = value}
+    get layouts(){return this._state.layouts}
 
     get rateLabel() {
         return formatCurrency(this._state.rate, this._state.currency)
@@ -194,6 +201,9 @@ class MaterialEstimate {
 }
 
 export default {
+    components: {
+        EstimateDetailCostingBillOfMaterialsLayout
+    },
     props: {
         quantities: {
             type: Array,
@@ -264,7 +274,7 @@ export default {
                             x.itemQuantity, x.estimatedMaterialQuantity,
                             x.spoilageMaterialQuantity));
                     const material = new Material(data.name, data.rate, 
-                        data.uom, data.spoilageRate, estimates, currency);
+                        data.uom, data.spoilageRate, estimates, currency, data.layouts);
                     state.data.billOfMaterials.push(material); 
                 });
 

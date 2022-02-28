@@ -92,7 +92,6 @@ class MaterialEstimateSerializer(serializers.Serializer):
     estimated_stock_quantity = serializers.IntegerField(min_value=1)
     estimated_spoilage_quantity = serializers.IntegerField(min_value=1)
     estimated_total_quantity = serializers.IntegerField(min_value=1)
-    layouts_meta = SheetLayoutMetaSerializer(many=True, read_only=True)
 
 
 class MaterialSerializer(serializers.Serializer):
@@ -102,6 +101,7 @@ class MaterialSerializer(serializers.Serializer):
     uom = serializers.CharField()
     spoilage_rate = serializers.DecimalField(default=0, max_digits=None, decimal_places=2)
     estimates = MaterialEstimateSerializer(many=True, read_only=True)
+    layouts_meta = SheetLayoutMetaSerializer(many=True, read_only=True)
 
 
 class ActivityExpenseEstimateEstimateSerializer(serializers.Serializer):

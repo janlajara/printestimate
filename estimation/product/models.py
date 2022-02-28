@@ -307,6 +307,7 @@ class Material(PolymorphicModel):
             self.uom = uom
             self.spoilage_rate = spoilage_rate
             self.estimates = estimates
+            self.layouts_meta = []
 
         @cached_property
         def estimates_map(self):
@@ -638,6 +639,7 @@ class PaperMaterial(Material):
                 estimate = PaperMaterial.Estimate(quantity, self.component.quantity,
                     spoilage_rate, layouts)
                 estimates.append(estimate)
+            paper_estimate.layouts_meta = layouts
             paper_estimate.estimates = estimates
         
         return paper_estimate

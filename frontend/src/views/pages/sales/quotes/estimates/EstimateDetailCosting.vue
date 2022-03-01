@@ -1,5 +1,5 @@
 <template>
-    <Section heading="Cost Estimation">
+    <Section heading="Cost Breakdown">
         <div class="w-full">
             <!-- Table Header -->
             <div class="border-b grid grid-cols-2">
@@ -11,7 +11,7 @@
                                 'hidden': ''"
                             @click="state.components.paginator.left">chevron_left</span>
                     </div>
-                    <div :class="`w-full grid grid-cols-${state.meta.quantitiesColumnLength}`">
+                    <div :class="`w-full grid grid-cols-${state.meta.quantitiesColumnLength} divide-x`">
                         <div v-for="(quantity, key) in 
                                 state.components.paginator.paginate(state.data.quantities)" :key="key"
                             class="flex justify-center">

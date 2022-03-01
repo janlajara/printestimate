@@ -2,18 +2,55 @@
     <div class="border-t-2 border-dotted text-gray-500 grid grid-cols-2 py-1">
         <div class="text-sm">
             <div class="ml-8 my-auto">Layout</div>
-            <div class="ml-12 grid">
-                <span>Runsheet size:</span>
-                <span>Runsheets per material:</span>
-                <span>Finalsheets per material:</span>
-                <span class="pt-3">Usage:</span>
-                <span>Wastage:</span>
-                <span class="pt-3">Raw-to-running cut:</span>
-                <span >Running-to-final cut:</span>
+            <div v-if="state.data.stats" 
+                class="ml-12 grid">
+                <dl v-if="state.data.stats.hasRunsheet"
+                    class="grid grid-cols-2 my-4">
+                    <dt>Runsheet size:</dt>
+                    <dd>{{state.data.stats.runsheetSize}}</dd>
+
+                    <dt>Runsheet count:</dt>
+                    <dd>
+                        {{formatQuantity(state.data.stats.runsheetPerParent, 'out', 'outs')}}
+                        / whole sheet
+                    </dd>
+
+                    <dt>Finalsheet count:</dt>
+                    <dd>
+                        {{formatQuantity(state.data.stats.childsheetPerParent, 'out', 'outs')}}
+                        / whole sheet
+                    </dd>
+
+                    <dt>Usage:</dt>
+                    <dd>{{formatNumber(state.data.stats.totalUsage, 2)}}%</dd>
+
+                    <dt>Wastage:</dt>
+                    <dd>{{formatNumber(state.data.stats.totalWasteage, 2)}}%</dd>
+
+                    <dt>Total # of cuts:</dt>
+                    <dd>{{state.data.stats.totalCutCount}}</dd>
+                </dl>
+                <dl v-else class="grid grid-cols-2 my-4">
+                    <dt>Finalsheet count:</dt>
+                    <dd>
+                        {{formatQuantity(state.data.stats.childsheetPerParent, 'out', 'outs')}}
+                        / whole sheet
+                    </dd>
+
+                    <dt>Usage:</dt>
+                    <dd>{{formatNumber(state.data.stats.totalUsage, 2)}}%</dd>
+
+                    <dt>Wastage:</dt>
+                    <dd>{{formatNumber(state.data.stats.totalWasteage, 2)}}%</dd>
+
+                    <dt>Total # of cuts:</dt>
+                    <dd>{{state.data.stats.totalCutCount}}</dd>
+                </dl>
             </div>
         </div>
         <div>
             <CutListLayout 
+                @load="value => state.data.stats = value"
                 :layouts="state.data.layouts"
                 :svg-height="140"/>
         </div>
@@ -22,6 +59,7 @@
 <script>
 import CutListLayout from '@/views/commons/sheetfedpress/CutListLayout.vue';
 import {reactive, computed} from 'vue';
+import {formatNumber, formatQuantity} from '@/utils/format.js';
 
 export default {
     components: {
@@ -34,23 +72,11 @@ export default {
         const state = reactive({
             data: {
                 layouts: computed(()=>props.layouts),
-                meta: computed(()=>{
-                    let stats = {
-                        count:0, usage: 0, wastage: 0, cutCount: 0}
-                    if (props.layouts) {
-                        stats = props.layouts.map(x=>({
-                            count: x.count,
-                            usage: x.usage,
-                            wastage: x.wastage,
-                            cutCount: x.cut_count
-                        }));
-                    }
-                    return stats;
-                })
+                stats: null,
             }
         });
         return {
-            state
+            state, formatNumber, formatQuantity
         }
     },
 }

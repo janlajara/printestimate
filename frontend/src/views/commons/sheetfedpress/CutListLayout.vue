@@ -1,5 +1,5 @@
 <template>
-    <div class="mt-2 bg-gray-200 px-4 py-4 rounded-md">
+    <div class="bg-gray-200 px-4 py-4 rounded-md">
         <Svg :svg-height="$props.svgHeight"
             :view-box-width="state.svgRect.width" 
             :view-box-height="state.svgRect.length">
@@ -82,7 +82,7 @@ import ParentSheetShape from './ParentSheetShape.vue';
 import ChildSheetShape from './ChildSheetShape.vue';
  
 import convert from 'convert';
-import {reactive, computed, onUpdated} from 'vue';
+import {reactive, computed, onMounted, onUpdated} from 'vue';
 
 export default {
     props: {
@@ -154,6 +154,7 @@ export default {
             const totalCutCount = parentToRunsheet.cut_count + runsheetToChildsheet.cut_count;
 
             return {
+                hasRunsheet: state.hasRunsheet,
                 runsheetSize, runsheetPerParent, childsheetSize, 
                 childsheetPerRunsheet, childsheetPerParent,
                 totalUsage, totalWasteage, totalCutCount
@@ -178,6 +179,7 @@ export default {
             const totalCutCount = parentToCutsheet.cut_count;
             
             return {
+                hasRunsheet: state.hasRunsheet,
                 parentToCutsheet, childsheetSize, childsheetPerParent,
                 totalUsage, totalWasteage, totalCutCount
             }
@@ -190,10 +192,10 @@ export default {
             } else if (state.parentToCutsheet != null) {
                 stats = getNonRunsheetStats()
             }
-            console.log(stats)
             emit('load', stats);
         }
 
+        onMounted(initializeStats);
         onUpdated(initializeStats);
 
         return {

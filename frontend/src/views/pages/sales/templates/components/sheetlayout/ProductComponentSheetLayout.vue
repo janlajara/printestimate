@@ -1,6 +1,7 @@
 <template>
     <div>
-        <CutListLayout :layouts="state.data.sheetLayouts"/>
+        <CutListLayout @load="value => state.data.stats = value"
+            :layouts="state.data.sheetLayouts"/>
         <DescriptionList :class="`md:grid-cols-${state.meta.hasRunsheet? 3: 2}`">
             <DescriptionItem :name="`Total outs (${state.stats.childsheetSize})`" 
                 :value="`${state.stats.childsheetPerParent} sheets / material`"/>
@@ -37,7 +38,8 @@ export default {
         const state = reactive({
             data: {
                 sheetLayouts: [],
-                error: null
+                error: null,
+                stats: null
             },
             meta: {
                 hasRunsheet: computed(()=> state.data.sheetLayouts.length == 2)
@@ -53,45 +55,8 @@ export default {
                     totalWasteage: 0,
                     totalCutCount: 0
                 }
-                if (state.data.sheetLayouts != null ) {
-                    if (state.data.sheetLayouts.length == 2) {
-                        const parentToRunsheet = state.data.sheetLayouts[0];
-                        const runsheetToChildsheet = state.data.sheetLayouts[1];
-
-                        stats.runsheetSize = `${parentToRunsheet.rect.width} x ` +
-                            `${parentToRunsheet.rect.length} ${parentToRunsheet.rect.uom}`;
-                        stats.runsheetPerParent = parentToRunsheet.count;
-                        stats.childsheetSize = `${runsheetToChildsheet.rect.width} x ` +
-                            `${runsheetToChildsheet.rect.length} ${runsheetToChildsheet.rect.uom}`;
-                        stats.childsheetPerRunsheet = runsheetToChildsheet.count;
-                        stats.childsheetPerParent = parentToRunsheet.count * runsheetToChildsheet.count;
-
-                        const parentUom = parentToRunsheet.bin.uom;
-                        const childUom = runsheetToChildsheet.rect.uom;
-                        const parentArea = convert(parentToRunsheet.bin.width, parentUom).to(childUom) * 
-                            convert(parentToRunsheet.bin.length, parentUom).to(childUom);
-                        const totalUsedArea = runsheetToChildsheet.rect.width * 
-                            runsheetToChildsheet.rect.length * stats.childsheetPerParent;
-                        stats.totalUsage = totalUsedArea/parentArea  * 100;
-                        stats.totalWasteage =  100 - stats.totalUsage;
-                        stats.totalCutCount = parentToRunsheet.cut_count + runsheetToChildsheet.cut_count;
-                    } else if (state.data.sheetLayouts.length == 1) {
-                        const parentToCutsheet = state.data.sheetLayouts[0];
-                        stats.childsheetSize = `${parentToCutsheet.rect.width} x ` +
-                            `${parentToCutsheet.rect.length} ${parentToCutsheet.rect.uom}`;
-                        stats.childsheetPerParent = parentToCutsheet.count;
-
-                        const parentUom = parentToCutsheet.bin.uom;
-                        const childUom = parentToCutsheet.rect.uom;
-                        const parentArea = convert(parentToCutsheet.bin.width, parentUom).to(childUom) * 
-                            convert(parentToCutsheet.bin.length, parentUom).to(childUom);
-                        const totalUsedArea = parentToCutsheet.rect.width * 
-                            parentToCutsheet.rect.length * stats.childsheetPerParent;
-                        stats.totalUsage = totalUsedArea/parentArea  * 100;
-                        stats.totalWasteage =  100 - stats.totalUsage;
-                        stats.totalCutCount = parentToCutsheet.cut_count;
-                    }
-                }
+                if (state.data.stats && Object.keys(state.data.stats).length > 0) 
+                    stats = state.data.stats;
                 return stats;
             })
         });

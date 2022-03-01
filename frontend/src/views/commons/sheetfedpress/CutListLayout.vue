@@ -81,7 +81,8 @@ import Rectangle from '@/utils/svg/Rectangle.vue';
 import ParentSheetShape from './ParentSheetShape.vue';
 import ChildSheetShape from './ChildSheetShape.vue';
  
-import {reactive, computed} from 'vue';
+import convert from 'convert';
+import {reactive, computed, onUpdated} from 'vue';
 
 export default {
     props: {
@@ -97,12 +98,16 @@ export default {
     components: {
         Svg, Rectangle, ParentSheetShape, ChildSheetShape
     },
-    setup(props) {
+    emits: ['load'],
+    setup(props, {emit}) {
         const state = reactive({
             layouts: computed(()=> props.layouts || []),
             parentToRunsheet: computed(()=> findLayout('Parent-to-runsheet')),
             runsheetToCutsheet: computed(()=> findLayout('Runsheet-to-cutsheet')),
             parentToCutsheet: computed(()=> findLayout('Parent-to-cutsheet')),
+            hasRunsheet: computed(()=> state.parentToRunsheet != null 
+                && state.runsheetToCutsheet != null
+                && state.parentToCutsheet == null),
             svgRect: computed(()=> {
                 let width = 0;
                 let length = 0;
@@ -124,6 +129,72 @@ export default {
             }
             return layout;
         }
+
+        const getWithRunsheetStats = ()=> {
+            const parentToRunsheet = state.parentToRunsheet;
+            const runsheetToChildsheet = state.runsheetToCutsheet;
+
+            const runsheetSize = `${parentToRunsheet.rect.width} x ` +
+                `${parentToRunsheet.rect.length} ${parentToRunsheet.rect.uom}`;
+            const runsheetPerParent = parentToRunsheet.count;
+            const childsheetSize = `${runsheetToChildsheet.rect.width} x ` +
+                `${runsheetToChildsheet.rect.length} ${runsheetToChildsheet.rect.uom}`;
+            const childsheetPerRunsheet = runsheetToChildsheet.count;
+            const childsheetPerParent = parentToRunsheet.count * runsheetToChildsheet.count;
+
+            const parentUom = parentToRunsheet.bin.uom;
+            const childUom = runsheetToChildsheet.rect.uom;
+            const parentArea = convert(parentToRunsheet.bin.width, parentUom).to(childUom) * 
+                convert(parentToRunsheet.bin.length, parentUom).to(childUom);
+            const totalUsedArea = runsheetToChildsheet.rect.width * 
+                runsheetToChildsheet.rect.length * childsheetPerParent;
+
+            const totalUsage = totalUsedArea/parentArea  * 100;
+            const totalWasteage =  100 - totalUsage;
+            const totalCutCount = parentToRunsheet.cut_count + runsheetToChildsheet.cut_count;
+
+            return {
+                runsheetSize, runsheetPerParent, childsheetSize, 
+                childsheetPerRunsheet, childsheetPerParent,
+                totalUsage, totalWasteage, totalCutCount
+            }
+        }
+
+        const getNonRunsheetStats = ()=> {
+            const parentToCutsheet = state.parentToCutsheet;
+            const childsheetSize = `${parentToCutsheet.rect.width} x ` +
+                `${parentToCutsheet.rect.length} ${parentToCutsheet.rect.uom}`;
+            const childsheetPerParent = parentToCutsheet.count;
+
+            const parentUom = parentToCutsheet.bin.uom;
+            const childUom = parentToCutsheet.rect.uom;
+            const parentArea = convert(parentToCutsheet.bin.width, parentUom).to(childUom) * 
+                convert(parentToCutsheet.bin.length, parentUom).to(childUom);
+            const totalUsedArea = parentToCutsheet.rect.width * 
+                parentToCutsheet.rect.length * childsheetPerParent;
+
+            const totalUsage = totalUsedArea/parentArea  * 100;
+            const totalWasteage =  100 - totalUsage;
+            const totalCutCount = parentToCutsheet.cut_count;
+            
+            return {
+                parentToCutsheet, childsheetSize, childsheetPerParent,
+                totalUsage, totalWasteage, totalCutCount
+            }
+        }
+
+        const initializeStats = ()=> {
+            let stats = {};
+            if (state.hasRunsheet) {
+                stats = getWithRunsheetStats();
+            } else if (state.parentToCutsheet != null) {
+                stats = getNonRunsheetStats()
+            }
+            console.log(stats)
+            emit('load', stats);
+        }
+
+        onUpdated(initializeStats);
 
         return {
             state

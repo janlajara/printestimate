@@ -7,6 +7,7 @@ from inventory.models import Item
 from estimation.template.models import ProductTemplate
 from estimation.product.models import ProductEstimate, \
     EstimateQuantity, Product, Component, Service, \
+    ActivityEstimate, OperationEstimate, \
     Material, TapeMaterial, LineMaterial, \
     PaperMaterial, PanelMaterial, LiquidMaterial
 from estimation.machine.serializers import SheetLayoutMetaSerializer
@@ -86,6 +87,55 @@ class MaterialPolymorphicSerializer(PolymorphicSerializer):
         resource_type = mapping.get(object_name, 'other')
         return resource_type
 '''
+class MaterialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Material
+        fields = ['material_id', 'label']
+
+
+class ComponentSerializer(serializers.ModelSerializer):
+    materials = MaterialSerializer(many=True)
+
+    class Meta:
+        model = Component
+        fields = ['id', 'name', 'quantity', 'materials']
+
+
+class ActivityEstimateSerializer(serializers.ModelSerializer):
+    speed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ActivityEstimate
+        fields = ['id', 'name', 'sequence', 'speed', 'notes']
+
+    def get_speed(self, instance):
+        return instance.speed_estimate.rate_formatted
+
+
+class OperationEstimateSerializer(serializers.ModelSerializer):
+    activity_estimates = ActivityEstimateSerializer(many=True)
+
+    class Meta:
+        model = OperationEstimate
+        fields = ['id', 'name', 'activity_estimates']
+
+
+class ServiceSerializer(serializers.ModelSerializer):
+    operation_estimates = OperationEstimateSerializer(many=True)
+
+    class Meta:
+        model = Service
+        fields = ['id', 'name', 'sequence', 'operation_estimates']
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    components = ComponentSerializer(many=True)
+    services = ServiceSerializer(many=True)
+
+    class Meta:
+        model = Product
+        fields = ['id', 'components', 'services']
+
 
 class MaterialEstimateSerializer(serializers.Serializer):
     order_quantity = serializers.IntegerField(min_value=1)
@@ -147,15 +197,25 @@ class ProductEstimateInputSerializer(serializers.Serializer):
 
 
 class ProductEstimateSerializer(serializers.ModelSerializer):
+    product = ProductSerializer()
     order_quantities = serializers.ListField(child=serializers.IntegerField(min_value=1))
 
     class Meta:
         model = ProductEstimate
         fields = ['id', 'name', 'description', 'template_code', 
-            'order_quantities', 'material_spoilage_rate']
+            'order_quantities', 'material_spoilage_rate',
+            'product']
 
 
-class ProductEstimateInputSerializer(ProductEstimateSerializer):
+class ProductEstimateListSerializer(serializers.ModelSerializer):
+    order_quantities = serializers.ListField(child=serializers.IntegerField(min_value=1))
+
+    class Meta:
+        model = ProductEstimate
+        fields = ['id', 'name', 'description', 'template_code', 'order_quantities']
+
+
+class ProductEstimateInputSerializer(ProductEstimateListSerializer):
     id = serializers.IntegerField(required=False)
 
     class Meta:

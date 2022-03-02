@@ -6,6 +6,11 @@ from estimation.product.models import ProductEstimate
 from estimation.template.models import ProductTemplate
 
 
+class ProductEstimateSpecificationView(mixins.RetrieveModelMixin, 
+        viewsets.GenericViewSet):
+    queryset = ProductEstimate.objects.all()
+
+
 class ProductEstimateView(mixins.ListModelMixin,
         mixins.CreateModelMixin, mixins.RetrieveModelMixin,
         mixins.UpdateModelMixin, mixins.DestroyModelMixin,
@@ -15,8 +20,10 @@ class ProductEstimateView(mixins.ListModelMixin,
     def get_serializer_class(self):
         if self.action in ['create', 'update']:
             return serializers.ProductEstimateInputSerializer
-        else:
+        elif self.action in ['retrieve']:
             return serializers.ProductEstimateSerializer
+        else:
+            return serializers.ProductEstimateListSerializer
 
 
 class ProductEstimateCostView(mixins.RetrieveModelMixin, 

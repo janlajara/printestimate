@@ -210,7 +210,7 @@ class ComponentManager(PolymorphicManager):
         return component
 
 
-class Component(PolymorphicModel):
+class Component(PolymorphicModel, Shape):
     objects = ComponentManager()
     name = models.CharField(max_length=20, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE,

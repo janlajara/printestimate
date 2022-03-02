@@ -1,5 +1,5 @@
 <template>
-    <Page :title="`Estimate : ${state.data.estimateCode}`">
+    <Page :title="`Estimate : CE-${state.data.estimateCode}`">
         <hr class="my-4"/>
         <div class="flex gap-4">
             <Button color="secondary" icon="arrow_back"
@@ -12,7 +12,7 @@
                 :product-estimate-id="state.data.id"
                 :is-open="state.components.editModal.isOpen"
                 @toggle="state.components.editModal.toggle" 
-                @saved="estimateId => retrieveEstimateById(estimateId)"/>
+                @saved="estimateId => retrieveEstimateCostsById(estimateId)"/>
             <DeleteRecordDialog 
                 heading="Delete Quote"
                 :is-open="state.components.deleteDialog.isOpen"
@@ -35,11 +35,15 @@
                     name="Description" :value="state.data.templateDescription"/>
             </DescriptionList>
         </Section>
+        <EstimateDetailSpecification
+            :is-processing="state.isProcessing"
+            :components="state.data.specifications.components"
+            :services="state.data.specifications.services"/>
         <EstimateDetailCosting
             :is-processing="state.isProcessing"
             :quantities="state.data.quantities"
-            :bill-of-materials="state.data.billOfMaterials"
-            :services="state.data.services"/>
+            :bill-of-materials="state.data.costing.billOfMaterials"
+            :services="state.data.costing.services"/>
     </Page>
     
 </template>
@@ -51,7 +55,8 @@ import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import EstimateModal from './EstimateModal.vue';
-import EstimateDetailCosting from './EstimateDetailCosting.vue';
+import EstimateDetailSpecification from './specification/EstimateDetailSpecification.vue';
+import EstimateDetailCosting from './costing/EstimateDetailCosting.vue';
 
 import {reactive, inject, onBeforeMount} from 'vue';
 import {useRoute} from 'vue-router';
@@ -62,7 +67,7 @@ export default {
     components: {
         Page, Button, Section, DeleteRecordDialog, 
         DescriptionList, DescriptionItem, EstimateModal,
-        EstimateDetailCosting
+        EstimateDetailSpecification, EstimateDetailCosting
     },
     setup() {
         const currency = inject('currency').abbreviation;
@@ -71,13 +76,19 @@ export default {
             isProcessing: false,
             data: {
                 id: route.params.id,
-                estimateCode: 'CE-1234',
+                estimateCode: '',
                 templateCode: '',
                 templateName: '',
                 templateDescription: '',
                 quantities: [],
-                billOfMaterials: [],
-                services: []
+                specifications: {
+                    components: [],
+                    services: []
+                },
+                costing: {
+                    billOfMaterials: [],
+                    services: []
+                }
             },
             components: {
                 editModal: {
@@ -95,25 +106,57 @@ export default {
         });
 
         onBeforeMount(()=> {
-            retrieveEstimateById(state.data.id);
+            retrieveEstimateBydId(state.data.id);
+            retrieveEstimateCostsById(state.data.id);
         });
 
         const deleteEstimate = async (id)=> {
             if (id) await EstimateApi.deleteEstimate(id); 
         }
 
-        const retrieveEstimateById = async (id)=> {
+        const retrieveEstimateBydId = async (id)=> {
+            if (id != null) {
+                const response = await EstimateApi.retrieveEstimate(id);
+                if (response) {
+                    state.data.specifications.components = 
+                        response.product.components.map(x => ({
+                            name: x.name,
+                            quantity: x.quantity,
+                            materials: x.materials.map(x => x.label)
+                        }));
+                    
+                    state.data.specifications.services = 
+                        response.product.services.map(x => ({
+                            name: x.name, sequence: x.sequence,
+                            operationEstimates: x.operation_estimates.map(y => ({
+                                name: y.name,
+                                activityEstimates: y.activity_estimates.map(z => ({
+                                    name: z.name,
+                                    sequence: z.sequence,
+                                    speed: z.speed,
+                                    notes: z.notes
+                                }))
+                            }))
+                        }));
+                        
+                    console.log(state.data.specifications.components);
+                }
+            }
+        }
+
+        const retrieveEstimateCostsById = async (id)=> {
             state.isProcessing = true;
             if (id != null) {
                 const response = await EstimateApi.retrieveEstimateCosts(id);
                 if (response) {
+                    state.data.estimateCode = response.id;
                     state.data.templateCode = response.template_code;
                     state.data.templateName = response.name;
                     state.data.templateDescription = response.description;
                     state.data.quantities = response.order_quantities;
                     
                     if (response.estimates) {
-                        state.data.billOfMaterials = response.estimates.material_estimates.map(me => ({
+                        state.data.costing.billOfMaterials = response.estimates.material_estimates.map(me => ({
                             name: me.name, rate: parseFloat(me.rate), uom: me.uom, 
                             spoilageRate: parseFloat(me.spoilage_rate), isExpanded: false,
                             layouts: me.layouts_meta,
@@ -124,7 +167,7 @@ export default {
                             }))
                         }));
                         
-                        state.data.services = response.estimates.service_estimates.map(se => ({
+                        state.data.costing.services = response.estimates.service_estimates.map(se => ({
                             name: se.name, isExpanded: false,
                             operations: se.operation_estimates.map(oe => ({
                                 name: [oe.name, oe.item_name].join(' '), 
@@ -155,7 +198,7 @@ export default {
         }
 
         return {
-            state, retrieveEstimateById, formatMoney
+            state, retrieveEstimateCostsById, formatMoney
         }
     }
     

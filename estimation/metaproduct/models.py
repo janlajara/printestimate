@@ -238,6 +238,12 @@ class MetaOperationOption(models.Model):
         return self.operation.name
 
     @property
+    def machine_name(self):
+        machine = self.operation.workstation.machine
+        if machine is not None:
+            return machine.name
+
+    @property
     def operation_steps(self):
         operation = self.operation
         if operation is not None and operation.operation_steps is not None:

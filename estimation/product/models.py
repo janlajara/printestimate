@@ -779,12 +779,14 @@ class OperationEstimateManager(models.Manager):
             name=name, service=service, material=material)
 
         for operation_option in operation_options:
+            machine = operation_option.meta_operation_option.machine_name
+
             for step in operation_option.meta_operation_option.operation_steps:
                 activity = step.activity
                 ActivityEstimate.objects.create_activity_estimate(
                     activity, step.sequence, 
                     activity.set_up, activity.tear_down,
-                    step.notes, operation_estimate)
+                    step.notes, operation_estimate, machine)
 
 
 class OperationEstimate(models.Model):
@@ -833,12 +835,13 @@ class OperationEstimate(models.Model):
 
 class ActivityEstimateManager(models.Manager):
     def create_activity_estimate(self, activity, sequence, set_up, tear_down, 
-            notes, operation_estimate):
+            notes, operation_estimate, machine=None):
         name = activity.name
         measure_unit = activity.measure_unit
         activity_speed = activity.speed
 
         activity_estimate = ActivityEstimate.objects.create(
+            machine_name=machine,
             operation_estimate=operation_estimate,
             name=name, sequence=sequence, 
             set_up=set_up, tear_down=tear_down,
@@ -866,6 +869,7 @@ class ActivityEstimate(models.Model):
 
     objects = ActivityEstimateManager()
     name = models.CharField(max_length=50, null=True)
+    machine_name = models.CharField(max_length=50, null=True)
     operation_estimate = models.ForeignKey(OperationEstimate, on_delete=models.CASCADE,
         related_name='activity_estimates')
     sequence = models.IntegerField(default=0)

@@ -130,6 +130,7 @@ export default {
                             name: x.name, sequence: x.sequence,
                             operationEstimates: x.operation_estimates.map(y => ({
                                 name: y.name,
+                                material: y.material,
                                 activityEstimates: y.activity_estimates.map(z => ({
                                     name: z.name,
                                     sequence: z.sequence,
@@ -138,8 +139,6 @@ export default {
                                 }))
                             }))
                         }));
-                        
-                    console.log(state.data.specifications.components);
                 }
             }
         }

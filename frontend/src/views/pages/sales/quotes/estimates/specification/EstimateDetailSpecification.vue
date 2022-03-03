@@ -1,5 +1,5 @@
 <template>
-    <div class="md:grid md:grid-cols-2 gap-6">
+    <div class="md:grid md:grid-cols-2 md:gap-6">
         <EstimateDetailSpecificationComponents
             :components="$props.components"/>
         <EstimateDetailSpecificationServices

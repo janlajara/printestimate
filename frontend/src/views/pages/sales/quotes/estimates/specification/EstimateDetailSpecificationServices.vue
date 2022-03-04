@@ -1,12 +1,6 @@
 <template>
     <Section heading="Services">
         <div class="bg-gray-100 w-full rounded-md p-4 relative my-4">
-            <div class="px-4 absolute right-0 cursor-pointer z-10" 
-                    @click="state.data.expandAll.toggle">
-                <span class="material-icons bg-gray-300 rounded-full p-1">
-                    {{state.data.expandAll.isAllExpanded? 'unfold_less' : 'unfold_more'}}
-                </span>
-            </div>
             <div class="flow-root">
                 <ul role="list">
                     <li v-for="(service, key) in state.data.services" :key="key" class="relative">
@@ -55,6 +49,13 @@
                         </div>
                     </li>
                 </ul>
+            </div>
+            <div v-show="state.data.services.length > 0"
+                class="px-4 absolute top-4 right-0 cursor-pointer" 
+                    @click="state.data.expandAll.toggle">
+                <span class="material-icons bg-gray-300 rounded-full p-1">
+                    {{state.data.expandAll.isAllExpanded? 'unfold_less' : 'unfold_more'}}
+                </span>
             </div>
         </div>
     </Section>

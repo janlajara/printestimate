@@ -24,7 +24,7 @@
                     type="text" :value="state.form.quantitiesField.text" required
                     @keyup="state.form.quantitiesField.onkeyup"
                     @input="(value) => state.form.quantitiesField.text = value"/>
-                <InputText
+                <InputText postfix="%"
                     name="Material Spoilage Rate"  placeholder="0-100" 
                     type="number" :min="0" :max="100" required
                     :value="state.data.materialSpoilageRate" 
@@ -124,6 +124,7 @@ export default {
             if (id != null) {
                 const response = await EstimateApi.retrieveEstimate(id);
                 state.form.quantitiesField.text = response.order_quantities.join(',');
+                state.data.materialSpoilageRate = parseInt(response.material_spoilage_rate);
             }
             state.isProcessing = false;
         }

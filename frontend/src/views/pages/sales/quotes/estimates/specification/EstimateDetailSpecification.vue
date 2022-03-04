@@ -1,9 +1,9 @@
 <template>
     <div class="md:grid md:grid-cols-2 md:gap-6">
-        <EstimateDetailSpecificationComponents
-            :components="$props.components"/>
         <EstimateDetailSpecificationServices
             :services="$props.services"/>
+        <EstimateDetailSpecificationComponents
+            :components="$props.components"/>
     </div>
 </template>
 <script>

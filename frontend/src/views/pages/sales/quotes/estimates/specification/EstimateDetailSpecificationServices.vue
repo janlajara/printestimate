@@ -4,7 +4,7 @@
             <div class="px-4 absolute right-0 cursor-pointer z-10" 
                     @click="state.data.expandAll.toggle">
                 <span class="material-icons ">
-                    {{state.data.expandAll.isAllExpanded? 'expand' : 'unfold_less'}}
+                    {{state.data.expandAll.isAllExpanded? 'unfold_more' : 'unfold_less'}}
                 </span>
             </div>
             <div class="flow-root">
@@ -15,9 +15,9 @@
                             <div class="relative flex space-x-3">
                                 <div>
                                     <span class="h-6 w-6 rounded-full flex items-center justify-center bg-secondary-light">
-                                        <!--span class="text-xs font-bold">{{key+1}}.</span-->
-                                        <span class="material-icons text-sm">
-                                            {{service.isExpanded? 'expand_more' : 'chevron_right'}}
+                                        <span class="material-icons text-sm transition"
+                                            :class="service.isExpanded ? 'transform rotate-90' : ''">
+                                            chevron_right
                                         </span>
                                     </span>
                                 </div>
@@ -39,7 +39,7 @@
                                             leave-to-class="transform origin-top opacity-0 scale-y-75">
                                             <div v-show="service.isExpanded">
                                                 <ul v-for="(operation, i) in service.operationEstimates" 
-                                                        :key="i" class="list-disc pl-8 pb-2">
+                                                        :key="i" class="list-disc pl-3 pb-2">
                                                     <li class="font-bold">{{[operation.name, operation.material].join(' ')}}</li>
                                                     <ul class="pl-4">
                                                         <li v-for="(activity, j) in operation.activityEstimates" :key="j">

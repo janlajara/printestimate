@@ -232,7 +232,6 @@ class ProductEstimateInputSerializer(ProductEstimateListSerializer):
         product_template = validated_data.get('product_template')
         order_quantities = validated_data.get('order_quantities')
         material_spoilage_rate = validated_data.get('material_spoilage_rate')
-        #product_template = get_object_or_404(ProductTemplate, pk=product_template_id)
         product_estimate = ProductEstimate.objects.create_product_estimate(
                 product_template, order_quantities, material_spoilage_rate)
         return product_estimate

@@ -128,10 +128,10 @@ export default {
                     state.data.specifications.services = 
                         response.product.services.map(x => ({
                             name: x.name, sequence: x.sequence,
-                            operationEstimates: x.operation_estimates.map(y => ({
+                            operations: x.operation_estimates.map(y => ({
                                 name: y.name,
                                 material: y.material,
-                                activityEstimates: y.activity_estimates.map(z => ({
+                                activities: y.activity_estimates.map(z => ({
                                     name: z.name,
                                     sequence: z.sequence,
                                     speed: z.speed,

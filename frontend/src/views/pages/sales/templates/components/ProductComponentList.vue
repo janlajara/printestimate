@@ -1,27 +1,25 @@
  <template>
     <div>
         <Table :loader="state.isProcessing"
-            :headers="['Name', 'Type', 'Size', 'Quantity', 'Material/s', 'Machine']" >
+            :headers="['Name', 'Material/s', 'Quantity']" >
             <Row v-for="(s, key) in state.data.productComponents" :key="key">
                 <Cell label="Name">{{s.name}}</Cell>
-                <Cell label="Type" class="capitalize">{{s.type}}</Cell>
-                <Cell label="Size">{{s.size}}</Cell>
-                <Cell label="Quantity">
-                    {{s.total_material_quantity}} 
-                    <span v-if="s.material_templates.length > 1">
-                        ({{s.quantity}} x {{s.material_templates.length}})
-                    </span>    
-                </Cell>
                 <Cell label="Material/s">
-                    <ul class="pl-2">
+                    <ul class="pl-2 text-xs">
                         <li v-for="(x, i) in s.material_templates" :key="i"
                             class="list-disc">
-                            {{x.label}}
+                            {{x.item_name}} {{s.size}}
                         </li>
                     </ul>
                 </Cell>
-                <Cell label="Machine">
-                    {{s.machine_option_obj? s.machine_option_obj.name : ''}}</Cell>
+                <Cell label="Quantity">
+                    <span v-if="s.material_templates.length > 1">
+                        {{s.quantity}} x {{s.material_templates.length}}
+                    </span>
+                    <span v-else>
+                        {{s.total_material_quantity}} 
+                    </span>
+                </Cell>
             </Row>
         </Table>
     </div>

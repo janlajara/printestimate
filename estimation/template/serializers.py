@@ -49,11 +49,15 @@ class ServiceTemplateReadSerializer(ServiceTemplateSerializer):
 
 class MaterialTemplateSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
+    item_name = serializers.SerializerMethodField()
 
     class Meta:
         model = MaterialTemplate
-        fields = ['id', 'label', 'quantity', 
+        fields = ['id', 'item_name', 'label', 'quantity', 
             'meta_material_option']
+
+    def get_item_name(self, instance):
+        return instance.item.name
 
 
 class MaterialTemplateReadSerializer(serializers.ModelSerializer):

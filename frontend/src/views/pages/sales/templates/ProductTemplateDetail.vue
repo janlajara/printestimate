@@ -36,14 +36,16 @@
                     name="Description" :value="state.data.description"/>
             </DescriptionList>
         </Section>
-        <Section heading="Components">
-            <ProductComponentList 
-                :product-components="state.data.componentTemplates"/>
-        </Section>
-        <Section heading="Services">
-            <ProductServiceList 
-                :product-services="state.data.serviceTemplates"/> 
-        </Section>
+        <div class="md:grid md:grid-cols-2 md:gap-6">
+            <!--ProductServiceList 
+                :product-services="state.data.serviceTemplates"/--> 
+            <ServicesList
+                :services="state.data.serviceTemplates"/>
+            <Section heading="Components">
+                <ProductComponentList 
+                    :product-components="state.data.componentTemplates"/>
+            </Section>
+        </div>
     </Page>
 </template>
 
@@ -55,7 +57,7 @@ import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import ProductComponentList from './components/ProductComponentList.vue';
-import ProductServiceList from './services/ProductServiceList.vue';
+import ServicesList from '../commons/ServicesList.vue';
 import ProductTemplateModal from './ProductTemplateModal.vue';
 
 import {useRoute} from 'vue-router';
@@ -65,7 +67,7 @@ import {ProductTemplateApi} from '@/utils/apis.js';
 export default {
     components: {
         Page, Button, Section, DescriptionList, DescriptionItem, DeleteRecordDialog,
-        ProductComponentList, ProductServiceList, ProductTemplateModal
+        ProductComponentList, ServicesList, ProductTemplateModal
     },
     setup() {
         const route = useRoute();
@@ -105,7 +107,19 @@ export default {
                     description: response.description,
                     metaProduct: response.meta_product,
                     componentTemplates: response.component_templates,
-                    serviceTemplates: response.service_templates
+                    serviceTemplates: response.service_templates.map(service => ({
+                        name: service.name, sequence: service.sequence,
+                        operations: service.operation_templates.map(ot => ({
+                            name: ot.name,
+                            material: null,
+                            activities: ot.operation_option_templates.map(oot => ({
+                                name: oot.label,
+                                sequence: null,
+                                speed: null,
+                                notes: null
+                            }))
+                        }))
+                    }))
                 }
             }
             state.isProcessing = false;

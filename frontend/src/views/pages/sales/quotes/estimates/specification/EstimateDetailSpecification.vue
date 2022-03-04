@@ -1,6 +1,6 @@
 <template>
     <div class="md:grid md:grid-cols-2 md:gap-6">
-        <EstimateDetailSpecificationServices
+        <ServicesList
             :services="$props.services"/>
         <EstimateDetailSpecificationComponents
             :components="$props.components"/>
@@ -8,12 +8,12 @@
 </template>
 <script>
 import EstimateDetailSpecificationComponents from './EstimateDetailSpecificationComponents.vue';
-import EstimateDetailSpecificationServices from './EstimateDetailSpecificationServices.vue';
+import ServicesList from '../../../commons/ServicesList.vue'; 
 
 export default{
     components: {
         EstimateDetailSpecificationComponents, 
-        EstimateDetailSpecificationServices
+        ServicesList
     },
     props: {
         components: Array,

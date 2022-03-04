@@ -32,11 +32,11 @@
                                             leave-from-class="transform origin-top opacity-100 scale-100" 
                                             leave-to-class="transform origin-top opacity-0 scale-y-75">
                                             <div v-show="service.isExpanded">
-                                                <ul v-for="(operation, i) in service.operationEstimates" 
+                                                <ul v-for="(operation, i) in service.operations" 
                                                         :key="i" class="list-disc pl-3 pb-2">
                                                     <li class="font-bold">{{[operation.name, operation.material].join(' ')}}</li>
                                                     <ul class="pl-4">
-                                                        <li v-for="(activity, j) in operation.activityEstimates" :key="j">
+                                                        <li v-for="(activity, j) in operation.activities" :key="j">
                                                             - {{activity.name}} {{activity.notes}}
                                                         </li>
                                                     </ul>

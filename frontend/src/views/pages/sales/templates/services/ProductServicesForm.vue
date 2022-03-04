@@ -93,9 +93,9 @@ export default {
             state.isProcessing = false;
         }
 
-        watchEffect(()=> { 
-            if (props.value && props.value.length > 0) { 
-                state.data.serviceTemplates = [...props.value];
+        watchEffect(()=> {
+            if (props.value) { 
+                if (props.value.length > 0) state.data.serviceTemplates = [...props.value];
                 if (state.id) retrieveMetaProductServices(state.id);
             } else {state.clear();}
         });

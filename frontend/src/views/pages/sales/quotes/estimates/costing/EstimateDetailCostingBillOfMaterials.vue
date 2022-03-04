@@ -1,18 +1,20 @@
 <template>
     <div>
         <!-- Table Rows for Bill of Materials -->
-        <div class="text-primary-dark font-bold">
+        <div class="flex text-primary-dark font-bold">
             <span>Bill of Materials</span>
         </div>
         <div v-for="(material, x) in state.data.billOfMaterials" :key="x"
             :class="!material.isExpanded? 'border-b' : ''">
             <div class="grid md:grid-cols-2">
                 <div class="cursor-pointer" 
-                    @click="()=>{material.isExpanded = !material.isExpanded}">
+                    @click="()=>{
+                        material.isExpanded = !material.isExpanded;
+                        emitToggled()}">
                     <div class="flex">
-                        <span class="material-icons text-base my-auto">
-                            {{material.isExpanded? 
-                                'expand_more' : 'chevron_right'}}</span>
+                        <span class="material-icons text-base my-auto transition"
+                            :class="material.isExpanded? 'transform rotate-90': ''">
+                            chevron_right</span>
                         <div class="ml-4">
                             <span class="text-sm">
                                 {{material.name}}</span>
@@ -24,8 +26,8 @@
                         </div>
                     </div>
                 </div>
-                <div :class="`grid md:grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`"
-                    v-show="!material.isExpanded">
+                <div :class="[`grid md:grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x transition`,
+                    material.isExpanded? 'transform opacity-0 ': '']">
                     <div v-for="(estimate, y) in state.paginate(material.estimates)" :key="y" class="grid">
                         <div class="text-xs flex my-auto">
                             <div class="text-right w-2/5">
@@ -39,77 +41,85 @@
                     </div>
                 </div>
             </div>
-            <div v-show="material.isExpanded">
-                <EstimateDetailCostingBillOfMaterialsLayout 
-                    :layouts="material.layouts"/>
-                <div class="border-t-2 border-dotted text-gray-500 grid grid-cols-2">
-                    <div>
-                        <div class="flex">
-                            <div class="ml-8 text-sm my-auto">Stock Quantity</div>
-                            <div class="ml-4 flex-auto text-right">
-                                <span class="text-xs">
-                                    {{formatMoney(material.rate)}} / {{material.uom}}</span>    
+            <transition 
+                enter-active-class="transition ease-out duration-100" 
+                enter-from-class="transform origin-top opacity-0 scale-y-75" 
+                enter-to-class="transform origin-top opacity-100 scale-100" 
+                leave-active-class="transition ease-in duration-75" 
+                leave-from-class="transform origin-top opacity-100 scale-100" 
+                leave-to-class="transform origin-top opacity-0 scale-y-75">
+                <div v-show="material.isExpanded" class="border-b pb-2">
+                    <EstimateDetailCostingBillOfMaterialsLayout 
+                        :layouts="material.layouts"/>
+                    <div class="border-t-2 border-dotted text-gray-500 grid grid-cols-2">
+                        <div>
+                            <div class="flex">
+                                <div class="ml-8 text-sm my-auto">Stock Quantity</div>
+                                <div class="ml-4 flex-auto text-right">
+                                    <span class="text-xs">
+                                        {{formatMoney(material.rate)}} / {{material.uom}}</span>    
+                                </div>
+                            </div>                              
+                        </div>
+                        <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
+                            <div v-for="(estimate, y) in state.paginate(material.estimates)" :key="y" class="grid">
+                                <div class="text-xs flex my-auto">
+                                    <div class="text-right w-2/5">
+                                        <span>x</span>
+                                        {{estimate.estimatedQuantity}}</div>
+                                    <div class="ml-1 w-3/5 flex justify-between">
+                                        <span>=</span>
+                                        <span>{{formatMoney(material.rate * estimate.estimatedQuantity)}}</span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>                              
+                        </div>
                     </div>
-                    <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
-                        <div v-for="(estimate, y) in state.paginate(material.estimates)" :key="y" class="grid">
-                            <div class="text-xs flex my-auto">
-                                <div class="text-right w-2/5">
-                                    <span>x</span>
-                                    {{estimate.estimatedQuantity}}</div>
-                                <div class="ml-1 w-3/5 flex justify-between">
-                                    <span>=</span>
-                                    <span>{{formatMoney(material.rate * estimate.estimatedQuantity)}}</span>
+                    <div class="border-t-2 border-dotted text-gray-500 grid grid-cols-2">
+                        <div>
+                            <div class="flex">
+                                <div class="ml-8 text-sm my-auto">Spoilage ({{material.spoilageRate}}%)</div>
+                                <div class="ml-4 flex-auto text-right">
+                                    <span class="text-xs">
+                                        {{formatMoney(material.rate)}} / {{material.uom}}</span>    
+                                </div>
+                            </div>
+                        </div>
+                        <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
+                            <div v-for="(estimate, y) in state.paginate(material.estimates)" :key="y" class="grid">
+                                <div class="text-xs flex my-auto">
+                                    <div class="text-right w-2/5">
+                                        <span>x</span>
+                                        {{estimate.spoilageQuantity}}</div>
+                                    <div class="ml-1 w-3/5 flex justify-between">
+                                        <span>=</span>
+                                        <span>{{formatMoney(material.rate * estimate.spoilageQuantity)}}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Total for a material -->
+                    <div class="border-t-2 border-dotted grid grid-cols-2 mb-4">
+                        <div>
+                        </div>
+                        <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
+                            <div v-for="(estimate, y) in state.paginate(material.estimates)" :key="y" class="grid">
+                                <div class="text-xs flex py-1 my-auto">
+                                    <div class="text-right w-2/5">
+                                        <span>x</span>
+                                        {{estimate.totalQuantity}}</div>
+                                    <div class="ml-1 w-3/5 flex justify-between">
+                                        <span>=</span>
+                                        <span class="underline">
+                                            {{formatMoney(material.rate * estimate.totalQuantity)}}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="border-t-2 border-dotted text-gray-500 grid grid-cols-2">
-                    <div>
-                        <div class="flex">
-                            <div class="ml-8 text-sm my-auto">Spoilage ({{material.spoilageRate}}%)</div>
-                            <div class="ml-4 flex-auto text-right">
-                                <span class="text-xs">
-                                    {{formatMoney(material.rate)}} / {{material.uom}}</span>    
-                            </div>
-                        </div>
-                    </div>
-                    <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
-                        <div v-for="(estimate, y) in state.paginate(material.estimates)" :key="y" class="grid">
-                            <div class="text-xs flex my-auto">
-                                <div class="text-right w-2/5">
-                                    <span>x</span>
-                                    {{estimate.spoilageQuantity}}</div>
-                                <div class="ml-1 w-3/5 flex justify-between">
-                                    <span>=</span>
-                                    <span>{{formatMoney(material.rate * estimate.spoilageQuantity)}}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Total for a material -->
-                <div class="border-t-2 border-dotted grid grid-cols-2 mb-4">
-                    <div>
-                    </div>
-                    <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
-                        <div v-for="(estimate, y) in state.paginate(material.estimates)" :key="y" class="grid">
-                            <div class="text-xs flex py-1 my-auto">
-                                <div class="text-right w-2/5">
-                                    <span>x</span>
-                                    {{estimate.totalQuantity}}</div>
-                                <div class="ml-1 w-3/5 flex justify-between">
-                                    <span>=</span>
-                                    <span class="underline">
-                                        {{formatMoney(material.rate * estimate.totalQuantity)}}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </transition>
         </div>
         <!-- Total for all materials -->
         <div class="grid grid-cols-2 mt-2">
@@ -219,11 +229,15 @@ export default {
             default: 2
         }
     },
-    emits: ['initialized'],
+    emits: ['initialized', 'toggled'],
     setup(props, {emit}) {
         const currency = inject('currency').abbreviation;
         const state = reactive({
             meta: {
+                areAllMaterialsExpanded: computed(()=>
+                    state.data.billOfMaterials.filter(material => 
+                        !material.isExpanded).length == 0
+                ),
                 quantitiesColumnLength: computed(()=> 
                     Math.min(state.data.quantities.length, 
                         props.maxQuantityViewable)
@@ -265,6 +279,21 @@ export default {
             }
         });
 
+        const emitToggled = ()=> {
+            const areAllExpanded = state.meta.areAllMaterialsExpanded;
+            const toggle = ()=> {
+                state.data.billOfMaterials
+                    .filter(material => material.isExpanded == state.meta.areAllMaterialsExpanded)
+                    .forEach(material => {
+                        material.isExpanded = !material.isExpanded;
+                });
+                emitToggled();
+            }
+            emit('toggled', {
+                areAllExpanded, toggle
+            });
+        }
+
         const initializeBillOfMaterials = ()=> {
             state.data.billOfMaterials = [];
             if (props.billOfMaterials) {
@@ -282,6 +311,7 @@ export default {
                 state.data.quantities.forEach(q => 
                     totals[q] = state.getMaterialTotalPriceByQuantity(q, false))
                 emit('initialized', totals); 
+                emitToggled();
             }
         }
 
@@ -294,8 +324,7 @@ export default {
         watch(()=>props.billOfMaterials, initializeBillOfMaterials);
 
         return {
-            state, 
-            formatMoney
+            state, formatMoney, emitToggled
         }
     }
 }

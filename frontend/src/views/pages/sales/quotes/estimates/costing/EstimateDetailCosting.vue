@@ -1,9 +1,17 @@
 <template>
     <Section heading="Cost Breakdown">
-        <div class="w-full">
+        <div class="w-full p-4 bg-gray-100 rounded-md">
+            <!-- Expand/Collapse Button -->
+            <div class="flex justify-end mb-3 cursor-pointer">
+                <span class="material-icons bg-gray-300 rounded-full p-1"
+                    @click="state.components.expandButton.toggleAll">
+                    {{state.components.expandButton.isAllExpanded? 'unfold_less' : 'unfold_more'}}
+                </span>
+            </div>
             <!-- Table Header -->
             <div class="border-b grid grid-cols-2">
-                <div class="font-bold text-lg text-left"></div>
+                <div>
+                </div>
                 <div class="flex relative">
                     <div class="absolute">
                         <span class="material-icons text-sm cursor-pointer"
@@ -33,7 +41,8 @@
                 :bill-of-materials="state.data.billOfMaterials"
                 :quantity-viewable-offset="state.components.paginator.offset"
                 :max-quantity-viewable="3"
-                @initialized="value => state.meta.materialTotalsMap = value"/>
+                @initialized="value => state.meta.materialTotalsMap = value"
+                @toggled="value => state.components.expandButton.materials = value"/>
                 
             <!-- Table Rows for Services -->
             <EstimateDetailCostingServices class="py-2 pb-4"
@@ -41,9 +50,10 @@
                 :services="state.data.services"
                 :quantity-viewable-offset="state.components.paginator.offset"
                 :max-quantity-viewable="3"
-                @initialized="value => state.meta.serviceTotalsMap = value"/>
+                @initialized="value => state.meta.serviceTotalsMap = value"
+                @toggled="value => state.components.expandButton.services = value"/>
 
-                <!-- Table Footer Totals -->
+            <!-- Table Footer Totals -->
             <div class="border-t pt-2 grid grid-cols-2">
                 <div class="text-right">
                     <div class="text-xs py-1">Unit Price:</div>
@@ -124,6 +134,27 @@ export default {
                 services: props.services
             })),
             components: {
+                expandButton: {
+                    isAllExpanded: computed(()=> 
+                        state.components.expandButton.materials.areAllExpanded &&
+                        state.components.expandButton.services.areAllExpanded),
+                    materials: {
+                        areAllExpanded: false,
+                        toggle: ()=>{}
+                    },
+                    services: {
+                        areAllExpanded: false,
+                        toggle: ()=>{}
+                    },
+                    toggleAll: ()=> {
+                        const materialsExpanded = state.components.expandButton.materials.areAllExpanded;
+                        const servicesExpanded = state.components.expandButton.services.areAllExpanded;
+                        if (!materialsExpanded || servicesExpanded)
+                            state.components.expandButton.materials.toggle();
+                        if (!servicesExpanded || materialsExpanded)
+                            state.components.expandButton.services.toggle();
+                    }
+                },
                 paginator: {
                     offset: 0,
                     limit: computed(()=>

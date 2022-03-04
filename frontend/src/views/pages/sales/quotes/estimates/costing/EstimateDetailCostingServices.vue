@@ -8,19 +8,21 @@
             :class="!service.isExpanded? 'border-b' : ''">
             <div class="grid grid-cols-2">
                 <div class="cursor-pointer" 
-                    @click="()=>{service.isExpanded = !service.isExpanded}">
+                    @click="()=>{
+                        service.isExpanded = !service.isExpanded;
+                        emitToggled();}">
                     <div class="flex  my-auto">
-                        <span class="material-icons text-base my-auto">
-                            {{service.isExpanded? 
-                                'expand_more' : 'chevron_right'}}</span>
+                        <span class="material-icons text-base my-auto transition"
+                            :class="service.isExpanded? 'transform rotate-90': ''">
+                            chevron_right</span>
                         <div class="ml-4">
                             <span class="text-sm inline-block align-middle">
                                 {{service.name}}</span>
                         </div>
                     </div>
                 </div>
-                <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`"
-                    v-show="!service.isExpanded">
+                <div :class="[`grid md:grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x transition`,
+                    service.isExpanded? 'transform opacity-0 ': '']">
                     <div v-for="(quantity, a) in state.paginate(state.data.quantities)" :key="a" class="grid">
                         <div class="flex text-xs my-auto">
                             <div class="text-right w-2/5">
@@ -33,58 +35,66 @@
                     </div>
                 </div>
             </div>
-            <div v-show="service.isExpanded">
-                <!-- Service Breakdown Expandable -->
-                <div v-for="(operation, x) in service.operations" :key="x"
-                    class="border-t-2 border-dotted text-gray-500 text-sm">
-                    <span class="ml-8">{{operation.name}}</span>
-                    <div v-for="(activity, y) in operation.activities" :key="y"
-                        class="border-t-2 border-dotted">
-                        <span class="ml-12">{{activity.name}}</span>
-                        <div v-for="(expense, z) in activity.expenses" :key="z"
-                            class="border-t-2 border-dotted  grid grid-cols-2">
-                            <div class="flex">
-                                <div class="ml-16">{{expense.name}}</div>
-                                <div class="ml-4 flex-auto text-right">
-                                    <span class="text-xs inline-block align-middle">
-                                        {{expense.rateLabel}}</span>    
+            <transition 
+                enter-active-class="transition ease-out duration-100" 
+                enter-from-class="transform origin-top opacity-0 scale-y-75" 
+                enter-to-class="transform origin-top opacity-100 scale-100" 
+                leave-active-class="transition ease-in duration-75" 
+                leave-from-class="transform origin-top opacity-100 scale-100" 
+                leave-to-class="transform origin-top opacity-0 scale-y-75">
+                <div v-show="service.isExpanded">
+                    <!-- Service Breakdown Expandable -->
+                    <div v-for="(operation, x) in service.operations" :key="x"
+                        class="border-t-2 border-dotted text-gray-500 text-sm">
+                        <span class="ml-8">{{operation.name}}</span>
+                        <div v-for="(activity, y) in operation.activities" :key="y"
+                            class="border-t-2 border-dotted">
+                            <span class="ml-12">{{activity.name}}</span>
+                            <div v-for="(expense, z) in activity.expenses" :key="z"
+                                class="border-t-2 border-dotted  grid grid-cols-2">
+                                <div class="flex">
+                                    <div class="ml-16">{{expense.name}}</div>
+                                    <div class="ml-4 flex-auto text-right">
+                                        <span class="text-xs inline-block align-middle">
+                                            {{expense.rateLabel}}</span>    
+                                    </div>
                                 </div>
-                            </div>
-                            <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
-                                <div v-for="(estimate, a) in state.paginate(expense.estimates)" :key="a" class="grid">
-                                    <div class="flex text-xs my-auto">
-                                        <div class="text-right w-2/5"
-                                            :class="estimate.estimate == null? 'invisible' : ''">
-                                            <span>x</span>
-                                            {{estimate.estimate}}</div>
-                                        <div class="ml-1 w-3/5 flex justify-between">
-                                            <span>=</span>
-                                            <span>{{formatMoney(expense.getEstimatePriceByQuantity(estimate.itemQuantity))}}</span>
+                                <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
+                                    <div v-for="(estimate, a) in state.paginate(expense.estimates)" :key="a" class="grid">
+                                        <div class="flex text-xs my-auto">
+                                            <div class="text-right w-2/5"
+                                                :class="estimate.estimate == null? 'invisible' : ''">
+                                                <span>x</span>
+                                                {{estimate.estimate}}</div>
+                                            <div class="ml-1 w-3/5 flex justify-between">
+                                                <span>=</span>
+                                                <span>{{formatMoney(expense.getEstimatePriceByQuantity(estimate.itemQuantity))}}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <!-- Service Total Expandable -->
-                <div class="border-t-2 border-dotted grid grid-cols-2 mb-4">
-                    <div>
-                    </div>
-                    <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength}`">
-                        <div v-for="(quantity, y) in state.meta.displayedQuantities" :key="y" class="my-auto">
-                            <div class="text-xs flex py-1">
-                                <div class="w-2/5"></div>
-                                <div class="ml-1 w-3/5 flex justify-between">
-                                    <span>=</span>
-                                    <span class="underline">
-                                        {{formatMoney(service.getTotalExpensesByQuantity(quantity))}}</span>
+                    <!-- Service Total Expandable -->
+                    <div class="border-t-2 border-dotted grid grid-cols-2 mb-4">
+                        <div>
+                        </div>
+                        <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength}`">
+                            <div v-for="(quantity, y) in state.meta.displayedQuantities" :key="y" class="my-auto">
+                                <div class="text-xs flex py-1">
+                                    <div class="w-2/5"></div>
+                                    <div class="ml-1 w-3/5 flex justify-between">
+                                        <span>=</span>
+                                        <span class="underline">
+                                            {{formatMoney(service.getTotalExpensesByQuantity(quantity))}}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </transition>
         </div>
         
         <!-- Total for all Services -->
@@ -237,11 +247,15 @@ export default {
             default: 2
         }
     },
-    emits: ['initialized'],
+    emits: ['initialized', 'toggled'],
     setup(props, {emit}) {
         const currency = inject('currency').abbreviation;
         const state = reactive({
             meta: {
+                areAllServicesExpanded: computed(()=>
+                    state.data.services.filter(service => 
+                        !service.isExpanded).length == 0
+                ),
                 quantitiesColumnLength: computed(()=> 
                     Math.min(state.data.quantities.length, 
                         props.maxQuantityViewable)
@@ -289,6 +303,21 @@ export default {
             else return ''
         }
 
+        const emitToggled = ()=> {
+            const areAllExpanded = state.meta.areAllServicesExpanded;
+            const toggle = ()=> {
+                state.data.services
+                    .filter(service => service.isExpanded == state.meta.areAllServicesExpanded)
+                    .forEach(service => {
+                        service.isExpanded = !service.isExpanded;
+                });
+                emitToggled();
+            }
+            emit('toggled', {
+                areAllExpanded, toggle
+            });
+        }
+
         const initializeServices = ()=> {
             state.data.services = [];
             if (props.services) {
@@ -312,13 +341,14 @@ export default {
                 state.data.quantities.forEach(q => 
                     totals[q] = state.getServicePriceByQuantity(q, false))
                 emit('initialized', totals);
+                emitToggled();
             }
         }
 
         watch(()=>props.services, initializeServices);
 
         return {
-            state, formatMoney, formatQuantity
+            state, formatMoney, formatQuantity, emitToggled
         }
     }
 }

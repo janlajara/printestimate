@@ -3,8 +3,8 @@
         <div class="bg-gray-100 w-full rounded-md p-4 relative my-4">
             <div class="px-4 absolute right-0 cursor-pointer z-10" 
                     @click="state.data.expandAll.toggle">
-                <span class="material-icons ">
-                    {{state.data.expandAll.isAllExpanded? 'unfold_more' : 'unfold_less'}}
+                <span class="material-icons bg-gray-300 rounded-full p-1">
+                    {{state.data.expandAll.isAllExpanded? 'unfold_less' : 'unfold_more'}}
                 </span>
             </div>
             <div class="flow-root">
@@ -80,11 +80,11 @@ export default {
             data: {
                 expandAll: {
                   isAllExpanded: computed(()=> 
-                    state.data.services.find(x=> !x.isExpanded) != null),
+                    state.data.services.filter(x=> !x.isExpanded) == 0),
                   toggle: ()=>{
                       const isAllExpanded = state.data.expandAll.isAllExpanded;
                       state.data.services
-                        .filter(x=> x.isExpanded != isAllExpanded)
+                        .filter(x=> x.isExpanded == isAllExpanded)
                         .forEach(x=> {
                             x.isExpanded = !x.isExpanded;
                       });

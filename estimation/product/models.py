@@ -112,6 +112,7 @@ class ProductEstimate(models.Model):
 
     def set_material_spoilage_rate(self, spoilage_rate):
         self.material_spoilage_rate = spoilage_rate
+        self.save()
         
         for component in self.product.components.all():
             for material in component.materials.all():

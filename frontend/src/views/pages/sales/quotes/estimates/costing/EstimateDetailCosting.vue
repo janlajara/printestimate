@@ -15,7 +15,7 @@
                         <div v-for="(quantity, key) in 
                                 state.components.paginator.paginate(state.data.quantities)" :key="key"
                             class="flex justify-center">
-                            <span class="font-bold">{{quantity}}</span>
+                            <span class="font-bold text-secondary">{{quantity}}</span>
                         </div>
                     </div>
                     <div class="absolute right-0">

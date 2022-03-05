@@ -11,9 +11,9 @@
                     name="Name"  placeholder="Name"
                     type="text" :value="state.data.name" required
                     @input="value => state.data.name = value"/>
-                <InputText class="col-span-2"
+                <InputTextarea class="col-span-2"
                     name="Description"  placeholder="Description"  
-                    type="text" :value="state.data.description" required
+                    :value="state.data.description" required
                     @input="value => state.data.description = value"/>
                 <InputTextLookup name="Product Class" required
                     :disabled="!state.isCreate"
@@ -57,6 +57,7 @@
 import Modal from '@/components/Modal.vue';
 import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
+import InputTextarea from '@/components/InputTextarea.vue';
 import InputTextLookup from '@/components/InputTextLookup.vue';
 import ProductComponentsForm from './components/ProductComponentsForm.vue';
 import ProductServicesForm from './services/ProductServicesForm.vue';
@@ -66,7 +67,7 @@ import {MetaProductApi, ProductTemplateApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Modal, Section, InputText, InputTextLookup, 
+        Modal, Section, InputText, InputTextarea, InputTextLookup, 
         ProductComponentsForm, ProductServicesForm
     },
     props: {

@@ -1,6 +1,10 @@
 <template>
     <div class="input">
-        <label class="input-label">{{$props.name}}</label>
+        <label class="input-label">
+          {{$props.name}}
+          <span v-if="$props.required" 
+                class="text-secondary-light">*</span>
+        </label>
         <div class="rounded-md shadow-sm">
             <textarea class="rounded input-field w-full"
               :value="$props.value" :placeholder="$props.placeholder" 
@@ -16,7 +20,8 @@ export default {
     props: {
         name: String,
         value: String,
-        placeholder: String
+        placeholder: String,
+        required: Boolean
     },
     emits: ['input']
 }

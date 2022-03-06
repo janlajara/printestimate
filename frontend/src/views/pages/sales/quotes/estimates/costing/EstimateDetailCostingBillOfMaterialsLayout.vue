@@ -1,5 +1,6 @@
 <template>
-    <div class="border-t-2 border-dotted text-gray-500 grid grid-cols-2 py-1">
+    <div v-if="state.data.layouts && state.data.layouts.length > 0"
+        class="border-t-2 border-dotted text-gray-500 grid grid-cols-2 py-1">
         <div class="text-sm">
             <div class="ml-8 my-auto">Layout</div>
             <div v-if="state.data.stats" 

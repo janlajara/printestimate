@@ -80,6 +80,7 @@ class ProductEstimate(models.Model):
                 for material in component.materials.all():
                     me = material.estimates
                     material_estimates.append(me)
+                    
             return material_estimates
 
         def _get_service_estimates(services):
@@ -87,13 +88,11 @@ class ProductEstimate(models.Model):
 
             def __append_to_service_estimates(estimate):
                 service_estimates.append(estimate)
-            
             for service in services:
                 se = service.estimates
                 service_estimates.append(se)
-
             return service_estimates
-
+            
         product_estimates = []
         order_quantities = [estimate_quantity.quantity 
             for estimate_quantity in self.estimate_quantities.all()]
@@ -101,6 +100,7 @@ class ProductEstimate(models.Model):
         product = self.product
         product_template_id = (self.product_template.pk 
             if self.product_template is not None else None)
+
         material_estimates = _get_material_estimates(product.components.all())
         service_estimates = _get_service_estimates(product.services.all())
 
@@ -413,16 +413,22 @@ class Material(PolymorphicModel):
             for estimate_quantity 
             in product_estimate.estimate_quantities.all()]
         material_estimate = self.estimate(quantities, self.spoilage_rate)
-
         return material_estimate
 
     def estimate(self, order_quantities, spoilage_rate=0):
         if not isinstance(order_quantities, list):
             raise Exception("Provided argument to method 'estimate' must be a list of integers.")
-        material = Material.Material(self.label, self.price, 
+        material_estimate = Material.Material(self.label, self.price, 
             self.item.base_uom, spoilage_rate)
+
+        estimates = []
+        for quantity in order_quantities:
+            estimate = Material.Estimate(quantity, self.component.quantity,
+                spoilage_rate)
+            estimates.append(estimate)
+        material_estimate.estimates = estimates
         
-        return material
+        return material_estimate
         
 
 class TapeMaterial(Material):
@@ -712,7 +718,6 @@ class Service(models.Model):
             for estimate_quantity 
             in product_estimate.estimate_quantities.all()]
         service_estimate = self.estimate(quantities)
-
         return service_estimate
 
     def estimate(self, order_quantities):
@@ -724,11 +729,9 @@ class Service(models.Model):
 
             for activity_expense_estimate in activity_expense_estimates:
                 expense_estimates = []
-
                 for quantity in order_quantities:
                     estimate = activity_expense_estimate.estimate(quantity)
                     expense_estimates.append(estimate)
-                
                 aee = ActivityExpenseEstimate.Expense(
                     activity_expense_estimate.name,
                     activity_expense_estimate.rate,
@@ -762,9 +765,8 @@ class Service(models.Model):
                     operation_estimate.name, item_name,
                     activity_estimates)
                 results.append(oe)
-            
             return results
-
+        
         operation_estimates = _get_operation_estimates(self.operation_estimates.all())
         service_estimate = Service.Estimate(self.name, operation_estimates)
 
@@ -807,7 +809,7 @@ class OperationEstimate(models.Model):
 
     def get_costing_measurement(self, order_quantity):
         estimate_variable_type = self.service.estimate_variable_type
-
+        
         if estimate_variable_type is not None and \
                 self.service.costing_measure is not None:
 
@@ -816,16 +818,15 @@ class OperationEstimate(models.Model):
                 else 'c%s' % (self.service.component.pk) )
             key = '%s-%s' % (prefix, order_quantity)
             measures_mapping = self.measures_mapping_cache.get(key)
-
+            
             if measures_mapping is None:
-                
                 if is_material_based:
                     material_estimate = self.material.estimates.estimates_map.get(
-                        order_quantity)      
+                        order_quantity)
                     measures_mapping = material_estimate.costing_measurements_map
                 else:
                     measures_mapping = self.service.component.get_costing_measurements_map(order_quantity)
-
+                
                 self.measures_mapping_cache[key] = measures_mapping
             
             measures = measures_mapping.get(estimate_variable_type)
@@ -992,7 +993,7 @@ class ActivityExpenseEstimate(models.Model):
         activity_estimate = self.activity_estimate
         operation = activity_estimate.operation_estimate
         costing_measurement = operation.get_costing_measurement(order_quantity)
-
+        
         if costing_measurement is not None:
             duration = activity_estimate.get_duration(costing_measurement)
             estimate = ActivityExpenseEstimate.Estimate(

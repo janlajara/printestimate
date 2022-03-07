@@ -41,9 +41,20 @@ class ProductEstimate(models.Model):
             self.order_quantities = order_quantities
             self.material_estimates = material_estimates
             self.service_estimates = service_estimates
-
+    
+        @property
+        def total_prices_map(self):
+            def _initialize_totals(container, estimates):
+                for estimate in estimates:
+                    for (key, value) in estimate.total_prices_map.items():
+                        container[key] = container.get(key, 0) + value
+            totals = {}
+            _initialize_totals(totals, self.material_estimates + self.service_estimates)
+            return totals
+            
     objects = ProductEstimateManager()
-    product_template = models.ForeignKey(ProductTemplate, null=True, on_delete=models.SET_NULL)
+    product_template = models.ForeignKey(ProductTemplate, null=True, 
+        on_delete=models.SET_NULL, related_name='product_estimates')
     material_spoilage_rate = models.DecimalField(max_digits=5, decimal_places=2,
         validators=[MinValueValidator(0), MaxValueValidator(100)], default=0)
     created_date = models.DateTimeField(auto_now_add=True)
@@ -309,6 +320,12 @@ class Material(PolymorphicModel):
             self.spoilage_rate = spoilage_rate
             self.estimates = estimates
             self.layouts_meta = []
+
+        @cached_property
+        def total_prices_map(self):
+            return {estimate.order_quantity: 
+                estimate.estimated_total_quantity * self.rate 
+                for estimate in self.estimates}
 
         @cached_property
         def estimates_map(self):
@@ -695,6 +712,14 @@ class Service(models.Model):
         def __init__(self, name, operation_estimates):
             self.name = name
             self.operation_estimates = operation_estimates
+        
+        @property
+        def total_prices_map(self):
+            totals = {}
+            for estimate in self.operation_estimates:
+                for (key, value) in estimate.total_prices_map.items():
+                    totals[key] = totals.get(key, 0) + value
+            return totals 
 
     objects = ServiceManager()
     name = models.CharField(max_length=50, null=True)
@@ -798,6 +823,14 @@ class OperationEstimate(models.Model):
             self.name = name
             self.item_name = item_name
             self.activity_estimates = activity_estimates
+
+        @property
+        def total_prices_map(self):
+            totals = {}
+            for estimate in self.activity_estimates:
+                for (key, value) in estimate.total_prices_map.items():
+                    totals[key] = totals.get(key, 0) + value
+            return totals
             
     objects = OperationEstimateManager()
     name = models.CharField(max_length=50, null=True)
@@ -868,6 +901,14 @@ class ActivityEstimate(models.Model):
             self.name = name
             self.notes = notes
             self.activity_expense_estimates = activity_expense_estimates
+        
+        @property
+        def total_prices_map(self):
+            totals = {}
+            for estimate in self.activity_expense_estimates:
+                for (key, value) in estimate.total_prices_map.items():
+                    totals[key] = totals.get(key, 0) + value
+            return totals
 
     objects = ActivityEstimateManager()
     name = models.CharField(max_length=50, null=True)
@@ -940,6 +981,11 @@ class ActivityExpenseEstimate(models.Model):
             self.rate = rate
             self.rate_label = rate_label
             self.estimates = estimates
+
+        @property
+        def total_prices_map(self):
+            return {estimate.order_quantity: estimate.cost 
+                for estimate in self.estimates}
 
     class Estimate:
         def __init__(self, uom, type, rate, order_quantity, 

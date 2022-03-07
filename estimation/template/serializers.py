@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 from inventory.models import Item
+from estimation.product.models import ProductEstimate
+from djmoney.contrib.django_rest_framework import MoneyField
 from estimation.machine.serializers import MachineSerializer
 from estimation.template.models import ProductTemplate, ComponentTemplate, \
     MaterialTemplate, ServiceTemplate, OperationTemplate, OperationOptionTemplate, \
@@ -215,14 +217,28 @@ class ServiceTemplateSerializerField(serializers.Field):
             raise Exception(deserialized.errors)
 
 
+class ProductEstimateEstimateSerializer(serializers.Serializer):
+    total_prices_map = serializers.DictField(child=MoneyField(
+        max_digits=14, decimal_places=2, read_only=False, default_currency='PHP'))
+
+
+class ProductEstimateListSerializer(serializers.ModelSerializer):
+    estimates = ProductEstimateEstimateSerializer()
+
+    class Meta:
+        model = ProductEstimate
+        fields = ['id', 'order_quantities', 'updated_date', 'estimates']
+
+
 class ProductTemplateSerializer(serializers.ModelSerializer):
     component_templates = ComponentTemplatePolymorphicSerializer(many=True)
     service_templates = ServiceTemplateSerializerField()
+    product_estimates = ProductEstimateListSerializer(many=True)
 
     class Meta:
         model = ProductTemplate
         fields = ['id', 'code', 'name', 'description', 'meta_product',
-            'component_templates', 'service_templates']
+            'component_templates', 'service_templates', 'product_estimates']
 
 
 class ProductTemplateListSerializer(serializers.ModelSerializer):

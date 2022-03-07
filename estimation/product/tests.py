@@ -419,6 +419,33 @@ def test_product_estimate__set_material_spoilage_rate(db, product_template):
             assert material.spoilage_rate == 10
 
 
+def test_product__estimate_total_prices_map(db, product_template):
+    product_estimate = ProductEstimate.objects.create_product_estimate(
+        product_template, [100,200,300])
+    product = product_estimate.product
+
+    assert product_estimate.estimates.total_prices_map is not None
+    assert len(product_estimate.estimates.total_prices_map.items()) == 3
+
+    # Material Totals
+    material_estimates = product_estimate.estimates.material_estimates
+
+    for estimate in material_estimates:
+        assert estimate.total_prices_map is not None
+        assert len(estimate.total_prices_map.items()) == 3
+
+    # Service Totals
+    print_service = product.services.filter(name='Printing').first()
+    print_service_estimate = print_service.estimates
+
+    assert print_service_estimate.total_prices_map is not None
+    assert len(print_service_estimate.total_prices_map.items()) == 3
+
+    for operation_estimate in print_service_estimate.operation_estimates:
+        assert operation_estimate.total_prices_map is not None
+        assert len(operation_estimate.total_prices_map.items()) == 3
+
+
 def test_product_estimate_output_json(db, product_template):
     start_time = time.time()
     product_estimate = ProductEstimate.objects.create_product_estimate(

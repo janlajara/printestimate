@@ -54,17 +54,17 @@ const routes = [
         props: true,
         component: ()=>import('../views/pages/sales/templates/ProductTemplateDetail.vue')
       }, 
-      {
-        path: 'sales/quotes/estimates',
-        name: 'sales-quotes-estimates',
-        component: ()=>import('../views/pages/sales/quotes/estimates/EstimateList.vue'),
+      /*{
+        path: 'sales/products/estimates',
+        name: 'sales-products-estimates',
+        component: ()=>import('../views/pages/sales/estimates/EstimateList.vue'),
         meta: {label: 'Estimates', group: 'Sales'}
-      },
+      },*/
       {
-        path: 'sales/quotes/estimates/:id',
-        name: 'sales-quote-estimates-detail',
+        path: 'sales/products/estimates/:id',
+        name: 'sales-product-estimates-detail',
         props: true,
-        component: ()=>import('../views/pages/sales/quotes/estimates/EstimateDetail.vue')
+        component: ()=>import('../views/pages/sales/estimates/EstimateDetail.vue')
       },
       {
         path: 'admin/inventory',

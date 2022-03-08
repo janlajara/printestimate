@@ -37,13 +37,16 @@
             </DescriptionList>
         </Section>
         <div class="md:grid md:grid-cols-2 md:gap-6">
-            <!--ProductServiceList 
-                :product-services="state.data.serviceTemplates"/--> 
             <ServicesList
                 :services="state.data.serviceTemplates"/>
             <Section heading="Components">
                 <ProductComponentList 
                     :product-components="state.data.componentTemplates"/>
+            </Section>
+            <Section heading="Estimates">
+                <ProductEstimatesList
+                    :template-id="parseInt(state.id)"
+                    :estimates="state.data.productEstimates"/>
             </Section>
         </div>
     </Page>
@@ -59,6 +62,7 @@ import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import ProductComponentList from './components/ProductComponentList.vue';
 import ServicesList from '../commons/ServicesList.vue';
 import ProductTemplateModal from './ProductTemplateModal.vue';
+import ProductEstimatesList from './estimates/ProductEstimatesList.vue';
 
 import {useRoute} from 'vue-router';
 import {reactive, onBeforeMount} from 'vue';
@@ -67,7 +71,7 @@ import {ProductTemplateApi} from '@/utils/apis.js';
 export default {
     components: {
         Page, Button, Section, DescriptionList, DescriptionItem, DeleteRecordDialog,
-        ProductComponentList, ServicesList, ProductTemplateModal
+        ProductComponentList, ServicesList, ProductTemplateModal, ProductEstimatesList
     },
     setup() {
         const route = useRoute();
@@ -119,7 +123,8 @@ export default {
                                 notes: null
                             }))
                         }))
-                    }))
+                    })),
+                    productEstimates: response.product_estimates
                 }
             }
             state.isProcessing = false;

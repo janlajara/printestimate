@@ -7,9 +7,11 @@
             class="pt-4 text-sm text-red-600">*{{state.error}}</div>
         <Section heading="General Information" heading-position="side"> 
             <div class="md:grid md:gap-4 md:grid-cols-3">
-                <InputTextLookup name="Product Template" required
-                    v-show="state.isCreate"
-                    placeholder="Search..." class="flex-grow md:col-span-2"
+                <InputTextLookup name="Product Template" 
+                    class="flex-grow md:col-span-2"
+                    required :disabled="$props.presetData && $props.presetData.template != null"
+                    v-show="state.isCreate" 
+                    placeholder="Search..." 
                     :text="state.form.templateLookup.text"
                     @select="value => state.form.templateLookup.select(value)"
                     @input="value => state.form.templateLookup.search(value)"
@@ -49,7 +51,8 @@ export default {
     },
     props: {
         isOpen: Boolean,
-        productEstimateId: String
+        productEstimateId: String,
+        presetData: Object
     },
     emits: ['toggle', 'saved'],
     setup(props, {emit}) {
@@ -162,10 +165,17 @@ export default {
             state.isProcessing = false;
         }
 
+        const initializePreset = ()=> {
+            if (props.presetData && props.presetData.template != null) {
+                state.data.template = props.presetData.template;
+            }
+        }
+
         watch(()=> props.isOpen, async ()=> { 
             if (props.isOpen) {
                 state.error = ''; 
                 populateProductTemplateList();
+                initializePreset();
                 if (state.id) retrieveEstimateById(state.id);
             } else {
                 state.clear();

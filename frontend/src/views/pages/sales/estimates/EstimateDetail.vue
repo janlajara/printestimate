@@ -1,5 +1,5 @@
 <template>
-    <Page :title="`Estimate : CE-${state.data.estimateCode}`">
+    <Page :title="`Estimate : ${state.data.estimateCode}`">
         <hr class="my-4"/>
         <div class="flex gap-4">
             <Button color="secondary" icon="arrow_back"
@@ -115,9 +115,15 @@ export default {
         }
 
         const retrieveEstimateBydId = async (id)=> {
+            state.isProcessing = true;
             if (id != null) {
                 const response = await EstimateApi.retrieveEstimate(id);
                 if (response) {
+                    state.data.estimateCode = response.estimate_code;
+                    state.data.templateCode = response.template_code;
+                    state.data.templateName = response.name;
+                    state.data.templateDescription = response.description;
+                    state.data.quantities = response.order_quantities;
                     state.data.specifications.components = 
                         response.product.components.map(x => ({
                             name: x.name,
@@ -141,19 +147,13 @@ export default {
                         }));
                 }
             }
+            state.isProcessing = false;
         }
 
         const retrieveEstimateCostsById = async (id)=> {
-            state.isProcessing = true;
             if (id != null) {
                 const response = await EstimateApi.retrieveEstimateCosts(id);
                 if (response) {
-                    state.data.estimateCode = response.id;
-                    state.data.templateCode = response.template_code;
-                    state.data.templateName = response.name;
-                    state.data.templateDescription = response.description;
-                    state.data.quantities = response.order_quantities;
-                    
                     if (response.estimates) {
                         state.data.costing.billOfMaterials = response.estimates.material_estimates.map(me => ({
                             name: me.name, rate: parseFloat(me.rate), uom: me.uom, 
@@ -187,7 +187,6 @@ export default {
                     }
                 }
             }
-            state.isProcessing = false;
         }
 
         const formatMoney = (amount)=> {

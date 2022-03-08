@@ -207,9 +207,8 @@ class ProductEstimateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductEstimate
-        fields = ['id', 'name', 'description', 'template_code', 
-            'order_quantities', 'material_spoilage_rate',
-            'product']
+        fields = ['id', 'name', 'description', 'estimate_code', 'template_code', 
+            'order_quantities', 'material_spoilage_rate', 'product']
 
 
 class ProductEstimateListSerializer(serializers.ModelSerializer):

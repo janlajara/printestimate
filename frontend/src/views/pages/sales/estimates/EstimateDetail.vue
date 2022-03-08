@@ -27,7 +27,7 @@
             </DeleteRecordDialog>
         </div>
         <Section>
-            <DescriptionList class="md:grid-cols-3">
+            <DescriptionList class="md:grid-cols-2">
                 <DescriptionItem  
                     name="Template" :loader="state.isProcessing" 
                     :value="`[${state.data.templateCode}] ${state.data.templateName}`"/>

@@ -31,7 +31,7 @@ import Table from '@/components/Table.vue';
 import Row from '@/components/Row.vue';
 import Cell from '@/components/Cell.vue';
 import Button from '@/components/Button.vue';
-import EstimateModal from '@/views/pages/sales/quotes/estimates/EstimateModal.vue';
+import EstimateModal from '@/views/pages/sales/estimates/EstimateModal.vue';
 
 import {reactive, computed} from 'vue';
 import {useRouter} from 'vue-router';
@@ -63,7 +63,7 @@ export default {
 
         const goToDetail = (id)=> {
             router.push({ 
-                name: 'sales-quote-estimates-detail', 
+                name: 'sales-product-estimates-detail', 
                 params: {id}});
         };
 

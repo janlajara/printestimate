@@ -27,12 +27,10 @@
             </DeleteRecordDialog>
         </div>
         <Section>
-            <DescriptionList class="md:grid-cols-3">
+            <DescriptionList class="md:grid-cols-4">
                 <DescriptionItem :loader="state.isProcessing" 
                     name="Code" :value="state.data.code"/>
-                <DescriptionItem :loader="state.isProcessing" 
-                    name="Name" :value="state.data.name"/>
-                <DescriptionItem :loader="state.isProcessing" 
+                <DescriptionItem :loader="state.isProcessing" class="col-span-3"
                     name="Description" :value="state.data.description"/>
             </DescriptionList>
         </Section>

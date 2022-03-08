@@ -8,7 +8,7 @@
 </template>
 <script>
 import EstimateDetailSpecificationComponents from './EstimateDetailSpecificationComponents.vue';
-import ServicesList from '../../../commons/ServicesList.vue'; 
+import ServicesList from '@/views/pages/sales/commons/ServicesList.vue'; 
 
 export default{
     components: {

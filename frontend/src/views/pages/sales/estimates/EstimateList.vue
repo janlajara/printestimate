@@ -82,7 +82,7 @@ export default {
 
         const goToDetail = (id)=> {
             router.push({ 
-                name: 'sales-quote-estimates-detail', 
+                name: 'sales-product-estimates-detail', 
                 params: {id}});
         };
 

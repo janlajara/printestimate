@@ -217,17 +217,11 @@ class ServiceTemplateSerializerField(serializers.Field):
             raise Exception(deserialized.errors)
 
 
-class ProductEstimateEstimateSerializer(serializers.Serializer):
-    total_prices_map = serializers.DictField(child=MoneyField(
-        max_digits=14, decimal_places=2, read_only=False, default_currency='PHP'))
-
-
 class ProductEstimateListSerializer(serializers.ModelSerializer):
-    estimates = ProductEstimateEstimateSerializer()
-
     class Meta:
         model = ProductEstimate
-        fields = ['id', 'order_quantities', 'updated_date', 'estimates']
+        fields = ['id', 'order_quantities', 'estimate_code', 
+            'material_spoilage_rate', 'updated_date']
 
 
 class ProductTemplateSerializer(serializers.ModelSerializer):

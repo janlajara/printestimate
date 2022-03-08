@@ -61,6 +61,10 @@ class ProductEstimate(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
     
     @property
+    def estimate_code(self):
+        return 'CE-%s' %  (str(self.id).zfill(4))
+
+    @property
     def name(self):
         if self.product is not None:
             return self.product.name

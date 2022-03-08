@@ -30,7 +30,7 @@
             <DescriptionList class="md:grid-cols-2">
                 <DescriptionItem  
                     name="Template" :loader="state.isProcessing" 
-                    :value="`[${state.data.templateCode}] ${state.data.templateName}`"/>
+                    :value="`${state.data.templateCode} - ${state.data.templateName}`"/>
                 <DescriptionItem :loader="state.isProcessing"
                     name="Description" :value="state.data.templateDescription"/>
             </DescriptionList>

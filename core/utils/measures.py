@@ -9,6 +9,11 @@ from django_measurement.models import MeasurementField
 
 # Create your models here.
 class Measure:
+    class Unit:
+        def __init__(self, value, display_name):
+            self.value = value
+            self.display_name = display_name
+
     QUANTITY_UNITS = [
         ('set', 'Set'),
         ('pad', 'Pad'),
@@ -94,6 +99,33 @@ class CostingMeasure:
         (QUANTITY, 'Quantity'),
         (PERIMETER, 'Perimeter'),
     ]
+
+    def __init__(self, name, units):
+        self.name = name
+        self.units = units
+
+    @classmethod
+    def create(cls, name):
+        uom_choices = CostingMeasure.get_unit_of_measure_choices([name])
+        units = []
+
+        for uom_choice in uom_choices:
+            unit = Measure.Unit(uom_choice[0], uom_choice[1])
+            units.append(unit)
+
+        costing_measure = CostingMeasure(name, units)
+        return costing_measure
+    
+    @classmethod
+    def get_all_measures(cls):
+        measures = []
+
+        for type in CostingMeasure.TYPES:
+            measure_name = type[0]
+            measure = CostingMeasure.create(measure_name)
+            measures.append(measure)
+        
+        return measures
 
     @classmethod
     def get_base_measure(cls, costing_measure):

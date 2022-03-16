@@ -14,7 +14,7 @@
                     name="Material Type" required 
                     @input="(value)=> {
                         state.data.type = value;
-                        state.costingMeasure = '';
+                        state.data.costingMeasure = '';
                         state.data.component = '';
                     }"
                     :options="state.meta.materialTypeChoices.map(c=>({
@@ -27,6 +27,13 @@
                     :options="state.meta.costingMeasureChoices.map(c=>({
                         value: c.value, label: c.label,
                         isSelected: state.data.costingMeasure == c.value
+                    }))"/>
+                <InputSelect :disabled="state.data.costingMeasure == ''"
+                    name="Unit of Measure" required 
+                    @input="(value)=>state.data.uom = value"
+                    :options="state.meta.costingMeasureUnitsChoices.map(c=>({
+                        value: c.value, label: c.label,
+                        isSelected: state.data.uom == c.value
                     }))"/>
             </div>
         </Section>
@@ -70,7 +77,7 @@ import InputSelect from '@/components/InputSelect.vue';
 import MetaServiceOperationsListForm from './MetaServiceOperationsListForm.vue';
 
 import {reactive, computed, watch, onBeforeMount} from 'vue';
-import {MetaProductApi, MetaServiceApi, OperationApi} from '@/utils/apis.js';
+import {MetaProductApi, MetaServiceApi, OperationApi, CostingMeasureUnitsApi} from '@/utils/apis.js';
 
 export default {
     components: {
@@ -95,6 +102,7 @@ export default {
             data: {
                 name: '', 
                 type: '', 
+                uom: '',
                 costingMeasure: '',
                 component: '',
                 estimateVariableType: '',
@@ -110,6 +118,16 @@ export default {
                     if (mapping && mapping[0]) {
                         return mapping[0].value.map(c=> ({
                             value: c.value, label: c.display
+                        }));
+                    } else return [];
+                }),
+                costingMeasureUnitsChoicesMapping: [],
+                costingMeasureUnitsChoices: computed(()=> {
+                    const mapping =  state.meta.costingMeasureUnitsChoicesMapping.filter(
+                        c => c.name == state.data.costingMeasure);
+                    if (mapping && mapping[0]) {
+                        return mapping[0].units.map(c=> ({
+                            value: c.value, label: c.display_name
                         }));
                     } else return [];
                 }),
@@ -140,6 +158,7 @@ export default {
                 state.data = {
                     name: '', 
                     type: '', 
+                    uom: '',
                     costingMeasure: '',
                     component: '',
                     estimateVariableType: '',
@@ -164,6 +183,7 @@ export default {
                     name: state.data.name,
                     type: state.data.type,
                     costing_measure: state.data.costingMeasure,
+                    uom: state.data.uom,
                     meta_component: state.data.component,
                     estimate_variable_type: state.data.estimateVariableType,
                     meta_operations: state.data.metaOperations.map( x => ({
@@ -190,6 +210,7 @@ export default {
                         name: response.name, 
                         type: response.type, 
                         costingMeasure: response.costing_measure,
+                        uom: response.uom,
                         component: response.meta_component,
                         estimateVariableType: response.estimate_variable_type,
                         metaOperations: response.meta_operations.map( x => ({
@@ -230,6 +251,13 @@ export default {
                     key: c.material, value:c.measure_choices
                 }));
             }
+        } 
+
+        const listCostingMeasureUnits = async () => {
+            const response = await CostingMeasureUnitsApi.listUnits();
+            if (response) {
+                state.meta.costingMeasureUnitsChoicesMapping = response;
+            }
         }
 
         const saveService = async (service) => {
@@ -258,6 +286,7 @@ export default {
         })
         onBeforeMount(async ()=> {
             await listCostingMeasures();
+            await listCostingMeasureUnits();
             await retrieveServiceMetaData(state.metaProductId);
         })
 

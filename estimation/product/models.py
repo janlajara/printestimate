@@ -1,4 +1,5 @@
 import math
+from measurement.utils import guess
 from cached_property import cached_property
 from decimal import Decimal
 from django.db import models
@@ -8,7 +9,7 @@ from core.utils.measures import Quantity, CostingMeasure, Measure
 from measurement.measures import Time
 from inventory.models import Item
 from inventory.properties.models import Shape, Tape, Line, Paper, Panel, Liquid
-from estimation.metaproduct.models import MetaEstimateVariable
+from estimation.metaproduct.models import MetaEstimateVariable, MetaService
 from estimation.process.models import ActivityExpense, Speed
 from estimation.template.models import ProductTemplate, ComponentTemplate
 from estimation.machine.models import Machine, ChildSheet
@@ -691,18 +692,15 @@ class ServiceManager(models.Manager):
         sequence = service_template.sequence
         costing_measure = service_template.costing_measure
         estimate_variable_type = service_template.estimate_variable_type
+        input_quantity = service_template.input_quantity
 
         service = Service.objects.create(name=name, product=product, 
             sequence=sequence, component=component, costing_measure=costing_measure,
-            estimate_variable_type=estimate_variable_type)
+            estimate_variable_type=estimate_variable_type, input_quantity=input_quantity)
         component_materials = component.materials.all()
 
         for operation_template in service_template.operation_templates.all():
-            if estimate_variable_type in [MetaEstimateVariable.RAW_MATERIAL,
-                    MetaEstimateVariable.MACHINE_RUN, 
-                    MetaEstimateVariable.RAW_TO_RUNNING_CUT,
-                    MetaEstimateVariable.RUNNING_TO_FINAL_CUT,
-                    MetaEstimateVariable.RAW_TO_FINAL_CUT]:
+            if service_template.measure_basis == MetaService.MeasureBasis.MATERIAL:
                 for component_material in component_materials:
                     _create_operation_estimate(operation_template, service, component_material)
             else:
@@ -738,6 +736,14 @@ class Service(models.Model):
     estimate_variable_type = models.CharField(
         choices=MetaEstimateVariable.TYPE_CHOICES,
         max_length=30, blank=True, null=True)
+    input_quantity = models.DecimalField(decimal_places=2, max_digits=7, default=0)
+    input_uom = models.CharField(max_length=20, choices=Measure.PRIMARY_UNITS,
+        default='pc')
+
+    @property
+    def input_measure(self):
+        if self.component is None:
+            return guess(self.input_quantity, self.input_uom)
 
     @property
     def estimates(self):
@@ -846,13 +852,21 @@ class OperationEstimate(models.Model):
 
     def get_costing_measurement(self, order_quantity):
         estimate_variable_type = self.service.estimate_variable_type
+        is_material_based = self.material is not None
+        is_component_based = not is_material_based and self.service.component is not None
+        is_input_quantity_based = not is_material_based and not is_component_based
         
         if estimate_variable_type is not None and \
                 self.service.costing_measure is not None:
 
-            is_material_based = self.material is not None
-            prefix = ('m%s' % (self.material.pk) if is_material_based
-                else 'c%s' % (self.service.component.pk) )
+            if is_input_quantity_based:
+                return self.service.input_measure
+
+            if is_material_based:
+                prefix = 'm%s' % (self.material.pk)
+            elif is_component_based:
+                prefix = 'c%s' % (self.service.component.pk)
+
             key = '%s-%s' % (prefix, order_quantity)
             measures_mapping = self.measures_mapping_cache.get(key)
             
@@ -861,9 +875,8 @@ class OperationEstimate(models.Model):
                     material_estimate = self.material.estimates.estimates_map.get(
                         order_quantity)
                     measures_mapping = material_estimate.costing_measurements_map
-                else:
+                elif is_component_based:
                     measures_mapping = self.service.component.get_costing_measurements_map(order_quantity)
-                
                 self.measures_mapping_cache[key] = measures_mapping
             
             measures = measures_mapping.get(estimate_variable_type)

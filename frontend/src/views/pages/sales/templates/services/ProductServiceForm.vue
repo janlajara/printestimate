@@ -3,27 +3,35 @@
         <p class="font-bold">{{state.service.name}}</p>
         <div v-if="state.error" 
             class="pt-4 text-sm text-red-600">*{{state.error}}</div>
-        <div class="md:grid md:gap-4 md:grid-cols-4">
-            <InputSelect 
-                v-for="(operation, key) in state.service.metaOperations" :key="key"
-                :name="operation.name" class="flex-grow md:col-span-2"
-                :multiple="operation.optionsType == 'Multiple'"
-                :required="operation.isRequired"
-                @input="(value)=> {
-                    if (operation.optionsType != 'Multiple') value = [value] 
-                    state.setValue(operation.id, value, key)}"
-                :options="operation.metaOperationOptions.map(c=>{
-                    let options = {
-                        value: c.id, label: c.label,
-                        isSelected: state.getValue(key)
-                            .find(x => x.meta_operation_option == c.id) != null};
-                    return options;
-                })"/>
+        <div>
+            <div v-for="(operation, key) in state.service.metaOperations" :key="key"
+                    class="md:grid md:gap-4 md:grid-cols-2">
+                <InputSelect 
+                    :name="operation.name" class="flex-grow"
+                    :multiple="operation.optionsType == 'Multiple'"
+                    :required="operation.isRequired"
+                    @input="(value)=> {
+                        if (operation.optionsType != 'Multiple') value = [value] 
+                        state.setValue(operation.id, value, key)}"
+                    :options="operation.metaOperationOptions.map(c=>{
+                        let options = {
+                            value: c.id, label: c.label,
+                            isSelected: state.getValue(key)
+                                .find(x => x.meta_operation_option == c.id) != null};
+                        return options;
+                    })"/>
+                <InputText v-if="state.service.measureBasis=='input'"
+                    type="number" required
+                    name="Input Quantity" :postfix="state.service.uom"
+                    @input="(value)=>state.data.input_quantity = value"
+                    :value="state.data.input_quantity"/> 
+            </div>
         </div>
     </div>
 </template>
 <script>
 import InputSelect from '@/components/InputSelect.vue';
+import InputText from '@/components/InputText.vue';
 import {reactive, onMounted, onBeforeMount} from 'vue';
 
 export default {
@@ -32,7 +40,7 @@ export default {
         value: Object
     },
     components: {
-        InputSelect
+        InputSelect, InputText
     },
     emits: ['input', 'load'],
     setup(props, {emit}) { 
@@ -42,6 +50,7 @@ export default {
             data: {
                 id: null,
                 meta_service: props.service.id,
+                input_quantity: 0,
                 operation_templates: []
             },
             validate: ()=> {

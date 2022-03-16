@@ -23,9 +23,10 @@ class ProductTemplate(models.Model):
             quantity=quantity, **kwargs)
         return component_template
 
-    def add_service_template(self, meta_service):
+    def add_service_template(self, meta_service, input_quantity=0):
         service_template = ServiceTemplate.objects.create(
-            product_template=self, meta_service=meta_service)
+            product_template=self, meta_service=meta_service,
+            input_quantity=input_quantity)
         return service_template
 
 
@@ -134,6 +135,7 @@ class ServiceTemplate(models.Model):
     product_template = models.ForeignKey(ProductTemplate, on_delete=models.CASCADE,
         related_name='service_templates')
     meta_service = models.ForeignKey(MetaService, on_delete=models.CASCADE)
+    input_quantity = models.DecimalField(decimal_places=2, max_digits=7, default=0)
 
     @property
     def name(self):
@@ -152,12 +154,20 @@ class ServiceTemplate(models.Model):
         return self.meta_service.type
 
     @property
+    def measure_basis(self):
+        return self.meta_service.measure_basis
+
+    @property
     def sequence(self):
         return self.meta_service.sequence
 
     @property
     def costing_measure(self):
         return self.meta_service.costing_measure
+
+    @property
+    def input_uom(self):
+        return self.meta_service.uom
 
     @property
     def estimate_variable_type(self):

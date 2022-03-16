@@ -103,7 +103,8 @@ class MetaServiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MetaService
-        fields = ['id', 'sequence', 'name', 'type', 'costing_measure', 'meta_operations',
+        fields = ['id', 'sequence', 'name', 'type', 'uom',
+            'costing_measure', 'measure_basis', 'meta_operations', 
             'meta_component', 'estimate_variable_type']
 
 

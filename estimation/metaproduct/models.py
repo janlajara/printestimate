@@ -142,6 +142,11 @@ class MetaComponent(MetaProductData):
 
 
 class MetaService(MetaProductData):
+    class MeasureBasis:
+        MATERIAL = 'material'
+        COMPONENT = 'component'
+        INPUT = 'input'
+
     sequence = models.IntegerField(default=0)
     costing_measure = models.CharField(max_length=15, choices=CostingMeasure.TYPES, 
         default=CostingMeasure.QUANTITY)
@@ -151,6 +156,19 @@ class MetaService(MetaProductData):
         blank=True, null=True)
     estimate_variable_type = models.CharField(choices=MetaEstimateVariable.TYPE_CHOICES,
         max_length=30, blank=True, null=True)
+
+    @property
+    def measure_basis(self):
+        if self.estimate_variable_type in [MetaEstimateVariable.RAW_MATERIAL,
+                MetaEstimateVariable.MACHINE_RUN, 
+                MetaEstimateVariable.RAW_TO_RUNNING_CUT,
+                MetaEstimateVariable.RUNNING_TO_FINAL_CUT,
+                MetaEstimateVariable.RAW_TO_FINAL_CUT]:
+            return MetaService.MeasureBasis.MATERIAL
+        elif self.meta_component is not None:
+            return MetaService.MeasureBasis.COMPONENT
+        else:
+            return MetaService.MeasureBasis.INPUT
 
 
 class MetaMaterialOption(models.Model):

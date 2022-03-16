@@ -13,3 +13,5 @@ export {MetaProductApi, MetaComponentApi, MetaServiceApi} from '@/utils/apis/est
 export {ProductTemplateApi, ComponentTemplateApi} from '@/utils/apis/estimation.templates.js'
 
 export {EstimateApi} from '@/utils/apis/estimation.quotes.js'
+
+export {CostingMeasureUnitsApi} from '@/utils/apis/core.utils.measures.js'

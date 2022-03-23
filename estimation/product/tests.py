@@ -6,7 +6,7 @@ from estimation.template.tests import meta_product, gto_workstation, \
     gto_machine, finishing_workstation
 from estimation.template.models import ProductTemplate
 from estimation.product.models import ProductEstimate, Product, \
-    Component, Material, EstimateQuantity
+    Component, Material, EstimateQuantity, Service, OperationEstimate
 from estimation.product import serializers
 from estimation.machine.models import Machine
 
@@ -466,5 +466,18 @@ def test_product_estimate_output_json(db, product_template):
     print('serialized', duration)
 
     print('runtime', time.time() - start_time)
-    assert duration <= 1
-    assert False
+    assert duration <= 1.5
+
+
+def test_product_service__input_measure(db):
+    product_estimate = ProductEstimate.objects.create()
+    product_estimate.set_estimate_quantities([100,200,300])
+    product = Product.objects.create(name='Form', description='This is a sample form',
+        product_estimate=product_estimate)
+    
+    service = Service.objects.create(name='Test Service', product=product, 
+        input_quantity=500, input_uom='sheet')
+    operation = OperationEstimate.objects.create(name='Test Operation', service=service)
+
+    assert service.input_measure is not None
+    assert service.input_measure.sheet == 500

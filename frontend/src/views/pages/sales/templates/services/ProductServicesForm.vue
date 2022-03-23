@@ -77,7 +77,8 @@ export default {
                 if (response) {
                     state.meta.services = response.map(obj => ({
                         id: obj.id, sequence: obj.sequence,
-                        name: obj.name, type: obj.type, uom: obj.uom,
+                        name: obj.name, type: obj.type, 
+                        uom: obj.uom, uom_plural: obj.uom_plural,
                         costingMeasure: obj.costing_measure,
                         measureBasis: obj.measure_basis,
                         metaOperations: obj.meta_operations.map( x => ({

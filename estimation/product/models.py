@@ -101,12 +101,15 @@ class ProductEstimate(models.Model):
 
         def _get_service_estimates(services):
             service_estimates = []
-
+            print('start')
             def __append_to_service_estimates(estimate):
                 service_estimates.append(estimate)
             for service in services:
+                print('   start', service.name)
                 se = service.estimates
                 service_estimates.append(se)
+                print('   end', service.name)
+            print('end')
             return service_estimates
             
         product_estimates = []
@@ -170,7 +173,7 @@ class ProductManager(models.Manager):
             component = Component.objects.create_component_by_template(component_template, product)
             components_map[component_template.pk] = component
     
-        for service_template in product_template.service_templates.all():
+        for service_template in product_template.service_templates.order_by('meta_service__sequence'):
             component = None
             if service_template.component_template is not None:
                 component = components_map.get(service_template.component_template.pk, None)
@@ -697,10 +700,11 @@ class ServiceManager(models.Manager):
         service = Service.objects.create(name=name, product=product, 
             sequence=sequence, component=component, costing_measure=costing_measure,
             estimate_variable_type=estimate_variable_type, input_quantity=input_quantity)
-        component_materials = component.materials.all()
+        component_materials = component.materials.all() if component is not None else []
 
         for operation_template in service_template.operation_templates.all():
-            if service_template.measure_basis == MetaService.MeasureBasis.MATERIAL:
+            if service_template.measure_basis == MetaService.MeasureBasis.MATERIAL and \
+                    len(component_materials) > 0:
                 for component_material in component_materials:
                     _create_operation_estimate(operation_template, service, component_material)
             else:
@@ -743,11 +747,14 @@ class Service(models.Model):
     @property
     def input_measure(self):
         if self.component is None:
-            return guess(self.input_quantity, self.input_uom)
+            if self.costing_measure == CostingMeasure.QUANTITY:
+                return Quantity(**{self.input_uom: self.input_quantity})
+            else:
+                return guess(self.input_quantity, self.input_uom)   
 
     @property
     def estimates(self):
-        product_estimate = self.component.product.product_estimate
+        product_estimate = self.product.product_estimate
         quantities = [
             estimate_quantity.quantity
             for estimate_quantity 
@@ -855,12 +862,9 @@ class OperationEstimate(models.Model):
         is_material_based = self.material is not None
         is_component_based = not is_material_based and self.service.component is not None
         is_input_quantity_based = not is_material_based and not is_component_based
-        
+
         if estimate_variable_type is not None and \
                 self.service.costing_measure is not None:
-
-            if is_input_quantity_based:
-                return self.service.input_measure
 
             if is_material_based:
                 prefix = 'm%s' % (self.material.pk)
@@ -883,6 +887,9 @@ class OperationEstimate(models.Model):
             if measures is not None:
                 result = measures.get(self.service.costing_measure, None)
                 return result
+
+        elif is_input_quantity_based:
+            return self.service.input_measure
 
 
 class ActivityEstimateManager(models.Manager):
@@ -967,7 +974,7 @@ class ActivityEstimate(models.Model):
                 base = mval / sval
                 multiplier = (contingency / 100) + 1
                 duration = __compute_overall(base * multiplier)
-
+        
         return Time(hr=duration)
 
     def _validate_measurement(self, measurement):
@@ -983,6 +990,8 @@ class ActivityEstimate(models.Model):
             uom = self.speed_estimate.measure_unit
             measure = Measure.get_measure(uom)
             raise MeasurementMismatch(measurement, measure)
+        except Exception as e:
+            raise e
 
 
 class SpeedEstimate(Speed):
@@ -1056,11 +1065,12 @@ class ActivityExpenseEstimate(models.Model):
         activity_estimate = self.activity_estimate
         operation = activity_estimate.operation_estimate
         costing_measurement = operation.get_costing_measurement(order_quantity)
+        estimate = None
         
         if costing_measurement is not None:
             duration = activity_estimate.get_duration(costing_measurement)
             estimate = ActivityExpenseEstimate.Estimate(
                 self.uom, self.type, self.rate, 
                 order_quantity, costing_measurement, duration)
-            
-            return estimate
+        
+        return estimate

@@ -145,9 +145,10 @@ class ServiceTemplate(models.Model):
     def component_template(self):
         if self.meta_service is not None:
             meta_component = self.meta_service.meta_component
-            component_template = self.product_template.component_templates.get(
-                meta_component__pk=meta_component.pk)
-            return component_template
+            if meta_component is not None:
+                component_template = self.product_template.component_templates.get(
+                    meta_component__pk=meta_component.pk)
+                return component_template
 
     @property
     def type(self):
@@ -168,6 +169,10 @@ class ServiceTemplate(models.Model):
     @property
     def input_uom(self):
         return self.meta_service.uom
+
+    @property
+    def input_uom_plural(self):
+        return self.meta_service.uom_plural
 
     @property
     def estimate_variable_type(self):

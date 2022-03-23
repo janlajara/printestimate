@@ -42,7 +42,8 @@ class ServiceTemplateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServiceTemplate
-        fields = ['id', 'name', 'type', 'sequence', 'meta_service', 'operation_templates']
+        fields = ['id', 'name', 'type', 'sequence', 'input_quantity',
+            'meta_service', 'operation_templates']
 
 
 class ServiceTemplateReadSerializer(ServiceTemplateSerializer):
@@ -227,7 +228,7 @@ class ProductEstimateListSerializer(serializers.ModelSerializer):
 class ProductTemplateSerializer(serializers.ModelSerializer):
     component_templates = ComponentTemplatePolymorphicSerializer(many=True)
     service_templates = ServiceTemplateSerializerField()
-    product_estimates = ProductEstimateListSerializer(many=True)
+    product_estimates = ProductEstimateListSerializer(many=True, read_only=True)
 
     class Meta:
         model = ProductTemplate

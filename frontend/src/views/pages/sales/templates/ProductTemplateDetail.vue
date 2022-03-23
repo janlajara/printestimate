@@ -12,7 +12,7 @@
                 :product-template-id="state.id"
                 :is-open="state.components.editModal.isOpen"
                 @toggle="state.components.editModal.toggle" 
-                :on-after-save="()=> retrieveProductTempalateDetail(state.id)"/>
+                :on-after-save="()=> retrieveProductTemplateDetail(state.id)"/>
             <DeleteRecordDialog 
                 heading="Delete Product"
                 :is-open="state.components.deleteDialog.isOpen"
@@ -99,7 +99,7 @@ export default {
             }
         });
 
-        const retrieveProductTempalateDetail = async (id)=> {
+        const retrieveProductTemplateDetail = async (id)=> {
             state.isProcessing = true;
             const response = await ProductTemplateApi.retrieveProductTemplate(id);
             if (response) {
@@ -111,6 +111,7 @@ export default {
                     componentTemplates: response.component_templates,
                     serviceTemplates: response.service_templates.map(service => ({
                         name: service.name, sequence: service.sequence,
+                        input_quantity: service.input_quantity,
                         operations: service.operation_templates.map(ot => ({
                             name: ot.name,
                             material: null,
@@ -134,11 +135,11 @@ export default {
 
         onBeforeMount(async ()=> {
             const id = state.id;
-            if (id) retrieveProductTempalateDetail(id);
+            if (id) retrieveProductTemplateDetail(id);
         })
 
         return {
-            state, retrieveProductTempalateDetail
+            state, retrieveProductTemplateDetail
         }
     }
 }

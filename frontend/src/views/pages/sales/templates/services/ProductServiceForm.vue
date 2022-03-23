@@ -21,8 +21,9 @@
                         return options;
                     })"/>
                 <InputText v-if="state.service.measureBasis=='input'"
-                    type="number" required
-                    name="Input Quantity" :postfix="state.service.uom"
+                    name="Input Quantity" type="decimal" required
+                    :postfix="state.data.input_quantity == 1? 
+                        state.service.uom: state.service.uom_plural" 
                     @input="(value)=>state.data.input_quantity = value"
                     :value="state.data.input_quantity"/> 
             </div>
@@ -84,6 +85,7 @@ export default {
         onBeforeMount(()=> {
             if (props.value) {
                 state.data.id = props.value.id;
+                state.data.input_quantity = props.value.input_quantity;
                 state.data.operation_templates = props.value.operation_templates;
             } else if (state.service.metaOperations) {
                 state.service.metaOperations.forEach((operation, key)=> {

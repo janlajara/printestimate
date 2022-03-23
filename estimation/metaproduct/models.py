@@ -5,7 +5,9 @@ from inventory.models import Item
 from estimation.machine.models import Machine
 from estimation.process.models import Operation
 from polymorphic.models import PolymorphicModel
+import inflect
 
+_inflect = inflect.engine()
 
 class MetaProduct(models.Model):
     name = models.CharField(max_length=40)
@@ -156,6 +158,10 @@ class MetaService(MetaProductData):
         blank=True, null=True)
     estimate_variable_type = models.CharField(choices=MetaEstimateVariable.TYPE_CHOICES,
         max_length=30, blank=True, null=True)
+
+    @property
+    def uom_plural(self):
+        return _inflect.plural(self.uom)
 
     @property
     def measure_basis(self):

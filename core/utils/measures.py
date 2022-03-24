@@ -5,6 +5,9 @@ from measurement.utils import guess
 from measurement.base import MeasureBase, BidimensionalMeasure
 from measurement.measures import Area, Time, Volume, Distance
 from django_measurement.models import MeasurementField
+import inflect
+
+_inflect = inflect.engine()
 
 
 # Create your models here.
@@ -183,14 +186,30 @@ class VolumeSpeed(BidimensionalMeasure):
 
 class MeasurementSerializerField(serializers.Field):
 
-    def __init__(self, display_unit=None, **kwargs):
+    def __init__(self, display_unit=None, decimal_places=None, **kwargs):
         super().__init__(**kwargs)
         self.display_unit = display_unit
+        self.decimal_places = decimal_places
+
+    def _format(self, value, unit_singular, unit_plural, decimal_places=None):
+        unit = unit_plural
+        if value == 1:
+            unit = unit_singular
+        if decimal_places is not None:
+            value = round(value, decimal_places)
+        return '%s %s' % (value, unit)
 
     def to_representation(self, value):
-        rep = '%s %s' % (value.value, value.unit)
+        rep = self._format(
+            value.value, value.unit , 
+            _inflect.plural(value.unit), self.decimal_places)
+        
         if self.display_unit is not None:
-            rep = '%s %s' % (getattr(value, self.display_unit), self.display_unit)
+            rep = self._format(
+                getattr(value, self.display_unit),
+                self.display_unit,
+                _inflect.plural(self.display_unit), self.decimal_places)
+
         return rep
 
     def to_internal_value(self, data):

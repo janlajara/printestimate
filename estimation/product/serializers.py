@@ -3,90 +3,15 @@ from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 from django.shortcuts import get_object_or_404
 from djmoney.contrib.django_rest_framework import MoneyField
+from core.utils.measures import MeasurementSerializerField
 from inventory.models import Item
 from estimation.template.models import ProductTemplate
 from estimation.product.models import ProductEstimate, \
     EstimateQuantity, Product, Component, Service, \
-    ActivityEstimate, OperationEstimate, \
-    Material, TapeMaterial, LineMaterial, \
-    PaperMaterial, PanelMaterial, LiquidMaterial
+    ActivityEstimate, OperationEstimate, Material
 from estimation.machine.serializers import SheetLayoutMetaSerializer
 
-'''
-class MaterialSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Material
-        fields = ['material_id', 'component', 'name', 'item']
 
-
-class LineMaterialSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LineMaterial
-        fields = ['material_id', 'component', 'name', 'item',
-            'length_value', 'length_uom']
-
-
-class TapeMaterialSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TapeMaterial
-        fields = ['material_id', 'component', 'name', 'item', 
-            'length_value', 'length_uom', 'width_value', 'width_uom']
-
-    def validate(self, data):
-        errors = {}
-        if data.get('length_value', None) is not None and data.get('length_uom', None) is None:
-            errors['length_uom'] = 'Must provide value if length_value is populated'
-        if data.get('width_value', None) is not None and data.get('width_uom', None) is None:
-            errors['width_uom'] = 'Must provide value if width_value is populated'
-        if errors:
-            raise serializers.ValidationError(errors)
-        return data
-
-
-class PaperMaterialSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PaperMaterial
-        fields = ['material_id', 'component', 'name', 'item',
-            'width_value', 'length_value', 'size_uom', 'gsm', 'finish', 'estimates']
-
-
-class PanelMaterialSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PanelMaterial
-        fields = ['material_id', 'component', 'name', 'item',
-            'width_value', 'length_value', 'size_uom', 'thickness_value', 'thickness_uom']
-
-
-class LiquidMaterialSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LiquidMaterial
-        fields = ['material_id', 'component', 'name', 'item',
-            'volume_value', 'volume_uom']
-
-
-class MaterialPolymorphicSerializer(PolymorphicSerializer):
-    model_serializer_mapping = {
-        Material: MaterialSerializer,
-        LineMaterial: LineMaterialSerializer,
-        TapeMaterial: TapeMaterialSerializer,
-        PaperMaterial: PaperMaterialSerializer,
-        PanelMaterial: PanelMaterialSerializer,
-        LiquidMaterial: LiquidMaterialSerializer
-    }
-    
-    def to_resource_type(self, model_or_instance):
-        mapping = {
-            LineMaterial.__name__: Item.LINE,
-            TapeMaterial.__name__: Item.TAPE,
-            PaperMaterial.__name__: Item.PAPER,
-            PanelMaterial.__name__: Item.PANEL,
-            LiquidMaterial.__name__: Item.LIQUID,
-            Material.__name__: Item.OTHER
-        }
-        object_name = model_or_instance._meta.object_name
-        resource_type = mapping.get(object_name, 'other')
-        return resource_type
-'''
 class MaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = Material
@@ -192,6 +117,8 @@ class OperationEstimateSerializer(serializers.Serializer):
 
 class ServiceEstimateSerializer(serializers.Serializer):
     name = serializers.CharField()
+    duration_estimates_map = serializers.DictField(
+        child=MeasurementSerializerField(decimal_places=2))
     operation_estimates = OperationEstimateSerializer(many=True, read_only=True)
 
 
@@ -248,9 +175,28 @@ class ProductEstimateEstimatesSerializer(serializers.Serializer):
     service_estimates = ServiceEstimateSerializer(many=True, required=False, read_only=True)
 
 
+class ProductEstimateSummaryPriceSerializer(serializers.Serializer):
+    order_quantity = serializers.IntegerField()
+    price = MoneyField(max_digits=14, decimal_places=2, read_only=False, 
+        default_currency='PHP')
+
+
+class ProductEstimateSummaryDurationSerializer(serializers.Serializer):
+    order_quantity = serializers.IntegerField()
+    duration = MeasurementSerializerField(decimal_places=2)
+
+
+class ProductEstimateSummarySerializer(serializers.Serializer):
+    order_quantities = serializers.ListField(child=serializers.IntegerField(min_value=1))
+    prices = ProductEstimateSummaryPriceSerializer(many=True)
+    durations = ProductEstimateSummaryDurationSerializer(many=True)
+
+
 class ProductEstimateCostsSerializer(ProductEstimateSerializer):
+    summary = ProductEstimateSummarySerializer(read_only=True)
     estimates = ProductEstimateEstimatesSerializer(read_only=True)
 
     class Meta:
         model = ProductEstimate
-        fields = ['id', 'name', 'description', 'template_code', 'order_quantities', 'estimates']
+        fields = ['id', 'name', 'description', 'template_code', 
+            'summary', 'estimates']

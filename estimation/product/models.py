@@ -34,6 +34,30 @@ class ProductEstimateManager(models.Manager):
 
 
 class ProductEstimate(models.Model):
+    class Summary:
+        def __init__(self, order_quantities, prices, durations):
+            self.order_quantities = order_quantities
+            self.prices = prices
+            self.durations = durations
+
+        class Price:
+            def __init__(self, order_quantity, price):
+                self.order_quantity = order_quantity
+                self.price = price
+
+            @property
+            def price_value(self):
+                return self.price.amount
+
+        class Duration:
+            def __init__(self, order_quantity, duration):
+                self.order_quantity = order_quantity
+                self.duration = duration
+            
+            @property
+            def duration_value(self):
+                return self.duration.hr
+
     class Estimate:
         def __init__(self, id, product_template_id, order_quantities, 
                 material_estimates, service_estimates):
@@ -52,6 +76,14 @@ class ProductEstimate(models.Model):
             totals = {}
             _initialize_totals(totals, self.material_estimates + self.service_estimates)
             return totals
+
+        @property
+        def duration_estimates_map(self):
+            durations = {}
+            for estimate in self.service_estimates:
+                for (key, value) in estimate.duration_estimates_map.items():
+                    durations[key] = durations.get(key, Time(hr=0)) + value
+            return durations
             
     objects = ProductEstimateManager()
     product_template = models.ForeignKey(ProductTemplate, null=True, 
@@ -88,6 +120,23 @@ class ProductEstimate(models.Model):
         return quantities
 
     @property
+    def summary(self):
+        prices_map = self.estimates.total_prices_map
+        durations_map = self.estimates.duration_estimates_map
+        prices = []
+        durations = []
+    
+        for (key, value) in prices_map.items():
+            price = ProductEstimate.Summary.Price(key, value)
+            prices.append(price)
+
+        for (key, value) in durations_map.items():
+            duration = ProductEstimate.Summary.Duration(key, value)
+            durations.append(duration)
+
+        return ProductEstimate.Summary(self.order_quantities, prices, durations)
+
+    @cached_property
     def estimates(self):
 
         def _get_material_estimates(components):
@@ -101,15 +150,11 @@ class ProductEstimate(models.Model):
 
         def _get_service_estimates(services):
             service_estimates = []
-            print('start')
             def __append_to_service_estimates(estimate):
                 service_estimates.append(estimate)
             for service in services:
-                print('   start', service.name)
                 se = service.estimates
                 service_estimates.append(se)
-                print('   end', service.name)
-            print('end')
             return service_estimates
             
         product_estimates = []
@@ -726,6 +771,14 @@ class Service(models.Model):
                 for (key, value) in estimate.total_prices_map.items():
                     totals[key] = totals.get(key, 0) + value
             return totals 
+        
+        @property
+        def duration_estimates_map(self):
+            durations = {}
+            for estimate in self.operation_estimates:
+                for (key, value) in estimate.duration_estimates_map.items():
+                    durations[key] = durations.get(key, Time(hr=0)) + value
+            return durations
 
     objects = ServiceManager()
     name = models.CharField(max_length=50, null=True)
@@ -768,20 +821,10 @@ class Service(models.Model):
 
         def _get_activity_expense_estimates(activity_expense_estimates):
             results = []
-
             for activity_expense_estimate in activity_expense_estimates:
-                expense_estimates = []
-                for quantity in order_quantities:
-                    estimate = activity_expense_estimate.estimate(quantity)
-                    expense_estimates.append(estimate)
-                aee = ActivityExpenseEstimate.Expense(
-                    activity_expense_estimate.name,
-                    activity_expense_estimate.rate,
-                    activity_expense_estimate.type,
-                    activity_expense_estimate.rate_label,
-                    expense_estimates)
+                aee = ActivityExpenseEstimate.Expense.create(
+                    activity_expense_estimate, order_quantities)
                 results.append(aee)
-
             return results
 
         def _get_activity_estimates(activity_estimates):
@@ -848,6 +891,14 @@ class OperationEstimate(models.Model):
                 for (key, value) in estimate.total_prices_map.items():
                     totals[key] = totals.get(key, 0) + value
             return totals
+
+        @property
+        def duration_estimates_map(self):
+            durations = {}
+            for estimate in self.activity_estimates:
+                for (key, value) in estimate.duration_estimates_map.items():
+                    durations[key] = durations.get(key, Time(hr=0)) + value
+            return durations
             
     objects = OperationEstimateManager()
     name = models.CharField(max_length=50, null=True)
@@ -921,7 +972,8 @@ class ActivityEstimateManager(models.Manager):
 
 class ActivityEstimate(models.Model):
     class Estimate:
-        def __init__(self, name, notes, activity_expense_estimates):
+        def __init__(self, name, notes, activity_expense_estimates, 
+                duration_estimates=[]):
             self.name = name
             self.notes = notes
             self.activity_expense_estimates = activity_expense_estimates
@@ -933,6 +985,15 @@ class ActivityEstimate(models.Model):
                 for (key, value) in estimate.total_prices_map.items():
                     totals[key] = totals.get(key, 0) + value
             return totals
+
+        @property
+        def duration_estimates_map(self):
+            durations = {}
+            if len(self.activity_expense_estimates) > 0:
+                expense = self.activity_expense_estimates[0]
+                for estimate in expense.estimates:
+                    durations[estimate.order_quantity] = estimate.duration
+            return durations
 
     objects = ActivityEstimateManager()
     name = models.CharField(max_length=50, null=True)
@@ -1012,6 +1073,20 @@ class ActivityExpenseEstimate(models.Model):
         def total_prices_map(self):
             return {estimate.order_quantity: estimate.cost 
                 for estimate in self.estimates}
+
+        @classmethod
+        def create(cls, activity_expense_estimate, order_quantities):
+            expense_estimates = []
+            for quantity in order_quantities:
+                estimate = activity_expense_estimate.estimate(quantity)
+                expense_estimates.append(estimate)
+            aee = ActivityExpenseEstimate.Expense(
+                activity_expense_estimate.name,
+                activity_expense_estimate.rate,
+                activity_expense_estimate.type,
+                activity_expense_estimate.rate_label,
+                expense_estimates)
+            return aee
 
     class Estimate:
         def __init__(self, uom, type, rate, order_quantity, 

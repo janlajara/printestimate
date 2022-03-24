@@ -481,3 +481,34 @@ def test_product_service__input_measure(db):
 
     assert service.input_measure is not None
     assert service.input_measure.sheet == 500
+
+
+def test_product_estimate_output_json(db, product_template):
+    start_time = time.time()
+    product_estimate = ProductEstimate.objects.create_product_estimate(
+        product_template, [100, 200, 300])
+
+    assert product_estimate.summary is not None
+    summary = product_estimate.summary
+
+    assert summary.prices is not None
+    assert len(summary.prices) == 3
+    expected_prices = {
+        100: 15654.50,
+        200: 27358.25,
+        300: 39062.75}
+
+    for price in summary.prices:
+        expected = expected_prices.get(price.order_quantity)
+        assert round(price.price_value, 2) == expected
+
+    assert summary.durations is not None
+    assert len(summary.durations) == 3
+    expected_durations = {
+        100: 15.56,
+        200: 17.11,
+        300: 18.67}
+
+    for duration in summary.durations:
+        expected = expected_durations.get(duration.order_quantity)
+        assert duration.duration_value == expected

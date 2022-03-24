@@ -122,9 +122,11 @@ import {reactive, inject, computed, watch} from 'vue';
 import {formatQuantity, formatMoney as formatCurrency} from '@/utils/format.js';
 
 class Service {
-    constructor(name, uom, operations) {
+    constructor(name, uom, operations, durationsMap) {
         this._state = reactive({
-            name, uom, operations, isExpanded: false
+            name, uom, operations, 
+            durationsMap,
+            isExpanded: false
         })
     }
 
@@ -136,6 +138,9 @@ class Service {
 
     set operations(value){this._state.operations = value}
     get operations(){return this._state.operations}
+
+    set durationsMap(value){this._state.durationsMap = value}
+    get durationsMap(){return this._state.durationsMap}
 
     set isExpanded(value){this._state.isExpanded = value}
     get isExpanded(){return this._state.isExpanded}
@@ -333,7 +338,8 @@ export default {
                         })
                         return new Operation(b.name, activities);
                     });
-                    const service = new Service(a.name, a.uom, operations);
+                    const service = new Service(a.name, a.uom, 
+                        operations, a.durationsMap);
                     state.data.services.push(service);
                 });
 

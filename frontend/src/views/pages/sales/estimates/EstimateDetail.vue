@@ -168,6 +168,7 @@ export default {
                         
                         state.data.costing.services = response.estimates.service_estimates.map(se => ({
                             name: se.name, isExpanded: false,
+                            durationsMap: se.duration_estimates_map,
                             operations: se.operation_estimates.map(oe => ({
                                 name: [oe.name, oe.item_name].join(' '), 
                                 activities: oe.activity_estimates.map(ae => ({

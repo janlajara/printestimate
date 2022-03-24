@@ -8,6 +8,7 @@
         <Section heading="General Information" heading-position="side"> 
             <div class="md:grid md:gap-4 md:grid-cols-3">
                 <InputText name="Name"  placeholder="Name"
+                    class="col-span-2"
                     type="text" :value="state.data.name" required
                     @input="value => state.data.name = value"/>
                 <InputSelect :disabled="state.data.metaOperations.length > 0"

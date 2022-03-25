@@ -23,7 +23,7 @@
             </div>
             <div class="bg-gray-100 p-2 relative pb-6">
                 <span class="text-xs italic text-gray-400">
-                    Drag option/s to this area</span>
+                    Drag option to this area</span>
                 <draggable item-key="id" @change="emitInput"
                     group="choices" style="min-height: 24px"
                     :list="state.selected">

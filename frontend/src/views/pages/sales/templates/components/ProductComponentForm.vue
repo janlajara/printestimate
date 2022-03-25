@@ -4,25 +4,44 @@
         <div v-if="state.error" 
             class="pt-4 text-sm text-red-600">*{{state.error}}</div>
         <div class="md:grid md:gap-4 md:grid-cols-4">
-            <InputSelect name="Material" required 
-                class="flex-grow" :class="`md:col-span-${state.meta.isPaperType? 4:3}`"
-                :multiple="state.component.allowMultipleMaterials"
-                v-if="state.component.metaMaterialOptions.length > 0"
-                @input="(value)=> {
-                    if (!Array.isArray(value)) value = [value];
-                    state.data.material_templates = value.map(x => ({
-                        meta_material_option: x
-                    }));
-                    state.emitInput();
-                }"
-                :options="state.component.metaMaterialOptions.map(c=>{
-                    let options = {
-                        value: c.id, label: c.label,
-                        isSelected: state.data.material_templates
-                            .map(x => x.meta_material_option)
-                            .includes(c.id)};
-                    return options;
-                })"/>
+            <template v-if="state.meta.isPaperType && state.component.allowMultipleMaterials">
+                <InputSelectDraggableList
+                    name="Material" required 
+                    class="flex-grow md:col-span-4"
+                    @input="(value)=> {
+                        state.data.material_templates = value.map(x => ({
+                            meta_material_option: x
+                        }));
+                        state.emitInput();
+                    }"
+                    :options="state.component.metaMaterialOptions.map(
+                        c=>({value: c.id, label: c.label}))"
+                    :value="state.data.material_templates
+                        .map(x => x.meta_material_option)"/>
+            </template>
+            <template v-else>
+                <InputSelect 
+                    name="Material" required class="flex-grow" 
+                    :class="`md:col-span-${state.meta.isPaperType? 4:3}`"
+                    :multiple="state.component.allowMultipleMaterials"
+                    v-if="state.component.metaMaterialOptions.length > 0"
+                    @input="(value)=> {
+                        if (!Array.isArray(value)) value = [value];
+                        state.data.material_templates = value.map(x => ({
+                            meta_material_option: x
+                        }));
+                        state.emitInput();
+                    }"
+                    :options="state.component.metaMaterialOptions.map(c=>{
+                        let options = {
+                            value: c.id, label: c.label,
+                            isSelected: state.data.material_templates
+                                .map(x => x.meta_material_option)
+                                .includes(c.id)};
+                        return options;
+                    })"/>
+            </template>
+            
             <InputSelect name="Machine" class="flex-grow md:col-span-2"
                 v-if="state.component.metaMachineOptions.length > 0"
                 @input="(value)=> {
@@ -65,6 +84,7 @@
 </template>
 <script>
 import InputSelect from '@/components/InputSelect.vue';
+import InputSelectDraggableList from '@/components/InputSelectDraggableList.vue';
 import InputText from '@/components/InputText.vue';
 import DynamicInputField from '@/components/DynamicInputField.vue';
 import ProductComponentSheetLayoutTabs from './sheetlayout/ProductComponentSheetLayoutTabs.vue';
@@ -79,7 +99,8 @@ export default {
         value: Object
     },
     components: {
-        InputSelect, InputText, DynamicInputField, ProductComponentSheetLayoutTabs
+        InputSelect, InputSelectDraggableList, InputText, 
+        DynamicInputField, ProductComponentSheetLayoutTabs
     },
     emits: ['input', 'load'],
     setup(props, {emit}) {
@@ -279,8 +300,12 @@ export default {
                 return itemLayout;
             }
             if (state.meta.isPaperType) {
-                itemLayouts = state.data.material_templates.map(x => 
-                    getItemLayout(x));                
+                itemLayouts = state.data.material_templates
+                    .filter((item, index) => 
+                        state.data.material_templates.findIndex(x=>
+                            x.meta_material_option == item.meta_material_option)
+                        === index)
+                    .map(x => getItemLayout(x));     
             }
             return itemLayouts;
         };

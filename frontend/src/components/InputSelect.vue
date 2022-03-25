@@ -53,6 +53,7 @@ export default {
             //{label:String, value:number, description:String, isSelected:Boolean}
         },
     },
+    emits: ['input'],
     setup(props, {emit}) {  
       const state = reactive({
         baseOptions: props.options.filter(prop => prop && prop.value != null),
@@ -91,7 +92,7 @@ export default {
         }
         const selectedIds = selectedOptions.value.map(o=> o.value);
         const val = (props.multiple)? selectedIds : selectedIds.shift(); 
-        if (emit) emit('input', val);
+        emit('input', val);
       };
       return {
         state, toggleDropdown, select, selectedJoined

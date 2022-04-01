@@ -54,12 +54,6 @@ const routes = [
         props: true,
         component: ()=>import('../views/pages/sales/templates/ProductTemplateDetail.vue')
       }, 
-      /*{
-        path: 'sales/products/estimates',
-        name: 'sales-products-estimates',
-        component: ()=>import('../views/pages/sales/estimates/EstimateList.vue'),
-        meta: {label: 'Estimates', group: 'Sales'}
-      },*/
       {
         path: 'sales/products/estimates/:id',
         name: 'sales-product-estimates-detail',
@@ -107,6 +101,12 @@ const routes = [
         props: true,
         component: ()=>import('../views/admin/sales/products/MetaProductDetail.vue')
       }, 
+      {
+        path: 'admin/sales/costaddons',
+        name: 'admin-sales-costaddons',
+        component: ()=>import('../views/admin/sales/costaddons/CostAddonSettings.vue'),
+        meta: {label: 'Cost Add-ons', group: 'Sales Admin'}
+      },
     ]
   },
   {

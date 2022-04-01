@@ -1,3 +1,5 @@
+export {CostingMeasureUnitsApi} from '@/utils/apis/core.utils.measures.js'
+
 export {ItemApi, ItemRequestGroupApi, ItemRequestApi, 
     StockRequestApi, ItemPropertiesApi, BaseStockUnitApi, 
     AlternateStockUnitApi} from '@/utils/apis/inventory.js'
@@ -14,4 +16,4 @@ export {ProductTemplateApi, ComponentTemplateApi} from '@/utils/apis/estimation.
 
 export {EstimateApi} from '@/utils/apis/estimation.quotes.js'
 
-export {CostingMeasureUnitsApi} from '@/utils/apis/core.utils.measures.js'
+export {CostAddonApi} from '@/utils/apis/estimation.costaddons.js'

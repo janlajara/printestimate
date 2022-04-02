@@ -1,7 +1,9 @@
 <template>
     <div>
-        <div v-if="state.refresh && state.isActive">
-            <slot/>
+        <div v-if="state.refresh">
+            <div v-if="state.isActive">
+                <slot/>
+            </div>
         </div>
         <div v-else>
             <div :class="state.isActive? '': 'invisible absolute'">

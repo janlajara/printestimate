@@ -10,8 +10,8 @@
                 border-none bg-gray-200 text-sm">
             <div class="p-2">
                 <span class="text-xs font-medium">Options:</span>
-                <draggable item-key="value" :clone="add"
-                    :group="{ name: 'choices', pull: 'clone', put: false }"
+                <draggable item-key="value" 
+                    :group="state.group"
                     :list="state.options">
                     <template #item="option">
                         <div class="rounded-md bg-gray-100 p-2 m-1 cursor-move">
@@ -33,7 +33,8 @@
                             @mouseleave="option.element.showDelete = false">
                             <span class="material-icons text-xs my-auto">drag_indicator</span>
                             <span>{{option.element.label}}</span>
-                            <span v-show="option.element.showDelete"
+                            <span v-if="$props.clone"
+                                v-show="option.element.showDelete"
                                 @click="()=>remove(option.element.id)"
                                 class="material-icons text-xs my-auto cursor-pointer px-1">
                                 close</span>
@@ -57,6 +58,10 @@ export default {
         name: String,
         required: Boolean,
         disabled: Boolean,
+        clone: {
+            type: Boolean,
+            default: true
+        },
         options: {
             type: Array 
             //Array of Objects 
@@ -75,7 +80,8 @@ export default {
                 return options;
             }),
             counter: 0,
-            selected: []
+            selected: [],
+            group: { name: 'choices' }
         });
 
         const add = ({value, label}) => { 
@@ -104,6 +110,13 @@ export default {
                 const option = state.baseOptions.find(y=> y.value == x);
                 if (option) state.selected.push(add(option))
             })
+            if (props.clone) {
+                state.group = {
+                    ...state.group,
+                    pull: 'clone',
+                    put: false 
+                }
+            }
         });
 
         return {

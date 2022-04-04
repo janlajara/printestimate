@@ -7,7 +7,7 @@
         </label>
         <div class="grid md:grid-cols-2 gap-2
                 rounded-md shadow-sm w-full 
-                border-none bg-gray-200 text-sm">
+                border-none bg-gray-100 text-sm">
             <div class="p-2">
                 <span class="text-xs font-medium">Options:</span>
                 <draggable item-key="value" 
@@ -21,7 +21,7 @@
                     </template>
                 </draggable>
             </div>
-            <div class="bg-gray-100 p-2 relative pb-6">
+            <div class="bg-gray-200 p-2 relative pb-6 rounded-r-md">
                 <span class="text-xs italic text-gray-400">
                     Drag option to this area</span>
                 <draggable item-key="id" @change="emitInput"
@@ -47,7 +47,7 @@
 </template>
 
 <script>
-import {reactive, computed, onBeforeMount} from 'vue';
+import {reactive, computed, onBeforeMount, watch} from 'vue';
 import draggable from 'vuedraggable';
 
 export default {
@@ -81,7 +81,9 @@ export default {
             }),
             counter: 0,
             selected: [],
-            group: { name: 'choices' }
+            group: { 
+                name: 'choices', 
+                put:true, pull: true }
         });
 
         const add = ({value, label}) => { 
@@ -104,18 +106,29 @@ export default {
             emit('input', selected);
         }
 
-        onBeforeMount(()=> {
+        const initializeSelectedOptions = () => {
+            state.selected = []
             state.baseOptions = props.options.filter(prop => prop && prop.value != null);
             props.value.forEach( x => {
-                const option = state.baseOptions.find(y=> y.value == x);
-                if (option) state.selected.push(add(option))
-            })
-            if (props.clone) {
-                state.group = {
-                    ...state.group,
-                    pull: 'clone',
-                    put: false 
+                const index = state.baseOptions.findIndex(y=> y.value == x);
+                if (index > -1) {
+                    const option = state.baseOptions[index];
+                    state.selected.push(add(option))
+
+                    // Remove item from source list if setting is not clone
+                    if (!props.clone) {
+                        state.baseOptions.splice(index, 1);
+                    }
                 }
+            });
+        };
+
+        watch(()=> props.value, initializeSelectedOptions);
+
+        onBeforeMount(()=> { 
+            if (props.clone) {
+                state.group.pull = 'clone';
+                state.group.put = false;
             }
         });
 

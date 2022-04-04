@@ -88,6 +88,13 @@ class TemplateCostAddonSetSerializer(serializers.ModelSerializer):
         model = TemplateCostAddonSet
         fields = ['id', 'name', 'is_default', 'template_cost_addon_items']
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        addon_item_sorted = instance.template_cost_addon_items.all().order_by('sequence')
+        addon_item_serializer = TemplateCostAddonItemSerializer(addon_item_sorted, many=True)
+        data['template_cost_addon_items'] = addon_item_serializer.data
+        return data
+
     def create(self, validated_data):
         items_data = validated_data.pop('template_cost_addon_items')
         instance = TemplateCostAddonSet.objects.create(**validated_data)

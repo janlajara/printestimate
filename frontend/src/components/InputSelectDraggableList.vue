@@ -47,7 +47,7 @@
 </template>
 
 <script>
-import {reactive, computed, onBeforeMount, watch} from 'vue';
+import {reactive, computed, onBeforeMount, onUpdated} from 'vue';
 import draggable from 'vuedraggable';
 
 export default {
@@ -72,7 +72,7 @@ export default {
     emits: ['input'],
     setup(props, {emit}) {  
         const state = reactive({
-            baseOptions: [],
+            baseOptions: props.options.filter(prop => prop && prop.value != null),
             options: computed(()=> {
                 const options = (!props.required)? 
                     [{value: null, label: ''}].concat(state.baseOptions):
@@ -106,9 +106,14 @@ export default {
             emit('input', selected);
         }
 
+        onUpdated(()=>{
+            if (props.value && state.selected.length != props.value.length) {
+                initializeSelectedOptions();
+            }
+        })
+
         const initializeSelectedOptions = () => {
-            state.selected = []
-            state.baseOptions = props.options.filter(prop => prop && prop.value != null);
+            state.selected = [];
             props.value.forEach( x => {
                 const index = state.baseOptions.findIndex(y=> y.value == x);
                 if (index > -1) {
@@ -122,8 +127,6 @@ export default {
                 }
             });
         };
-
-        watch(()=> props.value, initializeSelectedOptions);
 
         onBeforeMount(()=> { 
             if (props.clone) {

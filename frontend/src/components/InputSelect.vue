@@ -85,8 +85,11 @@ export default {
         if (props.multiple) {
           option.isSelected = !option.isSelected
         } else {
+          let none_selected = true;
           state.options.forEach(o => {
-            o.isSelected = (option.value == o.value)? true : false;
+            const match_found = option.value == o.value && none_selected;
+            o.isSelected = (none_selected && match_found)? true : false;
+            if (none_selected && match_found) none_selected = false;
           });
           toggleDropdown(false);
         }

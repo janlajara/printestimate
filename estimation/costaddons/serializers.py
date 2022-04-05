@@ -17,7 +17,7 @@ class ConfigCostAddonSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConfigCostAddon
-        fields = ['id', 'name', 'type', 'allow_custom_value', 
+        fields = ['id', 'name', 'type', 'allow_custom_value', 'is_required',
             'symbol', 'config_cost_addon_options']
 
     def create(self, validated_data):
@@ -54,7 +54,8 @@ class ConfigCostAddonSerializer(serializers.ModelSerializer):
         instance.name = validated_data.get('name', instance.name)
         instance.type = validated_data.get('type', instance.type)
         instance.allow_custom_value = validated_data.get('allow_custom_value', instance.allow_custom_value)
-        
+        instance.is_required = validated_data.get('is_required', instance.is_required)
+
         addon_options_data = validated_data.get('config_cost_addon_options', [])
         _delete_items(instance.config_cost_addon_options.all(), addon_options_data)
         _update_items(addon_options_data)

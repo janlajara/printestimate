@@ -12,6 +12,7 @@ class ConfigCostAddon(models.Model):
     name = models.CharField(max_length=40)
     type = models.CharField(max_length=10, choices=TYPES)
     allow_custom_value = models.BooleanField(default=False)
+    is_required = models.BooleanField(default=False)
 
     @property
     def symbol(self):
@@ -21,9 +22,9 @@ class ConfigCostAddon(models.Model):
     def has_options(self):
         return len(self.config_cost_addon_options.all()) > 0
 
-    def add_option(self, value, label):
+    def add_option(self, value, label, is_required=False):
         option = ConfigCostAddonOption.objects.create(
-            config_cost_addon=self, value=value, label=label)
+            config_cost_addon=self, value=value, label=label, is_required=is_required)
         return option
 
 

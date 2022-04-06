@@ -11,7 +11,7 @@
                 :class="($props.disabled)? 'text-gray-400' : ''"
                 :value="selectedValue" :disabled="$props.disabled" 
                 :readonly="!$props.customizable"
-                @blur="inputCustomValue"
+                @change="inputCustomValue"
                 @click="toggleDropdown(!state.isDroppedDown)"/>
               <span class="absolute material-icons right-0 m-1 transform"
                 :class="state.isDroppedDown? 'rotate-180' : ''">

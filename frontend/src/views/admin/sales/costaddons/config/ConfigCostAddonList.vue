@@ -22,9 +22,11 @@
                                 </div>
                             </li>
                         </ul>
-                        <span v-if="s.allowCustomValue"
+                        <div v-if="s.allowCustomValue || s.isRequired"
                             class="-ml-3 mt-4 text-xs italic text-secondary-dark">
-                            *Custom value allowed.</span>
+                            *<span v-if="s.isRequired">Required. </span>
+                            <span v-if="s.allowCustomValue">Custom value allowed.</span>
+                        </div>
                     </Cell>
                     <Cell>
                         <div class="flex justify-end">
@@ -108,6 +110,7 @@ export default {
                 state.list = response.map(x => ({
                     id: x.id, name: x.name,
                     allowCustomValue: x.allow_custom_value,
+                    isRequired: x.is_required,
                     options: x.config_cost_addon_options.map(y => ({
                         id: y.id, label: y.label,
                         formattedValue: y.formatted_value,

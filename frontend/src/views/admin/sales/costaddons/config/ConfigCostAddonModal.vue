@@ -20,6 +20,9 @@
         </Section>
         <hr/>
         <Section heading="Add-on Options" heading-position="side">
+            <InputCheckbox label="Is Required?" 
+                :value="state.data.isRequired"
+                @input="value => state.data.isRequired = value"/>
             <InputCheckbox label="Allow Custom Value?" 
                 :value="state.data.allowCustomValue"
                 @input="value => state.data.allowCustomValue = value"/>
@@ -59,6 +62,7 @@ export default {
             data: {
                 name: '', type: '',
                 allowCustomValue: false,
+                isRequired: false,
                 configCostAddonOptions: []
             },
             meta: {
@@ -80,6 +84,7 @@ export default {
                 const configCostAddon = {
                     name: state.data.name, 
                     type: state.data.type,
+                    is_required: state.data.isRequired,
                     allow_custom_value: state.data.allowCustomValue,
                     config_cost_addon_options: state.data
                         .configCostAddonOptions.map(x=> ({
@@ -93,6 +98,7 @@ export default {
                 state.data = {
                     name: '', type: '',
                     allowCustomValue: false,
+                    isRequired: false,
                     configCostAddonOptions: []
                 }
             }
@@ -109,6 +115,7 @@ export default {
             if (response) {
                 state.data = {
                     name: response.name, type: response.type,
+                    isRequired: response.is_required,
                     allowCustomValue: response.allow_custom_value,
                     configCostAddonOptions: response.config_cost_addon_options
                 };

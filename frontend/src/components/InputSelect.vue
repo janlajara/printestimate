@@ -9,15 +9,19 @@
             <div class="relative"> 
               <input type="text" class="rounded input-field cursor-pointer"
                 :class="($props.disabled)? 'text-gray-400' : ''"
-                :value="selectedJoined" :disabled="$props.disabled"
-                @click="toggleDropdown(!state.isDroppedDown)" readonly/>
+                :value="selectedValue" :disabled="$props.disabled" 
+                :readonly="!$props.customizable"
+                @blur="inputCustomValue"
+                @click="toggleDropdown(!state.isDroppedDown)"/>
               <span class="absolute material-icons right-0 m-1 transform"
                 :class="state.isDroppedDown? 'rotate-180' : ''">
                 arrow_drop_down</span>
               <div v-show="state.isDroppedDown" 
-                class="shadow-md rounded bg-white absolute w-full mt-1 z-10 max-h-60 overflow-auto">
+                class="shadow-md rounded bg-white absolute w-full 
+                mt-1 z-10 max-h-60 overflow-auto">
                 <div v-for="option in state.options" :key="option.value"
-                  class="p-2 hover:bg-secondary-light hover:bg-opacity-20 text-sm cursor-pointer"
+                  class="p-2 hover:bg-secondary-light hover:bg-opacity-20 
+                  text-sm cursor-pointer"
                   @click="select(option)">
                   <div class="flex w-full">
                     <input v-if="$props.multiple" type="checkbox" 
@@ -25,7 +29,9 @@
                       :name="name" :checked="option.isSelected"/> 
                     <div class="flex justify-between w-full align-middle">
                       <span :class="(option.value == null)? 'text-gray-400 italic' : ''">
-                        {{(option.value == null)?  'None': option.label}}</span>
+                        {{(option.value == null)?  
+                            'None': option.label ? 
+                              option.label : [option.value, $props.postfix].join(' ')}}</span>
                       <span v-if="option.description" class="text-gray-400">
                         {{option.description}}
                       </span>
@@ -44,9 +50,12 @@ import {reactive, computed, watch} from 'vue'
 export default {
     props: {
         name: String,
+        postfix: String,
         multiple: Boolean,
         required: Boolean,
         disabled: Boolean,
+        customizable: Boolean,
+        regex: Object,
         options: {
             type: Array 
             //Array of Objects 
@@ -64,32 +73,52 @@ export default {
           return options;
         }),
         isDroppedDown: false,
+        customInput: null,
       }); 
+
       watch(()=>props.options, ()=> {
         state.baseOptions = props.options.filter(prop => prop && prop.value != null);
       });
 
-      const selectedOptions = computed(() => 
-        state.options
-          .filter(option=> option.isSelected)
-      );
-      const selectedJoined = computed(() => 
-        selectedOptions.value
-          .map(option=> option.label)
-          .join(", ")
-      );
+      const selectedOptions = computed(() => {
+        let selected = state.options.filter(option=> option.isSelected);
+        if (!props.multiple && selected.length > 1) selected.splice(0,1);
+        return selected;
+      });
+
+      const selectedValue = computed(() => {
+        let selectedValue = selectedOptions.value
+          .map(option=> option.label? 
+            option.label : 
+            [option.value, props.postfix].join(' '))
+          .join(", ");
+        
+        if (props.customizable && state.customInput)
+          selectedValue = [state.customInput, props.postfix].join(' ');
+        return selectedValue;
+      });
+
       const toggleDropdown = (value) => {
         state.isDroppedDown = value;
       };
+
+      const inputCustomValue = (event) => {
+        let input = event.target.value;
+        if (props.regex != null) {
+          const matchFound = input.match(props.regex);
+          if (matchFound) input = matchFound[0];
+        }
+        state.customInput = input;
+        emit('input', input);
+      }
+
       const select = (option) => { 
         if (props.multiple) {
           option.isSelected = !option.isSelected
         } else {
-          let none_selected = true;
           state.options.forEach(o => {
-            const match_found = option.value == o.value && none_selected;
-            o.isSelected = (none_selected && match_found)? true : false;
-            if (none_selected && match_found) none_selected = false;
+            const match_found = option.value == o.value;
+            o.isSelected = (match_found)? true : false;
           });
           toggleDropdown(false);
         }
@@ -97,8 +126,9 @@ export default {
         const val = (props.multiple)? selectedIds : selectedIds.shift(); 
         emit('input', val);
       };
+
       return {
-        state, toggleDropdown, select, selectedJoined
+        state, toggleDropdown, select, selectedValue, inputCustomValue
       };
     }
 }

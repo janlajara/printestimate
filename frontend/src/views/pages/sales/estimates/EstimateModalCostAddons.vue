@@ -97,6 +97,7 @@ export default {
 
         const emitInput = () => {
             emit('input', state.data.costAddons);
+            console.log(state.data.costAddons)
         }
 
         return {

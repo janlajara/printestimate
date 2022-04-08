@@ -41,13 +41,25 @@ class ProductEstimate(models.Model):
             self.durations = durations
 
         class Price:
-            def __init__(self, order_quantity, price):
+            def __init__(self, order_quantity, price, addons=[]):
                 self.order_quantity = order_quantity
                 self.price = price
+                self.addons = addons
 
             @property
             def price_value(self):
                 return self.price.amount
+            
+            @property
+            def total_addons(self):
+                total_addons = 0
+                for addon in self.addons:
+                    total_addons += addon.addon_cost
+                return total_addons
+
+            @property
+            def total_price(self):
+                return self.price_value + self.total_addons
 
         class Duration:
             def __init__(self, order_quantity, duration):
@@ -127,7 +139,9 @@ class ProductEstimate(models.Model):
         durations = []
     
         for (key, value) in prices_map.items():
-            price = ProductEstimate.Summary.Price(key, value)
+            cost_addon_set = next((x for x in self.cost_addons 
+                if x.order_quantity ==  key), [])
+            price = ProductEstimate.Summary.Price(key, value, cost_addon_set.addon_costs)
             prices.append(price)
 
         for (key, value) in durations_map.items():
@@ -173,6 +187,15 @@ class ProductEstimate(models.Model):
             material_estimates, service_estimates)
 
         return product_estimate
+    
+    @property
+    def cost_addons(self):
+        cost_addons = []
+        prices_map = self.estimates.total_prices_map
+        for (quantity, price) in prices_map.items():
+            cost_addon_set = self.estimate_addon_set.get_addon_cost_set(quantity, price.amount)
+            cost_addons.append(cost_addon_set)
+        return cost_addons
 
     def set_material_spoilage_rate(self, spoilage_rate):
         self.material_spoilage_rate = spoilage_rate

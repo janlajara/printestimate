@@ -1,4 +1,5 @@
 import pytest
+from estimation.product.models import ProductEstimate
 from estimation.costaddons.models import ConfigCostAddon, ConfigCostAddonOption, \
     TemplateCostAddonSet, TemplateCostAddonItem, EstimateAddonSet, EstimateAddonItem
 
@@ -14,6 +15,13 @@ def create_config_cost_addon(db):
 def create_template_cost_addon_set(db):
     def _create(**kwargs):
         return TemplateCostAddonSet.objects.create(**kwargs)
+    return _create
+
+
+@pytest.fixture
+def create_estimate_addon_set(db):
+    def _create(**kwargs):
+        return EstimateAddonSet.objects.create(**kwargs)
     return _create
 
 
@@ -80,3 +88,36 @@ def test_template_cost_addon_set__add_item(db, create_config_cost_addon,
     assert len(regular_template.template_cost_addon_items.all()) == 2
     assert delivery_template_item is not None and delivery_template_item.sequence == 1 
     assert salestax_template_item is not None and salestax_template_item.sequence == 2
+
+
+def test_estimate_addon_set__add_addon_item(db, create_estimate_addon_set):
+    product_estimate = ProductEstimate.objects.create()
+    assert hasattr(product_estimate, 'estimate_addon_set') == False
+    
+    addon_set = create_estimate_addon_set(product_estimate=product_estimate)
+    delivery_fee = addon_set.add_addon_item('Delivery Fee', 1, 
+        ConfigCostAddon.FLAT, value=500, allow_custom_value=True)
+
+    assert product_estimate.estimate_addon_set is not None
+    assert delivery_fee is not None
+    assert len(addon_set.estimate_addon_items.all()) == 1
+
+
+def test_estimate_addon_set__get_addon_costs(db, create_estimate_addon_set):
+    product_estimate = ProductEstimate.objects.create()
+    addon_set = create_estimate_addon_set(product_estimate=product_estimate)
+    delivery_fee = addon_set.add_addon_item('Delivery Fee', 1, 
+        ConfigCostAddon.FLAT, value=500, allow_custom_value=True)
+    sales_tax = addon_set.add_addon_item('Sales Tax', 2, ConfigCostAddon.PERCENTAGE, value=12)
+
+    addon_costs = addon_set.get_addon_costs(1000)
+    expected_costs = [500, 180]
+
+    for index, addon_cost in enumerate(addon_costs):
+        assert addon_cost.addon_cost == expected_costs[index]
+
+    cost_set = addon_set.get_addon_cost_set(50, 1000)
+    assert cost_set.order_quantity == 50
+    assert len(cost_set.addon_costs) == 2
+
+        

@@ -9,7 +9,10 @@ from estimation.template.models import ProductTemplate
 from estimation.product.models import ProductEstimate, \
     EstimateQuantity, Product, Component, Service, \
     ActivityEstimate, OperationEstimate, Material
+from estimation.costaddons.models import EstimateAddonItem, EstimateAddonSet
 from estimation.machine.serializers import SheetLayoutMetaSerializer
+from estimation.costaddons.serializers import AddonCostSetSerializer, \
+    EstimateAddonItemSerializer, EstimateAddonSetSerializer
 
 
 class MaterialSerializer(serializers.ModelSerializer):
@@ -148,25 +151,87 @@ class ProductEstimateListSerializer(serializers.ModelSerializer):
 
 class ProductEstimateInputSerializer(ProductEstimateListSerializer):
     id = serializers.IntegerField(required=False)
+    estimate_addon_set = EstimateAddonSetSerializer()
 
     class Meta:
         model = ProductEstimate
         fields = ['id', 'product_template', 'order_quantities', 
-            'material_spoilage_rate']
+            'material_spoilage_rate', 'estimate_addon_set']
 
     def create(self, validated_data):
         product_template = validated_data.get('product_template')
         order_quantities = validated_data.get('order_quantities')
         material_spoilage_rate = validated_data.get('material_spoilage_rate')
+
         product_estimate = ProductEstimate.objects.create_product_estimate(
                 product_template, order_quantities, material_spoilage_rate)
+
+        estimate_addon_set_data = validated_data.get('estimate_addon_set')
+        if estimate_addon_set_data is not None:
+            cost_addons_data = estimate_addon_set_data.get('estimate_addon_items', [])
+            if len(cost_addons_data) > 0:
+                addon_set = EstimateAddonSet.objects.create(product_estimate=product_estimate)
+
+                for index, addon_data in enumerate(cost_addons_data):
+                    name = addon_data.get('name')
+                    sequence = index+1
+                    type = addon_data.get('type')
+                    value = addon_data.get('value')
+                    allow_custom_value = addon_data.get('allow_custom_value')
+                    config_cost_addon = addon_data.get('config_cost_addon')
+
+                    addon_set.add_addon_item(name=name, sequence=sequence,
+                        type=type, value=value, allow_custom_value=allow_custom_value,
+                        config_cost_addon=config_cost_addon)
+
         return product_estimate
 
     def update(self, instance, validated_data):
+        def _delete_addons(as_is_addons, to_be_addons):
+            as_is_pks = [x.id for x in as_is_addons]
+            to_be_pks = [x.get('id') for x in to_be_addons if 'id' in x]
+            to_delete = [x for x in as_is_pks if x not in to_be_pks]
+            EstimateAddonItem.objects.filter(pk__in=to_delete).delete()
+
+        def _update_items(to_be_addons):
+            for index, addon_data in enumerate(to_be_addons):
+                existing_id = addon_data.get('id')
+                if existing_id is not None:
+                    addon = get_object_or_404(EstimateAddonItem, pk=existing_id)
+                    addon.name = addon_data.get('name', addon.name)
+                    addon.sequence = addon_data.get('sequence', addon.sequence)
+                    addon.type = addon_data.get('type', addon.type)
+                    addon.value = addon_data.get('value', addon.value)
+                    addon.allow_custom_value = addon_data.get('allow_custom_value', addon.allow_custom_value)
+                else:
+                    name = addon_data.get('name')
+                    sequence = index+1
+                    type = addon_data.get('type')
+                    value = addon_data.get('value')
+                    allow_custom_value = addon_data.get('allow_custom_value')
+                    config_cost_addon = addon_data.get('config_cost_addon')
+                    instance.estimate_addon_set.add_addon_item(name=name, sequence=sequence,
+                        type=type, value=value, allow_custom_value=allow_custom_value,
+                        config_cost_addon=config_cost_addon)
+
         order_quantities = validated_data.get('order_quantities')
         material_spoilage_rate = validated_data.get('material_spoilage_rate')
         instance.set_estimate_quantities(order_quantities)
         instance.set_material_spoilage_rate(material_spoilage_rate)
+        
+        estimate_addon_set_data = validated_data.get('estimate_addon_set')
+        if estimate_addon_set_data is not None:
+            cost_addons_data = estimate_addon_set_data.get('estimate_addon_items', [])
+            if len(cost_addons_data) > 0:
+                addon_set = None
+                if not hasattr(instance, 'estimate_addon_set'):
+                    addon_set = EstimateAddonSet.objects.create(product_estimate=instance)
+                else:
+                    addon_set = instance.estimate_addon_set
+                    _delete_addons(addon_set.estimate_addon_items.all(), cost_addons_data)
+
+                _update_items(cost_addons_data)
+            
         return instance
 
 
@@ -178,6 +243,10 @@ class ProductEstimateEstimatesSerializer(serializers.Serializer):
 class ProductEstimateSummaryPriceSerializer(serializers.Serializer):
     order_quantity = serializers.IntegerField()
     price = MoneyField(max_digits=14, decimal_places=2, read_only=False, 
+        default_currency='PHP')
+    total_addons = MoneyField(max_digits=14, decimal_places=2, read_only=False, 
+        default_currency='PHP')
+    total_price = MoneyField(max_digits=14, decimal_places=2, read_only=False, 
         default_currency='PHP')
 
 
@@ -195,8 +264,9 @@ class ProductEstimateSummarySerializer(serializers.Serializer):
 class ProductEstimateCostsSerializer(ProductEstimateSerializer):
     summary = ProductEstimateSummarySerializer(read_only=True)
     estimates = ProductEstimateEstimatesSerializer(read_only=True)
+    cost_addons = AddonCostSetSerializer(read_only=True, many=True)
 
     class Meta:
         model = ProductEstimate
         fields = ['id', 'name', 'description', 'template_code', 
-            'summary', 'estimates']
+            'summary', 'estimates', 'cost_addons']

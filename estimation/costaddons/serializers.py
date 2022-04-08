@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from django.shortcuts import get_object_or_404
 from estimation.costaddons.models import ConfigCostAddon, ConfigCostAddonOption, \
-    TemplateCostAddonSet, TemplateCostAddonItem
+    TemplateCostAddonSet, TemplateCostAddonItem, \
+    EstimateAddonSet, EstimateAddonItem
 
 
 class ConfigCostAddonOptionSerializer(serializers.ModelSerializer):
@@ -140,3 +141,36 @@ class TemplateCostAddonSetSerializer(serializers.ModelSerializer):
         return instance
 
         
+class EstimateAddonItemSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    
+    class Meta:
+        model = EstimateAddonItem
+        fields = ['id', 'name', 'sequence', 'type', 'value', 
+            'allow_custom_value', 'config_cost_addon']
+
+
+class EstimateAddonSetSerializer(serializers.ModelSerializer):
+    estimate_addon_items = EstimateAddonItemSerializer(many=True)
+
+    class Meta:
+        model = EstimateAddonSet
+        fields = ['id', 'estimate_addon_items']
+
+
+class AddonCostSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField(max_length=30)
+    sequence = serializers.IntegerField()
+    type = serializers.CharField(max_length=10)
+    addon_value = serializers.DecimalField(decimal_places=2, max_digits=10)
+    addon_cost = serializers.DecimalField(decimal_places=2, max_digits=10) 
+
+
+class AddonCostSetSerializer(serializers.Serializer):
+    order_quantity = serializers.IntegerField()
+    addon_costs = AddonCostSerializer(many=True)
+
+    class Meta:
+        model = EstimateAddonSet
+        fields = ['id', 'order_quantity', 'addon_costs']

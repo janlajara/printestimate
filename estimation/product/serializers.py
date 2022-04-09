@@ -203,6 +203,7 @@ class ProductEstimateInputSerializer(ProductEstimateListSerializer):
                     addon.type = addon_data.get('type', addon.type)
                     addon.value = addon_data.get('value', addon.value)
                     addon.allow_custom_value = addon_data.get('allow_custom_value', addon.allow_custom_value)
+                    addon.save()
                 else:
                     name = addon_data.get('name')
                     sequence = index+1

@@ -157,8 +157,8 @@ class ProductTemplateViewSet(viewsets.ModelViewSet):
                     product_template, service_templates_data)
 
                 product_template.refresh_from_db()
-                serialized = serializers.ProductTemplateSerializer(product_template)
-                return Response(serialized.data)
+                serialized = serializers.ProductTemplateListSerializer(product_template)
+                return Response(serialized.data) 
                 
                 return Response(serialized.data)
             else:

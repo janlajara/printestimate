@@ -90,12 +90,16 @@ export default {
                     .templateCostAddonItems.map(x => ({
                         sequence: x.sequence,
                         name: x.configCostAddon.name,
+                        type: x.configCostAddon.type,
+                        allow_custom_value: x.configCostAddon.allowCustomValue,
+                        config_cost_addon: x.configCostAddon.id,
                         value: null
                     }));
             }
         });
 
         const emitInput = () => {
+            console.log(state.data.costAddons)
             emit('input', state.data.costAddons);
         }
 

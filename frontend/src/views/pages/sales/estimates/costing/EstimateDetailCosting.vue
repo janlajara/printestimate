@@ -40,18 +40,26 @@
                 :quantities="state.data.quantities"
                 :bill-of-materials="state.data.billOfMaterials"
                 :quantity-viewable-offset="state.components.paginator.offset"
-                :max-quantity-viewable="3"
+                :max-quantity-viewable="state.meta.maxQuantitiesColumnLength"
                 @initialized="value => state.meta.materialTotalsMap = value"
                 @toggled="value => state.components.expandButton.materials = value"/>
                 
             <!-- Table Rows for Services -->
-            <EstimateDetailCostingServices class="py-2 pb-4"
+            <EstimateDetailCostingServices class="py-2"
                 :quantities="state.data.quantities"
                 :services="state.data.services"
                 :quantity-viewable-offset="state.components.paginator.offset"
-                :max-quantity-viewable="3"
+                :max-quantity-viewable="state.meta.maxQuantitiesColumnLength"
                 @initialized="value => state.meta.serviceTotalsMap = value"
                 @toggled="value => state.components.expandButton.services = value"/>
+
+            <!-- Table Rows for Cost-addons -->
+            <EstimateDetailCostingCostAddons class="py-2 pb-4"
+                :quantities="state.data.quantities"
+                :cost-addons="state.data.costAddons"
+                :quantity-viewable-offset="state.components.paginator.offset"
+                :max-quantity-viewable="state.meta.maxQuantitiesColumnLength"
+                @initialized="value => state.meta.addonsTotalsMap = value"/>
 
             <!-- Table Footer Totals -->
             <div class="border-t pt-2 grid grid-cols-2">
@@ -89,13 +97,15 @@
 import Section from '@/components/Section.vue';
 import EstimateDetailCostingBillOfMaterials from './EstimateDetailCostingBillOfMaterials.vue';
 import EstimateDetailCostingServices from './EstimateDetailCostingServices.vue';
+import EstimateDetailCostingCostAddons from './EstimateDetailCostingCostAddons.vue';
 
 import {reactive, inject, computed} from 'vue';
 import {formatMoney as formatCurrency} from '@/utils/format.js'
 
 export default {
     components: {
-        Section, EstimateDetailCostingBillOfMaterials, EstimateDetailCostingServices
+        Section, EstimateDetailCostingBillOfMaterials, 
+        EstimateDetailCostingServices, EstimateDetailCostingCostAddons
     },
     props: {
         isProcessing: Boolean,
@@ -105,7 +115,8 @@ export default {
         },
         quantities: Array,
         billOfMaterials: Array,
-        services: Array
+        services: Array,
+        costAddons: Array,
     },
     setup(props) {
         const currency = inject('currency').abbreviation;
@@ -117,12 +128,14 @@ export default {
                         state.meta.maxQuantitiesColumnLength)),
                 materialTotalsMap: {},
                 serviceTotalsMap: {},
+                addonsTotalsMap: {},
                 totalsMap: computed(()=> {
                     let totals = {};
                     state.data.quantities.forEach(q=> {
                         const materialTotal = state.meta.materialTotalsMap[q] | 0;
                         const serviceTotal = state.meta.serviceTotalsMap[q] | 0;
-                        const total = materialTotal + serviceTotal;
+                        const addonsTotal = state.meta.addonsTotalsMap[q] | 0;
+                        const total = materialTotal + serviceTotal + addonsTotal;
                         totals[q] = total;
                     });
                     return totals;
@@ -131,7 +144,8 @@ export default {
             data: computed(()=> ({
                 quantities: props.quantities,
                 billOfMaterials: props.billOfMaterials,
-                services: props.services
+                services: props.services,
+                costAddons: props.costAddons
             })),
             components: {
                 expandButton: {

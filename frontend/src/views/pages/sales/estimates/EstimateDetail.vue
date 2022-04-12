@@ -43,7 +43,8 @@
             :is-processing="state.isProcessing"
             :quantities="state.data.quantities"
             :bill-of-materials="state.data.costing.billOfMaterials"
-            :services="state.data.costing.services"/>
+            :services="state.data.costing.services"
+            :cost-addons="state.data.costing.costAddons"/>
     </Page>
     
 </template>
@@ -87,7 +88,8 @@ export default {
                 },
                 costing: {
                     billOfMaterials: [],
-                    services: []
+                    services: [],
+                    costAddons: []
                 }
             },
             components: {
@@ -185,6 +187,17 @@ export default {
                                 }))
                             }))
                         }));
+
+                        if (response.cost_addons) {
+                            state.data.costing.costAddons = response.cost_addons.map(x => ({
+                                orderQuantity: x.order_quantity,
+                                addonCosts: x.addon_costs.map(y => ({
+                                    id: y.id, name: y.name, sequence: y.sequence,
+                                    type: y.type, addonValue: y.addon_value, 
+                                    addonCost: y.addon_cost
+                                }))
+                            }));
+                        }
                     }
                 }
             }

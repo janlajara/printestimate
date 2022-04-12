@@ -7,20 +7,6 @@
             class="pt-4 text-sm text-red-600">*{{state.error}}</div>
         <Section heading="General Information" heading-position="side"> 
             <div class="md:grid md:gap-4 md:grid-cols-3">
-                <InputTextLookup name="Product Template" 
-                    class="flex-grow md:col-span-2"
-                    required :disabled="$props.presetData && $props.presetData.template != null"
-                    v-show="state.isCreate" 
-                    placeholder="Search..." 
-                    :text="state.form.templateLookup.text"
-                    @select="value => state.form.templateLookup.select(value)"
-                    @input="value => state.form.templateLookup.search(value)"
-                    :options="state.meta.templates.map( option => ({
-                        value: option.id,
-                        title: option.name,
-                        subtitle: option.description,
-                        isSelected: state.data.template == option.id
-                    }))"/>
                 <InputText class="col-span-2"
                     name="Quantities"  placeholder="e.g. 100,200,300" 
                     type="text" :value="state.form.quantitiesField.text" required
@@ -33,6 +19,11 @@
                     @input="(value) => state.data.materialSpoilageRate = value"/>
             </div>
         </Section>
+        <hr/>
+        <Section heading="Cost Add-ons" heading-position="side"> 
+            <EstimateModalCostAddons
+                @input="value => state.data.estimateAddons = value"/>
+        </Section>
     </Modal>
 </template>
 <script>
@@ -41,13 +32,13 @@ import {reactive, computed, watch} from 'vue';
 import Modal from '@/components/Modal.vue';
 import Section from '@/components/Section.vue';
 import InputText from '@/components/InputText.vue';
-import InputTextLookup from '@/components/InputTextLookup.vue';
+import EstimateModalCostAddons from './EstimateModalCostAddons.vue';
 
-import {ProductTemplateApi, EstimateApi} from '@/utils/apis.js';
+import {EstimateApi} from '@/utils/apis.js';
 
 export default {
     components: {
-        Modal, Section, InputText, InputTextLookup
+        Modal, Section, InputText, EstimateModalCostAddons
     },
     props: {
         isOpen: Boolean,
@@ -61,9 +52,6 @@ export default {
             isCreate: computed(()=> props.productEstimateId == null),
             isProcessing: false,
             error: '',
-            meta: {
-                templates: []
-            },
             data: {
                 template: null,
                 orderQuantities: computed(()=> {
@@ -74,16 +62,9 @@ export default {
                     return parsed;
                 }),
                 materialSpoilageRate: 0,
+                estimateAddons: []
             },
             form: {
-                templateLookup: {
-                    text: '',
-                    select: (value)=> {
-                        state.data.template = value},
-                    search: (value)=> {
-                        state.form.templateLookup.text = value;
-                        populateProductTemplateList(value);}
-                },
                 quantitiesField: {
                     text: '',
                     onkeyup: (event)=> {
@@ -110,14 +91,17 @@ export default {
                 const estimate = {
                     product_template: state.data.template,
                     order_quantities: state.data.orderQuantities,
-                    material_spoilage_rate: state.data.materialSpoilageRate
+                    material_spoilage_rate: state.data.materialSpoilageRate,
+                    estimate_addon_set: {
+                        estimate_addon_items: state.data.estimateAddons 
+                    }
                 };
                 saveEstimate(state.id, estimate);
             },
             clear: ()=> {
                 state.data.template = null;
                 state.data.materialSpoilageRate = 0;
-                state.form.templateLookup.text = '';
+                state.data.estimateAddons = [];
                 state.form.quantitiesField.text = '';
             }
         });
@@ -130,18 +114,6 @@ export default {
                 state.data.materialSpoilageRate = parseInt(response.material_spoilage_rate);
             }
             state.isProcessing = false;
-        }
-
-        const populateProductTemplateList = async (search=null)=> {
-            const response = await ProductTemplateApi.listProductTemplates(10, 0, search);
-            if (response && response.results) {
-                state.meta.templates = response.results.map( obj => ({
-                    id: obj.id,
-                    code: obj.code,
-                    name: obj.name,
-                    description: obj.description
-                }))
-            }
         }
 
         const saveEstimate = async (id, estimate)=> {
@@ -174,13 +146,12 @@ export default {
         watch(()=> props.isOpen, async ()=> { 
             if (props.isOpen) {
                 state.error = ''; 
-                populateProductTemplateList();
                 initializePreset();
                 if (state.id) retrieveEstimateById(state.id);
             } else {
                 state.clear();
             }
-        })
+        });
 
         return {
             state

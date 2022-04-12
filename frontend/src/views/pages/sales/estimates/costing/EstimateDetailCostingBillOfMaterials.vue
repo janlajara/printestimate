@@ -124,7 +124,7 @@
         <!-- Total for all materials -->
         <div class="grid grid-cols-2 mt-2">
             <div class="text-right text-xs">
-                <div class="py-1">Total Materials:</div>
+                <div class="py-1"></div>
             </div>
             <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2`">
                 <div v-for="(quantity, x) in state.paginate(state.data.quantities)" :key="x">

@@ -120,6 +120,7 @@ export default {
             const match_found = option.value == o.value;
             o.isSelected = (match_found)? true : false;
           });
+          if (props.customizable) state.customInput = option.value;
           toggleDropdown(false);
         }
         const selectedIds = selectedOptions.value.map(o=> o.value);

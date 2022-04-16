@@ -22,7 +22,8 @@
         <hr/>
         <Section heading="Cost Add-ons" heading-position="side"> 
             <EstimateModalCostAddons
-                @input="value => state.data.estimateAddons = value"/>
+                :value="state.data.estimateAddonSet"
+                @input="value => state.data.estimateAddonSet.estimateAddonItems = value"/>
         </Section>
     </Modal>
 </template>
@@ -62,7 +63,10 @@ export default {
                     return parsed;
                 }),
                 materialSpoilageRate: 0,
-                estimateAddons: []
+                estimateAddonSet: {
+                    id: null,
+                    estimateAddonItems: []
+                }
             },
             form: {
                 quantitiesField: {
@@ -93,7 +97,8 @@ export default {
                     order_quantities: state.data.orderQuantities,
                     material_spoilage_rate: state.data.materialSpoilageRate,
                     estimate_addon_set: {
-                        estimate_addon_items: state.data.estimateAddons 
+                        id: state.data.estimateAddonSet.id,
+                        estimate_addon_items: state.data.estimateAddonSet.estimateAddonItems
                     }
                 };
                 saveEstimate(state.id, estimate);
@@ -101,7 +106,8 @@ export default {
             clear: ()=> {
                 state.data.template = null;
                 state.data.materialSpoilageRate = 0;
-                state.data.estimateAddons = [];
+                state.data.estimateAddonSet.id = null;
+                state.data.estimateAddonSet.estimateAddonItems = [];
                 state.form.quantitiesField.text = '';
             }
         });
@@ -112,6 +118,11 @@ export default {
                 const response = await EstimateApi.retrieveEstimate(id);
                 state.form.quantitiesField.text = response.order_quantities.join(',');
                 state.data.materialSpoilageRate = parseInt(response.material_spoilage_rate);
+                if (response.estimate_addon_set) {
+                    state.data.estimateAddonSet.id = response.estimate_addon_set.id;
+                    state.data.estimateAddonSet.estimateAddonItems = 
+                        response.estimate_addon_set.estimate_addon_items;
+                }
             }
             state.isProcessing = false;
         }

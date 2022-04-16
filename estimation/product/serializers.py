@@ -134,11 +134,12 @@ class ProductEstimateInputSerializer(serializers.Serializer):
 class ProductEstimateSerializer(serializers.ModelSerializer):
     product = ProductSerializer()
     order_quantities = serializers.ListField(child=serializers.IntegerField(min_value=1))
+    estimate_addon_set = EstimateAddonSetSerializer()
 
     class Meta:
         model = ProductEstimate
         fields = ['id', 'name', 'description', 'estimate_code', 'template_code', 
-            'order_quantities', 'material_spoilage_rate', 'product']
+            'order_quantities', 'material_spoilage_rate', 'product', 'estimate_addon_set']
 
 
 class ProductEstimateListSerializer(serializers.ModelSerializer):

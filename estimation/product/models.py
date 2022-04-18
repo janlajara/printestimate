@@ -937,9 +937,14 @@ class OperationEstimate(models.Model):
         is_component_based = not is_material_based and self.service.component is not None
         is_input_quantity_based = not is_material_based and not is_component_based
 
-        if estimate_variable_type is not None and \
+        if is_input_quantity_based:
+            return self.service.input_measure
+
+        elif estimate_variable_type is not None and \
                 self.service.costing_measure is not None:
 
+            prefix = 'o'
+            
             if is_material_based:
                 prefix = 'm%s' % (self.material.pk)
             elif is_component_based:
@@ -962,8 +967,6 @@ class OperationEstimate(models.Model):
                 result = measures.get(self.service.costing_measure, None)
                 return result
 
-        elif is_input_quantity_based:
-            return self.service.input_measure
 
 
 class ActivityEstimateManager(models.Manager):

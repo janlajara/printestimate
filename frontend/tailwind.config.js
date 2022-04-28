@@ -3,6 +3,9 @@ module.exports = {
   darkMode: false, // or 'media' or 'class'
   theme: {
     extend: {
+      screens: {
+        print: {'raw': 'print'},
+      },
       colors: {
         primary: {
           light: '#FCA5A5', 

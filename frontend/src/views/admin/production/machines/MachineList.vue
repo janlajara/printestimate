@@ -1,13 +1,11 @@
 <template>
-    <Page title="Admin : Machines">
+    <Page title="Admin : Printers">
         <hr class="my-4"/>
         <Tabs :refresh="false">
             <Tab title="Sheet-fed Press">
                 <SheetFedPressMachineList/>
             </Tab>
             <Tab title="Roll-fed Press">
-            </Tab>
-            <Tab title="Cutter">
             </Tab>
         </Tabs>
     </Page>

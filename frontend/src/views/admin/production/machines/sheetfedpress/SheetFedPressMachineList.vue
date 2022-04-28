@@ -4,7 +4,7 @@
             <div class="my-auto">
                 <Button color="secondary" icon="add"
                     :action="state.createModal.open">
-                    Add Machine</Button>
+                    Add Press</Button>
                 <SheetFedPressMachineModal :is-open="state.createModal.isOpen"
                     @toggle="state.createModal.toggle" 
                     :on-after-save="populateMachines"/>

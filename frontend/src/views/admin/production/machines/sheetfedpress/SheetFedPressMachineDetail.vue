@@ -1,5 +1,5 @@
  <template>
-    <Page :title="`Machine : ${state.machine.data.name}`">
+    <Page :title="`Press : ${state.machine.data.name}`">
         <hr class="my-4"/>
         <div class="flex gap-4">
             <Button color="secondary" icon="arrow_back"
@@ -13,7 +13,7 @@
                 @toggle="state.machine.editModal.toggle"
                 :on-after-save="()=>retrieveMachineDetail(state.id)"/>
             <DeleteRecordDialog 
-                heading="Delete Machine"
+                heading="Delete Press"
                 :is-open="state.machine.deleteDialog.isOpen"
                 :execute="state.machine.deleteDialog.delete"
                 :on-after-execute="()=>$router.go(-1)"

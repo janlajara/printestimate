@@ -81,7 +81,7 @@ const routes = [
         path: 'admin/production/machines',
         name: 'admin-production-machines',
         component: ()=>import('../views/admin/production/machines/MachineList.vue'),
-        meta: {label: 'Machines', group: 'Production Admin'}
+        meta: {label: 'Printers', group: 'Production Admin'}
       },
       {
         path: 'admin/production/machines/:id',

@@ -140,8 +140,9 @@ class ProductEstimate(models.Model):
     
         for (key, value) in prices_map.items():
             cost_addon_set = next((x for x in self.cost_addons 
-                if x.order_quantity ==  key), [])
-            price = ProductEstimate.Summary.Price(key, value, cost_addon_set.addon_costs)
+                if x.order_quantity ==  key), None)
+            addon_costs = cost_addon_set.addon_costs if cost_addon_set is not None else []
+            price = ProductEstimate.Summary.Price(key, value, addon_costs)
             prices.append(price)
 
         for (key, value) in durations_map.items():
@@ -191,10 +192,11 @@ class ProductEstimate(models.Model):
     @property
     def cost_addons(self):
         cost_addons = []
-        prices_map = self.estimates.total_prices_map
-        for (quantity, price) in prices_map.items():
-            cost_addon_set = self.estimate_addon_set.get_addon_cost_set(quantity, price.amount)
-            cost_addons.append(cost_addon_set)
+        if hasattr(self, 'estimate_addon_set'):
+            prices_map = self.estimates.total_prices_map
+            for (quantity, price) in prices_map.items():
+                cost_addon_set = self.estimate_addon_set.get_addon_cost_set(quantity, price.amount)
+                cost_addons.append(cost_addon_set)
         return cost_addons
 
     def set_material_spoilage_rate(self, spoilage_rate):

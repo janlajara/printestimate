@@ -62,6 +62,16 @@ class PressMachine(Machine):
     material_type = Item.PAPER
 
 
+class RollfedPressMachine(PressMachine):
+    min_sheet_width = models.FloatField(default=0)
+    max_sheet_width = models.FloatField(default=0)
+    max_sheet_breakpoint_length = models.FloatField(default=0)
+    vertical_margin = models.FloatField(default=0)
+    horizontal_margin = models.FloatField(default=0)
+    uom = models.CharField(max_length=30, default='mm',
+        choices=Measure.UNITS[Measure.DISTANCE])
+
+
 class SheetFedPressMachine(PressMachine):
     min_sheet_length = models.FloatField(default=0)
     max_sheet_length = models.FloatField(default=0)
@@ -230,7 +240,7 @@ class ParentSheet(Rectangle):
         def get_pack_size_as_rect(self):
             return self.width, self.length, self.uom
 
-    machine = models.ForeignKey(SheetFedPressMachine, on_delete=models.CASCADE, 
+    machine = models.ForeignKey(PressMachine, on_delete=models.CASCADE, 
         related_name='parent_sheets') 
     label = models.CharField(max_length=30, blank=True, null=True)
     padding_top = models.FloatField(default=0)

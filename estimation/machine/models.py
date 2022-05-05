@@ -15,7 +15,8 @@ _inflect = inflect.engine()
 class MachineManager(PolymorphicManager):
     def create_machine(self, **kwargs):
         mapping = {
-            Machine.SHEET_FED_PRESS : SheetFedPressMachine
+            Machine.SHEET_FED_PRESS : SheetFedPressMachine,
+            Machine.ROLL_FED_PRESS : RollFedPressMachine
         }
         type = kwargs.get('type', Machine.SHEET_FED_PRESS)
         clazz = mapping[type]
@@ -25,8 +26,10 @@ class MachineManager(PolymorphicManager):
 
 class Machine(PolymorphicModel): 
     SHEET_FED_PRESS = 'SheetFedPressMachine'
+    ROLL_FED_PRESS = 'RollFedPressMachine'
     TYPES = [
         (SHEET_FED_PRESS, 'Sheet-fed Press'),
+        (ROLL_FED_PRESS, 'Roll-fed Press')
     ]
 
     objects = MachineManager()
@@ -61,15 +64,136 @@ class PressMachine(Machine):
         null=False, blank=False)
     material_type = Item.PAPER
 
+    def get_sheet_layouts(self, item_layout:Paper.Layout, material_layout:Paper.Layout, 
+            rotate=False, **kwargs):
+        layouts = self.get_layouts_meta(material_layout, item_layout, rotate, **kwargs)
+        return layouts
 
-class RollfedPressMachine(PressMachine):
+    def get_layouts_meta(self, material_layout, item_layout, rotate, **kwargs):
+        # Implement this method
+        pass
+
+
+class RollFedPressMachine(PressMachine):
     min_sheet_width = models.FloatField(default=0)
     max_sheet_width = models.FloatField(default=0)
+    min_sheet_breakpoint_length = models.FloatField(default=0)
     max_sheet_breakpoint_length = models.FloatField(default=0)
+    make_ready_spoilage_length = models.FloatField(default=0)
     vertical_margin = models.FloatField(default=0)
     horizontal_margin = models.FloatField(default=0)
     uom = models.CharField(max_length=30, default='mm',
         choices=Measure.UNITS[Measure.DISTANCE])
+
+    def _to_measurement(self, value):
+        m = Distance(inch=0)
+        if value is not None and self.uom is not None:
+            m = Distance(**{self.uom: value})
+        return m
+
+    @property
+    def margin_x_measurement(self):
+        return self._to_measurement(self.horizontal_margin)
+
+    @property
+    def margin_y_measurement(self):
+        return self._to_measurement(self.vertical_margin)
+
+    @property
+    def make_ready_spoilage_length_measurement(self):
+        return self._to_measurement(self.make_ready_spoilage_length)
+
+    @property
+    def min_breakpoint_length_measurement(self):
+        return self._to_measurement(self.min_sheet_breakpoint_length) 
+
+    @property
+    def max_breakpoint_length_measurement(self):
+        return self._to_measurement(self.max_sheet_breakpoint_length) 
+
+    @property
+    def min_printable_width_measurement(self):
+        return self._to_measurement(self.min_sheet_width - self.vertical_margin)
+
+    @property
+    def max_printable_width_measurement(self):
+        return self._to_measurement(self.max_sheet_width - self.vertical_margin)
+
+    def _validate_material(self, material_layout):
+        # returns width, length where length is always the longer dimension
+        def _get_material_dimensions(material_layout):
+            width, length = ((material_layout.width_measurement, material_layout.length_measurement)
+                if material_layout.length > material_layout.width 
+                else (material_layout.length_measurement, material_layout.width_measurement))
+            return width, length
+
+        width, length = _get_material_dimensions(material_layout)
+
+        if length < self.min_breakpoint_length_measurement:
+            raise ValueError('length of material cannot be lesser than the minimum breakpoint length.',
+                length, 'vs.', self.min_breakpoint_length_measurement)
+
+        if getattr(width, self.uom) < self.min_sheet_width:
+            raise ValueError('width of material cannot be lesser than the minimum sheet width.',
+                width, 'vs.', self.min_sheet_width)
+
+        if getattr(width, self.uom) > self.max_sheet_width:
+            raise ValueError('width of material cannot be greather than the maximum sheet width.',
+                width, 'vs.', self.max_sheet_width)
+
+    def get_layouts_meta(self, material_layout, item_layout:'ChildSheet', rotate=False, 
+            order_quantity=1, spoilage_rate=0, apply_breakpoint=False):
+
+        if item_layout.width == 0:
+            raise ValueError('Item layout width should not be equal to zero')
+
+        self._validate_material(material_layout)
+
+        def _get_runsheet_layouts(quantity):
+            def _get_runsheet_width(item_width):
+                printable_width = material_layout.width_measurement - self.margin_x_measurement
+                count = printable_width / item_width
+                return math.floor(count) * item_width
+
+            def _create_layout(width, length, uom):
+                return Rectangle.Layout(width=width, length=length, uom=uom)
+
+            runsheet_width = getattr(
+                _get_runsheet_width(item_layout.total_width_measurement),
+                self.uom)
+            total_item_area = item_layout.area_measurement * quantity
+            total_item_length = (getattr(total_item_area, 'sq_%s' % self.uom) / 
+                runsheet_width)
+            runsheet_length = total_item_length
+            layouts = []
+
+            if apply_breakpoint:
+                if self.min_sheet_breakpoint_length > total_item_length:
+                    runsheet_length = self.min_sheet_breakpoint_length
+                elif total_item_length > self.max_sheet_breakpoint_length:
+                    runsheet_length = self.max_sheet_breakpoint_length
+                
+                remainder_length = total_item_length % runsheet_length
+                if remainder_length > 0:
+                    if self.min_sheet_breakpoint_length > remainder_length:
+                        remainder_length = self.min_sheet_breakpoint_length
+                    remainder_rect = _create_layout(runsheet_width, 
+                        remainder_length, self.uom)
+                    remainder_layout = Rectangle.get_layout(remainder_rect, item_layout,
+                        False, 'Runsheet-to-cutsheet-remainder')
+                    layouts.append(remainder_layout)
+
+            uom = self.uom
+            runsheet_layout = _create_layout(runsheet_width, runsheet_length, uom)
+            layout = Rectangle.get_layout(runsheet_layout, item_layout, 
+                False, 'Runsheet-to-cutsheet')
+            layouts.insert(0, layout)
+            return layouts     
+
+        quantity = order_quantity * (1+(spoilage_rate/100))
+        runsheet_to_final_layouts = _get_runsheet_layouts(quantity)
+        
+        return runsheet_to_final_layouts
 
 
 class SheetFedPressMachine(PressMachine):
@@ -184,12 +308,6 @@ class SheetFedPressMachine(PressMachine):
                 rotated_parent_to_child_layout_meta]
 
         return return_layouts_meta
-
-
-    def get_sheet_layouts(self, item_layout:Paper.Layout, material_layout:Paper.Layout, 
-            rotate=False):
-        layouts = self.get_layouts_meta(material_layout, item_layout, rotate)
-        return layouts
         
 
     def add_parent_sheet(self, width_value, length_value, size_uom, 
@@ -341,6 +459,14 @@ class ChildSheet(Rectangle):
             self.margin_bottom = margin_bottom
             self.margin_left = margin_left
         
+        @property
+        def total_width_measurement(self):
+            return self.width_measurement + self._to_measurement(self.margin_x)
+
+        @property
+        def total_length_measurement(self):
+            return self.length_measurement + self._to_measurement(self.margin_y)
+
         @property
         def margin_x(self):
             return self.margin_right + self.margin_left

@@ -26,6 +26,14 @@ def gto_machine(db):
 
 
 @pytest.fixture
+def hplatex_machine(db):
+    return Machine.objects.create_machine(name='HP Latex',
+        type=Machine.ROLL_FED_PRESS, uom='inch',
+        min_sheet_width=25, max_sheet_width=48,
+        max_sheet_breakpoint_length=150)
+
+
+@pytest.fixture
 def carbonless_item(db, item_factory):
     item = item_factory(type=Item.PAPER, name='Carbonless')
     item.properties.length_value = 27
@@ -184,3 +192,23 @@ def test_sheet_fed_press__get_sheet_layouts__big_layout(
 
     assert item_to_runsheet.count == 3
     assert runsheet_to_material.count == 1
+
+
+def test_roll_fed_press__get_sheet_layouts(db, hplatex_machine):
+    material = Rectangle.Layout(width=48, length=2000, uom='inch')
+    item = ChildSheet.Layout(width=3, length=3, uom='inch', 
+        margin_top=1, margin_right=1, margin_bottom=1, margin_left=1)
+    
+    layouts = hplatex_machine.get_sheet_layouts(item, material, rotate=True, 
+        order_quantity=5000, apply_breakpoint=True)
+
+    assert layouts is not None and len(layouts) == 2
+
+    layout1 = layouts[0]
+    layout2 = layouts[1]
+
+    assert layout1.bin.width == 45 and layout1.bin.length == 150
+    assert layout1.count == 270
+
+    assert layout2.bin.width == 45 and round(layout2.bin.length) == 100
+    assert layout2.count == 171

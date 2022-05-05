@@ -146,19 +146,27 @@ class Rectangle(Shape):
         def __str__(self):
             return '%sx%s %s' % (self.width, self.length, self.uom)
 
+        def _to_measurement(self, value):
+            m = Distance(inch=0)
+            if value is not None and self.uom is not None:
+                m = Distance(**{self.uom: value})
+            return m
+
+        @property
+        def total_width_measurement(self):
+            return self.width_measurement
+
+        @property
+        def total_length_measurement(self):
+            return self.length_measurement
+
         @property
         def width_measurement(self):
-            w = Distance(inch=0)
-            if self.width is not None and self.uom is not None:
-                w = Distance(**{self.uom: self.width})
-            return w
+            return self._to_measurement(self.width)
 
         @property
         def length_measurement(self):
-            l = Distance(inch=0)
-            if self.length is not None and self.uom is not None:
-                l = Distance(**{self.uom: self.length}) 
-            return l
+            return self._to_measurement(self.length)
 
         @property
         def area_measurement(self):
@@ -193,9 +201,6 @@ class Rectangle(Shape):
                 is_gte = self.width_measurement.mm >= layout.length_measurement.mm and \
                 self.length_measurement.mm >= layout.width_measurement.mm
             return is_gte
-
-        def __str__(self):
-            return '%s x %s %s' % (self.width, self.length, self.uom)
     
     class LayoutMeta:
         def __init__(self, bin, rect, layouts, count, usage, wastage, rotate, 

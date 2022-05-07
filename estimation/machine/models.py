@@ -64,12 +64,16 @@ class PressMachine(Machine):
         null=False, blank=False)
     material_type = Item.PAPER
 
-    def get_sheet_layouts(self, item_layout:Paper.Layout, material_layout:Paper.Layout, 
-            rotate=False, **kwargs):
-        layouts = self.get_layouts_meta(material_layout, item_layout, rotate, **kwargs)
+    # Get sheet layout given the following:
+    # raw_material_layout - the layout of the raw material
+    # final_material_layout - the layout of the final material after converting the raw material
+    def get_sheet_layouts(self, raw_material_layout:Paper.Layout, 
+            final_material_layout:Paper.Layout, rotate=False, **kwargs):
+        layouts = self.get_layouts_meta(final_material_layout, raw_material_layout, 
+            rotate, **kwargs)
         return layouts
 
-    def get_layouts_meta(self, material_layout, item_layout, rotate, **kwargs):
+    def get_layouts_meta(self, final_material_layout, raw_material_layout, rotate, **kwargs):
         # Implement this method
         pass
 
@@ -119,7 +123,7 @@ class RollFedPressMachine(PressMachine):
     def max_printable_width_measurement(self):
         return self._to_measurement(self.max_sheet_width - self.vertical_margin)
 
-    def _validate_material(self, material_layout):
+    def _validate_raw_material(self, material_layout):
         # returns width, length where length is always the longer dimension
         def _get_material_dimensions(material_layout):
             width, length = ((material_layout.width_measurement, material_layout.length_measurement)
@@ -141,29 +145,29 @@ class RollFedPressMachine(PressMachine):
             raise ValueError('width of material cannot be greather than the maximum sheet width.',
                 width, 'vs.', self.max_sheet_width)
 
-    def get_layouts_meta(self, material_layout, item_layout:'ChildSheet', rotate=False, 
+    def get_layouts_meta(self, final_material_layout, raw_material_layout, rotate=False, 
             order_quantity=1, spoilage_rate=0, apply_breakpoint=False):
 
-        if item_layout.width == 0:
-            raise ValueError('Item layout width should not be equal to zero')
+        if final_material_layout.width == 0:
+            raise ValueError('Final material layout width should not be equal to zero')
 
-        self._validate_material(material_layout)
+        self._validate_raw_material(raw_material_layout)
 
         def _get_runsheet_layouts(quantity):
-            def _get_runsheet_width(item_width):
-                printable_width = material_layout.width_measurement - self.margin_x_measurement
-                count = printable_width / item_width
-                return math.floor(count) * item_width
+            def _get_runsheet_width(final_material_width):
+                printable_width = raw_material_layout.width_measurement - self.margin_x_measurement
+                count = printable_width / final_material_width
+                return math.floor(count) * final_material_width
 
             def _create_layout(width, length, uom):
                 return Rectangle.Layout(width=width, length=length, uom=uom)
 
-            runsheet_width = getattr(
-                _get_runsheet_width(item_layout.total_width_measurement),
-                self.uom)
-            total_item_area = item_layout.area_measurement * quantity
-            total_item_length = (getattr(total_item_area, 'sq_%s' % self.uom) / 
-                runsheet_width)
+            runsheet_width_measurement = _get_runsheet_width(
+                final_material_layout.total_width_measurement)
+            runsheet_width = getattr(runsheet_width_measurement, self.uom)
+            total_item_area_measurement = final_material_layout.area_measurement * quantity
+            total_item_area = getattr(total_item_area_measurement, 'sq_%s' % self.uom)
+            total_item_length = (round(total_item_area, 4) / runsheet_width)
             runsheet_length = total_item_length
             layouts = []
 
@@ -173,19 +177,21 @@ class RollFedPressMachine(PressMachine):
                 elif total_item_length > self.max_sheet_breakpoint_length:
                     runsheet_length = self.max_sheet_breakpoint_length
                 
-                remainder_length = total_item_length % runsheet_length
-                if remainder_length > 0:
-                    if self.min_sheet_breakpoint_length > remainder_length:
-                        remainder_length = self.min_sheet_breakpoint_length
-                    remainder_rect = _create_layout(runsheet_width, 
-                        remainder_length, self.uom)
-                    remainder_layout = Rectangle.get_layout(remainder_rect, item_layout,
-                        False, 'Runsheet-to-cutsheet-remainder')
-                    layouts.append(remainder_layout)
+                if total_item_length > runsheet_length:
+                    remainder_length = total_item_length % runsheet_length
+                    if remainder_length > 0:
+                        if self.min_sheet_breakpoint_length > remainder_length:
+                            remainder_length = self.min_sheet_breakpoint_length
+                        remainder_rect = _create_layout(runsheet_width, 
+                            remainder_length, self.uom)
+                        remainder_layout = Rectangle.get_layout(remainder_rect, 
+                            final_material_layout,
+                            False, 'Runsheet-to-cutsheet-remainder')
+                        layouts.append(remainder_layout)
 
             uom = self.uom
             runsheet_layout = _create_layout(runsheet_width, runsheet_length, uom)
-            layout = Rectangle.get_layout(runsheet_layout, item_layout, 
+            layout = Rectangle.get_layout(runsheet_layout, final_material_layout, 
                 False, 'Runsheet-to-cutsheet')
             layouts.insert(0, layout)
             return layouts     
@@ -204,7 +210,7 @@ class SheetFedPressMachine(PressMachine):
     uom = models.CharField(max_length=30, default='mm',
         choices=Measure.UNITS[Measure.DISTANCE])
     
-    def get_layouts_meta(self, material_layout, item_layout, rotate=False):
+    def get_layouts_meta(self, final_material_layout, raw_material_layout, rotate=False):
         # Dirty workaround for the floating point-number lossy 
         # implementation in python-measurements package
         def _is_gte(x, y):
@@ -288,17 +294,17 @@ class SheetFedPressMachine(PressMachine):
                     is_rotated=True)
 
         item_to_parent_layout_meta = _get_parentsheet_layout_meta(
-            item_layout.width, item_layout.length, item_layout.uom, 
-            material_layout.width, material_layout.length, material_layout.uom)
+            raw_material_layout.width, raw_material_layout.length, raw_material_layout.uom, 
+            final_material_layout.width, final_material_layout.length, final_material_layout.uom)
         parent_to_child_layout_meta = ChildSheet.get_layout(
-            item_to_parent_layout_meta.rect, material_layout, rotate, 'Runsheet-to-cutsheet')
+            item_to_parent_layout_meta.rect, final_material_layout, rotate, 'Runsheet-to-cutsheet')
         child_count = item_to_parent_layout_meta.count * parent_to_child_layout_meta.count
 
         rotated_item_to_parent_layout_meta = _get_parentsheet_layout_meta(
-            item_layout.length, item_layout.width, item_layout.uom,
-            material_layout.width, material_layout.length, material_layout.uom)
+            raw_material_layout.length, raw_material_layout.width, raw_material_layout.uom,
+            final_material_layout.width, final_material_layout.length, final_material_layout.uom)
         rotated_parent_to_child_layout_meta = ChildSheet.get_layout(
-            rotated_item_to_parent_layout_meta.rect, material_layout, rotate, 'Runsheet-to-cutsheet')
+            rotated_item_to_parent_layout_meta.rect, final_material_layout, rotate, 'Runsheet-to-cutsheet')
         rotated_child_count = rotated_item_to_parent_layout_meta.count * rotated_parent_to_child_layout_meta.count
 
         return_layouts_meta = [item_to_parent_layout_meta, parent_to_child_layout_meta]

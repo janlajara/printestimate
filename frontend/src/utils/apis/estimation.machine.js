@@ -52,33 +52,6 @@ export class SheetFedPressMachineApi {
             'Machine deleted successfully.', 'Delete failed. Please try again.');
     }
 
-    /* Not used anymore. To be removed
-    static async retrieveSheetFedPressMachineParentSheets(id) {
-        const response = await AXIOS.execute(AXIOS.GET, 
-            SheetFedPressMachineApi.uri + `/sheetfedpress/${id}/parentsheets`)
-        return response.data
-    }
-
-    static async createSheetFedPressMachineParentSheet(id, sheet) {
-        const response = await AXIOS.execute(AXIOS.POST, 
-            SheetFedPressMachineApi.uri + `/sheetfedpress/${id}/parentsheets`,
-            'Parent Sheet created successfully.', 'Create failed. Please try again.', sheet);
-        return response.data;
-    }
-
-    static async retrieveSheetFedPressMachineChildSheets(id) {
-        const response = await AXIOS.execute(AXIOS.GET, 
-            SheetFedPressMachineApi.uri + `/sheetfedpress/${id}/childsheets`)
-        return response.data
-    }
-
-    static async createSheetFedPressMachineChildSheet(id, sheet) {
-        const response = await AXIOS.execute(AXIOS.POST, 
-            SheetFedPressMachineApi.uri + `/sheetfedpress/${id}/childsheets`,
-            'Child Sheet created successfully.', 'Create failed. Please try again.', sheet);
-        return response.data;
-    }*/
-
     static async getSheetLayout(id, input) {
         const response = await AXIOS.execute(AXIOS.POST, 
             SheetFedPressMachineApi.uri + `/${id}/getlayout`,

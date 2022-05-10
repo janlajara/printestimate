@@ -304,13 +304,13 @@ class Rectangle(Shape):
             pa = d_pw.mm * d_pl.mm
             return (ca / pa)
 
-        def __get_layouts__(packer, rotated):
+        def __get_layouts__(packer, rotated, uom=None):
             layouts = []
             if packer is not None:
                 for key, rect in enumerate(packer.rect_list()):
                     x, y, width, length, rid = rect
                     is_rotated = key in rotated
-                    layout = Rectangle.Layout(key + 1, x, y, width, length, is_rotated)
+                    layout = Rectangle.Layout(key + 1, x, y, width, length, is_rotated, uom=uom)
                     layouts.append(layout) 
             return layouts
         
@@ -353,7 +353,7 @@ class Rectangle(Shape):
         # list of index of rectangles that have been rotated
         rotated = [i for i, x in enumerate(packer) if x.width != child_width and x.height != child_length] if \
             packer is not None and rotate else []
-        layouts = __get_layouts__(packer, rotated)
+        layouts = __get_layouts__(packer, rotated, uom=child_uom)
         cut_count = __get_cut_count__(packer, parent_width, parent_length, rotated)
 
         layout_meta = Rectangle.LayoutMeta(parent_layout, child_layout, layouts, count, 

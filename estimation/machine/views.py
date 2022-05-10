@@ -69,7 +69,7 @@ class RollFedPressMachineViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
 
-'''
+# For getting sheet layouts that do not involved any printers
 class GetSheetLayoutsView(mixins.CreateModelMixin, viewsets.GenericViewSet):
     queryset = []
     serializer_class = serializers.GetSheetLayoutSerializer
@@ -80,7 +80,7 @@ class GetSheetLayoutsView(mixins.CreateModelMixin, viewsets.GenericViewSet):
         if serializer.is_valid():
             validated_data = serializer.validated_data
             material_layout, item_layout, bleed, rotate = \
-                    serializer.create(validated_data)
+                    serializer.parse(validated_data)
             sheet_layout = ChildSheet.get_layout(item_layout, material_layout, 
                 rotate)
             response = {}
@@ -90,7 +90,7 @@ class GetSheetLayoutsView(mixins.CreateModelMixin, viewsets.GenericViewSet):
             return Response(response)
         else:
             return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-'''
+
 
 class SheetFedPressMachineGetSheetLayoutsView(mixins.CreateModelMixin,  
         viewsets.GenericViewSet):

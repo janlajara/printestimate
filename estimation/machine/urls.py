@@ -17,6 +17,10 @@ urlpatterns = [
         views.RollFedPressMachineViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
     path('api/machines/rollfedpress/<pk>/getlayout',
         views.RollFedPressMachineGetSheetLayoutsView.as_view({'post': 'create'})),
+
+    # ChildSheet Viewsets
+    path('api/childsheets/getlayout',
+        views.GetSheetLayoutsView.as_view({'post': 'create'})),
 ]    
     
 # START : Not used anymore. To remove

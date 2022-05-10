@@ -232,7 +232,7 @@ def test_roll_fed_press__get_sheet_layouts__remainder_is_less_than_minbreakpoint
     material = ChildSheet.Layout(width=3, length=3, uom='inch', 
         margin_top=1, margin_right=1, margin_bottom=1, margin_left=1)
     layouts = hplatex_machine.get_sheet_layouts(item, material, rotate=True, 
-        order_quantity=900, apply_breakpoint=True)
+        order_quantity=900.00, apply_breakpoint=True)
     assert layouts is not None and len(layouts) == 2
 
     layout1 = layouts[0]

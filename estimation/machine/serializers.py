@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 from inventory.properties.models import Paper
 from core.utils.shapes import Rectangle, RectangleLayoutSerializer, RectangleLayoutMetaSerializer
-from estimation.models import Machine, SheetFedPressMachine, ParentSheet, ChildSheet
+from estimation.models import Machine, SheetFedPressMachine, RollFedPressMachine, ParentSheet, ChildSheet
 from django.shortcuts import get_object_or_404
 import inflect
 
@@ -14,7 +14,7 @@ class MachineSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'type', 'material_type', 'description']
 
 
-class SheetFedPressMachineSerializer(serializers.ModelSerializer):
+class SheetFedPressMachineSerializer(MachineSerializer):
     length_range = serializers.SerializerMethodField()
     width_range = serializers.SerializerMethodField()
     min_parent_sheet_length = serializers.SerializerMethodField()
@@ -58,13 +58,51 @@ class SheetFedPressMachineSerializer(serializers.ModelSerializer):
         min_width_obj = obj.parent_sheets.order_by('width_value').first()
         return min_width_obj.width_value if min_width_obj else None
 
+
+class RollFedPressMachineSerializer(MachineSerializer):
+
+    class Meta:
+        model = RollFedPressMachine
+        fields = ['id', 'name', 'process_type', 
+            'material_type', 'description', 'costing_measures', 
+            'min_sheet_width', 'max_sheet_width',
+            'min_sheet_breakpoint_length', 'max_sheet_breakpoint_length',
+            'make_ready_spoilage_length', 'vertical_margin',
+            'horizontal_margin', 'uom']
+
+    def validate(self, data):
+        errors = {}
+        min_sheet_width = data['min_sheet_width']
+        max_sheet_width = data['max_sheet_width']
+        min_sheet_breakpoint_length = data['min_sheet_breakpoint_length']
+        max_sheet_breakpoint_length = data['max_sheet_breakpoint_length']
+        horizontal_margin = data['horizontal_margin']
+        vertical_margin = data['vertical_margin']
+
+        if min_sheet_width > max_sheet_width:
+            errors["max_sheet_width"] = "value must be greater than 'min_sheet_width'."
+        if min_sheet_breakpoint_length > max_sheet_breakpoint_length > 0:
+            errors["max_sheet_breakpoint_length"] = "value must be greater than 'min_sheet_breakpoint_length'."
+        if (horizontal_margin * 2) > min_sheet_width:
+            errors['horizontal_margin'] = "twice its value cannot be greater than min_sheet_width."
+        if (vertical_margin * 2) > min_sheet_breakpoint_length > 0:
+            errors['vertical_margin'] = "twice its value cannot be greater than min_sheet_breakpoint_length."
+
+        if len(errors.items()) > 0:
+            raise serializers.ValidationError(errors)
+
+        return super().validate(data)
+
+
 class MachinePolymorphicSerializer(PolymorphicSerializer):
     model_serializer_mapping = {
         Machine: MachineSerializer,
-        SheetFedPressMachine: SheetFedPressMachineSerializer
+        SheetFedPressMachine: SheetFedPressMachineSerializer,
+        RollFedPressMachine: RollFedPressMachineSerializer
     }
 
 
+'''
 class ChildSheetSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChildSheet
@@ -122,7 +160,7 @@ class ChildSheetSimpleSerializer(serializers.ModelSerializer):
         fields = ['parent', 'width_value', 'length_value', 'size_uom',
             'margin_top', 'margin_right', 'margin_bottom', 'margin_left',
             'pack_width', 'pack_length']
-
+'''
 
 class ParentSheetLayoutSerializer(RectangleLayoutSerializer):
     padding_top = serializers.FloatField()
@@ -197,7 +235,7 @@ class GetSheetLayoutSerializer(serializers.Serializer):
     bleed = serializers.BooleanField(default=False)
     rotate = serializers.BooleanField(default=False)
 
-    def create(self, validated_data):
+    def parse(self, validated_data):
         material_layout_data = validated_data.get('material_layout')
         material_layout = ChildSheet.Layout(**material_layout_data)
 
@@ -208,3 +246,24 @@ class GetSheetLayoutSerializer(serializers.Serializer):
         rotate = validated_data.get('rotate', False)
 
         return material_layout, item_layout, bleed, rotate
+
+
+class GetRollFedMachineSheetLayoutSerializer(serializers.Serializer):
+    material_layout = ChildSheetLayoutSerializer()
+    item_layout = RectangleLayoutSerializer()
+    order_quantity = serializers.IntegerField()
+    spoilage_rate = serializers.DecimalField(decimal_places=2, max_digits=8)
+    apply_breakpoint = serializers.BooleanField(default=False)
+
+    def parse(self, validated_data):
+        material_layout_data = validated_data.get('material_layout')
+        material_layout = ChildSheet.Layout(**material_layout_data)
+
+        item_layout_data = validated_data.get('item_layout')
+        item_layout = Rectangle.Layout(**item_layout_data)
+
+        order_quantity = validated_data.get('order_quantity')
+        spoilage_rate = validated_data.get('spoilage_rate')
+        apply_breakpoint = validated_data.get('apply_breakpoint')
+
+        return material_layout, item_layout, order_quantity, spoilage_rate, apply_breakpoint

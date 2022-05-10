@@ -160,8 +160,10 @@ class RollFedPressMachine(PressMachine):
                 return math.floor(count) * final_material_width
 
             def _create_layout(width, length, uom):
-                return Rectangle.Layout(width=width, length=length, uom=uom)
+                layout = Rectangle.Layout(width=width, length=length, uom=uom)
+                return layout
 
+            quantity = float(quantity)
             runsheet_width_measurement = _get_runsheet_width(
                 final_material_layout.total_width_measurement)
             runsheet_width = getattr(runsheet_width_measurement, self.uom)
@@ -189,8 +191,7 @@ class RollFedPressMachine(PressMachine):
                             False, 'Runsheet-to-cutsheet-remainder')
                         layouts.append(remainder_layout)
 
-            uom = self.uom
-            runsheet_layout = _create_layout(runsheet_width, runsheet_length, uom)
+            runsheet_layout = _create_layout(runsheet_width, runsheet_length, self.uom)
             layout = Rectangle.get_layout(runsheet_layout, final_material_layout, 
                 False, 'Runsheet-to-cutsheet')
             layouts.insert(0, layout)

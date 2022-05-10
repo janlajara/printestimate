@@ -9,12 +9,22 @@ urlpatterns = [
         views.SheetFedPressMachineViewSet.as_view({'get': 'list', 'post': 'create'})),
     path('api/machines/sheetfedpress/<pk>/', 
         views.SheetFedPressMachineViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
+    path('api/machines/sheetfedpress/<pk>/getlayout', 
+        views.SheetFedPressMachineGetSheetLayoutsView.as_view({'post': 'create'})),
+    path('api/machines/rollfedpress', 
+        views.RollFedPressMachineViewSet.as_view({'get': 'list', 'post': 'create'})),
+    path('api/machines/rollfedpress/<pk>/', 
+        views.RollFedPressMachineViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
+    path('api/machines/rollfedpress/<pk>/getlayout',
+        views.RollFedPressMachineGetSheetLayoutsView.as_view({'post': 'create'})),
+]    
+    
+# START : Not used anymore. To remove
+'''
     path('api/machines/sheetfedpress/<pk>/parentsheets', 
         views.SheetFedPressMachineParentSheetViewSet.as_view({'get': 'list', 'post': 'create'})),
     path('api/machines/sheetfedpress/<pk>/childsheets', 
         views.SheetFedPressMachineChildSheetViewSet.as_view({'get': 'list', 'post': 'create'})),
-    path('api/machines/sheetfedpress/<pk>/getlayout', 
-        views.SheetFedPressMachineGetSheetLayoutsView.as_view({'post': 'create'})),
 
     # ParentSheet Viewsets
     path('api/parentsheets/<pk>/',
@@ -27,4 +37,5 @@ urlpatterns = [
         views.ChildSheetLayoutView.as_view({'post': 'create'})),
     path('api/childsheets/<pk>/',
         views.ChildSheetViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
-]
+'''
+# END : Not used anymore

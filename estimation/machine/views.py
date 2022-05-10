@@ -2,7 +2,8 @@ from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
 from core.utils.shapes import Rectangle, RectangleLayoutMetaSerializer
-from estimation.models import Machine, SheetFedPressMachine, ParentSheet, ChildSheet
+from estimation.models import Machine, SheetFedPressMachine, RollFedPressMachine, \
+    ParentSheet, ChildSheet
 from estimation import serializers
 import json
 
@@ -39,18 +40,36 @@ class SheetFedPressMachineViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.SheetFedPressMachineSerializer
 
     def create(self, request):
-        deserialized = serializers.SheetFedPressMachineSerializer(data=request.data)
+        serializer = serializers.SheetFedPressMachineSerializer(data=request.data)
 
-        if deserialized.is_valid():
-            validated_data = deserialized.validated_data
+        if serializer.is_valid():
+            validated_data = serializer.validated_data
             machine = Machine.objects.create_machine(
                 type=Machine.SHEET_FED_PRESS, **validated_data)
             serialized = serializers.SheetFedPressMachineSerializer(machine)
             return Response(serialized.data)
         else:
-            return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
 
+class RollFedPressMachineViewSet(viewsets.ModelViewSet):
+    queryset = RollFedPressMachine.objects.all()
+    serializer_class = serializers.RollFedPressMachineSerializer
+
+    def create(self, request):
+        serializer = serializers.RollFedPressMachineSerializer(data=request.data)
+
+        if serializer.is_valid():
+            validated_data = serializer.validated_data
+            machine = Machine.objects.create_machine(
+                type=Machine.ROLL_FED_PRESS, **validated_data)
+            serialized = serializers.RollFedPressMachineSerializer(machine)
+            return Response(serialized.data)
+        else:
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+
+'''
 class GetSheetLayoutsView(mixins.CreateModelMixin, viewsets.GenericViewSet):
     queryset = []
     serializer_class = serializers.GetSheetLayoutSerializer
@@ -71,7 +90,7 @@ class GetSheetLayoutsView(mixins.CreateModelMixin, viewsets.GenericViewSet):
             return Response(response)
         else:
             return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-
+'''
 
 class SheetFedPressMachineGetSheetLayoutsView(mixins.CreateModelMixin,  
         viewsets.GenericViewSet):
@@ -86,7 +105,7 @@ class SheetFedPressMachineGetSheetLayoutsView(mixins.CreateModelMixin,
             if serializer.is_valid():
                 validated_data = serializer.validated_data
                 material_layout, item_layout, bleed, rotate = \
-                    serializer.create(validated_data)
+                    serializer.parse(validated_data)
                 sheet_layouts = press_machine.get_sheet_layouts(item_layout, 
                     material_layout, rotate)
 
@@ -102,6 +121,36 @@ class SheetFedPressMachineGetSheetLayoutsView(mixins.CreateModelMixin,
             return Response({'error': "missing machine pk"}, status.HTTP_400_BAD_REQUEST)
 
 
+class RollFedPressMachineGetSheetLayoutsView(mixins.CreateModelMixin,  
+        viewsets.GenericViewSet):
+    queryset = []
+    serializer_class = serializers.GetRollFedMachineSheetLayoutSerializer
+
+    def create(self, request, pk):
+        if pk is not None:
+            press_machine = get_object_or_404(RollFedPressMachine, pk=pk)
+            serializer = serializers.GetRollFedMachineSheetLayoutSerializer(data=request.data)
+            
+            if serializer.is_valid():
+                validated_data = serializer.validated_data
+                (material_layout, item_layout, order_quantity,
+                    spoilage_rate, apply_breakpoint) = serializer.parse(validated_data)
+                sheet_layouts = press_machine.get_sheet_layouts(item_layout, 
+                    material_layout, False, order_quantity=order_quantity, 
+                    spoilage_rate=spoilage_rate, apply_breakpoint=apply_breakpoint)
+
+                response = {}
+                if sheet_layouts is not None:
+                    serializer = serializers.SheetLayoutMetaSerializer(sheet_layouts, many=True)
+                    response = serializer.data
+
+                return Response(response)
+            else:
+                return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': "missing machine pk"}, status.HTTP_400_BAD_REQUEST)
+
+'''
 class SheetFedPressMachineParentSheetViewSet(mixins.ListModelMixin,
                             mixins.CreateModelMixin, viewsets.GenericViewSet):
     serializer_class = serializers.ParentSheetSerializer
@@ -247,5 +296,4 @@ class ChildSheetLayoutView(mixins.CreateModelMixin, viewsets.GenericViewSet):
                 return Response({'error': str(ve)}, status.HTTP_400_BAD_REQUEST)
         else:
             return Response(deserialized.errors, status.HTTP_400_BAD_REQUEST)
-
-        
+'''

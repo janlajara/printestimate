@@ -5,14 +5,13 @@ from djmoney.money import Money
 from djmoney.models.fields import MoneyField
 from django_measurement.models import MeasurementField
 from measurement.measures import Time, Speed as MeasureSpeed
+from core.utils.format import Inflect
 from core.utils.measures import CostingMeasure, Quantity, Measure, AreaSpeed, VolumeSpeed, QuantitySpeed
 from inventory.models import Item
 from inventory.properties.models import Tape, Line, Paper, Panel, Liquid
 from estimation.machine.models import Machine
 from estimation.exceptions import MeasurementMismatch, MaterialTypeMismatch, CostingMeasureMismatch
-import inflect
 
-_inflect = inflect.engine()
 
 # Create your models here.
 
@@ -251,11 +250,10 @@ class Speed(models.Model):
     @property
     def rate_formatted(self):
         value = self.measure_value
-        measure_unit = self.measure_unit if value == 1 else _inflect.plural(self.measure_unit)
+        measure_unit = Inflect.to_plural(self.measure_unit, quantity=value)
         speed_unit = self.speed_unit
         return '{0:,.2f}'.format(value) + \
             ' %s/%s' % (measure_unit, speed_unit)
-            #'%.2f %s/%s' % (value, measure_unit, speed_unit)
 
 
 class ActivityManager(models.Manager):

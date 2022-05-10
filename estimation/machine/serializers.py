@@ -1,12 +1,11 @@
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 from inventory.properties.models import Paper
+from core.utils.format import Inflect
 from core.utils.shapes import Rectangle, RectangleLayoutSerializer, RectangleLayoutMetaSerializer
 from estimation.models import Machine, SheetFedPressMachine, RollFedPressMachine, ParentSheet, ChildSheet
 from django.shortcuts import get_object_or_404
-import inflect
 
-_inflect = inflect.engine()
 
 class MachineSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,23 +40,29 @@ class SheetFedPressMachineSerializer(MachineSerializer):
 
     def get_length_range(self, obj):
         return '%g - %g %s' % (obj.min_sheet_length, 
-            obj.max_sheet_length, _inflect.plural(obj.uom))
+            obj.max_sheet_length, Inflect.to_plural(obj.uom))
 
     def get_width_range(self, obj):
         return '%g - %g %s' % (obj.min_sheet_width, 
-            obj.max_sheet_width, _inflect.plural(obj.uom))
+            obj.max_sheet_width, Inflect.to_plural(obj.uom))
 
 
 class RollFedPressMachineSerializer(MachineSerializer):
+    width_range = serializers.SerializerMethodField()
+    breakpoint_length_range = serializers.SerializerMethodField()
+    vertical_margin_formatted = serializers.SerializerMethodField()
+    horizontal_margin_formatted = serializers.SerializerMethodField()
 
     class Meta:
         model = RollFedPressMachine
         fields = ['id', 'name', 'process_type', 
             'material_type', 'description', 'costing_measures', 
-            'min_sheet_width', 'max_sheet_width',
+            'min_sheet_width', 'max_sheet_width', 'width_range',
             'min_sheet_breakpoint_length', 'max_sheet_breakpoint_length',
-            'make_ready_spoilage_length', 'vertical_margin',
-            'horizontal_margin', 'uom']
+            'breakpoint_length_range',
+            'make_ready_spoilage_length', 
+            'vertical_margin', 'vertical_margin_formatted',
+            'horizontal_margin', 'horizontal_margin_formatted', 'uom']
 
     def validate(self, data):
         errors = {}
@@ -81,6 +86,20 @@ class RollFedPressMachineSerializer(MachineSerializer):
             raise serializers.ValidationError(errors)
 
         return super().validate(data)
+
+    def get_width_range(self, obj):
+        return '%g - %g %s' % (obj.min_sheet_width, 
+            obj.max_sheet_width, Inflect.to_plural(obj.uom))
+
+    def get_breakpoint_length_range(self, obj):
+        return '%g - %g %s' % (obj.min_sheet_breakpoint_length, 
+            obj.max_sheet_breakpoint_length, Inflect.to_plural(obj.uom))
+    
+    def get_vertical_margin_formatted(self, obj):
+        return Inflect.format_quantity(obj.vertical_margin, obj.uom)
+
+    def get_horizontal_margin_formatted(self, obj):
+        return Inflect.format_quantity(obj.horizontal_margin, obj.uom)
 
 
 class MachinePolymorphicSerializer(PolymorphicSerializer):

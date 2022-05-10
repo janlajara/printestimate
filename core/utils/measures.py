@@ -5,9 +5,7 @@ from measurement.utils import guess
 from measurement.base import MeasureBase, BidimensionalMeasure
 from measurement.measures import Area, Time, Volume, Distance
 from django_measurement.models import MeasurementField
-import inflect
-
-_inflect = inflect.engine()
+from core.utils.format import Inflect
 
 
 # Create your models here.
@@ -202,13 +200,13 @@ class MeasurementSerializerField(serializers.Field):
     def to_representation(self, value):
         rep = self._format(
             value.value, value.unit , 
-            _inflect.plural(value.unit), self.decimal_places)
+            Inflect.to_plural(value.unit), self.decimal_places)
         
         if self.display_unit is not None:
             rep = self._format(
                 getattr(value, self.display_unit),
                 self.display_unit,
-                _inflect.plural(self.display_unit), self.decimal_places)
+                Inflect.to_plural(self.display_unit), self.decimal_places)
 
         return rep
 

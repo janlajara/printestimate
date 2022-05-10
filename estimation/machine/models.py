@@ -7,9 +7,6 @@ from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
 from inventory.models import Item
 from inventory.properties.models import Paper
-import inflect
-
-_inflect = inflect.engine()
 
 
 class MachineManager(PolymorphicManager):

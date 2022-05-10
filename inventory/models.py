@@ -3,14 +3,12 @@ from django.db.models import Q, Sum, Avg, Count
 from djmoney.models.fields import MoneyField
 from inventory.properties.models import TapeProperties, LineProperties, PaperProperties, \
     PanelProperties, LiquidProperties, ItemProperties, Paper, Panel
+from core.utils.format import Inflect
 from core.utils.shapes import Shape, Line, Tape, Liquid
 from core.utils.measures import CostingMeasure
 from .exceptions import DepositTooBig, InsufficientStock, \
     InvalidExpireQuantity, IllegalUnboundedDeposit, \
         IllegalItemRequestOperation, IllegalItemRequestGroupOperation
-import inflect
-
-_inflect = inflect.engine()
 
 
 # Create your models here.
@@ -22,12 +20,12 @@ class StokUnit(models.Model):
     @property
     def plural_name(self):
         if self.name is not None:
-            return _inflect.plural(self.name)
+            return Inflect.to_plural(self.name)
 
     @property
     def plural_abbrev(self):
         if self.abbrev is not None:
-            return _inflect.plural(self.abbrev)
+            return Inflect.to_plural(self.abbrev)
 
     def __str__(self):
         return self.name

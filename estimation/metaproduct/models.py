@@ -1,13 +1,12 @@
 from django.db import models
+from core.utils.format import Inflect
 from core.utils.shapes import Shape
 from core.utils.measures import CostingMeasure, Measure
 from inventory.models import Item
 from estimation.machine.models import Machine
 from estimation.process.models import Operation
 from polymorphic.models import PolymorphicModel
-import inflect
 
-_inflect = inflect.engine()
 
 class MetaProduct(models.Model):
     name = models.CharField(max_length=40)
@@ -161,7 +160,7 @@ class MetaService(MetaProductData):
 
     @property
     def uom_plural(self):
-        return _inflect.plural(self.uom)
+        return Inflect.to_plural(self.uom)
 
     @property
     def measure_basis(self):

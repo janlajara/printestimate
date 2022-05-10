@@ -101,67 +101,6 @@ class MachinePolymorphicSerializer(PolymorphicSerializer):
         RollFedPressMachine: RollFedPressMachineSerializer
     }
 
-
-'''
-class ChildSheetSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ChildSheet
-        fields = ['id', 'label', 'parent', 'width_value', 'length_value', 'size_uom',
-            'margin_top', 'margin_right', 'margin_bottom', 'margin_left',
-            'pack_width', 'pack_length']
-
-
-class ChildSheetListSerializer(ChildSheetSerializer):
-    size = serializers.SerializerMethodField()
-    parent_size = serializers.SerializerMethodField()
-
-    class Meta:
-        model = ChildSheet
-        fields = ['id', 'parent', 'parent_size', 'size', 'label', 
-            'width_value', 'length_value', 'size_uom',
-            'margin_top', 'margin_right', 'margin_bottom', 'margin_left',
-            'pack_width', 'pack_length']
-
-
-    def get_size(self, obj):
-        return str(obj)
-
-    def get_parent_size(self, obj):
-        return str(obj.parent)
-
-
-class ParentSheetSerializer(serializers.ModelSerializer):
-    size = serializers.SerializerMethodField()
-    child_sheets = ChildSheetSerializer(read_only=True, many=True)
-
-    class Meta:
-        model = ParentSheet
-        fields = ['id', 'size', 'label', 'width_value', 'length_value', 'size_uom',
-            'padding_top', 'padding_right', 'padding_bottom', 'padding_left',
-            'pack_width', 'pack_length', 'pack_size', 'child_sheets']
-
-    def get_size(self, obj):
-        return str(obj)
-
-
-class ParentSheetSimpleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ParentSheet
-        fields = ['width_value', 'length_value', 'size_uom',
-            'padding_top', 'padding_right', 'padding_bottom', 'padding_left',
-            'pack_width', 'pack_length']
-
-
-class ChildSheetSimpleSerializer(serializers.ModelSerializer):
-    parent = ParentSheetSimpleSerializer()
-
-    class Meta:
-        model = ChildSheet
-        fields = ['parent', 'width_value', 'length_value', 'size_uom',
-            'margin_top', 'margin_right', 'margin_bottom', 'margin_left',
-            'pack_width', 'pack_length']
-'''
-
 class ParentSheetLayoutSerializer(RectangleLayoutSerializer):
     padding_top = serializers.FloatField()
     padding_right = serializers.FloatField()

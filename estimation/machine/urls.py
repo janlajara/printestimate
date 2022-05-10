@@ -21,25 +21,4 @@ urlpatterns = [
     # ChildSheet Viewsets
     path('api/childsheets/getlayout',
         views.GetSheetLayoutsView.as_view({'post': 'create'})),
-]    
-    
-# START : Not used anymore. To remove
-'''
-    path('api/machines/sheetfedpress/<pk>/parentsheets', 
-        views.SheetFedPressMachineParentSheetViewSet.as_view({'get': 'list', 'post': 'create'})),
-    path('api/machines/sheetfedpress/<pk>/childsheets', 
-        views.SheetFedPressMachineChildSheetViewSet.as_view({'get': 'list', 'post': 'create'})),
-
-    # ParentSheet Viewsets
-    path('api/parentsheets/<pk>/',
-        views.ParentSheetViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
-
-    # ChildSheet Viewsets
-    path('api/childsheets/getlayout',
-        views.GetSheetLayoutsView.as_view({'post': 'create'})),
-    path('api/childsheets/layout',
-        views.ChildSheetLayoutView.as_view({'post': 'create'})),
-    path('api/childsheets/<pk>/',
-        views.ChildSheetViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
-'''
-# END : Not used anymore
+]

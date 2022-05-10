@@ -17,8 +17,6 @@ class MachineSerializer(serializers.ModelSerializer):
 class SheetFedPressMachineSerializer(MachineSerializer):
     length_range = serializers.SerializerMethodField()
     width_range = serializers.SerializerMethodField()
-    min_parent_sheet_length = serializers.SerializerMethodField()
-    min_parent_sheet_width = serializers.SerializerMethodField()
 
     class Meta:
         model = SheetFedPressMachine
@@ -26,8 +24,7 @@ class SheetFedPressMachineSerializer(MachineSerializer):
             'description', 'costing_measures', 
             'min_sheet_length', 'max_sheet_length', 
             'min_sheet_width', 'max_sheet_width', 'uom', 
-            'length_range', 'width_range', 
-            'min_parent_sheet_length', 'min_parent_sheet_width']
+            'length_range', 'width_range']
     
     def validate(self, data):
         errors = {}
@@ -49,14 +46,6 @@ class SheetFedPressMachineSerializer(MachineSerializer):
     def get_width_range(self, obj):
         return '%g - %g %s' % (obj.min_sheet_width, 
             obj.max_sheet_width, _inflect.plural(obj.uom))
-
-    def get_min_parent_sheet_length(self, obj):
-        min_length_obj = obj.parent_sheets.order_by('length_value').first()
-        return min_length_obj.length_value if min_length_obj else None
-
-    def get_min_parent_sheet_width(self, obj):
-        min_width_obj = obj.parent_sheets.order_by('width_value').first()
-        return min_width_obj.width_value if min_width_obj else None
 
 
 class RollFedPressMachineSerializer(MachineSerializer):

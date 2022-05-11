@@ -6,6 +6,7 @@
                 <SheetFedPressMachineList/>
             </Tab>
             <Tab title="Roll-fed Press">
+                <RollFedPressMachineList/>
             </Tab>
         </Tabs>
     </Page>
@@ -16,11 +17,12 @@ import Page from '@/components/Page.vue';
 import Tabs from '@/components/Tabs.vue';
 import Tab from '@/components/Tab.vue';
 
-import SheetFedPressMachineList from '@/views/admin/production/machines/sheetfedpress/SheetFedPressMachineList.vue';
+import SheetFedPressMachineList from './sheetfedpress/SheetFedPressMachineList.vue';
+import RollFedPressMachineList from './rollfedpress/RollFedPressMachineList.vue';
 
 export default {
     components: {
-        Page, Tabs, Tab, SheetFedPressMachineList
+        Page, Tabs, Tab, SheetFedPressMachineList, RollFedPressMachineList
     }
 }
 </script>

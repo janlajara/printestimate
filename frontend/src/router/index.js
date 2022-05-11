@@ -90,6 +90,12 @@ const routes = [
         component: ()=>import('../views/admin/production/machines/sheetfedpress/SheetFedPressMachineDetail.vue')
       }, 
       {
+        path: 'admin/production/machines/:id',
+        name: 'admin-production-rollfedpressmachine-detail',
+        props: true,
+        component: ()=>import('../views/admin/production/machines/rollfedpress/RollFedPressMachineDetail.vue')
+      }, 
+      {
         path: 'admin/sales/products',
         name: 'admin-sales-products',
         component: ()=>import('../views/admin/sales/products/MetaProductList.vue'),

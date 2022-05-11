@@ -71,21 +71,17 @@ export default {
         const emitInput = (event)=> {
             let input = event.target.value;
             if (['number', 'decimal', 'money'].includes(props.type))  {
-                let pattern = /[^\d]/g;
+                let regex = /^\d+/g;
+                let match = input.match(regex);
                 if (['decimal', 'money'].includes(props.type)) {
-                    const firstOccur = input.indexOf('.');
-                    if (firstOccur >= 0) {
-                        let whole = input.substr(0, firstOccur+1)
-                        let decimal = input.slice(firstOccur+1).replaceAll('.', '');
-                        if (props.type == 'money') decimal = decimal.substr(0, 2);
-                        input = whole + decimal;
-                    }
-                    pattern = /[^\d.]/g;
+                    regex = (props.type == 'money')?
+                        /^\d+\.?\d{0,2}/ : /^\d+\.?\d{0,}/;
+                    match = input.match(regex);
                 } 
-                input = input.replace(pattern, "");
-                if (input.trim() == "") {
-                    input = null
+                if (match == null) {
+                    input = 0;
                 } else {
+                    input = match[0];
                     if (props.min != null && props.min > parseFloat(input)) input = props.min;
                     if (props.max != null && props.max < parseFloat(input)) input = props.max;
                 }

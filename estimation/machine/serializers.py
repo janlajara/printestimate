@@ -52,6 +52,7 @@ class RollFedPressMachineSerializer(MachineSerializer):
     breakpoint_length_range = serializers.SerializerMethodField()
     vertical_margin_formatted = serializers.SerializerMethodField()
     horizontal_margin_formatted = serializers.SerializerMethodField()
+    make_ready_spoilage_length_formatted = serializers.SerializerMethodField()
 
     class Meta:
         model = RollFedPressMachine
@@ -61,6 +62,7 @@ class RollFedPressMachineSerializer(MachineSerializer):
             'min_sheet_breakpoint_length', 'max_sheet_breakpoint_length',
             'breakpoint_length_range',
             'make_ready_spoilage_length', 
+            'make_ready_spoilage_length_formatted',
             'vertical_margin', 'vertical_margin_formatted',
             'horizontal_margin', 'horizontal_margin_formatted', 'uom']
 
@@ -100,6 +102,9 @@ class RollFedPressMachineSerializer(MachineSerializer):
 
     def get_horizontal_margin_formatted(self, obj):
         return Inflect.format_quantity(obj.horizontal_margin, obj.uom)
+
+    def get_make_ready_spoilage_length_formatted(self, obj):
+        return Inflect.format_quantity(obj.make_ready_spoilage_length, obj.uom)
 
 
 class MachinePolymorphicSerializer(PolymorphicSerializer):

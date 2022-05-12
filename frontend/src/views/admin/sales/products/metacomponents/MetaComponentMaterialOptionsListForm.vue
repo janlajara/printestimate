@@ -101,16 +101,26 @@ export default {
                 state.meta.materialChoices = diff.concat(choices);
             }
         } 
-        watch(()=> props.value, ()=> {
+        watch(()=> props.value, async ()=> {
             if (props.value.length > 0) {
                 state.materialForm.items = props.value.map(x => 
                     x? x.item : null);
-                listMaterials();
+                await listMaterials();
+                const toAdd = props.value.map(x => ({
+                    label: x.label, value: x.item,
+                    type: x.type
+                }));
+                const ids = new Set(state.meta.materialChoices.map(x => x.value));
+                state.meta.materialChoices = [...state.meta.materialChoices, 
+                    ...toAdd.filter(x => !ids.has(x.value))]; 
             }
         });
-        watch(()=> state.materialType, ()=> {
+        watch(()=> state.materialType, (type)=> {
             state.materialForm.lookupText = null;
-            listMaterials();
+            const choices = state.meta.materialChoices;
+            if (choices && choices.length > 0 && choices[0].type != type) {
+                listMaterials();
+            }
         });
 
         return {

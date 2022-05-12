@@ -5,12 +5,8 @@
                 :disabled="state.materialType == ''"
                 placeholder="Search..." class="flex-grow md:col-span-2"
                 :text="state.materialForm.lookupText"
-                @select="value => {
-                    state.select(value)
-                }"
-                @input="value => {
-                    state.lookupMaterials(value);
-                }"
+                @select="value => state.select(value)"
+                @input="value => state.lookupMaterials(value)"
                 :options="state.meta.materialChoices.map( option => ({
                     value: option.value,
                     title: option.label,

@@ -8,8 +8,8 @@
         <div class="rounded-md shadow-sm" v-click-outside="()=>toggleDropdown(false)">
             <div class="relative"> 
               <input type="text" class="rounded input-field cursor-pointer"
-                :class="($props.disabled)? 'text-gray-400' : ''"
-                :value="selectedValue" :disabled="$props.disabled" 
+                :class="($props.disabled || state.options.length == 0)? 'text-gray-400' : ''"
+                :value="selectedValue" :disabled="$props.disabled || state.options.length == 0" 
                 :readonly="!$props.customizable"
                 @change="inputCustomValue"
                 @click="toggleDropdown(!state.isDroppedDown)"/>
@@ -26,7 +26,7 @@
                   <div class="flex w-full">
                     <input v-if="$props.multiple" type="checkbox" 
                       class="input-checkbox mr-4 my-auto" disabled 
-                      :name="name" :checked="option.isSelected"/> 
+                      :name="name" :checked="option.isSelected"/>
                     <div class="flex justify-between w-full align-middle">
                       <span :class="(option.value == null)? 'text-gray-400 italic' : ''">
                         {{(option.value == null)?  
@@ -87,6 +87,7 @@ export default {
       });
 
       const selectedValue = computed(() => {
+        if (state.options.length == 0) return 'No choices available';
         let selectedValue = selectedOptions.value
           .map(option=> option.label? 
             option.label : 

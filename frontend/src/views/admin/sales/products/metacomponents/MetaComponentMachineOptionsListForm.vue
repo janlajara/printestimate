@@ -14,8 +14,7 @@
                 :disabled="state.machineForm.machineType == null"
                 @input="value => {
                     state.machineForm.machines = value;
-                    state.emitInput();
-                }"
+                    state.emitInput();}"
                 :options="state.meta.machineChoices.map(c=>({
                     value: c.value, label: c.label,
                     isSelected: state.machineForm.machines.includes(c.value)
@@ -48,7 +47,13 @@ export default {
             },
             meta: {
                 machineTypes: [],
-                machineChoices: [],
+                machineList: [],
+                machineChoices: computed(()=> {
+                    const filtered = state.meta.machineList.filter(x => 
+                        x.materialtype == state.materialType &&
+                        x.resourcetype == state.machineForm.machineType);
+                    return filtered;
+                }),
             },
             clearMachineForm: ()=> {
                 state.machineForm = {
@@ -76,12 +81,13 @@ export default {
         const listMachines = async () => {
             const filter = {
                 material_type: state.materialType || '',
-                resourcetype: state.machineForm.machineType || ''
+                //resourcetype: state.machineForm.machineType || ''
             }
             const response = await MachineApi.listMachines(filter); 
             if (response) {
-                state.meta.machineChoices = response.map( x => ({
+                state.meta.machineList = response.map( x => ({
                     label: x.name, value: x.id,
+                    materialtype: x.material_type,
                     resourcetype: x.resourcetype
                 }));
             }
@@ -107,7 +113,7 @@ export default {
             state.machineForm.machines = props.value.map(x => x.machine);
             const machines = state.machineForm.machines;
             if (machines.length > 0) {
-                const m = state.meta.machineChoices.find(x => x.value == machines[0])
+                const m = state.meta.machineList.find(x => x.value == machines[0])
                 if (m) state.machineForm.machineType = m.resourcetype;
             }
         });

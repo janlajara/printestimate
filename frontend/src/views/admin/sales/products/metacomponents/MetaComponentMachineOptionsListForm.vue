@@ -80,8 +80,7 @@ export default {
 
         const listMachines = async () => {
             const filter = {
-                material_type: state.materialType || '',
-                //resourcetype: state.machineForm.machineType || ''
+                material_type: state.materialType || ''
             }
             const response = await MachineApi.listMachines(filter); 
             if (response) {

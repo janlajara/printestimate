@@ -91,6 +91,7 @@ import ProductComponentSheetLayoutTabs from './sheetlayout/ProductComponentSheet
 
 import convert from 'convert';
 import {roundNumber} from '@/utils/format.js';
+import {ProductComponentHelper} from './utils/product.utils.js';
 import {reactive, onBeforeMount, onMounted, computed} from 'vue';
 
 export default {
@@ -114,6 +115,7 @@ export default {
                 quantity: 1,
                 resourcetype: props.component.type,
             },
+            helper: null,
             meta: {
                 materialUom: computed(()=> state.data['size_uom']),
                 isPaperType: computed(()=> state.data.resourcetype == 'paper'),
@@ -128,81 +130,21 @@ export default {
                     if (machineOption) obj = machineOption.machine_obj;
                     return obj;
                 }),
-                converted_item_dimensions: {
-                    width: computed(()=> {
-                        let min = null;
-                        let max = null;
-                        if (state.meta.materialUom) {
-                            const width_values = state.meta.sheet_layout.item_layouts.map(
-                                x=> convert(x.width, x.uom).to(state.meta.materialUom));
-                            if (width_values.length > 0) {
-                                min = Math.min.apply(Math, width_values);
-                                max = Math.max.apply(Math, width_values);
-                            }
-                        }
-                        return {min, max}
-                    }),
-                    length: computed(()=> {
-                        let min = null;
-                        let max = null;
-                        if (state.meta.materialUom) {
-                            const length_values = state.meta.sheet_layout.item_layouts.map(
-                                x=> convert(x.length, x.uom).to(state.meta.materialUom));
-                            if (length_values.length > 0) {
-                                min = Math.min.apply(Math, length_values);
-                                max = Math.max.apply(Math, length_values);
-                            }
-                        }
-                        return {min, max}
-                    })
-                },
-                converted_machine_dimensions: {
-                    width: computed(()=> {
-                        let min = null;
-                        let max = null;
-                        const machine_obj = state.meta.machine_option_obj;
-                        if (machine_obj && state.meta.materialUom) {
-                            min = convert(machine_obj.min_sheet_width, 
-                                machine_obj.uom).to(state.meta.materialUom);
-                            max = convert(machine_obj.max_sheet_width, 
-                                machine_obj.uom).to(state.meta.materialUom);
-                        }
-                        return {min, max};
-                    }),
-                    length: computed(()=> {
-                        let min = null;
-                        let max = null;
-                        const machine_obj = state.meta.machine_option_obj;
-                        if (machine_obj && state.meta.materialUom) {
-                            min = convert(machine_obj.min_sheet_length, 
-                                machine_obj.uom).to(state.meta.materialUom);
-                            max = convert(machine_obj.max_sheet_length, 
-                                machine_obj.uom).to(state.meta.materialUom);
-                        }
-                        return {min, max};
-                    })
-                }
+                converted_item_dimensions: computed(()=> {
+                    return (state.helper)? state.helper.minMaxItemDimensions : null;
+                }),
+                converted_machine_dimensions: computed(()=> {
+                    return (state.helper)? state.helper.minMaxMachineDimensions : null;
+                }),
             },
             emitInput: ()=> {
                 emit('input', state.data);
             },
             executeRules: (attribute, value)=> {
-                if (state.meta.isPaperType && attribute.name == 'size_uom') {
-                    const width_value = state.data['width_value'] || 
-                        state.meta.converted_machine_dimensions.width.max;
-                    const length_value = state.data['length_value'] ||
-                        state.meta.converted_machine_dimensions.length.max;
-                    const w = Number(width_value);
-                    const l = Number(length_value);
-                    const asIsSizeUom = state.data['size_uom'] || value;
-                    const toBeSizeUom = value;
-                    const convertedWidth = convert(w, asIsSizeUom).to(toBeSizeUom);
-                    const convertedLength = convert(l, asIsSizeUom).to(toBeSizeUom);
-                    state.data['width_value'] = roundNumber(convertedWidth, 4); 
-                    state.data['length_value'] = roundNumber(convertedLength, 4);
-                }
+                state.helper.applyAttributeRules(attribute.name, value, state.data);
             },
             getMinValue: (attribute)=> {
+                // Refactor start
                 let min = null;
                 if (state.meta.materialUom && state.meta.isPaperType && 
                         ['width_value', 'length_value'].includes(attribute.name)) {
@@ -210,10 +152,13 @@ export default {
                     min = roundNumber(min, 4);
                 }
                 return min;
+                // Refactor end
             },
             getMaxValue: (attribute)=> {
+                // Refactor start
                 let max = null;
-                if (state.meta.isPaperType) {
+                if (state.meta.isPaperType && state.meta.converted_machine_dimensions &&
+                        state.meta.converted_item_dimensions) {
                     if (attribute.name == 'width_value') {
                         max = state.data.machine_option?
                             state.meta.converted_machine_dimensions.width.max : 
@@ -226,6 +171,7 @@ export default {
                     if (max) max = roundNumber(max, 4);
                 }
                 return max;
+                // Refactor end
             },
             validate: ()=> {
                 let errors = []
@@ -234,6 +180,8 @@ export default {
                 if (state.data.quantity == 0)
                     errors.push('quantity')
 
+                // If there are required fields with no values,
+                // include said fields in the validation error
                 const additionalFields = state.component.additionalFields;
                 if (additionalFields) {
                     const fields = Object.entries(state.data)
@@ -244,6 +192,7 @@ export default {
                         if (fieldMeta.required && fieldVal == null) errors.push(fieldKey);
                     });
                 }
+
                 if (errors.length > 0)
                     state.error = `The following fields must not be empty: ${errors.join(', ')}.`;
                 else state.error = '';
@@ -257,6 +206,7 @@ export default {
                 state.data.machine_option = component.machineOption;
                 state.data.quantity = component.quantity;
                 
+                // Initialize data dynamically according to given props 
                 const dynamicProps = Object.entries(component)
                     .filter(x => !['meta_component', 'material_templates', 
                         'quantity', 'resourcetype'].includes(x[0]));
@@ -265,6 +215,13 @@ export default {
                     const value = x[1];
                     state.data[key] = value;
                 });
+                
+                // Initialize helper class
+                state.helper = ProductComponentHelper.create(
+                    component.resourcetype,
+                    state.meta.sheet_layout.item_layouts,
+                    state.meta.machine_option_obj,
+                    state.meta.materialUom)
             }
         });
         onMounted(()=> {

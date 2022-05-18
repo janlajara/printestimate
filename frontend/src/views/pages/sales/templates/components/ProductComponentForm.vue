@@ -89,10 +89,8 @@ import InputText from '@/components/InputText.vue';
 import DynamicInputField from '@/components/DynamicInputField.vue';
 import ProductComponentSheetLayoutTabs from './sheetlayout/ProductComponentSheetLayoutTabs.vue';
 
-import convert from 'convert';
-import {roundNumber} from '@/utils/format.js';
 import {ProductComponentHelper} from './utils/product.utils.js';
-import {reactive, onBeforeMount, onMounted, computed} from 'vue';
+import {reactive, onBeforeMount, onMounted, computed, watchEffect} from 'vue';
 
 export default {
     props: {
@@ -141,37 +139,14 @@ export default {
                 emit('input', state.data);
             },
             executeRules: (attribute, value)=> {
-                state.helper.applyAttributeRules(attribute.name, value, state.data);
+                if (state.helper) state.helper.applyAttributeRules(
+                    attribute.name, value, state.data);
             },
             getMinValue: (attribute)=> {
-                // Refactor start
-                let min = null;
-                if (state.meta.materialUom && state.meta.isPaperType && 
-                        ['width_value', 'length_value'].includes(attribute.name)) {
-                    min = convert(1, 'inch').to(state.meta.materialUom);
-                    min = roundNumber(min, 4);
-                }
-                return min;
-                // Refactor end
+                if (state.helper) return state.helper.getAttributeMinValue(attribute.name);
             },
             getMaxValue: (attribute)=> {
-                // Refactor start
-                let max = null;
-                if (state.meta.isPaperType && state.meta.converted_machine_dimensions &&
-                        state.meta.converted_item_dimensions) {
-                    if (attribute.name == 'width_value') {
-                        max = state.data.machine_option?
-                            state.meta.converted_machine_dimensions.width.max : 
-                            state.meta.converted_item_dimensions.width.max;
-                    } else if (attribute.name == 'length_value') {
-                        max = state.data.machine_option?
-                            state.meta.converted_machine_dimensions.length.max : 
-                            state.meta.converted_item_dimensions.length.max;
-                    }
-                    if (max) max = roundNumber(max, 4);
-                }
-                return max;
-                // Refactor end
+                if (state.helper) return state.helper.getAttributeMaxValue(attribute.name);
             },
             validate: ()=> {
                 let errors = []
@@ -230,6 +205,14 @@ export default {
                 validator: state.validate
             });
         });
+        watchEffect(()=> {
+            // Update helper class
+            if (state.helper) {
+                state.helper.rawMaterialDimensions = state.meta.sheet_layout.item_layouts;
+                state.helper.machine = state.meta.machine_option_obj;
+                state.helper.targetUom = state.meta.materialUom;
+            }
+        })
 
         const getMaterialLayout = ()=> {
             let materialLayout = null;

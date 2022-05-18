@@ -112,6 +112,32 @@ class PaperProductComponentHelper extends ProductComponentHelper {
         return machineDimensions;
     }
 
+    getAttributeMinValue(attributeName) {
+        let min = null;
+        if (['width_value', 'length_value'].includes(attributeName)) {
+            min = convert(1, 'inch').to(this.targetUom);
+            min = roundNumber(min, 4);
+        }
+        return min;
+    }
+
+    getAttributeMaxValue(attributeName) {
+        let max = null;
+        if (attributeName == 'width_value') {
+            max = this.machine && this.minMaxMachineDimensions.width.max <
+                    this.minMaxItemDimensions.width.max?
+                this.minMaxMachineDimensions.width.max : 
+                this.minMaxItemDimensions.width.max;
+        } else if (attributeName == 'length_value') {
+            max = this.machine && this.minMaxMachineDimensions.length.max < 
+                    this.minMaxItemDimensions.length.max?
+                this.minMaxMachineDimensions.length.max : 
+                this.minMaxItemDimensions.length.max;
+        }
+        if (max) max = roundNumber(max, 4);
+        return max;
+    }
+
     applyAttributeRules(attributeName, attributeValue, data) {
         if (attributeName == 'size_uom') {
             // Convert width and length to target unit of measure

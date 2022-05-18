@@ -157,7 +157,8 @@ class PaperProductComponentHelper extends ProductComponentHelper {
 
     getAttributeMinValue(attributeName) {
         let min = null;
-        if (['width_value', 'length_value'].includes(attributeName)) {
+        if (['width_value', 'length_value'].includes(attributeName) &&
+                this.targetUom) {
             min = convert(1, 'inch').to(this.targetUom);
             min = roundNumber(min, 4);
         }

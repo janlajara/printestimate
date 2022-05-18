@@ -22,7 +22,7 @@ import DescriptionItem from '@/components/DescriptionItem.vue';
 
 import convert from 'convert';
 import {reactive, computed, watchEffect} from 'vue';
-import {SheetFedPressMachineApi, ChildSheetApi} from '@/utils/apis.js';
+import {SheetFedPressMachineApi, RollFedPressMachineApi, ChildSheetApi} from '@/utils/apis.js';
 import {formatNumber} from '@/utils/format.js';
 
 export default {
@@ -30,9 +30,9 @@ export default {
         CutListLayout, DescriptionList, DescriptionItem
     },
     props: {
-        machineId: Number,
-        materialLayout: Object,
-        itemLayout: Object,
+        machine: Object,
+        finalMaterialLayout: Object,
+        rawMaterialLayout: Object,
     },
     setup(props) {
         const state = reactive({
@@ -42,7 +42,8 @@ export default {
                 stats: null
             },
             meta: {
-                hasRunsheet: computed(()=> state.data.sheetLayouts.length == 2)
+                hasRunsheet: computed(()=> 
+                    state.data.sheetLayouts && state.data.sheetLayouts.length == 2)
             },
             stats: computed(()=> {
                 let stats = {
@@ -61,11 +62,19 @@ export default {
             })
         });
     
-        const getSheetLayouts = async (input, machineId=null) => {
+        const getSheetLayouts = async (input, machine=null) => {
             if (input && inputIsValid(input)) {
-                if (machineId) {
-                    const response = await SheetFedPressMachineApi.getSheetLayout(
-                        machineId, input);
+                if (machine) {
+                    let response = [];
+
+                    if (machine.resourcetype == 'SheetFedPressMachine') {
+                        response = await SheetFedPressMachineApi.getSheetLayout(
+                            machine.id, input);
+                    } else if (machine.resourcetype == 'RollFedPressMachine') {
+                        response = await RollFedPressMachineApi.getSheetLayout(
+                            machine.id, input);
+                    }
+
                     if (response) return response || [];
                 } else {
                     const response = await ChildSheetApi.getSheetLayout(input);
@@ -83,7 +92,6 @@ export default {
                     itemLayout.width > 0 && 
                     itemLayout.length > 0 && 
                     itemLayout.uom != null;
-
                 const materialLayout = input.material_layout;
                 const materialLayoutIsValid = 
                     materialLayout.width && materialLayout.length &&
@@ -92,30 +100,29 @@ export default {
                         >= Number(materialLayout.width) > 0 &&
                     convert(itemLayout.length, itemLayout.uom).to(materialLayout.uom)  
                         >= Number(materialLayout.length) > 0;
-
                 isValid = materialLayoutIsValid && itemLayoutIsValid;
             }
             return isValid;
         }
 
         watchEffect(async ()=> {
-            if (props.materialLayout && props.itemLayout) {
+            if (props.finalMaterialLayout && props.rawMaterialLayout) {
                 const input = {
                     material_layout: {
-                        width: props.materialLayout.width,
-                        length: props.materialLayout.length,
-                        uom: props.materialLayout.uom
+                        width: props.finalMaterialLayout.width,
+                        length: props.finalMaterialLayout.length,
+                        uom: props.finalMaterialLayout.uom
                     },
                     item_layout: {
-                        width: props.itemLayout.width,
-                        length: props.itemLayout.length,
-                        uom: props.itemLayout.uom
+                        width: props.rawMaterialLayout.width,
+                        length: props.rawMaterialLayout.length,
+                        uom: props.rawMaterialLayout.uom
                     },
                     bleed: false,
                     rotate: true
                 };
                 if (!inputIsValid(input)) return;
-                state.data.sheetLayouts = await getSheetLayouts(input, props.machineId);
+                state.data.sheetLayouts = await getSheetLayouts(input, props.machine);
             }
         });
 

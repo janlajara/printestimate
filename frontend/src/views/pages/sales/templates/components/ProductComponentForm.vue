@@ -4,7 +4,7 @@
         <div v-if="state.error" 
             class="pt-4 text-sm text-red-600">*{{state.error}}</div>
         <div class="md:grid md:gap-4 md:grid-cols-4">
-            <template v-if="state.meta.isPaperType && state.component.allowMultipleMaterials">
+            <template v-if="state.component.allowMultipleMaterials">
                 <InputSelectDraggableList
                     name="Material" required 
                     class="flex-grow md:col-span-4"
@@ -23,7 +23,7 @@
                 <InputSelect 
                     name="Material" required class="flex-grow" 
                     :class="`md:col-span-${state.meta.isPaperType? 4:3}`"
-                    :multiple="state.component.allowMultipleMaterials"
+                    :multiple="false"
                     v-if="state.component.metaMaterialOptions.length > 0"
                     @input="(value)=> {
                         if (!Array.isArray(value)) value = [value];
@@ -73,21 +73,19 @@
                     state.emitInput();
                 }"/>
         </div>
-        <ProductComponentSheetLayoutTabs
-            v-if="state.meta.isPaperType && 
-                state.meta.material_layout.final_material_layout.length && 
-                state.meta.material_layout.raw_material_layouts"
-            :machine-id="state.data.machine_option"
-            :material-layout="state.meta.material_layout.final_material_layout"
-            :item-layouts="state.meta.material_layout.raw_material_layouts"/>
+        <ProductComponentLayoutTabs
+            v-if="state.data.resourcetype != 'other'"
+            :machine="state.meta.machine"
+            :final-material-layout="state.meta.material_layout.final_material_layout"
+            :raw-material-layouts="state.meta.material_layout.raw_material_layouts"/>
     </div>
-</template>
+</template> 
 <script>
 import InputSelect from '@/components/InputSelect.vue';
 import InputSelectDraggableList from '@/components/InputSelectDraggableList.vue';
 import InputText from '@/components/InputText.vue';
 import DynamicInputField from '@/components/DynamicInputField.vue';
-import ProductComponentSheetLayoutTabs from './sheetlayout/ProductComponentSheetLayoutTabs.vue';
+import ProductComponentLayoutTabs from './layout/ProductComponentLayoutTabs.vue';
 
 import {ProductComponentHelper} from './utils/product.utils.js';
 import {reactive, onBeforeMount, onMounted, computed} from 'vue';
@@ -99,12 +97,12 @@ export default {
     },
     components: {
         InputSelect, InputSelectDraggableList, InputText, 
-        DynamicInputField, ProductComponentSheetLayoutTabs
+        DynamicInputField, ProductComponentLayoutTabs
     },
     emits: ['input', 'load'],
     setup(props, {emit}) {
         const state = reactive({
-            component: props.component,
+            component: computed(()=> props.component),
             error: null,
             data: {
                 meta_component: props.component.id,
@@ -115,8 +113,9 @@ export default {
             },
             helper: null,
             meta: {
-                materialUom: computed(()=> state.data['size_uom']),
-                isPaperType: computed(()=> state.data.resourcetype == 'paper'),
+                machine: computed(()=> {
+                    if (state.helper) return state.helper.machine;
+                }),
                 material_layout: computed(()=>{
                     let finalMaterialLayout = null;
                     let rawMaterialLayouts = null;
@@ -177,14 +176,21 @@ export default {
         });
 
         onBeforeMount(()=> {
+            if (props.component) {
+                // Initialize helper class
+                const propsComponent = props.component;
+                state.helper = ProductComponentHelper.create(
+                    propsComponent.type, state.data, propsComponent);
+            }
+
             if (props.value) {
-                const component = props.value; 
-                state.data.material_templates = component.material_templates;
-                state.data.machine_option = component.machineOption;
-                state.data.quantity = component.quantity;
+                const propsValue = props.value; 
+                state.data.material_templates = propsValue.material_templates;
+                state.data.machine_option = propsValue.machineOption;
+                state.data.quantity = propsValue.quantity;
                 
-                // Initialize data dynamically according to given props 
-                const dynamicProps = Object.entries(component)
+                // Initialize existing data dynamically according to given props 
+                const dynamicProps = Object.entries(propsValue)
                     .filter(x => !['meta_component', 'material_templates', 
                         'quantity', 'resourcetype', 'machine_option_obj']
                     .includes(x[0]));
@@ -193,10 +199,6 @@ export default {
                     const value = x[1];
                     state.data[key] = value;
                 });
-                
-                // Initialize helper class
-                state.helper = ProductComponentHelper.create(
-                    component.resourcetype, state.data, state.component);
             }
         });
         onMounted(()=> {

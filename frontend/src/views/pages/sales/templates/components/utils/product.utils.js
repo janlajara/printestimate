@@ -3,20 +3,38 @@ import {roundNumber} from '@/utils/format.js';
 import convert from 'convert';
 
 export class ProductComponentHelper {
-    constructor(rawMaterialDimensions, machine, targetUom) {
+    constructor(data, meta) { 
         this._state = reactive({
-            rawMaterialDimensions, machine, targetUom
-        })
+            data, meta
+        });
     }
 
-    set rawMaterialDimensions(value){this._state.rawMaterialDimensions = value}
-    get rawMaterialDimensions(){return this._state.rawMaterialDimensions}
+    get finalMaterialDimensions() {
+        throw new Error('Implementation required for getter method finalMaterialDimensions.')
+    }
 
-    set machine(value){this._state.machine = value}
-    get machine(){return this._state.machine}
+    get rawMaterialDimensions(){
+        const dimensions = this._state.data.material_templates
+            // Filter to ensure unique results
+            .filter((item, index) => 
+                this._state.data.material_templates.findIndex(x=>
+                    x.meta_material_option == item.meta_material_option)
+                === index)
+            .map(x => this._getRawMaterialDimension(x));
+        return dimensions;
+    }
 
-    set targetUom(value){this._state.targetUom = value}
-    get targetUom(){return this._state.targetUom} 
+    get machine(){
+        const machineOption = this._state.meta.metaMachineOptions.find(x => 
+            x.id == this._state.data.machine_option);
+        let obj = null;
+        if (machineOption) obj = machineOption.machine_obj;
+        return obj;
+    }
+
+    get targetUom(){
+        return this._state.data['size_uom'];
+    } 
 
     get minMaxItemDimensions(){return this.getMinMaxItemDimensions(this.targetUom)}
     get minMaxMachineDimensions(){return this.getMinMaxMachineDimensions(this.targetUom)}
@@ -37,6 +55,10 @@ export class ProductComponentHelper {
         throw new Error('Implementation required for method applyAttributeRules. Args:', attributeName, attributeValue, data)
     }
 
+    _getRawMaterialDimension(template){
+        throw new Error('Implementation required for method _getRawMaterialDimension. Args', template);
+    }
+
     _getMinMax(arrayOfValues) {
         let min = null;
         let max = null;
@@ -47,11 +69,11 @@ export class ProductComponentHelper {
         return {min, max}
     }
 
-    static create(materialType, rawMaterialDimensions, machine=null, targetUom=null) {
+    static create(materialType, data, meta) {
         let helper = null;
 
         if (materialType == 'paper') 
-            helper = new PaperProductComponentHelper(rawMaterialDimensions, machine, targetUom);
+            helper = new PaperProductComponentHelper(data, meta);
 
         return helper;
     }
@@ -59,6 +81,27 @@ export class ProductComponentHelper {
 
 
 class PaperProductComponentHelper extends ProductComponentHelper {
+
+    get finalMaterialDimensions() {
+        const state = this._state;
+        return {
+            width: state.data['width_value'],
+            length: state.data['length_value'],
+            uom: state.data['size_uom']}
+    }
+
+    _getRawMaterialDimension(template) {
+        const metaMaterialOption = 
+            this._state.meta.metaMaterialOptions.find(
+                y => y.id == template.meta_material_option);
+        const dimension = {
+            width: metaMaterialOption.properties.width_value, 
+            length: metaMaterialOption.properties.length_value,
+            uom: metaMaterialOption.properties.size_uom,
+            label: metaMaterialOption.label
+        }
+        return dimension;
+    }
 
     getMinMaxItemDimensions(targetUom=null) {
         const itemDimensions = this.rawMaterialDimensions;

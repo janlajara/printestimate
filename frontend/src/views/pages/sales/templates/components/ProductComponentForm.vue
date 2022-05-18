@@ -75,11 +75,11 @@
         </div>
         <ProductComponentSheetLayoutTabs
             v-if="state.meta.isPaperType && 
-                state.meta.sheet_layout.material_layout.length && 
-                state.meta.sheet_layout.item_layouts"
-            :machine-id="state.meta.machine_option_obj? state.meta.machine_option_obj.id : null"
-            :material-layout="state.meta.sheet_layout.material_layout"
-            :item-layouts="state.meta.sheet_layout.item_layouts"/>
+                state.meta.material_layout.final_material_layout.length && 
+                state.meta.material_layout.raw_material_layouts"
+            :machine-id="state.data.machine_option"
+            :material-layout="state.meta.material_layout.final_material_layout"
+            :item-layouts="state.meta.material_layout.raw_material_layouts"/>
     </div>
 </template>
 <script>
@@ -90,7 +90,7 @@ import DynamicInputField from '@/components/DynamicInputField.vue';
 import ProductComponentSheetLayoutTabs from './sheetlayout/ProductComponentSheetLayoutTabs.vue';
 
 import {ProductComponentHelper} from './utils/product.utils.js';
-import {reactive, onBeforeMount, onMounted, computed, watchEffect} from 'vue';
+import {reactive, onBeforeMount, onMounted, computed} from 'vue';
 
 export default {
     props: {
@@ -117,16 +117,17 @@ export default {
             meta: {
                 materialUom: computed(()=> state.data['size_uom']),
                 isPaperType: computed(()=> state.data.resourcetype == 'paper'),
-                sheet_layout: {
-                    material_layout: computed(()=>getMaterialLayout()),
-                    item_layouts: computed(()=>getItemLayouts()),
-                },
-                machine_option_obj: computed(()=>{
-                    const machineOption = state.component.metaMachineOptions.find(x => 
-                        x.id == state.data.machine_option);
-                    let obj = null;
-                    if (machineOption) obj = machineOption.machine_obj;
-                    return obj;
+                material_layout: computed(()=>{
+                    let finalMaterialLayout = null;
+                    let rawMaterialLayouts = null;
+                    if (state.helper) {
+                        finalMaterialLayout = state.helper.finalMaterialDimensions;
+                        rawMaterialLayouts = state.helper.rawMaterialDimensions;
+                    }
+                    return {
+                        final_material_layout: finalMaterialLayout,
+                        raw_material_layouts: rawMaterialLayouts
+                    }
                 }),
                 converted_item_dimensions: computed(()=> {
                     return (state.helper)? state.helper.minMaxItemDimensions : null;
@@ -174,6 +175,7 @@ export default {
                 return errors;
             }
         });
+
         onBeforeMount(()=> {
             if (props.value) {
                 const component = props.value; 
@@ -184,7 +186,8 @@ export default {
                 // Initialize data dynamically according to given props 
                 const dynamicProps = Object.entries(component)
                     .filter(x => !['meta_component', 'material_templates', 
-                        'quantity', 'resourcetype'].includes(x[0]));
+                        'quantity', 'resourcetype', 'machine_option_obj']
+                    .includes(x[0]));
                 dynamicProps.forEach(x => {
                     const key = x[0];
                     const value = x[1];
@@ -193,10 +196,7 @@ export default {
                 
                 // Initialize helper class
                 state.helper = ProductComponentHelper.create(
-                    component.resourcetype,
-                    state.meta.sheet_layout.item_layouts,
-                    state.meta.machine_option_obj,
-                    state.meta.materialUom)
+                    component.resourcetype, state.data, state.component);
             }
         });
         onMounted(()=> {
@@ -205,50 +205,6 @@ export default {
                 validator: state.validate
             });
         });
-        watchEffect(()=> {
-            // Update helper class
-            if (state.helper) {
-                state.helper.rawMaterialDimensions = state.meta.sheet_layout.item_layouts;
-                state.helper.machine = state.meta.machine_option_obj;
-                state.helper.targetUom = state.meta.materialUom;
-            }
-        })
-
-        const getMaterialLayout = ()=> {
-            let materialLayout = null;
-            if (state.meta.isPaperType) {
-                return {
-                    width: state.data['width_value'],
-                    length: state.data['length_value'],
-                    uom: state.data['size_uom']}
-            }
-            return materialLayout;
-        }
-
-        const getItemLayouts = () => {
-            let itemLayouts = [];
-            const getItemLayout = (x) => {
-                const metaMaterialOption = 
-                    state.component.metaMaterialOptions.find(
-                        y => y.id == x.meta_material_option);
-                const itemLayout = {
-                    width: metaMaterialOption.properties.width_value, 
-                    length: metaMaterialOption.properties.length_value,
-                    uom: metaMaterialOption.properties.size_uom,
-                    label: metaMaterialOption.label
-                }
-                return itemLayout;
-            }
-            if (state.meta.isPaperType) {
-                itemLayouts = state.data.material_templates
-                    .filter((item, index) => 
-                        state.data.material_templates.findIndex(x=>
-                            x.meta_material_option == item.meta_material_option)
-                        === index)
-                    .map(x => getItemLayout(x));     
-            }
-            return itemLayouts;
-        };
 
         return {
             state

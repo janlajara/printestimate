@@ -212,3 +212,22 @@ def test_roll_fed_press__get_sheet_layouts__remainder_is_less_than_minbreakpoint
     layout2 = layouts[1]
     assert layout2.bin.width == 45 and layout2.bin.length == 48
     assert layout2.count == 81
+
+
+def test_roll_fed_press__get_sheet_layouts__machine_has_vertical_margin(
+        db, hplatex_machine):
+    hplatex_machine.horizontal_margin = 1.5
+    hplatex_machine.save()
+
+    assert hplatex_machine.horizontal_margin == 1.5
+    assert hplatex_machine.max_printable_width == 45
+
+    item = Rectangle.Layout(width=45, length=2000, uom='inch')
+    material = ChildSheet.Layout(width=3, length=3, uom='inch')
+    layouts = hplatex_machine.get_sheet_layouts(item, material, rotate=True, 
+        order_quantity=100.00, apply_breakpoint=True)
+
+    layout1 = layouts[0]
+    assert len(layouts) == 1
+    assert layout1.bin.width == 42 and layout1.bin.length == 48
+    assert layout1.count == 224

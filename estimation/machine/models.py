@@ -114,11 +114,11 @@ class RollFedPressMachine(PressMachine):
 
     @property
     def min_printable_width(self):
-        return self.min_sheet_width - self.vertical_margin
+        return self.min_sheet_width - (self.horizontal_margin*2)
 
     @property
     def max_printable_width(self):
-        return self.max_sheet_width - self.vertical_margin
+        return self.max_sheet_width - (self.horizontal_margin*2)
 
     @property
     def min_printable_width_measurement(self):
@@ -160,7 +160,7 @@ class RollFedPressMachine(PressMachine):
 
         def _get_runsheet_layouts(quantity):
             def _get_runsheet_width(final_material_width):
-                printable_width = raw_material_layout.width_measurement - self.margin_x_measurement
+                printable_width = raw_material_layout.width_measurement - (self.margin_x_measurement*2)
                 count = printable_width / final_material_width
                 return math.floor(count) * final_material_width
 
@@ -172,6 +172,11 @@ class RollFedPressMachine(PressMachine):
             runsheet_width_measurement = _get_runsheet_width(
                 final_material_layout.total_width_measurement)
             runsheet_width = getattr(runsheet_width_measurement, self.uom)
+
+            if runsheet_width == 0:
+                return ValueError('Final sheet width does not fit within the printable area of the raw material.')
+            
+            runsheet_width = round(runsheet_width, 4)
             total_item_area_measurement = final_material_layout.area_measurement * quantity
             total_item_area = getattr(total_item_area_measurement, 'sq_%s' % self.uom)
             total_item_length = (round(total_item_area, 4) / runsheet_width)

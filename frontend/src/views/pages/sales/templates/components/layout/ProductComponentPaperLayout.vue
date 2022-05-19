@@ -1,6 +1,7 @@
 <template>
     <div>
-        <CutListLayout @load="value => state.data.stats = value"
+        <CutListLayout :loader="state.isLoading"
+            @load="value => state.data.stats = value"
             :layouts="state.data.sheetLayouts"/>
         <DescriptionList :class="`md:grid-cols-${state.meta.hasRunsheet? 3: 2}`">
             <DescriptionItem :name="`Total outs (${state.stats.childsheetSize})`" 
@@ -36,10 +37,22 @@ export default {
     },
     setup(props) {
         const state = reactive({
+            isLoading: false,
             data: {
                 sheetLayouts: [],
                 error: null,
-                stats: null
+                stats: null,
+                layoutInputParams: {
+                    sheetFedPress: {
+                        rotate: true,
+                        bleed: false
+                    },
+                    rollFedPress: {
+                        orderQuantity: 50,
+                        spoilageRate: 0,
+                        applyBreakpoint: true
+                    }
+                }
             },
             meta: {
                 hasRunsheet: computed(()=> 
@@ -66,6 +79,7 @@ export default {
             if (input && inputIsValid(input)) {
                 if (machine) {
                     let response = [];
+                    state.isLoading = true;
 
                     if (machine.resourcetype == 'SheetFedPressMachine') {
                         response = await SheetFedPressMachineApi.getSheetLayout(
@@ -75,6 +89,7 @@ export default {
                             machine.id, input);
                     }
 
+                    state.isLoading = false;
                     if (response) return response || [];
                 } else {
                     const response = await ChildSheetApi.getSheetLayout(input);
@@ -105,6 +120,24 @@ export default {
             return isValid;
         }
 
+        const addMachineSpecificInputParams = (machine, input) => {
+            let params = null;
+            const machineType = machine? machine.resourcetype : null;
+            if (machineType == 'SheetFedPressMachine') {
+                params = state.data.layoutInputParams.sheetFedPress;
+                input['bleed'] = params.bleed;
+                input['rotate'] = params.rotate;
+            } else if (machineType == 'RollFedPressMachine') {
+                params = state.data.layoutInputParams.rollFedPress;
+                input['order_quantity'] = params.orderQuantity;
+                input['spoilage_rate'] = params.spoilageRate;
+                input['apply_breakpoint'] = params.applyBreakpoint;
+            } else {
+                input['bleed'] = false;
+                input['rotate'] = true;
+            }
+        }
+
         watchEffect(async ()=> {
             if (props.finalMaterialLayout && props.rawMaterialLayout) {
                 const input = {
@@ -117,14 +150,14 @@ export default {
                         width: props.rawMaterialLayout.width,
                         length: props.rawMaterialLayout.length,
                         uom: props.rawMaterialLayout.uom
-                    },
-                    bleed: false,
-                    rotate: true
+                    }
                 };
+                addMachineSpecificInputParams(props.machine, input)
                 if (!inputIsValid(input)) return;
                 state.data.sheetLayouts = await getSheetLayouts(input, props.machine);
             }
         });
+
 
         return {
             state, formatNumber

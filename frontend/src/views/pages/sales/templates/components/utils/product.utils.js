@@ -131,8 +131,8 @@ class PaperProductComponentHelper extends ProductComponentHelper {
 
         if (machine != null) {
             const uom = machine.uom;
-            let minWidth = machine.min_sheet_width;
-            let maxWidth = machine.max_sheet_width;
+            let minWidth = machine.min_printable_width || machine.min_sheet_width;
+            let maxWidth = machine.max_printable_width || machine.max_sheet_width;
             let minLength = machine.min_sheet_length || machine.min_sheet_breakpoint_length;
             let maxLength = machine.max_sheet_length || machine.max_sheet_breakpoint_length;
 

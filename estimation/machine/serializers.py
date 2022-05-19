@@ -60,6 +60,7 @@ class RollFedPressMachineSerializer(MachineSerializer):
             'material_type', 'description', 'costing_measures', 
             'min_sheet_width', 'max_sheet_width', 'width_range',
             'min_sheet_breakpoint_length', 'max_sheet_breakpoint_length',
+            'min_printable_width', 'max_printable_width',
             'breakpoint_length_range',
             'make_ready_spoilage_length', 
             'make_ready_spoilage_length_formatted',

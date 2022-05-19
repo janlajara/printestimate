@@ -113,12 +113,20 @@ class RollFedPressMachine(PressMachine):
         return self._to_measurement(self.max_sheet_breakpoint_length) 
 
     @property
+    def min_printable_width(self):
+        return self.min_sheet_width - self.vertical_margin
+
+    @property
+    def max_printable_width(self):
+        return self.max_sheet_width - self.vertical_margin
+
+    @property
     def min_printable_width_measurement(self):
-        return self._to_measurement(self.min_sheet_width - self.vertical_margin)
+        return self._to_measurement(self.min_printable_width)
 
     @property
     def max_printable_width_measurement(self):
-        return self._to_measurement(self.max_sheet_width - self.vertical_margin)
+        return self._to_measurement(self.max_printable_width)
 
     def _validate_raw_material(self, material_layout):
         # returns width, length where length is always the longer dimension

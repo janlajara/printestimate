@@ -58,7 +58,7 @@
     </div>
 </template>
 <script>
-import CutListLayout from '@/views/commons/sheetfedpress/CutListLayout.vue';
+import CutListLayout from '@/views/commons/layout/CutListLayout.vue';
 import {reactive, computed} from 'vue';
 import {formatNumber, formatQuantity} from '@/utils/format.js';
 

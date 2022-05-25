@@ -5,6 +5,7 @@
                 <Tab v-for="(rawMaterialLayout, key) in state.data.rawMaterialLayouts" :key="key"
                         :title="rawMaterialLayout.label">
                     <ProductComponentPaperLayout
+                        :copy-quantity="$props.copyQuantity"
                         :machine="state.data.machine"
                         :raw-material-layout="rawMaterialLayout"
                         :final-material-layout="state.data.finalMaterialLayout"/>
@@ -27,7 +28,8 @@ export default {
     props: {
         machine: Object,
         finalMaterialLayout: Object,
-        rawMaterialLayouts: Array
+        rawMaterialLayouts: Array,
+        copyQuantity: Number
     },
     setup(props) {
         const state = reactive({

@@ -66,16 +66,17 @@
                     state.data[attribute.name] = value;
                     state.emitInput();
                 }"/>
-            <InputText name="Quantity"  placeholder="Quantity" required
+            <InputText name="Copies"  placeholder="Number of copies" required
                 type="number" :value="state.data.quantity" :min="1"
                 @input="value => {
-                    state.data.quantity = value;
+                    state.data.quantity = parseInt(value);
                     state.emitInput();
                 }"/>
         </div>
         <ProductComponentLayoutTabs
             v-if="state.data.resourcetype != 'other'"
             :machine="state.meta.machine"
+            :copy-quantity="state.data.quantity"
             :final-material-layout="state.meta.material_layout.final_material_layout"
             :raw-material-layouts="state.meta.material_layout.raw_material_layouts"/>
     </div>
@@ -127,12 +128,6 @@ export default {
                         final_material_layout: finalMaterialLayout,
                         raw_material_layouts: rawMaterialLayouts
                     }
-                }),
-                converted_item_dimensions: computed(()=> {
-                    return (state.helper)? state.helper.minMaxItemDimensions : null;
-                }),
-                converted_machine_dimensions: computed(()=> {
-                    return (state.helper)? state.helper.minMaxMachineDimensions : null;
                 }),
             },
             emitInput: ()=> {

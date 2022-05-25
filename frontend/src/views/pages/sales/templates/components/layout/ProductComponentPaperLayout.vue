@@ -3,23 +3,42 @@
         <CutListLayout :loader="state.isLoading"
             @load="value => state.data.stats = value"
             :layouts="state.data.sheetLayouts"/>
-        <DescriptionList :class="`md:grid-cols-${state.meta.hasRunsheet? 3: 2}`">
+        <DescriptionList class="md:grid-cols-3">
             <DescriptionItem :name="`Total outs (${state.stats.childsheetSize})`" 
-                :value="`${state.stats.childsheetPerParent} sheets / material`"/>
-            <DescriptionItem v-if="state.meta.hasRunsheet"
+                :value="state.stats.childsheetCountLabel"/>
+            <DescriptionItem v-if="
+                [layout_types.PARENT_RUNSHEET_CHILDSHEET,
+                 layout_types.RUNSHEET_CHILDSHEET]
+                    .includes(state.stats.layoutType)"
                 :name="`Runsheet (${state.stats.runsheetSize})`" 
-                :value="`${state.stats.runsheetPerParent} sheets / material`"/>
+                :value="state.stats.runsheetCountLabel"/>
             <DescriptionItem name="Wastage" 
                 :value="`${formatNumber(state.stats.totalWasteage, 2, true)} %`"
                 :class="(state.stats.totalWasteage > 20)? 'text-red-500 font-bold' : ''"/>
         </DescriptionList>
+        <template v-if="state.stats.layoutType == layout_types.RUNSHEET_CHILDSHEET">
+            <hr/>
+            <div class="grid md:grid-cols-3 md:gap-6">
+                <InputText name="Sample Order Quantity"  placeholder="Order Quantity" required
+                    type="number" :value="state.data.layoutInputParams.rollFedPress.orderQuantity" 
+                    :min="1"
+                    @input="value => {
+                        state.data.layoutInputParams.rollFedPress.orderQuantity = value;
+                    }"/>
+                <InputCheckbox label="Apply breakpoint?" 
+                    :value="state.data.layoutInputParams.rollFedPress.applyBreakpoint"
+                    @input="value => state.data.layoutInputParams.rollFedPress.applyBreakpoint = value"/>
+            </div>
+        </template>
     </div>
 </template>
 
 <script>
-import CutListLayout from '@/views/commons/sheetfedpress/CutListLayout.vue';
+import CutListLayout, {layout_types} from '@/views/commons/layout/CutListLayout.vue';
 import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
+import InputText from '@/components/InputText.vue';
+import InputCheckbox from '@/components/InputCheckbox.vue';
 
 import convert from 'convert';
 import {reactive, computed, watchEffect} from 'vue';
@@ -28,9 +47,10 @@ import {formatNumber} from '@/utils/format.js';
 
 export default {
     components: {
-        CutListLayout, DescriptionList, DescriptionItem
+        CutListLayout, DescriptionList, DescriptionItem, InputText, InputCheckbox
     },
     props: {
+        copyQuantity: Number,
         machine: Object,
         finalMaterialLayout: Object,
         rawMaterialLayout: Object,
@@ -48,23 +68,19 @@ export default {
                         bleed: false
                     },
                     rollFedPress: {
-                        orderQuantity: 50,
+                        orderQuantity: 50 * props.copyQuantity,
                         spoilageRate: 0,
                         applyBreakpoint: true
                     }
                 }
             },
-            meta: {
-                hasRunsheet: computed(()=> 
-                    state.data.sheetLayouts && state.data.sheetLayouts.length == 2)
-            },
             stats: computed(()=> {
                 let stats = {
+                    layoutType: null,
                     runsheetSize: '',
-                    runsheetPerParent: 0,
+                    runsheetCountLabel: 0,
                     childsheetSize: '',
-                    childsheetPerRunsheet: 0,
-                    childsheetPerParent: 0,
+                    childsheetCountLabel: 0,
                     totalUsage: 0, 
                     totalWasteage: 0,
                     totalCutCount: 0
@@ -129,7 +145,7 @@ export default {
                 input['rotate'] = params.rotate;
             } else if (machineType == 'RollFedPressMachine') {
                 params = state.data.layoutInputParams.rollFedPress;
-                input['order_quantity'] = params.orderQuantity;
+                input['order_quantity'] = params.orderQuantity * props.copyQuantity;
                 input['spoilage_rate'] = params.spoilageRate;
                 input['apply_breakpoint'] = params.applyBreakpoint;
             } else {
@@ -160,7 +176,7 @@ export default {
 
 
         return {
-            state, formatNumber
+            state, formatNumber, layout_types
         }
     }
 }

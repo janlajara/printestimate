@@ -21,6 +21,10 @@
                     :text="state.form.productClass.text"
                     @select="value => state.form.productClass.select(value)"
                     @input="value => state.form.productClass.search(value)"
+                    @cleared="{
+                        state.data.componentTemplates = [];
+                        state.data.serviceTemplates = [];
+                    }"
                     :options="state.meta.metaproducts.map( option => ({
                         value: option.id,
                         title: option.name,

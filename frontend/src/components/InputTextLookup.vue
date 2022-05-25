@@ -93,7 +93,7 @@ export default {
             }
         },
     },
-    emits: ['input', 'select'],
+    emits: ['input', 'select', 'cleared'],
     setup(props, {emit}) {
         const bgs = {
             'none': 'bg-transparent border-gray-400 border-b',
@@ -137,6 +137,7 @@ export default {
                         lookup.selected = [];
                     }
                     emit('select', (!props.multiple)? '': lookup.selected);
+                    emit('cleared');
                 }
             },
             emitOnInput: debounce((event)=> {

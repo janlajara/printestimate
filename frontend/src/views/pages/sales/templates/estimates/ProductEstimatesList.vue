@@ -8,7 +8,7 @@
             :preset-data="{template: $props.templateId}"
             @toggle="state.createModal.toggle" 
             @saved="estimateId => goToDetail(estimateId)"/>
-        <Table :loader="state.isProcessing"
+        <Table :loader="$props.loader"
             :headers="['Estimate', 'Quantities',  'Last Modified Date']" >
             <Row v-for="(s, key) in state.data.estimates" :key="key">
                 <Cell name="Estimate">
@@ -45,12 +45,12 @@ export default {
         estimates: {
             type: Array,
             default: ()=>[]
-        }
+        },
+        loader: Boolean
     },
     setup(props) {
         const router = useRouter();
         const state = reactive({
-            isProcessing: computed(()=>props.estimates.length == 0),
             data: {
                 estimates: computed(()=>props.estimates)
             },

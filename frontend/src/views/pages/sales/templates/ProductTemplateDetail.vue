@@ -44,7 +44,8 @@
             <Section heading="Estimates">
                 <ProductEstimatesList
                     :template-id="parseInt(state.id)"
-                    :estimates="state.data.productEstimates"/>
+                    :estimates="state.data.productEstimates"
+                    :loader="state.isProcessing"/>
             </Section>
         </div>
     </Page>

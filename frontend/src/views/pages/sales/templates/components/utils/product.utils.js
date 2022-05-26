@@ -14,13 +14,16 @@ export class ProductComponentHelper {
     }
 
     get rawMaterialDimensions(){
-        const dimensions = this._state.data.material_templates
+        const filtered = this._state.data.material_templates
             // Filter to ensure unique results
             .filter((item, index) => 
                 this._state.data.material_templates.findIndex(x=>
                     x.meta_material_option == item.meta_material_option)
-                === index)
-            .map(x => this._getRawMaterialDimension(x));
+                === index);
+        let dimensions = [];
+
+        if (filtered && filtered.length > 0)
+            dimensions = filtered.map(x => this._getRawMaterialDimension(x));
         return dimensions;
     }
 
@@ -91,38 +94,47 @@ class PaperProductComponentHelper extends ProductComponentHelper {
     }
 
     _getRawMaterialDimension(template) {
+        let dimension = null;
         const metaMaterialOption = 
             this._state.meta.metaMaterialOptions.find(
                 y => y.id == template.meta_material_option);
-        const dimension = {
-            width: metaMaterialOption.properties.width_value, 
-            length: metaMaterialOption.properties.length_value,
-            uom: metaMaterialOption.properties.size_uom,
-            label: metaMaterialOption.label
+        if (metaMaterialOption) {
+            dimension = {
+                width: metaMaterialOption.properties.width_value, 
+                length: metaMaterialOption.properties.length_value,
+                uom: metaMaterialOption.properties.size_uom,
+                label: metaMaterialOption.label
+            }
         }
         return dimension;
     }
 
     getMinMaxItemDimensions(targetUom=null) {
+        let minMaxDimensions = null;
         const itemDimensions = this.rawMaterialDimensions;
         let uom = null;
-        const width_values = itemDimensions.map(x => {
-            let width = x.width;
-            if (targetUom) width = convert(width, x.uom).to(targetUom);
-            return width;
-        });
-        const length_values = itemDimensions.map(x => {
-            let length = x.length;
-            if (targetUom) length = convert(length, x.uom).to(targetUom);
-            return length;
-        });
-        if (itemDimensions.length > 0) uom = itemDimensions[0].uom;
+        
+        if (itemDimensions && itemDimensions.length > 0) {
+            const width_values = itemDimensions.map(x => {
+                let width = x.width;
+                if (targetUom) width = convert(width, x.uom).to(targetUom);
+                return width;
+            });
+            const length_values = itemDimensions.map(x => {
+                let length = x.length;
+                if (targetUom) length = convert(length, x.uom).to(targetUom);
+                return length;
+            });
+            if (itemDimensions.length > 0) uom = itemDimensions[0].uom;
 
-        return {
-            width: this._getMinMax(width_values),
-            length: this._getMinMax(length_values),
-            uom: targetUom || uom
+            minMaxDimensions = {
+                width: this._getMinMax(width_values),
+                length: this._getMinMax(length_values),
+                uom: targetUom || uom
+            };
         }
+
+        return minMaxDimensions;
     }
 
     getMinMaxMachineDimensions(targetUom=null) {
@@ -167,18 +179,23 @@ class PaperProductComponentHelper extends ProductComponentHelper {
 
     getAttributeMaxValue(attributeName) {
         let max = null;
-        if (attributeName == 'width_value') {
-            max = this.machine && this.minMaxMachineDimensions.width.max <
-                    this.minMaxItemDimensions.width.max?
-                this.minMaxMachineDimensions.width.max : 
-                this.minMaxItemDimensions.width.max;
-        } else if (attributeName == 'length_value') {
-            max = this.machine && this.minMaxMachineDimensions.length.max < 
-                    this.minMaxItemDimensions.length.max?
-                this.minMaxMachineDimensions.length.max : 
-                this.minMaxItemDimensions.length.max;
+        if (this.minMaxItemDimensions) {
+            const itemWidth = this.minMaxItemDimensions.width.max;
+            const itemLength = this.minMaxItemDimensions.length.max;
+            const machineWidth = this.machine? 
+                this.minMaxMachineDimensions.width.max : null;
+                const machineLength = this.machine?
+                this.minMaxMachineDimensions.length.max : null;
+
+            if (attributeName == 'width_value') {
+                max = this.machine && machineWidth < itemWidth?
+                    machineWidth : itemWidth;
+            } else if (attributeName == 'length_value') {
+                max = this.machine && machineLength < itemLength?
+                    machineLength : itemLength;
+            }
+            if (max) max = roundNumber(max, 4);
         }
-        if (max) max = roundNumber(max, 4);
         return max;
     }
 

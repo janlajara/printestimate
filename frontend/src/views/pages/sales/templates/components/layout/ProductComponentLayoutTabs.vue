@@ -1,6 +1,6 @@
 <template>
     <div class="mt-4 grid w-full">
-        <div>
+        <div v-if="state.data.rawMaterialLayouts != null && state.data.finalMaterialLayout != null">
             <Tabs :refresh="false">
                 <Tab v-for="(rawMaterialLayout, key) in state.data.rawMaterialLayouts" :key="key"
                         :title="rawMaterialLayout.label">

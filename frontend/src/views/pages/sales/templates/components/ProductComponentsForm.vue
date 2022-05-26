@@ -63,7 +63,6 @@ export default {
         });
 
         const retrieveMetaProductComponents = async (id) => {
-            state.isProcessing = true;
             if (id) {
                 const response = await MetaProductApi.retrieveMetaProductComponents(id);
                 if (response) {
@@ -80,7 +79,6 @@ export default {
                     }));
                 }
             }
-            state.isProcessing = false;
         }
         
         const getComponentTemplateFields = async () => {
@@ -120,10 +118,12 @@ export default {
 
         onBeforeMount(getComponentTemplateFields);
         watchEffect(()=> {
-            if (props.value) {
+            if (state.id) {
                 state.data.componentTemplates = props.value;
-                if (state.id) retrieveMetaProductComponents(state.id);
-            } else {state.clear()}
+                retrieveMetaProductComponents(state.id);
+            } else {
+                state.clear();
+            }
         });
 
         return {

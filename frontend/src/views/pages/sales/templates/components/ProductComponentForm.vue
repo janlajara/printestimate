@@ -170,14 +170,13 @@ export default {
             }
         });
 
-        onBeforeMount(()=> {
+        const initialize = () => {
             if (props.component) {
                 // Initialize helper class
                 const propsComponent = props.component;
                 state.helper = ProductComponentHelper.create(
                     propsComponent.type, state.data, propsComponent);
             }
-
             if (props.value) {
                 const propsValue = props.value; 
                 state.data.material_templates = propsValue.material_templates;
@@ -195,7 +194,9 @@ export default {
                     state.data[key] = value;
                 });
             }
-        });
+        }
+
+        onBeforeMount(initialize);
         onMounted(()=> {
             emit('load', {
                 data: state.data,

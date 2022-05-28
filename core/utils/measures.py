@@ -58,14 +58,14 @@ class Measure:
 
     STANDARD_UNITS = {
         DISTANCE: 'm',
-        AREA: 'sqm',
+        AREA: 'sq_m',
         VOLUME: 'l',
         QUANTITY: 'pc',
     }
 
     STANDARD_SPEED_UNITS = {
         DISTANCE: 'm__hr',
-        AREA: 'sqm__hr',
+        AREA: 'sq_m__hr',
         VOLUME: 'l__hr',
         QUANTITY: 'pc__hr',
     }

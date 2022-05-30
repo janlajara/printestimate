@@ -106,7 +106,7 @@ class SheetFedPressMachineGetSheetLayoutsView(mixins.CreateModelMixin,
                 validated_data = serializer.validated_data
                 material_layout, item_layout, bleed, rotate = \
                     serializer.parse(validated_data)
-                sheet_layouts = press_machine.get_sheet_layouts(item_layout, 
+                sheet_layouts, layout_type = press_machine.get_sheet_layouts(item_layout, 
                     material_layout, rotate)
 
                 response = {}
@@ -135,7 +135,7 @@ class RollFedPressMachineGetSheetLayoutsView(mixins.CreateModelMixin,
                 validated_data = serializer.validated_data
                 (material_layout, item_layout, order_quantity,
                     spoilage_rate, apply_breakpoint) = serializer.parse(validated_data)
-                sheet_layouts = press_machine.get_sheet_layouts(item_layout, 
+                sheet_layouts, layout_type = press_machine.get_sheet_layouts(item_layout, 
                     material_layout, False, order_quantity=order_quantity, 
                     spoilage_rate=spoilage_rate, apply_breakpoint=apply_breakpoint)
 

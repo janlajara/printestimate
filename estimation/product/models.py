@@ -12,7 +12,7 @@ from inventory.properties.models import Shape, Tape, Line, Paper, Panel, Liquid
 from estimation.metaproduct.models import MetaEstimateVariable, MetaService
 from estimation.process.models import ActivityExpense, Speed
 from estimation.template.models import ProductTemplate, ComponentTemplate
-from estimation.machine.models import Machine, ChildSheet
+from estimation.machine.models import Machine, ChildSheet, RollFedPressMachine
 from estimation.exceptions import MaterialTypeMismatch, MeasurementMismatch
 from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
@@ -137,7 +137,7 @@ class ProductEstimate(models.Model):
         durations_map = self.estimates.duration_estimates_map
         prices = []
         durations = []
-    
+        
         for (key, value) in prices_map.items():
             cost_addon_set = next((x for x in self.cost_addons 
                 if x.order_quantity ==  key), None)
@@ -179,7 +179,7 @@ class ProductEstimate(models.Model):
         product = self.product
         product_template_id = (self.product_template.pk 
             if self.product_template is not None else None)
-
+            
         material_estimates = _get_material_estimates(product.components.all())
         service_estimates = _get_service_estimates(product.services.all())
 
@@ -397,7 +397,7 @@ class Material(PolymorphicModel):
             self.uom = uom
             self.spoilage_rate = spoilage_rate
             self.estimates = estimates
-            self.layouts_meta = []
+            #self.layouts_meta = []
 
         @cached_property
         def total_prices_map(self):
@@ -411,12 +411,12 @@ class Material(PolymorphicModel):
 
     class Estimate:
         def __init__(self, order_quantity, material_quantity, 
-                spoilage_rate=0, layouts_meta=None):
+                spoilage_rate=0, layouts_meta=None, layout_type=None):
             self.order_quantity = order_quantity
             self.material_quantity = material_quantity
             self.spoilage_rate = spoilage_rate
-            self.layouts_meta = layouts_meta 
-            self._output_per_item = None
+            self.layouts_meta = layouts_meta
+            self.layout_type = layout_type
         
         @property
         def layouts(self):
@@ -546,24 +546,20 @@ class PaperMaterial(Material):
             }
 
             if self.layouts_meta is not None:
-                layouts_count = len(self.layouts_meta)
 
-                if layouts_count == 2:
+                if self.layout_type == Machine.SHEET_FED_PRESS:
                     parent_to_runsheet = self.layouts_meta[0]
                     runsheet_to_finalsheet = self.layouts_meta[1]
                     layouts = {
                         'parent_sheet': parent_to_runsheet.bin,
                         'run_sheet': parent_to_runsheet.rect,
-                        'final_sheet': runsheet_to_finalsheet.rect
-                    }
-
-                elif layouts_count == 1:
+                        'final_sheet': runsheet_to_finalsheet.rect}
+                else:
                     parent_to_finalsheet = self.layouts_meta[0]
                     layouts = {
                         'parent_sheet': parent_to_finalsheet.bin,
                         'run_sheet': parent_to_finalsheet.rect,
-                        'final_sheet': parent_to_finalsheet.rect
-                    }
+                        'final_sheet': parent_to_finalsheet.rect}
 
             return layouts
 
@@ -605,20 +601,11 @@ class PaperMaterial(Material):
             machine_run_quantity = 0
 
             if self.layouts_meta is not None:
-                layouts_count = len(self.layouts_meta)
-
-                if layouts_count == 2:
-                    item_to_parent_layout_meta = self.layouts_meta[0]
-                    parent_sheet_per_item = item_to_parent_layout_meta.count
-
-                    machine_run_quantity = math.ceil(self.estimated_total_quantity * parent_sheet_per_item)
-
-                elif layouts_count == 1:
-                    item_to_child_layout_meta = self.layouts_meta[0]
-                    child_sheet_per_item = item_to_child_layout_meta.count
-
-                    machine_run_quantity = math.ceil(self.estimated_total_quantity * child_sheet_per_item)
-            
+                raw_to_runsheet_layout_meta = self.layouts_meta[0]
+                runsheet_per_raw_material = raw_to_runsheet_layout_meta.count
+                machine_run_quantity = math.ceil(self.estimated_total_quantity * 
+                    runsheet_per_raw_material)
+        
             run_sheet = self.layouts.get('run_sheet') 
             measures = {CostingMeasure.QUANTITY: Quantity(pc=machine_run_quantity)}
             add = self._get_additional_measures(run_sheet, machine_run_quantity)
@@ -643,9 +630,7 @@ class PaperMaterial(Material):
             cut_count = 0
 
             if self.layouts_meta is not None:
-                layouts_count = len(self.layouts_meta)
-
-                if layouts_count == 2:
+                if self.layout_type == Machine.SHEET_FED_PRESS:
                     item_to_parent_layout_meta = self.layouts_meta[0]
                     cut_count = item_to_parent_layout_meta.cut_count
 
@@ -656,9 +641,7 @@ class PaperMaterial(Material):
             cut_count = 0
             
             if self.layouts_meta is not None:
-                layouts_count = len(self.layouts_meta)
-
-                if layouts_count == 2:
+                if self.layout_type == Machine.SHEET_FED_PRESS:
                     parent_to_child_layout_meta = self.layouts_meta[1]
                     cut_count = parent_to_child_layout_meta.cut_count
             
@@ -669,9 +652,7 @@ class PaperMaterial(Material):
             cut_count = 0
 
             if self.layouts_meta is not None:
-                layouts_count = len(self.layouts_meta)
-
-                if layouts_count == 1:
+                if self.layout_type != Machine.SHEET_FED_PRESS:
                     item_to_child_layout_meta = self.layouts_meta[0]
                     cut_count = item_to_child_layout_meta.cut_count
 
@@ -682,9 +663,7 @@ class PaperMaterial(Material):
             output_per_item = 0
 
             if self.layouts_meta is not None:
-                layouts_count = len(self.layouts_meta)
-
-                if layouts_count == 2:
+                if self.layout_type == Machine.SHEET_FED_PRESS:
                     item_to_parent_layout_meta = self.layouts_meta[0]
                     parent_to_child_layout_meta = self.layouts_meta[1]
 
@@ -694,9 +673,9 @@ class PaperMaterial(Material):
                         child_sheet_per_parent = parent_to_child_layout_meta.count
                         output_per_item = parent_sheet_per_item * child_sheet_per_parent
 
-                elif layouts_count == 1:
+                else: 
                     item_to_child_layout_meta = self.layouts_meta[0]
-
+                    
                     if item_to_child_layout_meta.name == 'Parent-to-cutsheet':
                         output_per_item = item_to_child_layout_meta.count
 
@@ -722,25 +701,65 @@ class PaperMaterial(Material):
                 }
             return measures
 
+    def _get_default_layout_estimates(self, order_quantities, raw_material_layout, 
+            final_material_layout, rotate, spoilage_rate):
+        layouts = []
+        machine_layout_type = None
+        
+        machine = self.component.machine
+        if machine is not None:
+            layouts, machine_layout_type = machine.get_sheet_layouts(
+                raw_material_layout, final_material_layout, rotate)
+        else:
+            layouts = [ChildSheet.get_layout(raw_material_layout, 
+                final_material_layout, rotate)]
+        
+        estimates = []
+        for quantity in order_quantities:
+            estimate = PaperMaterial.Estimate(quantity, self.component.quantity,
+                spoilage_rate, layouts, machine_layout_type)
+            estimates.append(estimate)
+        
+        return layouts, estimates
+    
+    def _get_rollfed_layout_estimates(self, order_quantities, raw_material_layout, 
+            final_material_layout, rotate, spoilage_rate):
+        layouts = []
+        estimates = []
+        machine = self.component.machine
+        machine_layout_type = None
+
+        for quantity in order_quantities:
+            set_quantity = self.component.quantity
+            total_quantity = quantity * set_quantity
+            layouts, machine_layout_type = machine.get_sheet_layouts(raw_material_layout, 
+                final_material_layout, rotate, order_quantity=total_quantity, 
+                spoilage_rate=spoilage_rate)
+
+            estimate = PaperMaterial.Estimate(quantity, self.component.quantity,
+                spoilage_rate, layouts, machine_layout_type)
+            estimates.append(estimate)
+        
+        return layouts, estimates
+
     def estimate(self, order_quantities, spoilage_rate=0, rotate=True):
-        paper_estimate = super().estimate(order_quantities, spoilage_rate)
+        paper_estimate = Material.Material(self.label, self.price, 
+            self.item.base_uom, spoilage_rate)
 
         if self.item is not None:
             layouts = []
-            machine = self.component.machine
-            component_layout = self.component.layout
-            if self.component is not None and machine is not None:
-                layouts = machine.get_sheet_layouts(self.item_properties.layout, 
-                    component_layout, rotate)
-            else:
-                layouts = [ChildSheet.get_layout(self.item_properties.layout, 
-                    component_layout, rotate)]
-                    
             estimates = []
-            for quantity in order_quantities:
-                estimate = PaperMaterial.Estimate(quantity, self.component.quantity,
-                    spoilage_rate, layouts)
-                estimates.append(estimate)
+
+            if self.component is not None:
+                if isinstance(self.component.machine, RollFedPressMachine):
+                    layouts, estimates = self._get_rollfed_layout_estimates(
+                        order_quantities, self.item_properties.layout, 
+                        self.component.layout, rotate, spoilage_rate)
+                else:
+                    layouts, estimates = self._get_default_layout_estimates(
+                        order_quantities, self.item_properties.layout, 
+                        self.component.layout, rotate, spoilage_rate)
+
             paper_estimate.layouts_meta = layouts
             paper_estimate.estimates = estimates
         
@@ -876,7 +895,7 @@ class Service(models.Model):
                     activity_estimates)
                 results.append(oe)
             return results
-        
+
         operation_estimates = _get_operation_estimates(self.operation_estimates.all())
         service_estimate = Service.Estimate(self.name, operation_estimates)
 
@@ -1036,7 +1055,7 @@ class ActivityEstimate(models.Model):
 
     def get_duration(self, measurement, contingency=0, hours_per_day=10):
         self._validate_measurement(measurement)
-
+        
         if self.speed_estimate is None:
             raise Exception('Activity speed is currently null and has not been initialized.')
 
@@ -1056,6 +1075,7 @@ class ActivityEstimate(models.Model):
 
         if measure_uom is not None and speed_uom is not None and \
                 measurement is not None and self.speed_estimate is not None:
+                
             mval = getattr(measurement, measure_uom)
             sval = getattr(self.speed_estimate.rate, speed_uom)
 
@@ -1063,7 +1083,7 @@ class ActivityEstimate(models.Model):
                 base = mval / sval
                 multiplier = (contingency / 100) + 1
                 duration = __compute_overall(base * multiplier)
-        
+                
         return Time(hr=duration)
 
     def _validate_measurement(self, measurement):

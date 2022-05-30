@@ -93,8 +93,9 @@ def test_sheet_fed_press__get_sheet_layouts(db, create_sheetfed_machine):
     item = Rectangle.Layout(width=32, length=27, uom='inch')
     material = Rectangle.Layout(width=10, length=8, uom='inch')
 
-    layouts = machine.get_sheet_layouts(item, material, True)
+    layouts, layout_type = machine.get_sheet_layouts(item, material, True)
 
+    assert layout_type == Machine.SHEET_FED_PRESS
     assert layouts is not None
     assert len(layouts) == 2
 
@@ -115,8 +116,9 @@ def test_sheet_fed_press__get_sheet_layouts__rotated_sheet(db, create_sheetfed_m
     item = Rectangle.Layout(width=4, length=6, uom='inch')
     material = Rectangle.Layout(width=2, length=2, uom='inch')
 
-    layouts = machine.get_sheet_layouts(item, material, True)
+    layouts, layout_type = machine.get_sheet_layouts(item, material, True)
 
+    assert layout_type == Machine.SHEET_FED_PRESS
     assert layouts is not None and len(layouts) == 2
 
     item_to_runsheet = layouts[0]
@@ -135,8 +137,9 @@ def test_sheet_fed_press__get_sheet_layouts__halved_length_less_than_machine_min
     item = Rectangle.Layout(width=9, length=9, uom='inch')
     material = Rectangle.Layout(width=2, length=2, uom='inch')
 
-    layouts = machine.get_sheet_layouts(item, material, True)
+    layouts, layout_type = machine.get_sheet_layouts(item, material, True)
 
+    assert layout_type == Machine.SHEET_FED_PRESS
     assert layouts is not None and len(layouts) == 2
 
     item_to_runsheet = layouts[0]
@@ -154,8 +157,9 @@ def test_sheet_fed_press__get_sheet_layouts__big_layout(
     item = Rectangle.Layout(width=32, length=28, uom='inch')
     material = Rectangle.Layout(width=17, length=14, uom='inch')
 
-    layouts = machine.get_sheet_layouts(item, material, True)
+    layouts, layout_type = machine.get_sheet_layouts(item, material, True)
 
+    assert layout_type == Machine.SHEET_FED_PRESS
     assert layouts is not None and len(layouts) == 2
     
     item_to_runsheet = layouts[0]
@@ -169,8 +173,10 @@ def test_roll_fed_press__get_sheet_layouts(db, hplatex_machine):
     item = Rectangle.Layout(width=48, length=2000, uom='inch')
     material = ChildSheet.Layout(width=3, length=3, uom='inch', 
         margin_top=1, margin_right=1, margin_bottom=1, margin_left=1)
-    layouts = hplatex_machine.get_sheet_layouts(item, material, rotate=True, 
+    layouts, layout_type = hplatex_machine.get_sheet_layouts(item, material, rotate=True, 
         order_quantity=5000, apply_breakpoint=True)
+    
+    assert layout_type == Machine.ROLL_FED_PRESS
     assert layouts is not None and len(layouts) == 2
 
     layout1 = layouts[0]
@@ -187,8 +193,10 @@ def test_roll_fed_press__get_sheet_layouts__totallength_is_less_than_minbreakpoi
     item = Rectangle.Layout(width=48, length=2000, uom='inch')
     material = ChildSheet.Layout(width=3, length=3, uom='inch', 
         margin_top=1, margin_right=1, margin_bottom=1, margin_left=1)
-    layouts = hplatex_machine.get_sheet_layouts(item, material, rotate=True, 
+    layouts, layout_type = hplatex_machine.get_sheet_layouts(item, material, rotate=True, 
         order_quantity=40, apply_breakpoint=True)
+    
+    assert layout_type == Machine.ROLL_FED_PRESS
     assert layouts is not None and len(layouts) == 1
 
     layout1 = layouts[0]
@@ -201,8 +209,10 @@ def test_roll_fed_press__get_sheet_layouts__remainder_is_less_than_minbreakpoint
     item = Rectangle.Layout(width=48, length=2000, uom='inch')
     material = ChildSheet.Layout(width=3, length=3, uom='inch', 
         margin_top=1, margin_right=1, margin_bottom=1, margin_left=1)
-    layouts = hplatex_machine.get_sheet_layouts(item, material, rotate=True, 
+    layouts, layout_type = hplatex_machine.get_sheet_layouts(item, material, rotate=True, 
         order_quantity=900.00, apply_breakpoint=True)
+    
+    assert layout_type == Machine.ROLL_FED_PRESS
     assert layouts is not None and len(layouts) == 2
 
     layout1 = layouts[0]
@@ -224,10 +234,11 @@ def test_roll_fed_press__get_sheet_layouts__machine_has_vertical_margin(
 
     item = Rectangle.Layout(width=45, length=2000, uom='inch')
     material = ChildSheet.Layout(width=3, length=3, uom='inch')
-    layouts = hplatex_machine.get_sheet_layouts(item, material, rotate=True, 
+    layouts, layout_type = hplatex_machine.get_sheet_layouts(item, material, rotate=True, 
         order_quantity=100.00, apply_breakpoint=True)
 
     layout1 = layouts[0]
+    assert layout_type == Machine.ROLL_FED_PRESS
     assert len(layouts) == 1
     assert layout1.bin.width == 42 and layout1.bin.length == 48
     assert layout1.count == 224

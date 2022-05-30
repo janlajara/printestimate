@@ -66,9 +66,9 @@ class PressMachine(Machine):
     # final_material_layout - the layout of the final material after converting the raw material
     def get_sheet_layouts(self, raw_material_layout:Paper.Layout, 
             final_material_layout:Paper.Layout, rotate=False, **kwargs):
-        layouts = self.get_layouts_meta(final_material_layout, raw_material_layout, 
+        layouts, layout_type = self.get_layouts_meta(final_material_layout, raw_material_layout, 
             rotate, **kwargs)
-        return layouts
+        return layouts, layout_type
 
     def get_layouts_meta(self, final_material_layout, raw_material_layout, rotate, **kwargs):
         # Implement this method
@@ -152,7 +152,7 @@ class RollFedPressMachine(PressMachine):
 
     def get_layouts_meta(self, final_material_layout, raw_material_layout, rotate=False, 
             order_quantity=1, spoilage_rate=0, apply_breakpoint=False):
-
+            
         if final_material_layout.width == 0:
             raise ValueError('Final material layout width should not be equal to zero')
 
@@ -210,7 +210,7 @@ class RollFedPressMachine(PressMachine):
         quantity = order_quantity * (1+(spoilage_rate/100))
         runsheet_to_final_layouts = _get_runsheet_layouts(quantity)
         
-        return runsheet_to_final_layouts
+        return runsheet_to_final_layouts, Machine.ROLL_FED_PRESS
 
 
 class SheetFedPressMachine(PressMachine):
@@ -324,7 +324,7 @@ class SheetFedPressMachine(PressMachine):
             return_layouts_meta = [rotated_item_to_parent_layout_meta, 
                 rotated_parent_to_child_layout_meta]
 
-        return return_layouts_meta
+        return return_layouts_meta, Machine.SHEET_FED_PRESS
 
 
 class ParentSheet:

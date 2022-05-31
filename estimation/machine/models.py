@@ -152,7 +152,7 @@ class RollFedPressMachine(PressMachine):
 
     def get_layouts_meta(self, final_material_layout, raw_material_layout, rotate=False, 
             order_quantity=1, spoilage_rate=0, apply_breakpoint=False):
-            
+        
         if final_material_layout.width == 0:
             raise ValueError('Final material layout width should not be equal to zero')
 
@@ -172,14 +172,19 @@ class RollFedPressMachine(PressMachine):
             runsheet_width_measurement = _get_runsheet_width(
                 final_material_layout.total_width_measurement)
             runsheet_width = getattr(runsheet_width_measurement, self.uom)
+            final_material_length = getattr(final_material_layout.total_length_measurement, self.uom)
 
             if runsheet_width == 0:
                 raise ValueError('Final sheet width does not fit within the printable area of the raw material.')
             
             runsheet_width = round(runsheet_width, 4)
+            final_material_length = round(final_material_length, 4)
             total_item_area_measurement = final_material_layout.area_measurement * quantity
             total_item_area = getattr(total_item_area_measurement, 'sq_%s' % self.uom)
             total_item_length = (round(total_item_area, 4) / runsheet_width)
+            
+            # Round up to the nearest final material length multiple        
+            total_item_length -= total_item_length % -final_material_length
             runsheet_length = total_item_length
             layouts = []
 

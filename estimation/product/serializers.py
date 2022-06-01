@@ -84,6 +84,7 @@ class MaterialSerializer(serializers.Serializer):
     uom = serializers.CharField()
     spoilage_rate = serializers.DecimalField(default=0, max_digits=None, decimal_places=2)
     estimates = MaterialEstimateSerializer(many=True, read_only=True)
+    machine_type = serializers.CharField()
     layouts_meta = SheetLayoutMetaSerializer(many=True, read_only=True)
 
 

@@ -160,6 +160,7 @@ export default {
                         state.data.costing.billOfMaterials = response.estimates.material_estimates.map(me => ({
                             name: me.name, rate: parseFloat(me.rate), uom: me.uom, 
                             spoilageRate: parseFloat(me.spoilage_rate), isExpanded: false,
+                            machineType: me.machine_type,
                             layouts: me.layouts_meta,
                             estimates: me.estimates.map(es => ({
                                 itemQuantity: es.order_quantity,

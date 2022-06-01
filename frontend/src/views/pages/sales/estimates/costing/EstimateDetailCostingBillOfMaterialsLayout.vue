@@ -1,5 +1,5 @@
 <template>
-    <div v-if="state.data.layouts && state.data.layouts.length > 0"
+    <div v-if="$props.layouts && $props.layouts.length > 0"
         class="border-t-2 border-dotted text-gray-500 grid grid-cols-2 py-1">
         <div class="text-sm">
             <div class="ml-8 my-auto">Layout</div>
@@ -18,7 +18,7 @@
 
                     <dt>Finalsheet count:</dt>
                     <dd>
-                        {{formatQuantity(state.data.stats.childsheetPerParent, 'out', 'outs')}}
+                        {{formatQuantity(state.data.stats.childsheetCount, 'out', 'outs')}}
                         / whole sheet
                     </dd>
 
@@ -34,7 +34,7 @@
                 <dl v-else class="grid grid-cols-2 my-4">
                     <dt>Finalsheet count:</dt>
                     <dd>
-                        {{formatQuantity(state.data.stats.childsheetPerParent, 'out', 'outs')}}
+                        {{formatQuantity(state.data.stats.childsheetCount, 'out', 'outs')}}
                         / whole sheet
                     </dd>
 
@@ -52,14 +52,15 @@
         <div>
             <CutListLayout 
                 @load="value => state.data.stats = value"
-                :layouts="state.data.layouts"
+                :layout-type="$props.machineType"
+                :layouts="$props.layouts"
                 :svg-height="140"/>
         </div>
     </div>
 </template>
 <script>
 import CutListLayout from '@/views/commons/layout/CutListLayout.vue';
-import {reactive, computed} from 'vue';
+import {reactive} from 'vue';
 import {formatNumber, formatQuantity} from '@/utils/format.js';
 
 export default {
@@ -67,13 +68,13 @@ export default {
         CutListLayout
     },
     props: {
+        machineType: String,
         layouts: Array
     },
-    setup(props) {
+    setup() {
         const state = reactive({
             data: {
-                layouts: computed(()=>props.layouts),
-                stats: null,
+                stats: null
             }
         });
         return {

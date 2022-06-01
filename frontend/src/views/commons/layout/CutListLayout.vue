@@ -6,101 +6,100 @@
                 autorenew
             </span>
         </div>
-        <template v-else-if="state.layout.count <= 100">
-            <Svg :svg-height="$props.svgHeight"
-                :view-box-width="state.svgRect.width" 
-                :view-box-height="state.svgRect.length">
-                <Rectangle 
-                    :width="state.svgRect.width"
-                    :height="state.svgRect.length"
-                    stroke="#838383" :stroke-width="2" 
-                    pattern="diagonal-hatch"
-                    pattern-color="#d3677b"
-                    pattern-fill="#cecece"/>
-                <!-- if layout consists of parentsheet, runsheet and childsheet -->
-                <template v-if="state.layout.type == layout_types.PARENT_RUNSHEET_CHILDSHEET">
-                    <ParentSheetShape 
-                        :key="pkey"
-                        v-for="(runsheet, pkey) in state.parentToRunsheet.layouts"
-                        :view-box-width="state.svgRect.width"
-                        :view-box-length="state.svgRect.length"
-                        :x="runsheet.x" :y="runsheet.y"
-                        :width="runsheet.width"
-                        :length="runsheet.length"
-                        stroke="#838383" 
-                        :stroke-width="2"
+        <div v-else-if="state.layouts.length > 0">
+            <template v-if="state.layout.count <= 100">
+                <Svg :svg-height="$props.svgHeight"
+                    :view-box-width="state.svgRect.width" 
+                    :view-box-height="state.svgRect.length">
+                    <Rectangle 
+                        :width="state.svgRect.width"
+                        :height="state.svgRect.length"
+                        stroke="#838383" :stroke-width="2" 
                         pattern="diagonal-hatch"
-                        pattern-fill="white"
-                        :padding-top="runsheet.padding_top"
-                        :padding-right="runsheet.padding_right"
-                        :padding-bottom="runsheet.padding_bottom"
-                        :padding-left="runsheet.padding_right">
-                        <template v-if="state.runsheetToCutsheet">
-                            <ChildSheetShape 
-                                :key="ckey" v-for="(cutsheet, ckey) in state.runsheetToCutsheet.layouts"
-                                :text="(state.runsheetToCutsheet.layouts.length * pkey) + cutsheet.i"
-                                stroke="#838383" stroke-width="1" fill="white"
-                                :x="!runsheet.is_rotated?
-                                    (cutsheet.x + runsheet.x + runsheet.padding_left) :
-                                    (cutsheet.y + runsheet.x + runsheet.padding_left)" 
-                                :y="!runsheet.is_rotated?
-                                    (cutsheet.y + runsheet.y + runsheet.padding_top) :
-                                    (cutsheet.x + runsheet.y + runsheet.padding_top)"
-                                :width="!runsheet.is_rotated? 
-                                    cutsheet.width : cutsheet.length"
-                                :length="!runsheet.is_rotated? 
-                                    cutsheet.length : cutsheet.width"
-                                :margin-top="!runsheet.is_rotated? 
-                                    cutsheet.margin_top : cutsheet.margin_right"
-                                :margin-right="!runsheet.is_rotated? 
-                                    cutsheet.margin_right : cutsheet.margin_bottom"
-                                :margin-bottom="!runsheet.is_rotated? 
-                                    cutsheet.margin_bottom : cutsheet.margin_left"
-                                :margin-left="!runsheet.is_rotated? 
-                                    cutsheet.margin_left : cutsheet.margin_top"
-                                :view-box-width="state.svgRect.width"
-                                :view-box-length="state.svgRect.length">
-                            </ChildSheetShape>
-                        </template>
-                    </ParentSheetShape>
-                </template>
-                <!-- Runsheet to Childsheet only -->
-                <template v-else-if="state.layout.type == layout_types.RUNSHEET_CHILDSHEET"> 
-                    <ChildSheetShape 
-                        :key="ckey" v-for="(cutsheet, ckey) in state.runsheetToCutsheet.layouts"
-                        :text="cutsheet.i"
-                        stroke="#838383" stroke-width="1" fill="white"
-                        :x="cutsheet.x" :y="cutsheet.y"
-                        :width="cutsheet.width" :length="cutsheet.length"
-                        :margin-top="cutsheet.margin_top"
-                        :margin-right="cutsheet.margin_right"
-                        :margin-bottom="cutsheet.margin_bottom"
-                        :margin-left="cutsheet.margin_left"
-                        :view-box-width="state.svgRect.width"
-                        :view-box-length="state.svgRect.length">
-                    </ChildSheetShape>
-                </template> 
-                <!-- Parent to Childsheet only -->
-                <template v-else-if="state.layout.type == layout_types.PARENT_CHILDSHEET">
-                    <ChildSheetShape 
-                        :key="ckey" v-for="(cutsheet, ckey) in state.parentToCutsheet.layouts"
-                        :text="cutsheet.i"
-                        stroke="#838383" stroke-width="1" fill="white"
-                        :x="cutsheet.x" :y="cutsheet.y"
-                        :width="cutsheet.width" :length="cutsheet.length"
-                        :margin-top="cutsheet.margin_top"
-                        :margin-right="cutsheet.margin_right"
-                        :margin-bottom="cutsheet.margin_bottom"
-                        :margin-left="cutsheet.margin_left"
-                        :view-box-width="state.svgRect.width"
-                        :view-box-length="state.svgRect.length">
-                    </ChildSheetShape>
-                </template>
-            </Svg>
-        </template>
-        <div v-else>
-            <p class="text-sm text-gray-500 italic text-center">
-                Lay-out is too large to be displayed.</p> 
+                        pattern-color="#d3677b"
+                        pattern-fill="#cecece"/>
+                    <template v-if="state.layout.type == layout_types.SHEET_FED_PRESS_MACHINE">
+                        <ParentSheetShape 
+                            :key="pkey"
+                            v-for="(runsheet, pkey) in state.parentToRunsheet.layouts"
+                            :view-box-width="state.svgRect.width"
+                            :view-box-length="state.svgRect.length"
+                            :x="runsheet.x" :y="runsheet.y"
+                            :width="runsheet.width"
+                            :length="runsheet.length"
+                            stroke="#838383" 
+                            :stroke-width="2"
+                            pattern="diagonal-hatch"
+                            pattern-fill="white"
+                            :padding-top="runsheet.padding_top"
+                            :padding-right="runsheet.padding_right"
+                            :padding-bottom="runsheet.padding_bottom"
+                            :padding-left="runsheet.padding_right">
+                            <template v-if="state.runsheetToCutsheet">
+                                <ChildSheetShape 
+                                    :key="ckey" v-for="(cutsheet, ckey) in state.runsheetToCutsheet.layouts"
+                                    :text="(state.runsheetToCutsheet.layouts.length * pkey) + cutsheet.i"
+                                    stroke="#838383" stroke-width="1" fill="white"
+                                    :x="!runsheet.is_rotated?
+                                        (cutsheet.x + runsheet.x + runsheet.padding_left) :
+                                        (cutsheet.y + runsheet.x + runsheet.padding_left)" 
+                                    :y="!runsheet.is_rotated?
+                                        (cutsheet.y + runsheet.y + runsheet.padding_top) :
+                                        (cutsheet.x + runsheet.y + runsheet.padding_top)"
+                                    :width="!runsheet.is_rotated? 
+                                        cutsheet.width : cutsheet.length"
+                                    :length="!runsheet.is_rotated? 
+                                        cutsheet.length : cutsheet.width"
+                                    :margin-top="!runsheet.is_rotated? 
+                                        cutsheet.margin_top : cutsheet.margin_right"
+                                    :margin-right="!runsheet.is_rotated? 
+                                        cutsheet.margin_right : cutsheet.margin_bottom"
+                                    :margin-bottom="!runsheet.is_rotated? 
+                                        cutsheet.margin_bottom : cutsheet.margin_left"
+                                    :margin-left="!runsheet.is_rotated? 
+                                        cutsheet.margin_left : cutsheet.margin_top"
+                                    :view-box-width="state.svgRect.width"
+                                    :view-box-length="state.svgRect.length">
+                                </ChildSheetShape>
+                            </template>
+                        </ParentSheetShape>
+                    </template>
+                    <template v-else-if="state.layout.type == layout_types.ROLL_FED_PRESS_MACHINE"> 
+                        <ChildSheetShape 
+                            :key="ckey" v-for="(cutsheet, ckey) in state.runsheetToCutsheet.layouts"
+                            :text="cutsheet.i"
+                            stroke="#838383" stroke-width="1" fill="white"
+                            :x="cutsheet.x" :y="cutsheet.y"
+                            :width="cutsheet.width" :length="cutsheet.length"
+                            :margin-top="cutsheet.margin_top"
+                            :margin-right="cutsheet.margin_right"
+                            :margin-bottom="cutsheet.margin_bottom"
+                            :margin-left="cutsheet.margin_left"
+                            :view-box-width="state.svgRect.width"
+                            :view-box-length="state.svgRect.length">
+                        </ChildSheetShape>
+                    </template> 
+                    <template v-else-if="state.layout.type == layout_types.DEFAULT">
+                        <ChildSheetShape 
+                            :key="ckey" v-for="(cutsheet, ckey) in state.parentToCutsheet.layouts"
+                            :text="cutsheet.i"
+                            stroke="#838383" stroke-width="1" fill="white"
+                            :x="cutsheet.x" :y="cutsheet.y"
+                            :width="cutsheet.width" :length="cutsheet.length"
+                            :margin-top="cutsheet.margin_top"
+                            :margin-right="cutsheet.margin_right"
+                            :margin-bottom="cutsheet.margin_bottom"
+                            :margin-left="cutsheet.margin_left"
+                            :view-box-width="state.svgRect.width"
+                            :view-box-length="state.svgRect.length">
+                        </ChildSheetShape>
+                    </template>
+                </Svg>
+            </template>
+            <div v-else>
+                <p class="text-sm text-gray-500 italic text-center">
+                    Lay-out is too large to be displayed.</p> 
+            </div>
         </div>
     </div>
 </template>
@@ -115,16 +114,17 @@ import {reactive, computed, onMounted, onUpdated} from 'vue';
 
 
 export const layout_types = {
-    PARENT_RUNSHEET_CHILDSHEET: 'Parent-to-runsheet',
-    RUNSHEET_CHILDSHEET: 'Runsheet-to-cutsheet',
-    PARENT_CHILDSHEET: 'Parent-to-cutsheet'
+    SHEET_FED_PRESS_MACHINE: 'SheetFedPressMachine',
+    ROLL_FED_PRESS_MACHINE: 'RollFedPressMachine',
+    DEFAULT: 'Default'
 };
 
 export default {
     props: {
+        layoutType: String,
         layouts: {
-            type: Array,
-            default: ()=> []
+            type: Object,
+            default: null
         },
         svgHeight: {
             type: Number,
@@ -139,21 +139,24 @@ export default {
     setup(props, {emit}) {
         const state = reactive({
             layouts: computed(()=> props.layouts || []),
-            parentToRunsheet: computed(()=> findLayout(layout_types.PARENT_RUNSHEET_CHILDSHEET)),
-            runsheetToCutsheet: computed(()=> findLayout(layout_types.RUNSHEET_CHILDSHEET)),
-            parentToCutsheet: computed(()=> findLayout(layout_types.PARENT_CHILDSHEET)),
+            layoutType: computed(()=> {
+                let type = props.layoutType;
+                if (state.layouts.length > 0 && type == null)
+                    type = layout_types.DEFAULT;
+                return type
+            }),
+            parentToRunsheet: computed(()=> findLayout('Parent-to-runsheet')),
+            runsheetToCutsheet: computed(()=> findLayout('Runsheet-to-cutsheet')),
+            parentToCutsheet: computed(()=> findLayout('Parent-to-cutsheet')),
             layout: computed(()=> {
-                let type = null;
+                const type = state.layoutType;
                 let count = 0;
                 let main = null;
-                if (state.parentToRunsheet) {
-                    type = layout_types.PARENT_RUNSHEET_CHILDSHEET;
+                if (type == layout_types.SHEET_FED_PRESS_MACHINE) {
                     main = state.parentToRunsheet;
-                } else if (state.runsheetToCutsheet) {
-                    type = layout_types.RUNSHEET_CHILDSHEET;
+                } else if (type == layout_types.ROLL_FED_PRESS_MACHINE) {
                     main = state.runsheetToCutsheet;
-                } else if (state.parentToCutsheet) {
-                    type = layout_types.PARENT_CHILDSHEET;
+                } else {
                     main = state.parentToCutsheet;
                 }
                 if (main) count = main.count;
@@ -162,8 +165,8 @@ export default {
                 };
             }),
             hasRunsheet: computed(()=> 
-                [layout_types.PARENT_RUNSHEET_CHILDSHEET, 
-                layout_types.RUNSHEET_CHILDSHEET].
+                [layout_types.SHEET_FED_PRESS_MACHINE, 
+                layout_types.ROLL_FED_PRESS_MACHINE].
                 includes(state.layout.type)),
             svgRect: computed(()=> {
                 const rect = state.layout.main? 
@@ -180,7 +183,7 @@ export default {
 
         const findLayout = (name) => {
             let layout = null;
-            if (state.layouts.length > 0) {
+            if (state.layouts && state.layouts.length > 0) {
                 layout = state.layouts.find(x=> x.name == name)
             }
             return layout;
@@ -290,13 +293,14 @@ export default {
         }
 
         const initializeStats = ()=> {
-            let stats = {};
-            if (state.layout.type) {
-                if (state.layout.type == layout_types.PARENT_RUNSHEET_CHILDSHEET) {
+            let stats = {}; 
+            if (state.layouts.length > 0 && state.layout.type) {
+                
+                if (state.layout.type == layout_types.SHEET_FED_PRESS_MACHINE) {
                     stats = getParentRunsheetChildsheetStats();
-                } else if (state.layout.type == layout_types.RUNSHEET_CHILDSHEET) {
+                } else if (state.layout.type == layout_types.ROLL_FED_PRESS_MACHINE) {
                     stats = getRunsheetChildsheetStats();
-                } else if (state.layout.type == layout_types.PARENT_CHILDSHEET) {
+                } else if (state.layout.type == layout_types.DEFAULT) {
                     stats = getParentChildsheetStats();
                 }
             }

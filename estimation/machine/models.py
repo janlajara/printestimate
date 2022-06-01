@@ -182,7 +182,7 @@ class RollFedPressMachine(PressMachine):
             total_item_area_measurement = final_material_layout.area_measurement * quantity
             total_item_area = getattr(total_item_area_measurement, 'sq_%s' % self.uom)
             total_item_length = (round(total_item_area, 4) / runsheet_width)
-            
+
             # Round up to the nearest final material length multiple        
             total_item_length -= total_item_length % -final_material_length
             runsheet_length = total_item_length
@@ -207,9 +207,12 @@ class RollFedPressMachine(PressMachine):
                         layouts.append(remainder_layout)
 
             runsheet_layout = _create_layout(runsheet_width, runsheet_length, self.uom)
-            layout = Rectangle.get_layout(runsheet_layout, final_material_layout, 
-                False, 'Runsheet-to-cutsheet')
-            layouts.insert(0, layout)
+            parent_to_runsheet = Rectangle.get_layout(raw_material_layout, runsheet_layout,
+                False, 'Parent-to-runsheet')
+            runsheet_to_cutsheet = Rectangle.get_layout(runsheet_layout, 
+                final_material_layout, False, 'Runsheet-to-cutsheet')
+            layouts.insert(0, runsheet_to_cutsheet)
+            layouts.insert(0, parent_to_runsheet)
             return layouts     
 
         quantity = order_quantity * (1+(spoilage_rate/100))

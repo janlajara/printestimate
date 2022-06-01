@@ -83,11 +83,16 @@ class GetSheetLayoutsView(mixins.CreateModelMixin, viewsets.GenericViewSet):
                     serializer.parse(validated_data)
             sheet_layout = ChildSheet.get_layout(item_layout, material_layout, 
                 rotate)
-            response = {}
+            layouts = {}
+
             if sheet_layout is not None:
                 serializer = serializers.SheetLayoutMetaSerializer(sheet_layout)
-                response = serializer.data
-            return Response(response)
+                layouts = serializer.data
+
+            return Response({
+                    "machine_type": None,
+                    "layouts": [layouts]
+                })
         else:
             return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
@@ -109,12 +114,15 @@ class SheetFedPressMachineGetSheetLayoutsView(mixins.CreateModelMixin,
                 sheet_layouts, layout_type = press_machine.get_sheet_layouts(item_layout, 
                     material_layout, rotate)
 
-                response = {}
+                layouts = {}
                 if sheet_layouts is not None:
                     serializer = serializers.SheetLayoutMetaSerializer(sheet_layouts, many=True)
-                    response = serializer.data
+                    layouts = serializer.data
 
-                return Response(response)
+                return Response({
+                    "machine_type": layout_type,
+                    "layouts": layouts
+                })
             else:
                 return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
         else:
@@ -139,12 +147,15 @@ class RollFedPressMachineGetSheetLayoutsView(mixins.CreateModelMixin,
                     material_layout, False, order_quantity=order_quantity, 
                     spoilage_rate=spoilage_rate, apply_breakpoint=apply_breakpoint)
 
-                response = {}
+                layouts = {}
                 if sheet_layouts is not None:
                     serializer = serializers.SheetLayoutMetaSerializer(sheet_layouts, many=True)
-                    response = serializer.data
+                    layouts = serializer.data
 
-                return Response(response)
+                return Response({
+                    "machine_type": layout_type,
+                    "layouts": layouts
+                })
             else:
                 return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
         else:

@@ -2,13 +2,14 @@
     <div>
         <CutListLayout :loader="state.isLoading"
             @load="value => state.data.stats = value"
-            :layouts="state.data.sheetLayouts"/>
+            :layout-type="state.data.sheetLayout.machineType"
+            :layouts="state.data.sheetLayout.layouts"/>
         <DescriptionList class="md:grid-cols-3">
             <DescriptionItem :name="`Total outs (${state.stats.childsheetSize})`" 
                 :value="state.stats.childsheetCountLabel"/>
             <DescriptionItem v-if="
-                [layout_types.PARENT_RUNSHEET_CHILDSHEET,
-                 layout_types.RUNSHEET_CHILDSHEET]
+                [layout_types.SHEET_FED_PRESS_MACHINE,
+                 layout_types.ROLL_FED_PRESS_MACHINE]
                     .includes(state.stats.layoutType)"
                 :name="`Runsheet (${state.stats.runsheetSize})`" 
                 :value="state.stats.runsheetCountLabel"/>
@@ -16,7 +17,7 @@
                 :value="`${formatNumber(state.stats.totalWasteage, 2, true)} %`"
                 :class="(state.stats.totalWasteage > 20)? 'text-red-500 font-bold' : ''"/>
         </DescriptionList>
-        <template v-if="state.stats.layoutType == layout_types.RUNSHEET_CHILDSHEET">
+        <template v-if="state.stats.layoutType == layout_types.ROLL_FED_PRESS_MACHINE">
             <hr/>
             <div class="grid md:grid-cols-3 md:gap-6">
                 <InputText name="Sample Order Quantity"  placeholder="Order Quantity" required
@@ -59,7 +60,10 @@ export default {
         const state = reactive({
             isLoading: false,
             data: {
-                sheetLayouts: [],
+                sheetLayout: {
+                    machineType: null,
+                    layouts: []
+                },
                 error: null,
                 stats: null,
                 layoutInputParams: {
@@ -109,7 +113,7 @@ export default {
                     if (response) return response || [];
                 } else {
                     const response = await ChildSheetApi.getSheetLayout(input);
-                    if (response) return [response] || [];
+                    if (response) return response || [];
                 }
             }
         };
@@ -170,7 +174,11 @@ export default {
                 };
                 addMachineSpecificInputParams(props.machine, input)
                 if (!inputIsValid(input)) return;
-                state.data.sheetLayouts = await getSheetLayouts(input, props.machine);
+                const layoutObj = await getSheetLayouts(input, props.machine);
+                state.data.sheetLayout = {
+                    machineType: layoutObj.machine_type,
+                    layouts: layoutObj.layouts
+                }
             }
         });
 

@@ -49,7 +49,8 @@
                 leave-from-class="transform origin-top opacity-100 scale-100" 
                 leave-to-class="transform origin-top opacity-0 scale-y-75">
                 <div v-show="material.isExpanded" class="border-b pb-2">
-                    <EstimateDetailCostingBillOfMaterialsLayout 
+                    <EstimateDetailCostingBillOfMaterialsLayout
+                        :machine-type="material.machineType"
                         :layouts="material.layouts"/>
                     <div class="border-t-2 border-dotted text-gray-500 grid grid-cols-2">
                         <div>
@@ -149,9 +150,11 @@ import {reactive, inject, computed, watch} from 'vue';
 import {formatMoney as formatCurrency} from '@/utils/format.js'
 
 class Material {
-    constructor(name, rate, uom, spoilageRate, estimates, currency, layouts) {
+    constructor(name, rate, uom, spoilageRate, estimates, 
+            currency, layouts, machineType) {
         this._state = reactive({
-            name, rate, uom, spoilageRate, estimates, currency, layouts,
+            name, rate, uom, spoilageRate, estimates, 
+            currency, layouts, machineType,
             isExpanded: false
         })
     }
@@ -179,6 +182,9 @@ class Material {
 
     set layouts(value){this._state.layouts = value}
     get layouts(){return this._state.layouts}
+
+    set machineType(value){this._state.machineType = value}
+    get machineType(){return this._state.machineType}
 
     get rateLabel() {
         return formatCurrency(this._state.rate, this._state.currency)
@@ -303,7 +309,8 @@ export default {
                             x.itemQuantity, x.estimatedMaterialQuantity,
                             x.spoilageMaterialQuantity));
                     const material = new Material(data.name, data.rate, 
-                        data.uom, data.spoilageRate, estimates, currency, data.layouts);
+                        data.uom, data.spoilageRate, estimates, currency, 
+                        data.layouts, data.machineType);
                     state.data.billOfMaterials.push(material); 
                 });
 

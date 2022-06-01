@@ -177,13 +177,13 @@ def test_roll_fed_press__get_sheet_layouts(db, hplatex_machine):
         order_quantity=5000, apply_breakpoint=True)
     
     assert layout_type == Machine.ROLL_FED_PRESS
-    assert layouts is not None and len(layouts) == 2
+    assert layouts is not None and len(layouts) == 3
 
-    layout1 = layouts[0]
+    layout1 = layouts[1]
     assert layout1.bin.width == 45 and layout1.bin.length == 150
     assert layout1.count == 270
 
-    layout2 = layouts[1]
+    layout2 = layouts[2]
     assert layout2.bin.width == 45 and round(layout2.bin.length) == 100
     assert layout2.count == 180
 
@@ -197,9 +197,13 @@ def test_roll_fed_press__get_sheet_layouts__totallength_is_less_than_minbreakpoi
         order_quantity=40, apply_breakpoint=True)
     
     assert layout_type == Machine.ROLL_FED_PRESS
-    assert layouts is not None and len(layouts) == 1
+    assert layouts is not None and len(layouts) == 2
 
-    layout1 = layouts[0]
+    layout0 = layouts[0]
+    assert layout0.bin.width == 48 and layout0.bin.length == 2000
+    assert layout0.count == 41
+
+    layout1 = layouts[1]
     assert layout1.bin.width == 45 and layout1.bin.length == 48
     assert layout1.count == 81
 
@@ -213,13 +217,17 @@ def test_roll_fed_press__get_sheet_layouts__remainder_is_less_than_minbreakpoint
         order_quantity=900.00, apply_breakpoint=True)
     
     assert layout_type == Machine.ROLL_FED_PRESS
-    assert layouts is not None and len(layouts) == 2
+    assert layouts is not None and len(layouts) == 3
+    
+    layout0 = layouts[0]
+    assert layout0.bin.width == 48 and layout0.bin.length == 2000
+    assert layout0.count == 13
 
-    layout1 = layouts[0]
+    layout1 = layouts[1]
     assert layout1.bin.width == 45 and layout1.bin.length == 150
     assert layout1.count == 270
 
-    layout2 = layouts[1]
+    layout2 = layouts[2]
     assert layout2.bin.width == 45 and layout2.bin.length == 48
     assert layout2.count == 81
 
@@ -237,8 +245,12 @@ def test_roll_fed_press__get_sheet_layouts__machine_has_vertical_margin(
     layouts, layout_type = hplatex_machine.get_sheet_layouts(item, material, rotate=True, 
         order_quantity=100.00, apply_breakpoint=True)
 
-    layout1 = layouts[0]
+    layout0 = layouts[0]
+    assert layout0.bin.width == 45 and layout0.bin.length == 2000
+    assert layout0.count == 41
+
+    layout1 = layouts[1]
     assert layout_type == Machine.ROLL_FED_PRESS
-    assert len(layouts) == 1
+    assert len(layouts) == 2
     assert layout1.bin.width == 42 and layout1.bin.length == 48
     assert layout1.count == 224

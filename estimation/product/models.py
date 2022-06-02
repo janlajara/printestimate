@@ -738,8 +738,8 @@ class PaperMaterial(Material):
                 running_length = raw_to_running_layout_meta.rect.length
                 actual_total_outs_per_item = (running_per_raw * final_per_running)
 
-                if raw_length > running_length or \
-                        self.total_material_quantity > actual_total_outs_per_item:
+                if running_per_raw > 0 and (raw_length > running_length or \
+                        self.total_material_quantity > actual_total_outs_per_item):
                     multiplier = self.total_material_quantity / max(actual_total_outs_per_item, 1)
                     total_running_length = running_per_raw * multiplier * running_length
                     output_per_item = total_running_length / raw_length

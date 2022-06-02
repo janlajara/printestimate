@@ -291,7 +291,8 @@ class Rectangle(Shape):
     # Returns the following:
     # layouts, count, usage, wastage, indices of rotated rectangles
     @classmethod
-    def get_layout(cls, parent_layout, child_layout, rotate=False, name=None, childCount=None):
+    def get_layout(cls, parent_layout, child_layout, rotate=False, name=None, 
+            childCount=None, childLayoutLimit=None):
         def __round__(number):
             return round(number * 100, 2)
 
@@ -312,6 +313,10 @@ class Rectangle(Shape):
                     is_rotated = key in rotated
                     layout = Rectangle.Layout(key + 1, x, y, width, length, is_rotated, uom=uom)
                     layouts.append(layout) 
+
+                    if childLayoutLimit is not None and key > childLayoutLimit:
+                        break 
+
             return layouts
         
         def __get_cut_count__(packer, bin_width, bin_length, rotated):

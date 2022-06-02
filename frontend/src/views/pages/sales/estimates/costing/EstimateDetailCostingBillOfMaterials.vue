@@ -32,7 +32,7 @@
                         <div class="text-xs flex my-auto">
                             <div class="text-right w-2/5">
                                 <span class="text-gray-500">x</span>
-                                {{estimate.totalQuantity}}</div>
+                                {{roundNumber(estimate.totalQuantity, 4)}}</div>
                             <div class="ml-1 w-3/5 flex justify-between">
                                 <span class="text-gray-500">=</span>
                                 <span>{{formatMoney(material.rate * estimate.totalQuantity)}}</span>
@@ -109,7 +109,7 @@
                                 <div class="text-xs flex py-1 my-auto">
                                     <div class="text-right w-2/5">
                                         <span>x</span>
-                                        {{estimate.totalQuantity}}</div>
+                                        {{roundNumber(estimate.totalQuantity, 4)}}</div>
                                     <div class="ml-1 w-3/5 flex justify-between">
                                         <span>=</span>
                                         <span class="underline">
@@ -147,7 +147,7 @@
 import EstimateDetailCostingBillOfMaterialsLayout from './EstimateDetailCostingBillOfMaterialsLayout.vue';
 
 import {reactive, inject, computed, watch} from 'vue';
-import {formatMoney as formatCurrency} from '@/utils/format.js'
+import {roundNumber, formatMoney as formatCurrency} from '@/utils/format.js'
 
 class Material {
     constructor(name, rate, uom, spoilageRate, estimates, 
@@ -210,10 +210,10 @@ class MaterialEstimate {
     get itemQuantity(){return this._state.itemQuantity}
 
     set estimatedQuantity(value){this._state.estimatedQuantity = value}
-    get estimatedQuantity(){return this._state.estimatedQuantity}
+    get estimatedQuantity(){return parseFloat(this._state.estimatedQuantity)}
 
     set spoilageQuantity(value){this._state.spoilageQuantity = value}
-    get spoilageQuantity(){return this._state.spoilageQuantity}
+    get spoilageQuantity(){return parseFloat(this._state.spoilageQuantity)}
 }
 
 export default {
@@ -331,7 +331,7 @@ export default {
         watch(()=>props.billOfMaterials, initializeBillOfMaterials);
 
         return {
-            state, formatMoney, emitToggled
+            state, formatMoney, roundNumber, emitToggled
         }
     }
 }

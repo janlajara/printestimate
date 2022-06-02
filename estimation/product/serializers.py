@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from djmoney.contrib.django_rest_framework import MoneyField
 from core.utils.measures import MeasurementSerializerField
 from inventory.models import Item
+from estimation.machine.models import Machine
 from estimation.template.models import ProductTemplate
 from estimation.product.models import ProductEstimate, \
     EstimateQuantity, Product, Component, Service, \
@@ -77,15 +78,34 @@ class MaterialEstimateSerializer(serializers.Serializer):
     estimated_total_quantity = serializers.IntegerField(min_value=1)
 
 
+class MaterialRollFedPressMachineEstimateSerializer(serializers.Serializer):
+    order_quantity = serializers.IntegerField(min_value=1)
+    estimated_stock_quantity = serializers.DecimalField(
+        default=0, max_digits=None, decimal_places=4)
+    estimated_spoilage_quantity = serializers.DecimalField(
+        default=0, max_digits=None, decimal_places=4)
+    estimated_total_quantity = serializers.DecimalField(
+        default=0, max_digits=None, decimal_places=4)
+
+
 class MaterialSerializer(serializers.Serializer):
     name = serializers.CharField()
     rate = MoneyField(max_digits=14, decimal_places=2, read_only=False, 
         default_currency='PHP')
     uom = serializers.CharField()
     spoilage_rate = serializers.DecimalField(default=0, max_digits=None, decimal_places=2)
-    estimates = MaterialEstimateSerializer(many=True, read_only=True)
+    estimates = serializers.SerializerMethodField(read_only=True)
     machine_type = serializers.CharField()
     layouts_meta = SheetLayoutMetaSerializer(many=True, read_only=True)
+
+    def get_estimates(self, obj):
+        serializer = MaterialEstimateSerializer(obj.estimates, many=True)
+        
+        if obj.machine_type == Machine.ROLL_FED_PRESS:
+            serializer = MaterialRollFedPressMachineEstimateSerializer(
+                obj.estimates, many=True)
+
+        return serializer.data
 
 
 class ActivityExpenseEstimateEstimateSerializer(serializers.Serializer):

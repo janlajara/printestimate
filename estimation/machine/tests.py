@@ -201,7 +201,7 @@ def test_roll_fed_press__get_sheet_layouts__totallength_is_less_than_minbreakpoi
 
     layout0 = layouts[0]
     assert layout0.bin.width == 48 and layout0.bin.length == 2000
-    assert layout0.count == 41
+    assert layout0.count == 1
 
     layout1 = layouts[1]
     assert layout1.bin.width == 45 and layout1.bin.length == 48
@@ -221,7 +221,7 @@ def test_roll_fed_press__get_sheet_layouts__remainder_is_less_than_minbreakpoint
     
     layout0 = layouts[0]
     assert layout0.bin.width == 48 and layout0.bin.length == 2000
-    assert layout0.count == 13
+    assert layout0.count == 4
 
     layout1 = layouts[1]
     assert layout1.bin.width == 45 and layout1.bin.length == 150
@@ -247,7 +247,7 @@ def test_roll_fed_press__get_sheet_layouts__machine_has_vertical_margin(
 
     layout0 = layouts[0]
     assert layout0.bin.width == 45 and layout0.bin.length == 2000
-    assert layout0.count == 41
+    assert layout0.count == 1
 
     layout1 = layouts[1]
     assert layout_type == Machine.ROLL_FED_PRESS

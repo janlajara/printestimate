@@ -207,10 +207,13 @@ class RollFedPressMachine(PressMachine):
                         layouts.append(remainder_layout)
 
             runsheet_layout = _create_layout(runsheet_width, runsheet_length, self.uom)
-            parent_to_runsheet = Rectangle.get_layout(raw_material_layout, runsheet_layout,
-                False, 'Parent-to-runsheet')
+            
             runsheet_to_cutsheet = Rectangle.get_layout(runsheet_layout, 
                 final_material_layout, False, 'Runsheet-to-cutsheet')
+            estimated_runsheet_count = math.ceil(quantity / max(runsheet_to_cutsheet.count, 1))
+            parent_to_runsheet = Rectangle.get_layout(raw_material_layout, runsheet_layout,
+                False, 'Parent-to-runsheet', childCount=estimated_runsheet_count)
+
             layouts.insert(0, runsheet_to_cutsheet)
             layouts.insert(0, parent_to_runsheet)
             return layouts     

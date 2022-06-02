@@ -291,7 +291,7 @@ class Rectangle(Shape):
     # Returns the following:
     # layouts, count, usage, wastage, indices of rotated rectangles
     @classmethod
-    def get_layout(cls, parent_layout, child_layout, rotate=False, name=None):
+    def get_layout(cls, parent_layout, child_layout, rotate=False, name=None, childCount=None):
         def __round__(number):
             return round(number * 100, 2)
 
@@ -342,9 +342,10 @@ class Rectangle(Shape):
         parent_width, parent_length, parent_uom = parent_layout.get_pack_size_as_bin()
         child_width, child_length, child_uom = child_layout.get_pack_size_as_rect()
 
-        packer = Rectangle.binpacker(
+        packer = Rectangle.binpacker( 
             parent_width, parent_length, parent_uom,
-            child_width, child_length, child_uom, rotate)
+            child_width, child_length, child_uom, rotate, 
+            childCount)
 
         count = len(packer) if packer is not None else 0
         usage = __get_usage__(parent_width, parent_length, parent_uom, 
@@ -363,7 +364,7 @@ class Rectangle(Shape):
     @classmethod
     def binpacker(cls, 
             parent_width, parent_length, parent_uom,
-            child_width, child_length, child_uom, rotate):
+            child_width, child_length, child_uom, rotate, childRectCount=None):
 
         def __get_size__(unit, distance):
             d = Distance(**{unit: distance})
@@ -378,7 +379,8 @@ class Rectangle(Shape):
         child_dimensions = (child_width, child_length)
 
         params = parent_dimensions + child_dimensions
-        estimate_count = BinPacker.estimate_rectangles(*params)
+        estimate_count = (BinPacker.estimate_rectangles(*params) 
+            if childRectCount is None else childRectCount) 
         child_rects = [child_dimensions] * estimate_count
         parent_rect = [parent_dimensions]
 

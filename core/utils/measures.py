@@ -158,6 +158,7 @@ class Quantity(MeasureBase):
         'box': 1.0,
         'booklet': 1.0,
         'ream': 1.0,
+        'roll': 1.0,
         'count': 1.0
     }
 
@@ -189,25 +190,18 @@ class MeasurementSerializerField(serializers.Field):
         self.display_unit = display_unit
         self.decimal_places = decimal_places
 
-    def _format(self, value, unit_singular, unit_plural, decimal_places=None):
-        unit = unit_plural
-        if value == 1:
-            unit = unit_singular
+    def _format(self, value, unit, decimal_places=None):
         if decimal_places is not None:
             value = round(value, decimal_places)
         return '%s %s' % (value, unit)
 
     def to_representation(self, value):
-        rep = self._format(
-            value.value, value.unit , 
-            Inflect.to_plural(value.unit), self.decimal_places)
+        rep = self._format(value.value, value.unit, self.decimal_places)
         
         if self.display_unit is not None:
             rep = self._format(
                 getattr(value, self.display_unit),
-                self.display_unit,
-                Inflect.to_plural(self.display_unit), self.decimal_places)
-
+                self.display_unit, self.decimal_places)
         return rep
 
     def to_internal_value(self, data):

@@ -112,13 +112,15 @@ class MetaComponent(MetaProductData):
     def meta_estimate_variables(self):
         material_type = self.type
         variables = []
-        has_machine = self.meta_machine_options.all()
+        machines = self.meta_machine_options.all()
+        has_machine = len(machines) > 0
+        has_materials = len(self.meta_material_options.all()) > 0
 
-        if len(has_machine) > 0:
+        if has_machine:
             machine_variables = MetaEstimateVariable.machine_derived_variables(material_type)
             variables.extend(machine_variables)
 
-        if len(self.meta_material_options.all()) > 0:
+        if has_materials:
             material_variables = MetaEstimateVariable.material_derived_variables(material_type)
             cutter_variables = MetaEstimateVariable.cutter_derived_variables(material_type, has_machine)
             variables.extend(material_variables + cutter_variables)

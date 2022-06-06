@@ -553,7 +553,8 @@ class PaperMaterial(Material):
 
             if self.layouts_meta is not None:
 
-                if self.layout_type == Machine.SHEET_FED_PRESS:
+                if self.layout_type == Machine.SHEET_FED_PRESS or \
+                        self.layout_type == Machine.ROLL_FED_PRESS:
                     parent_to_runsheet = self.layouts_meta[0]
                     runsheet_to_finalsheet = self.layouts_meta[1]
                     layouts = {
@@ -711,17 +712,74 @@ class PaperMaterial(Material):
                 layout_type=layout_type)
 
         @property
+        def raw_to_running_cut(self):
+            cut_count = 0
+            if self.layouts_meta is not None:
+                raw_to_running_meta = self.layouts_meta[0]
+                cut_count = max(raw_to_running_meta.cut_count, 4)
+            return cut_count
+        
+        @property
+        def running_to_final_cut(self):
+            cut_count = 0
+            if self.layouts_meta is not None:
+                running_to_final_meta = self.layouts_meta[1]
+                cut_count = running_to_final_meta.cut_count
+            return cut_count
+        
+        @property
+        def raw_to_final_cut(self):
+            cut_count = self.raw_to_running_cut + self.running_to_final_cut
+            return cut_count
+
+        @property
+        def raw_to_running_measures(self):
+            return {CostingMeasure.QUANTITY: Quantity(count=self.raw_to_running_cut)}
+
+        @property
+        def running_to_final_measures(self):
+            return {CostingMeasure.QUANTITY: Quantity(count=self.running_to_final_cut)}
+
+        @property
+        def raw_to_final_measures(self):
+            return {CostingMeasure.QUANTITY: Quantity(count=self.raw_to_final_cut)}
+
+        @property
+        def machine_run_measures(self):
+            total_quantity = float(self.estimated_total_quantity)
+            parent_sheet = self.layouts.get('parent_sheet') 
+            measures = {
+                CostingMeasure.QUANTITY: Quantity(roll=total_quantity),
+                CostingMeasure.AREA: parent_sheet.area_measurement * total_quantity}
+
+            raw_to_running_layout_meta = self.layouts_meta[0]
+            running_to_final_layout_meta = self.layouts_meta[1]
+            running_per_raw = raw_to_running_layout_meta.count
+            final_per_running = running_to_final_layout_meta.count
+            final_sheets_count = (running_per_raw * final_per_running)
+            final_sheet = self.layouts.get('final_sheet') 
+            perimeter = {CostingMeasure.PERIMETER: 
+                final_sheet.perimeter_measurement * final_sheets_count}
+
+            measures.update(perimeter)
+
+            return measures
+
+        @property
         def estimated_stock_quantity(self):
-            return decimal.Decimal(self.output_per_item)
+            spoilage_divisor = (self.spoilage_rate / 100) + 1
+            total_outs = decimal.Decimal(self.output_per_item)
+            return total_outs / spoilage_divisor 
 
         @property
         def estimated_spoilage_quantity(self):
             spoilage_multiplier = (self.spoilage_rate / 100)
-            return self.estimated_stock_quantity * spoilage_multiplier
+            total_outs = decimal.Decimal(self.output_per_item)
+            return total_outs * spoilage_multiplier
 
         @property
         def estimated_total_quantity(self):
-            return self.estimated_stock_quantity
+            return self.estimated_stock_quantity + self.estimated_spoilage_quantity
 
         @cached_property
         def output_per_item(self):
@@ -736,11 +794,11 @@ class PaperMaterial(Material):
 
                 raw_length = raw_to_running_layout_meta.bin.length
                 running_length = raw_to_running_layout_meta.rect.length
-                actual_total_outs_per_item = (running_per_raw * final_per_running)
+                final_sheets_count = (running_per_raw * final_per_running)
 
                 if running_per_raw > 0 and (raw_length > running_length or \
-                        self.total_material_quantity > actual_total_outs_per_item):
-                    multiplier = self.total_material_quantity / max(actual_total_outs_per_item, 1)
+                        self.total_material_quantity > final_sheets_count):
+                    multiplier = self.total_material_quantity / max(final_sheets_count, 1)
                     total_running_length = running_per_raw * multiplier * running_length
                     output_per_item = total_running_length / raw_length
                 else:
@@ -1030,9 +1088,11 @@ class OperationEstimate(models.Model):
                     measures_mapping = material_estimate.costing_measurements_map
                 elif is_component_based:
                     measures_mapping = self.service.component.get_costing_measurements_map(order_quantity)
+
                 self.measures_mapping_cache[key] = measures_mapping
             
             measures = measures_mapping.get(estimate_variable_type)
+
             if measures is not None:
                 result = measures.get(self.service.costing_measure, None)
                 return result

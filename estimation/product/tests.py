@@ -205,7 +205,7 @@ def test_material_estimate__with_machine(db, carbonless_item, gto_machine):
         raw_material_perimeter is not None
     assert raw_material_quantity.pc == 223
     assert math.isclose(raw_material_area.sq_inch, 212296)
-    assert raw_material_perimeter.inch == 13826
+    assert raw_material_perimeter.inch == 27652
 
     total_material_quantity = estimate.total_material_measures.get(CostingMeasure.QUANTITY)
     total_material_area = estimate.total_material_measures.get(CostingMeasure.AREA)
@@ -215,7 +215,7 @@ def test_material_estimate__with_machine(db, carbonless_item, gto_machine):
         total_material_perimeter is not None
     assert total_material_quantity.pc == 7500
     assert math.isclose(total_material_area.sq_inch, 150000)
-    assert total_material_perimeter.inch == 67500
+    assert total_material_perimeter.inch == 135000
 
     set_material_quantity = estimate.set_material_measures.get(CostingMeasure.QUANTITY)
     set_material_area = estimate.set_material_measures.get(CostingMeasure.AREA)
@@ -225,7 +225,7 @@ def test_material_estimate__with_machine(db, carbonless_item, gto_machine):
         total_material_perimeter is not None
     assert set_material_quantity.pc == 75
     assert math.isclose(set_material_area.sq_inch, 1500)
-    assert set_material_perimeter.inch == 675
+    assert set_material_perimeter.inch == 1350
 
     machine_run_quantity = estimate.machine_run_measures.get(CostingMeasure.QUANTITY)
     machine_run_area = estimate.machine_run_measures.get(CostingMeasure.AREA)
@@ -235,7 +235,7 @@ def test_material_estimate__with_machine(db, carbonless_item, gto_machine):
         machine_run_perimeter is not None
     assert machine_run_quantity.pc == 892
     assert math.isclose(machine_run_area.sq_inch, 212296)
-    assert machine_run_perimeter.inch == 27652
+    assert machine_run_perimeter.inch == 55304
 
     assert estimate.raw_to_running_cut == 2
     assert estimate.running_to_final_cut == 9
@@ -263,7 +263,7 @@ def test_material_estimate__without_machine(db, carbonless_item):
         raw_material_perimeter is not None
     assert raw_material_quantity.pc == 208
     assert math.isclose(raw_material_area.sq_inch, 198016)
-    assert math.isclose(raw_material_perimeter.inch, 12896)
+    assert math.isclose(raw_material_perimeter.inch, 25792)
 
     total_material_quantity = estimate.total_material_measures.get(CostingMeasure.QUANTITY)
     total_material_area = estimate.total_material_measures.get(CostingMeasure.AREA)
@@ -273,7 +273,7 @@ def test_material_estimate__without_machine(db, carbonless_item):
         total_material_perimeter is not None
     assert total_material_quantity.pc == 7500
     assert math.isclose(total_material_area.sq_inch, 150000)
-    assert total_material_perimeter.inch == 67500
+    assert total_material_perimeter.inch == 135000
 
     set_material_quantity = estimate.set_material_measures.get(CostingMeasure.QUANTITY)
     set_material_area = estimate.set_material_measures.get(CostingMeasure.AREA)
@@ -283,7 +283,7 @@ def test_material_estimate__without_machine(db, carbonless_item):
         total_material_perimeter is not None
     assert set_material_quantity.pc == 75
     assert math.isclose(set_material_area.sq_inch, 1500)
-    assert set_material_perimeter.inch == 675
+    assert set_material_perimeter.inch == 1350
 
     machine_run_quantity = estimate.machine_run_measures.get(CostingMeasure.QUANTITY)
     machine_run_area = estimate.machine_run_measures.get(CostingMeasure.AREA)
@@ -293,7 +293,7 @@ def test_material_estimate__without_machine(db, carbonless_item):
         machine_run_perimeter is not None
     assert machine_run_quantity.pc == 9776
     assert math.isclose(machine_run_area.sq_inch, 195520)
-    assert machine_run_perimeter.inch == 87984
+    assert machine_run_perimeter.inch == 175968
 
     assert estimate.output_per_item == 47
     assert estimate.estimated_stock_quantity == 160

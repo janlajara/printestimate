@@ -5,6 +5,13 @@ _inflect = inflect.engine()
 class Inflect:
 
     @classmethod
+    def to_singular(cls, unit_of_measure, quantity=None):
+        uom = _inflect.singular_noun(unit_of_measure)
+        if quantity is not None and abs(quantity) == 1:
+            uom = unit_of_measure
+        return uom
+
+    @classmethod
     def to_plural(cls, unit_of_measure, quantity=None):
         uom = _inflect.plural(unit_of_measure)
         if quantity is not None and abs(quantity) == 1:

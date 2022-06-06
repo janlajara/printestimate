@@ -85,13 +85,13 @@ class ActivitySerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         speed_data = validated_data.pop('speed')
-        speed = Speed.objects.create(**speed_data)
+        speed = ActivitySpeed.objects.create(**speed_data)
         return Activity.objects.create(speed=speed, **validated_data)
 
     def update(self, instance, validated_data):
-        speed = validated_data.pop('speed')
-        if speed is not None:
-            Speed.objects.filter(pk=instance.speed.id).update(**speed)
+        speed_data = validated_data.pop('speed')
+        if speed_data is not None:
+            ActivitySpeed.objects.filter(pk=instance.speed.id).update(**speed_data)
         super().update(instance, validated_data)
         return Activity.objects.get(pk=instance.id)
 

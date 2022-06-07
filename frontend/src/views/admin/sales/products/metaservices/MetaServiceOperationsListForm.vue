@@ -5,7 +5,10 @@
             <Row v-for="(x, i) in state.operationList" :key="i"
                     :class="state.operationForm.editIndex == i? 
                         'bg-secondary-light bg-opacity-20' : ''">
-                <Cell>{{x.name}}</Cell>
+                <Cell>
+                    {{x.name}}
+                    <span v-if="x.isRequired">*</span>
+                </Cell>
                 <Cell>
                     <span>{{x.optionsType}} select:</span>
                     <ul class="pl-2">

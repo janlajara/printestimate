@@ -171,7 +171,7 @@ export default {
                 if (state.data.name == '') errors.push('name');
                 if (state.data.type == '') errors.push('type');
                 if (state.data.costingMeasure == '') errors.push('costing measure');
-                if (state.data.component != '' &&
+                if (state.data.component != null && state.data.component != '' &&
                     state.data.estimateVariableType == '') errors.push('derived from');
                 if (errors.length > 0)
                     state.error = `The following fields must not be empty: ${errors.join(', ')}.`;

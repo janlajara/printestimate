@@ -1,11 +1,11 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import Admin from '@/views/Admin.vue'
+import Wrapper from '@/views/Wrapper.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'Admin',
-    component: Admin,
+    name: 'Wrapper',
+    component: Wrapper,
     children: [
       {
         path: '/',

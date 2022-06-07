@@ -32,7 +32,7 @@ import Hamburger from '@/components/Hamburger.vue'
 import Notifications from '@/components/Notifications.vue'
 
 export default {
-  name: 'Admin',
+  name: 'Wrapper',
   components: {
     Nav, Header, Body, Footer,
     Logo, Hamburger, Notifications

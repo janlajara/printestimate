@@ -156,6 +156,9 @@ export default {
             if (id != null) {
                 const response = await EstimateApi.retrieveEstimateCosts(id);
                 if (response) {
+                    if (response.summary) {
+                        state.data.quantities = response.summary.order_quantities;
+                    }
                     if (response.estimates) {
                         state.data.costing.billOfMaterials = response.estimates.material_estimates.map(me => ({
                             name: me.name, rate: parseFloat(me.rate), uom: me.uom, 

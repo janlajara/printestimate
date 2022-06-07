@@ -13,12 +13,6 @@ const routes = [
         component: ()=>import('../views/pages/Home.vue')
       },
       {
-        path: 'inventory/',
-        name: 'inventory-dashboard',
-        component: ()=>import('../components/Placeholder.vue'),
-        meta: {label: 'Dashboard', group: 'Inventory'}
-      },
-      {
         path: 'inventory/items',
         name: 'inventory-items',
         component: ()=>import('../views/pages/inventory/items/ItemList.vue'),

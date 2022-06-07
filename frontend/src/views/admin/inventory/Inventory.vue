@@ -1,9 +1,6 @@
 <template>
     <Page title="Admin : Inventory">
         <Tabs>
-            <Tab title="Item">
-                <!--Item/-->
-            </Tab>
             <Tab title="Unit of Measure">
                 <UnitOfMeasure/>
             </Tab>

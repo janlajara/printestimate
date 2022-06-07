@@ -107,6 +107,22 @@ const routes = [
         component: ()=>import('../views/admin/sales/costaddons/CostAddonSettings.vue'),
         meta: {label: 'Cost Add-ons', group: 'Sales Admin'}
       },
+      {
+        path: 'admin/misc/globalvariables',
+        name: 'admin-misc-globalvariables',
+        component: ()=>import('@/components/Placeholder.vue'),
+        meta: {label: 'Global Variables', group: 'Miscellaneous'}
+      },
+      {
+        path: 'references/userguide',
+        name: 'references-userguide',
+        component: ()=>import('@/components/Placeholder.vue')
+      },
+      {
+        path: 'references/documentation',
+        name: 'references-documentation',
+        component: ()=>import('@/components/Placeholder.vue')
+      },
     ]
   },
   {

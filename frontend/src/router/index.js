@@ -90,6 +90,12 @@ const routes = [
         component: ()=>import('../views/admin/production/machines/rollfedpress/RollFedPressMachineDetail.vue')
       }, 
       {
+        path: 'admin/production/configvariables',
+        name: 'admin-production-configvariables',
+        component: ()=>import('@/components/Placeholder.vue'),
+        meta: {label: 'Config Variables', group: 'Production Admin'}
+      },
+      {
         path: 'admin/sales/products',
         name: 'admin-sales-products',
         component: ()=>import('../views/admin/sales/products/MetaProductList.vue'),
@@ -106,12 +112,6 @@ const routes = [
         name: 'admin-sales-costaddons',
         component: ()=>import('../views/admin/sales/costaddons/CostAddonSettings.vue'),
         meta: {label: 'Cost Add-ons', group: 'Sales Admin'}
-      },
-      {
-        path: 'admin/misc/globalvariables',
-        name: 'admin-misc-globalvariables',
-        component: ()=>import('@/components/Placeholder.vue'),
-        meta: {label: 'Global Variables', group: 'Miscellaneous'}
       },
       {
         path: 'references/userguide',

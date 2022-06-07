@@ -37,12 +37,6 @@
                 @selected="select" 
                 :selected="selected" class="nav-link">
                 Inventory</NavLink>
-            <NavMenu
-                icon="miscellaneous_services"
-                @selected="select" 
-                :selected="selected"
-                meta-group="Miscellaneous" class="nav-link">
-                Miscellaneous</NavMenu>
         </NavGroup>
         <NavGroup name="References">
             <NavLink :to="{name: 'references-userguide'}"

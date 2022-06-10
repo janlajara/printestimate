@@ -90,12 +90,6 @@ const routes = [
         component: ()=>import('../views/admin/production/machines/rollfedpress/RollFedPressMachineDetail.vue')
       }, 
       {
-        path: 'admin/production/configvariables',
-        name: 'admin-production-configvariables',
-        component: ()=>import('@/components/Placeholder.vue'),
-        meta: {label: 'Config Variables', group: 'Production Admin'}
-      },
-      {
         path: 'admin/sales/products',
         name: 'admin-sales-products',
         component: ()=>import('../views/admin/sales/products/MetaProductList.vue'),

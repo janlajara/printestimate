@@ -35,19 +35,30 @@
                     name="Alternate Stock Unit" 
                     :value="detail.data.altUom ? detail.data.altUom.name : null"/>
                 <DescriptionItem :loader="detail.isProcessing"
+                    :name="`Price per ${detail.data.baseUom ? 
+                        detail.data.baseUom.name : 'base unit'}`" 
+                    :value="detail.data.overridePrice ? 
+                        formatMoney(detail.data.overridePrice) : null"/>
+            </DescriptionList>
+        </Section>
+        <Section heading="Properties">
+            <DescriptionList class="grid-cols-2 md:grid-cols-4">
+                <DescriptionItem :loader="detail.isProcessing"
                     v-for="(entry, key) in Object.entries(detail.data.properties)
                         .filter(entry => entry[0] != 'resourcetype')" 
                     :key="key" :name="detail.propertyLabels[entry[0]]" :value="entry[1]"/>
             </DescriptionList>
         </Section>
-        <StockManagement
-            :data="{
-                itemId: detail.id,
-                units: {
-                    base: detail.data.baseUom,
-                    alternate: detail.data.altUom
-                }
-            }"/>
+        <!--
+            <StockManagement
+                :data="{
+                    itemId: detail.id,
+                    units: {
+                        base: detail.data.baseUom,
+                        alternate: detail.data.altUom
+                    }
+                }"/>
+        -->
     </Page>
 </template>
 
@@ -59,18 +70,20 @@ import DescriptionItem from '@/components/DescriptionItem.vue';
 import Button from '@/components/Button.vue';
 import DeleteRecordDialog from '@/components/DeleteRecordDialog.vue';
 import ItemInputModal from '@/views/pages/inventory/items/ItemInputModal.vue';
-import StockManagement from '@/views/pages/inventory/items/StockManagement.vue';
+//import StockManagement from '@/views/pages/inventory/items/StockManagement.vue';
 
 import {useRoute} from 'vue-router';
-import {reactive, onBeforeMount} from 'vue';
+import {reactive, onBeforeMount, inject} from 'vue';
 import {ItemApi, ItemPropertiesApi} from '@/utils/apis.js';
+import {formatMoney as formatCurrency} from '@/utils/format.js'
 
 export default {
     components: {
         Page, Section, DescriptionList, DescriptionItem, Button,
-        DeleteRecordDialog, ItemInputModal, StockManagement
+        DeleteRecordDialog, ItemInputModal, //StockManagement
     },
     setup() {
+        const currency = inject('currency').abbreviation;
         const route = useRoute()
         const detail = reactive({
             id: route.params.id,
@@ -81,7 +94,8 @@ export default {
                 id: null,
                 name: null, fullname: '',
                 type: null, baseUom: {}, 
-                altUom: {}, properties: {}
+                altUom: {}, overridePrice: 0, 
+                properties: {}
             },
             deleteDialog: {
                 isOpen: false,
@@ -109,6 +123,7 @@ export default {
                     type: response.type,
                     baseUom: response.base_uom,
                     altUom: response.alternate_uom,
+                    overridePrice: response.override_price,
                     properties: {},
                 };
                 if (response.properties) {
@@ -138,9 +153,14 @@ export default {
                 detail.id = parseInt(id);
                 loadItem(detail.id);
             }
-        })
+        });
+        const formatMoney = (amount)=> {
+            if (amount != null)
+                return formatCurrency(amount, currency)
+            else return ''
+        }
         return {
-            detail, loadItem
+            detail, loadItem, formatMoney
         }
     }
 }

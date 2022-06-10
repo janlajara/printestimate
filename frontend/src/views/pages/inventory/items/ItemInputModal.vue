@@ -29,8 +29,18 @@
                        value: au.id, label: au.name,
                        isSelected: modal.form.altUnit == au.id 
                     }))"/>
+                <InputText :name="`Price per ${modal.form.baseUnit? 
+                        modal.baseStockUnits
+                            .find(x => x.id == modal.form.baseUnit)
+                            .name: 
+                        'base unit'}`" 
+                    type="money" required
+                    :prefix="currency.symbol"
+                    @input="(value)=> modal.form.overridePrice = value"
+                    :value="modal.form.overridePrice"/>
             </div>    
         </Section>
+        <hr/>
         <Section heading="Properties" heading-position="side"
             v-if="modal.itemProperties">
             <div class="md:grid md:grid-cols-3 md:gap-4">
@@ -55,7 +65,7 @@ import Section from '@/components/Section.vue';
 import InputSelect from '@/components/InputSelect.vue';
 import InputText from '@/components/InputText.vue';
 
-import {reactive, watch} from 'vue';
+import {reactive, watch, inject} from 'vue';
 import {useRouter} from 'vue-router';
 import {ItemApi, ItemPropertiesApi, BaseStockUnitApi} from '@/utils/apis.js';
 
@@ -78,13 +88,17 @@ export default {
     },
     emits: ['toggle'],
     setup(props, {emit}){
+        const currency = inject('currency')
         const router = useRouter();
         const modal = reactive({
             isProcessing: false,
             form: {
+                name:'', type: null,
+                baseUnit: null, altUnit: null,
                 properties: {
                     resourcetype: null
                 },
+                overridePrice: 0
             },
             itemTypes: [{}],
             itemProperties: null,
@@ -118,7 +132,7 @@ export default {
                 const data = modal.form;
                 const request = {
                     name: data.name, type: data.type, 
-                    override_price: 0, is_override_price: false,
+                    override_price: data.overridePrice, is_override_price: true,
                     base_uom: data.baseUnit, alternate_uom: data.altUnit,
                     properties: Object.assign({}, data.properties)
                 }
@@ -152,12 +166,14 @@ export default {
                     id: data.id, name: data.name,
                     type: data.type, baseUnit: data.baseUom.id,
                     altUnit: data.altUom ? data.altUom.id : null, 
+                    overridePrice: data.overridePrice,
                     properties: Object.assign({},data.properties)
                 }; 
             } else {
                 modal.form = {
                     name:'', type: null,
                     baseUnit: null, altUnit: null,
+                    overridePrice: 0,
                     properties: {},
                 }
                 modal.itemProperties = null; 
@@ -254,7 +270,8 @@ export default {
         });
 
         return {
-            modal
+            modal, 
+            currency
         }
     }
 }

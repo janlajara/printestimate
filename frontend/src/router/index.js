@@ -24,7 +24,7 @@ const routes = [
         props: true,
         component: ()=>import('../views/pages/inventory/items/ItemDetail.vue'),
       },
-      {
+      /*{
         path: 'inventory/itemrequests',
         name: 'inventory-itemrequests',
         component: ()=>import('../views/pages/inventory/itemrequests/ItemRequestGroupList.vue'),
@@ -35,7 +35,7 @@ const routes = [
         name: 'inventory-itemrequest-detail',
         props: true,
         component: ()=>import('../views/pages/inventory/itemrequests/ItemRequestGroupDetail.vue')
-      }, 
+      },*/
       {
         path: 'sales/products/templates',
         name: 'sales-products-templates',

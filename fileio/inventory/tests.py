@@ -46,5 +46,5 @@ def test_itemsheet__write_excel(db, item_factory):
     assert len(paper_sheet.rows) == 2
     assert paper_sheet.dataframe is not None
 
-    with pd.ExcelWriter(path_to_file) as writer:
-        paper_sheet.write_excel(writer)
+    with pd.ExcelWriter(path_to_file, engine='xlsxwriter') as writer:
+        paper_sheet.write(writer)

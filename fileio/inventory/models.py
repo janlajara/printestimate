@@ -1,6 +1,7 @@
 import pandas as pd
 from cached_property import cached_property
 from inventory.models import Item
+from fileio import formats
 
 
 class ItemSheet:
@@ -41,9 +42,26 @@ class ItemSheet:
         else:
             assert row_count > 0, "Rows must not be empty."
 
-    def write_excel(self, writer):
+    def write(self, writer):
         dataframe = self.dataframe
         dataframe.to_excel(writer, sheet_name=self.name)
+        self.format(writer)
+
+    def format(self, writer):
+        workbook = writer.book
+        money_format = workbook.add_format({'num_format': formats.CURRENCY_FORMAT})
+
+        # Format column width and types
+        worksheet = writer.sheets[self.name]
+        if worksheet is not None:
+            worksheet.set_column(1, 1, 30)
+            worksheet.set_column(2, 4, 15)
+            worksheet.set_column(4, 4, None, money_format)
+
+        # Turn into a formatted table
+        (max_row, max_col) = self.dataframe.shape
+        column_settings = [{'header': column} for column in self.headers]
+        worksheet.add_table(0, 0, max_row, max_col, {'columns': column_settings})
     
     def get_row(self, obj):
         id = obj.id

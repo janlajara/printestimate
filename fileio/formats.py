@@ -1,0 +1,1 @@
+CURRENCY_FORMAT = '₱#,##0.00'

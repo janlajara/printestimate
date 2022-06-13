@@ -20,5 +20,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('core/', include('core.urls')),
     path('inventory/', include('inventory.urls')),
-    path('estimation/', include('estimation.urls'))
+    path('estimation/', include('estimation.urls')),
+    path('fileio/', include('fileio.urls'))
 ]

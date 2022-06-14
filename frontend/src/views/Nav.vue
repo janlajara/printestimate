@@ -38,7 +38,8 @@
                 :selected="selected" class="nav-link">
                 Inventory</NavLink>
         </NavGroup>
-        <NavGroup name="References">
+        <!-- TO BE IMPLEMENTED -->
+        <!--NavGroup name="References">
             <NavLink :to="{name: 'references-userguide'}"
                 icon="local_library"
                 @selected="select" 
@@ -49,7 +50,7 @@
                 @selected="select" 
                 :selected="selected" class="nav-link">
                 Documentation</NavLink>
-        </NavGroup>
+        </NavGroup-->
     </nav>
 </template>
 

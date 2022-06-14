@@ -129,7 +129,7 @@ class EstimateAddonItem(models.Model):
     name = models.CharField(max_length=40)
     sequence = models.IntegerField()
     type = models.CharField(max_length=10, choices=ConfigCostAddon.TYPES)
-    value = models.DecimalField(decimal_places=2, max_digits=8)
+    value = models.DecimalField(decimal_places=2, max_digits=8, default=0)
     estimate_addon_set = models.ForeignKey(EstimateAddonSet, on_delete=models.CASCADE,
         related_name='estimate_addon_items')
     config_cost_addon = models.ForeignKey(ConfigCostAddon, blank=True, null=True,

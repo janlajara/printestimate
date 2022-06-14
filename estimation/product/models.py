@@ -519,7 +519,8 @@ class Material(PolymorphicModel):
         if not isinstance(order_quantities, list):
             raise Exception("Provided argument to method 'estimate' must be a list of integers.")
 
-        material_estimate = Material.Material(self.label, self.price, 
+        material_estimate = Material.Material(
+            self.item.name, self.price, 
             self.item.base_uom, spoilage_rate)
 
         estimates = []
@@ -850,7 +851,8 @@ class PaperMaterial(Material):
     def estimate(self, order_quantities, spoilage_rate=0, rotate=True):
         machine_type = (self.component.machine.type 
             if self.component.machine is not None else None)
-        paper_estimate = Material.Material(self.label, self.price, 
+        raw_material_name = self.item.full_name
+        paper_estimate = Material.Material(raw_material_name, self.price, 
             self.item.base_uom, spoilage_rate, machine_type=machine_type)
 
         if self.item is not None:

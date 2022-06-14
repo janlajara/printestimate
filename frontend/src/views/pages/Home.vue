@@ -7,14 +7,14 @@
                     <span class="text-primary">instantly</span>
                 </h1>
                 <p class="mb-6 text-justify">
-                    Printestimate is an application especially designed for printers
+                    Printestimate is an app especially designed for printers
                     that follow the <a href="http://budgeted-hourly-cost-rates.com/" 
                         class="text-secondary-dark">budgeted hourly rates (BHRs)</a> 
                     type of costing. 
                 </p>
             </div>
             <div>
-                <div class="mt-14">
+                <div class="mt-12">
                     <dl class="space-y-10 md:space-y-0 md:grid md:gap-x-8 md:gap-y-10">
                         <div v-for="feature in features" :key="feature.title" class="relative">
                             <dt>
@@ -55,7 +55,7 @@ export default {
                 description: 'Automatically calculate for the number of raw materials to be consumed.'},
             {title: 'Multiple quantity estimates',
                 icon: '123',
-                description: 'View estimates for different quantities all on the same page.'},
+                description: 'View estimates for different quantities of the same product all on a single page.'},
         ]
         return {
             features

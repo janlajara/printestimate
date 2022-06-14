@@ -16,14 +16,14 @@ from estimation.costaddons.serializers import AddonCostSetSerializer, \
     EstimateAddonItemSerializer, EstimateAddonSetSerializer
 
 
-class MaterialSerializer(serializers.ModelSerializer):
+class MaterialSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Material
         fields = ['material_id', 'label']
 
 
 class ComponentSerializer(serializers.ModelSerializer):
-    materials = MaterialSerializer(many=True)
+    materials = MaterialSimpleSerializer(many=True)
 
     class Meta:
         model = Component

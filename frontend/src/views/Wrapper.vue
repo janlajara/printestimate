@@ -8,7 +8,7 @@
     <div class="flex-grow">
       <Header class="flex h-16 p-4 justify-end bg-primary">  
         <Logo class="sm:hidden flex-grow"/>
-        <Notifications/>
+        <!--Notifications/-->
         <Hamburger :activated="navExpanded" @click="navExpanded = !navExpanded" class="sm:hidden"/>
       </Header>
       <Body style="min-height: 80vh">
@@ -29,13 +29,13 @@ import Footer from '@/views/Footer.vue'
 
 import Logo from '@/components/Logo.vue'
 import Hamburger from '@/components/Hamburger.vue'
-import Notifications from '@/components/Notifications.vue'
+//import Notifications from '@/components/Notifications.vue'
 
 export default {
   name: 'Wrapper',
   components: {
     Nav, Header, Body, Footer,
-    Logo, Hamburger, Notifications
+    Logo, Hamburger, //Notifications
   },
   setup(){
     const navExpanded = ref(false)

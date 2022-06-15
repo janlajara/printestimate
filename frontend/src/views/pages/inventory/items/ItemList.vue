@@ -19,14 +19,14 @@
                     }"/>
             </div>
             <Table :loader="item.isProcessing" layout="fixed"
-                :headers="['Item', 'Type', 'Available Qty', 'On-hand Qty', 'Price per Unit']"
-                :cols-width="['w-1/3', 'w-1/5', 'w-1/5', 'w-1/5', 'w-1/5']">
+                :headers="['Item', 'Type', 'Price per Unit']"
+                :cols-width="['w-2/3', 'w-1/6', 'w-1/6']">
                 <Row v-for="(i, key) in item.list" :key="key" clickable
                     @click="()=>goToDetail(i.id)">
                     <Cell label="Item">{{i.name}}</Cell>
                     <Cell label="Type" class="capitalize">{{i.type}}</Cell>
-                    <Cell label="Available Qty">{{i.availableFormatted}}</Cell>
-                    <Cell label="Onhand Qty">{{i.onhandFormatted}}</Cell>
+                    <!--Cell label="Available Qty">{{i.availableFormatted}}</Cell>
+                    <Cell label="Onhand Qty">{{i.onhandFormatted}}</Cell-->
                     <Cell label="Price per Unit">{{moneyFormat(i.price)}}</Cell>
                 </Row>
             </Table>

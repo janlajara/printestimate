@@ -7,4 +7,5 @@ release:
   command:
     - python manage.py migrate
 run:
+  web_server: gunicorn printestimate.wsgi
   web_client: nginx -g "daemon off;"

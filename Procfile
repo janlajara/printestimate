@@ -1,1 +1,0 @@
-web_server: gunicorn printestimate.wsgi

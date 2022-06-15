@@ -3,6 +3,7 @@ astroid==2.4.2
 attrs==19.3.0
 cached-property==1.5.2
 coverage==5.2.1
+dj-database-url==0.5.0
 Django==3.1
 django-appconf==1.0.4
 django-cors-headers==3.5.0

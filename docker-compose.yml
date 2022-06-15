@@ -8,26 +8,30 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-  migrations:
-    build: .
-    command: python manage.py migrate
-    depends_on:
-      - db
   web:
     build: .
     ports:
       - "8000:8000"
-    command: python manage.py runserver 0.0.0.0:8000
+    command: bash -c "
+      python manage.py migrate && 
+      python manage.py runserver 0.0.0.0:8000"
     volumes:
-      - .:/code  
+      - backend_files:/backend
     environment:
       - POSTGRES_NAME=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     depends_on:
-      - migrations
-
-
+      - db
+  server:
+    image: nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html
+    depends_on:
+      - web
 
 volumes:
   postgres_data:
+  backend_files:

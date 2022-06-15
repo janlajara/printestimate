@@ -14,5 +14,3 @@ RUN npm run build
 # NGINX
 FROM nginx
 COPY --from=frontend /frontend/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]

@@ -3,6 +3,7 @@ build:
     web_server: Dockerfile
     web_client: Dockerfile.vue
 release:
+  image: web_server
   command:
     - python manage.py migrate
 run:

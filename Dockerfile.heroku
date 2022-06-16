@@ -16,8 +16,6 @@ RUN pip install -r requirements.txt
 # Copy project
 COPY . .
 
-RUN python manage.py migrate
-RUN nohup gunicorn printestimate.wsgi
 
 
 # VUE

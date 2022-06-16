@@ -1,3 +1,7 @@
 build:
   docker:
     web: Dockerfile.heroku
+release:
+  image: web
+  command:
+    - python /backend/manage.py migrate && nohup gunicorn printestimate.wsgi

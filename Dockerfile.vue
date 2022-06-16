@@ -15,5 +15,6 @@ RUN npm run build
 FROM nginx
 COPY --from=frontend /frontend/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf.template
-RUN echo '$PORT'
+RUN echo 'Replacing the port...'
+RUN echo "$PORT"
 CMD /bin/bash -c "envsubst '\$PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf"

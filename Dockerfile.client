@@ -1,5 +1,7 @@
 # VUE
 FROM node:14-slim as frontend
+ARG VUE_APP_DJANGO_API_BASE=http://localhost:8000
+ENV VUE_APP_DJANGO_API_BASE=${VUE_APP_DJANGO_API_BASE}
 WORKDIR /frontend
 
 # Install dependencies
@@ -8,10 +10,9 @@ RUN npm install
 
 # Copy project
 COPY ./frontend .
-RUN npm run build_heroku
+RUN npm run build
 
 
 # NGINX
 FROM nginx
 COPY --from=frontend /frontend/dist /usr/share/nginx/html
-CMD nginx -g 'daemon off;'

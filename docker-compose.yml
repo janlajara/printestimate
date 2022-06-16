@@ -11,10 +11,9 @@ services:
   web:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.web
     ports:
       - "8000:8000"
-      - "80:80"
     command: bash -c "
       python manage.py migrate && 
       python manage.py runserver 0.0.0.0:8000"
@@ -26,6 +25,15 @@ services:
       - POSTGRES_PASSWORD=postgres
     depends_on:
       - db
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+      args:
+        - VUE_APP_DJANGO_API_BASE=http://localhost:8000
+    ports:
+      - "80:80"
+    command: nginx -g 'daemon off;'
 
 volumes:
   postgres_data:

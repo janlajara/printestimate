@@ -16,7 +16,8 @@ const toastResponse = (response, success, error)=> {
 };
 
 const _axios = require('axios')
-const API_HOSTNAME = 'http://localhost:8000'
+const API_HOSTNAME = process.env.VUE_APP_DJANGO_API_BASE;
+
 const AXIOS =  {
     execute: async (method, uri, success, error, data, params)=> {
         const methods = ["post", "put", "get", "delete", "options"];

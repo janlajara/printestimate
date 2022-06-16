@@ -5,7 +5,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "build_heroku": "vue-cli-service --mode heroku",
+    "build_heroku": "vue-cli-service build --mode heroku",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {

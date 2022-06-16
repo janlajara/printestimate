@@ -4,4 +4,4 @@ build:
 release:
   image: web
   command:
-    - python /backend/manage.py migrate && nohup gunicorn printestimate.wsgi
+    - python manage.py migrate

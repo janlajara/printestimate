@@ -37,5 +37,5 @@ COPY . .
 
 
 # Setup Nginx
-sudo apt-install nginx
-sudo ufw allow 'Nginx HTTP'
+RUN sudo apt-install nginx
+RUN sudo ufw allow 'Nginx HTTP'

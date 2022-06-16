@@ -33,5 +33,4 @@ RUN pip install -r requirements.txt
 
 # Copy project
 COPY . .
-CMD python manage.py migrate
-CMD gunicorn printestimate.wsgi
+CMD python manage.py migrate && gunicorn printestimate.wsgi

@@ -1,11 +1,9 @@
 build:
   docker:
-    web: Dockerfile.vue
-    worker: Dockerfile
+    web: Dockerfile
 release:
-  image: worker
+  image: web
   command:
     - python manage.py migrate
 run:
-  worker: gunicorn printestimate.wsgi
-  web: nginx -g "daemon off;"
+  web: gunicorn printestimate.wsgi

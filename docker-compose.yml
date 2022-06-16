@@ -8,12 +8,13 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-  backend:
+  web:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+      - "80:80"
     command: bash -c "
       python manage.py migrate && 
       python manage.py runserver 0.0.0.0:8000"
@@ -25,15 +26,6 @@ services:
       - POSTGRES_PASSWORD=postgres
     depends_on:
       - db
-  client:
-    build:
-      context: .
-      dockerfile: Dockerfile.vue
-    ports:
-      - 80:80
-    command: nginx -g "daemon off;"
-    environment:
-      - PORT=80
 
 volumes:
   postgres_data:

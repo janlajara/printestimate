@@ -17,7 +17,6 @@ COPY --from=frontend /frontend/dist /usr/share/nginx/html
 CMD nginx -g 'daemon off;'
 
 
-
 # DJANGO 
 FROM python:3.8-slim-buster as backend
 

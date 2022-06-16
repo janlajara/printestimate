@@ -4,4 +4,6 @@ build:
 release:
   image: web
   command:
-    - python manage.py migrate && gunicorn printestimate.wsgi
+    - python manage.py migrate
+run:
+  web: gunicorn printestimate.wsgi

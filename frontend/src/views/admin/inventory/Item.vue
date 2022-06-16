@@ -1,16 +1,17 @@
 <template>
     <div class="grid gap-4 md:grid-cols-2 md:gap-8">
-        <Section heading="Export" class="bg-gray-100 p-6 rounded-md"
+        <Section heading="Mass Export" class="bg-gray-100 p-6 rounded-md"
             description="Download an excel file containing all items in the database.">
             <Button color="secondary" icon="file_download"
                 :action="downloadWorkbook">Download</Button>
         </Section>
         <!-- TO BE IMPLEMENTED -->
-        <!--Section heading="Import" class="bg-gray-100 p-6 rounded-md"
+        <Section heading="Mass Import" class="bg-gray-100 p-6 rounded-md"
             description="Upload an excel file to create/update multiple items at once.">
-            <Button color="secondary" icon="file_upload"
+            <Button color="secondary" icon="file_upload" disabled
                 :action="()=>{}">Upload</Button>
-        </Section-->
+            <span class="text-xs text-gray-400 italic">*To be implemented</span>
+        </Section>
     </div>
 </template>
 <script>

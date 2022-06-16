@@ -50,12 +50,15 @@ export default {
             {title: 'Estimates within seconds',
                 icon: 'schedule',
                 description: 'Quickly create your estimates after a one-time setup.'},
-            {title: 'Material costing included',
-                icon: 'request_quote',
-                description: 'Automatically calculate for the number of raw materials to be consumed.'},
+            {title: 'Complete costing solution',
+                icon: 'fact_check',
+                description: 'Highly customizeable solution for defining rates for materials, consumables, services and cost add-ons.'},
+            {title: 'Paper stock cutting guide',
+                icon: 'insert_page_break',
+                description: "Automatically plots how to cut your stock with regards to the size requirements of your printer."},
             {title: 'Multiple quantity estimates',
                 icon: '123',
-                description: 'View estimates for different quantities of the same product all on a single page.'},
+                description: 'View product estimates for different quantities all on the same page.'},
         ]
         return {
             features

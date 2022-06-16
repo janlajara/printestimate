@@ -1,3 +1,9 @@
 build:
   docker:
     web: Dockerfile.heroku
+release:
+  image: web
+  command:
+    - python manage.py migrate
+run:
+  web: gunicorn printestimate.wsgi

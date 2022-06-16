@@ -6,4 +6,4 @@ release:
   command:
     - python manage.py migrate
 run:
-  web: gunicorn printestimate.wsgi
+  web: gunicorn printestimate.wsgi:application --bind 0.0.0.0:$PORT

@@ -1,5 +1,8 @@
 build:
   docker:
     web: Dockerfile.heroku
+release:
+  command:
+    - python manage.py migrate && gunicorn printestimate.wsgi
 run:
   web: nginx -g 'daemon off;'

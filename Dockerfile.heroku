@@ -1,3 +1,22 @@
+# VUE
+FROM node:14-slim as frontend
+WORKDIR /frontend
+
+# Install dependencies
+COPY ./frontend/package*.json ./
+RUN npm install
+
+# Copy project
+COPY ./frontend .
+RUN npm run build
+
+
+# NGINX
+#FROM nginx
+#COPY --from=frontend /frontend/dist /usr/share/nginx/html
+#CMD nginx -g 'daemon off;'
+
+
 # DJANGO 
 FROM python:3.8-slim-buster as backend
 
@@ -15,26 +34,8 @@ RUN pip install -r requirements.txt
 
 # Copy project
 COPY . .
-# RUN python manage.py migrate && gunicorn printestimate.wsgi:application --daemon
 
 
-
-# VUE
-FROM node:14-slim as frontend
-WORKDIR /frontend
-
-# Install dependencies
-COPY ./frontend/package*.json ./
-RUN npm install
-
-# Copy project
-COPY ./frontend .
-RUN npm run build
-
-
-# NGINX
-FROM nginx
-COPY --from=frontend /frontend/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-CMD sed -i -e 's/$PORT/'"$PORT"'/g' /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'
+# Setup Nginx
+sudo apt-install nginx
+sudo ufw allow 'Nginx HTTP'

@@ -8,24 +8,26 @@
             :is-open="state.modal.isOpen"
             @toggle="value => state.modal.toggle(value)"
             @saved="listConfigCostAddons"/>
-        <div class="grid grid-cols-3">
+        <div class="grid md:grid-cols-3">
             <Table :headers="['Name', 'Options', '']" :loader="state.isProcessing"
                 class="col-span-2">
                 <Row v-for="(s, key) in state.list" :key="key">
                     <Cell label="Name">{{s.name}}</Cell>
                     <Cell label="Options">
-                        <ul class="list-disc">
-                            <li v-for="(option, key) in s.options" :key="key">
-                                <div class="grid grid-cols-2">
-                                    <span>{{option.label}}</span>
-                                    <span>{{option.formattedValue}}</span>
-                                </div>
-                            </li>
-                        </ul>
-                        <div v-if="s.allowCustomValue || s.isRequired"
-                            class="-ml-3 mt-4 text-xs italic text-secondary-dark">
-                            *<span v-if="s.isRequired">Required. </span>
-                            <span v-if="s.allowCustomValue">Custom value allowed.</span>
+                        <div class="pl-6">
+                            <ul class="list-disc">
+                                <li v-for="(option, key) in s.options" :key="key">
+                                    <div class="grid grid-cols-2">
+                                        <span>{{option.label}}</span>
+                                        <span>{{option.formattedValue}}</span>
+                                    </div>
+                                </li>
+                            </ul>
+                            <div v-if="s.allowCustomValue || s.isRequired"
+                                class="-ml-3 mt-4 text-xs italic text-secondary-dark">
+                                *<span v-if="s.isRequired">Required. </span>
+                                <span v-if="s.allowCustomValue">Custom value allowed.</span>
+                            </div>
                         </div>
                     </Cell>
                     <Cell>

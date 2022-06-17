@@ -8,7 +8,7 @@
             :is-open="state.modal.isOpen"
             @toggle="value => state.modal.toggle(value)"
             @saved="listTemplateCostAddons"/>
-        <div class="grid grid-cols-3">
+        <div class="grid md:grid-cols-3">
             <Table :headers="['Name', 'Add-ons', '', '']" :loader="state.isProcessing"
                 class="col-span-2">
                 <Row v-for="(s, key) in state.list" :key="key">

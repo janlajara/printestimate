@@ -134,7 +134,7 @@ class Item(models.Model):
         related_name='item')
     override_price = MoneyField(null=True, max_digits=14, decimal_places=2, 
         default_currency='PHP')
-    is_override_price = models.BooleanField(default=False)
+    is_override_price = models.BooleanField(default=True)
     is_raw_material = models.BooleanField(default=False)
     base_uom = models.ForeignKey(BaseStockUnit, on_delete=models.RESTRICT)
     alternate_uom = models.ForeignKey(AlternateStockUnit,

@@ -1,35 +1,37 @@
 <template>
     <teleport to="body">
         <transition name="slide-fade">
-            <div class="fixed overflow-y-auto inset-0 bg-gray-900 bg-opacity-30" 
-                v-if="$props.isOpen">
-                <div class="flex overflow-y-auto items-center justify-center min-h-screen">
-                    <div class="modal">
-                        <header class="modal-header">
-                            <h1 class="flex-grow">{{$props.heading}}</h1>
-                            <button>
-                                <Icon id="close" @click="close"/>
-                            </button>
-                        </header>
-                        <div class="modal-body pb-6" 
-                            :style="styleHeight" >
-                            <slot/>
+            <div class="relative z-40">
+                <div class="fixed overflow-y-auto inset-0 bg-gray-900 bg-opacity-30" 
+                    v-if="$props.isOpen">
+                    <div class="flex overflow-y-auto items-center justify-center min-h-screen">
+                        <div class="modal">
+                            <header class="modal-header">
+                                <h1 class="flex-grow">{{$props.heading}}</h1>
+                                <button>
+                                    <Icon id="close" @click="close"/>
+                                </button>
+                            </header>
+                            <div class="modal-body pb-6" 
+                                :style="styleHeight" >
+                                <slot/>
+                            </div>
+                            <footer class="modal-footer border-gray-300 border-t justify-end flex-wrap">
+                                <Button v-for="(button, index) in $props.buttons" 
+                                    :key="index" :type="button.type" 
+                                    :color="button.color" :disabled="button.disabled"
+                                    :icon="button.icon" :action="button.action" 
+                                    class="modal-button">
+                                    {{button.text}}
+                                </Button>
+                                <Button color="secondary" 
+                                    icon="close" 
+                                    class="modal-button"
+                                    :action="close">
+                                    Close
+                                </Button>
+                            </footer>
                         </div>
-                        <footer class="modal-footer border-gray-300 border-t justify-end flex-wrap">
-                            <Button v-for="(button, index) in $props.buttons" 
-                                :key="index" :type="button.type" 
-                                :color="button.color" :disabled="button.disabled"
-                                :icon="button.icon" :action="button.action" 
-                                class="modal-button">
-                                {{button.text}}
-                            </Button>
-                            <Button color="secondary" 
-                                icon="close" 
-                                class="modal-button"
-                                :action="close">
-                                Close
-                            </Button>
-                        </footer>
                     </div>
                 </div>
             </div>

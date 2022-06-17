@@ -14,7 +14,7 @@
             <slot v-if="$props.noBody"/>
             <tbody v-else class="bg-white divide-y divide-gray-200">
                 <Row v-for="(row, key1) in $props.rows" :key="key1">
-                    <Cell  v-for="(col, key2) in row.splice(0, columnCount)" 
+                    <Cell v-for="(col, key2) in row.splice(0, columnCount)" 
                         :key="key2" :label="$props.headers[key2]">
                         {{col}}
                     </Cell>

@@ -1,6 +1,6 @@
 <template>
   <div class="flex min-h-full">
-    <Nav class="nav flex-none" :class="!navExpanded? [ 'hidden sm:block']: []">
+    <Nav class="nav flex-none z-50" :class="!navExpanded? [ 'hidden sm:block']: []">
       <template v-slot:logo>
         <Logo class="hidden p-4 sm:flex"/>
       </template>

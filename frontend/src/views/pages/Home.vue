@@ -19,7 +19,7 @@
                         <div v-for="feature in features" :key="feature.title" class="relative">
                             <dt>
                                 <div class="absolute flex items-center justify-center h-12 w-12 
-                                    rounded-md bg-primary text-white">
+                                    rounded-md bg-primary text-white z-0">
                                     <span class="h-6 w-6 material-icons" aria-hidden="true">
                                         {{feature.icon}}
                                     </span>

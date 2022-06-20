@@ -22,14 +22,19 @@ def create_machines(apps, schema_editor):
 
     hplatex_machine = _create(Machine.ROLL_FED_PRESS, 'HP Latex', 'HP LATEX digital roll printer',
         min_sheet_width=25, max_sheet_width=48, uom='inch', min_sheet_breakpoint_length=48,
-        max_sheet_breakpoint_length=150)
+        max_sheet_breakpoint_length=150, process_type=PressMachine.DIGITAL)
+
+    versant_machine = _create(Machine.SHEET_FED_PRESS, 'FujiXerox Versant', 'FujiXerox Versant digital printer', 
+        min_sheet_length=11, max_sheet_length=16.5, min_sheet_width=8, max_sheet_width=11.25, uom='inch',
+        process_type=PressMachine.DIGITAL)
 
 
 def create_processes(apps, schema_editor):
 
-    gto_machine = Machine.objects.filter(name='Heidelberg GTO').first()
-    korse_machine = Machine.objects.filter(name='Heidelberg KORSE').first()
-    hplatex_machine = Machine.objects.filter(name='HP Latex').first()
+    gto_machine = Machine.objects.get(name='Heidelberg GTO')
+    korse_machine = Machine.objects.get(name='Heidelberg KORSE')
+    hplatex_machine = Machine.objects.get(name='HP Latex')
+    versant_machine = Machine.objects.get(name='FujiXerox Versant')
 
     dataset = [
         {'name': 'GTO Workstation', 'description': 'Workstation for Heidelberge GTO', 'machine': gto_machine,
@@ -85,6 +90,30 @@ def create_processes(apps, schema_editor):
                     'costing_measure': CostingMeasure.AREA, 'measure_unit': 'sq_m',
                     'steps': [
                         {'activity_name': 'Digital Printing', 'notes': ''}
+                    ]}
+            ]
+        },
+        {'name': 'Versant Workstation', 'description': 'Workstation for FujiXerox Versant', 'machine': versant_machine,
+            'expenses': [
+                {'name': 'Electricity', 'type': ActivityExpense.HOUR_BASED, 'rate': 66.67},
+                {'name': 'Labor', 'type': ActivityExpense.HOUR_BASED, 'rate': 75},
+                {'name': 'Click Charge B&W', 'type': ActivityExpense.MEASURE_BASED, 'rate': 0.3},
+                {'name': 'Click Charge Colored', 'type': ActivityExpense.MEASURE_BASED, 'rate': 0.5}
+            ],
+            'activities': [
+                {'name': 'B&W Printing', 'set_up': 1, 'tear_down': 1, 'speed': (1000, 'sheet', 'hr'),
+                    'expenses': ['Electricity', 'Labor', 'Click Charge B&W']},
+                {'name': 'Colored Printing', 'set_up': 1, 'tear_down': 1, 'speed': (1000, 'sheet', 'hr'),
+                    'expenses': ['Electricity', 'Labor', 'Click Charge Colored']},
+            ],
+            'operations': [
+                {'name': 'Versant B&W Printing', 'material_type': Item.PAPER, 'measure_unit': 'sheet',
+                    'steps': [
+                        {'activity_name': 'B&W Printing', 'notes': ''}
+                    ]},
+                {'name': 'Versant Colored Printing', 'material_type': Item.PAPER, 'measure_unit': 'sheet',
+                    'steps': [
+                        {'activity_name': 'Colored Printing', 'notes': ''}
                     ]}
             ]
         },

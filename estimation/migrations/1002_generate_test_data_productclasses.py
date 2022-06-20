@@ -83,6 +83,13 @@ def create_product_class(apps, schema_editor):
                         {'name': 'Front Print', 'options_type': MetaOperation.SINGLE_OPTION,
                             'options': ['GTO 2-Color Printing', 'KORSE 2-Color Printing']}
                     ]},
+                {'name': 'Form Running-to-Final Cut', 'type': Item.PAPER,  'uom': 'count',
+                    'costing_measure': CostingMeasure.QUANTITY, 
+                    'component': 'Form', 'estimate_variable_type': MetaEstimateVariable.RUNNING_TO_FINAL_CUT,
+                    'operations': [
+                        {'name': 'Cut Sheet', 'options_type': MetaOperation.SINGLE_OPTION,
+                            'options': ['Polar Cutting Operation']}
+                    ]},
                 {'name': 'Gathering', 'type': Item.PAPER,  'uom': 'set',
                     'costing_measure': CostingMeasure.QUANTITY, 
                     'component': 'Form', 'estimate_variable_type': MetaEstimateVariable.TOTAL_MATERIAL,

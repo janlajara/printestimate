@@ -15,15 +15,15 @@
                 item-key="id" handle=".drag" @change="state.updateServiceSequence"
                 class="bg-white divide-y divide-gray-200">
                 <template #item="{element}">
-                    <Row class="drag cursor-move">
-                        <Cell label="Name">
+                    <Row>
+                        <Cell label="Name" class="drag cursor-move">
                             <span class="material-icons text-xs my-auto">drag_indicator</span>
                             {{element.name}}</Cell>
-                        <Cell label="Type" class="capitalize">
+                        <Cell label="Type" class="capitalize drag cursor-move">
                             {{element.type}}</Cell>
-                        <Cell label="Costing Measure" class="capitalize">
+                        <Cell label="Costing Measure" class="capitalize drag cursor-move">
                             {{element.costingMeasure}}</Cell>
-                        <Cell label="Operations">
+                        <Cell label="Operations"  class="drag cursor-move">
                             <ul class="pl-2">
                                 <li v-for="(x, i) in element.metaOperations" :key="i"
                                     class="list-disc">

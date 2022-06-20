@@ -28,13 +28,12 @@
                     group="choices" style="min-height: 24px"
                     :list="state.selected">
                     <template #item="option">
-                        <div class="flex gap-1 rounded-md bg-gray-100 p-2 m-1 cursor-move"
-                            @mouseover="option.element.showDelete = true" 
-                            @mouseleave="option.element.showDelete = false">
+                        <div class="flex gap-1 rounded-md bg-gray-100 p-2 m-1 cursor-move">
+                            <!--@mouseover="option.element.showDelete = true" 
+                            @mouseleave="option.element.showDelete = false"-->
                             <span class="material-icons text-xs my-auto">drag_indicator</span>
                             <span>{{option.element.label}}</span>
                             <span v-if="$props.clone"
-                                v-show="option.element.showDelete"
                                 @click="()=>remove(option.element.id)"
                                 class="material-icons text-xs my-auto cursor-pointer px-1">
                                 close</span>

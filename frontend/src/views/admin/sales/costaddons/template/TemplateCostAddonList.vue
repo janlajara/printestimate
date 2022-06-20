@@ -16,7 +16,7 @@
                         <span>{{s.name}}</span>
                     </Cell>
                     <Cell label="Add-ons">
-                        <ul class="list-disc">
+                        <ul class="list-disc pl-6">
                             <li v-for="(addon, key) in s.templateCostAddonItems" :key="key">
                                 <span>{{addon.configCostAddon.name}}</span>
                             </li>

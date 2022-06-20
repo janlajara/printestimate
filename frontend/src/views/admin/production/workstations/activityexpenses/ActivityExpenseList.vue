@@ -106,7 +106,7 @@ export default {
 
         const deleteActivityExpense = async (id) => {
             state.isProcessing = true;
-            if (id)  ActivityExpenseApi.deleteActivityExpense(id);
+            if (id)  await ActivityExpenseApi.deleteActivityExpense(id);
             state.isProcessing = false;
         }
 

@@ -8,3 +8,4 @@ Tech Stack
 - Backend : Django, Django Rest Framework, Postgresql
 
 A demo site can be viewed here: https://printestimate.herokuapp.com
+*The backend "snoozes" when inactive as the app is hosted only on a free plan. It might take a few seconds to wake up.

@@ -8,7 +8,7 @@
         <Section heading="General Information" heading-position="side"> 
             <div class="md:grid md:gap-4 md:grid-cols-3">
                 <InputText name="Name"  placeholder="Name" class="col-span-2"
-                    type="text" :value="state.data.name" required
+                    type="text" :value="state.data.name" required :max=40
                     @input="value => state.data.name = value"/>
                 <InputText name="Description"  placeholder="Description"  class="col-span-3"
                     type="text" :value="state.data.description" required

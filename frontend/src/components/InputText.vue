@@ -85,6 +85,10 @@ export default {
                     if (props.min != null && props.min > parseFloat(input)) input = props.min;
                     if (props.max != null && props.max < parseFloat(input)) input = props.max;
                 }
+            } else {
+                if (props.max != null && input.length > props.max) {
+                    input = input.substr(0, props.max)
+                }
             }
             emit('input', input);
             event.target.value = input;

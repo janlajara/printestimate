@@ -31,6 +31,18 @@ def create_items(apps, schema_editor):
     kraft_item.properties.size_uom = 'inch'
     kraft_item.properties.save()
 
+    c2s_item = Item.objects.create_item(type=Item.PAPER, name='Coated 2-sides', 
+        base_uom=sheet_uom, override_price=7)
+    c2s_item.properties.width_value = 36
+    c2s_item.properties.length_value = 24
+    c2s_item.properties.size_uom = 'inch'
+    c2s_item.properties.gsm = 220
+    c2s_item.properties.save()
+
+    pc = BaseStockUnit.objects.create(name='piece', abbrev='pc')
+    card_case = Item.objects.create_item(type=Item.OTHER, name='Calling Card Case', 
+        base_uom=pc, override_price=10)
+
 
 class Migration(migrations.Migration):
 

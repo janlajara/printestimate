@@ -108,7 +108,7 @@ class Migration(migrations.Migration):
             name='MetaOperation',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=40)),
+                ('name', models.CharField(max_length=100)),
                 ('options_type', models.CharField(choices=[('Single', 'Single'), ('Multiple', 'Multiple'), ('Boolean', 'On/Off')], max_length=26)),
                 ('is_required', models.BooleanField(default=False)),
             ],

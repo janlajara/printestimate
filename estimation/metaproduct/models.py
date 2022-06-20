@@ -221,7 +221,7 @@ class MetaOperation(PolymorphicModel):
         (MULTIPLE_OPTIONS, 'Multiple'),
         (BOOLEAN_OPTION, 'On/Off')
     ]
-    name = models.CharField(max_length=40)
+    name = models.CharField(max_length=100)
     options_type = models.CharField(max_length=26, choices=TYPES)
     is_required = models.BooleanField(default=False)
     meta_product_data = models.ForeignKey(MetaProductData, on_delete=models.CASCADE, 

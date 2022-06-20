@@ -101,9 +101,11 @@ def create_processes(apps, schema_editor):
                 {'name': 'Click Charge Colored', 'type': ActivityExpense.MEASURE_BASED, 'rate': 0.5}
             ],
             'activities': [
-                {'name': 'B&W Printing', 'set_up': 1, 'tear_down': 1, 'speed': (1000, 'sheet', 'hr'),
+                {'name': 'B&W Printing', 'set_up': 1, 'tear_down': 1, 
+                    'speed': (1000, 'sheet', 'hr'),
                     'expenses': ['Electricity', 'Labor', 'Click Charge B&W']},
-                {'name': 'Colored Printing', 'set_up': 1, 'tear_down': 1, 'speed': (1000, 'sheet', 'hr'),
+                {'name': 'Colored Printing', 'set_up': 1, 'tear_down': 1, 
+                    'speed': (1000, 'sheet', 'hr'),
                     'expenses': ['Electricity', 'Labor', 'Click Charge Colored']},
             ],
             'operations': [
@@ -129,6 +131,9 @@ def create_processes(apps, schema_editor):
                 {'name': 'Padding', 'set_up': 0.5, 'tear_down': 0.5, 
                     'speed': (100, 'pad', 'hr'),
                     'expenses': ['Labor', 'Padding Fee']},
+                {'name': 'Calling Card Assembly', 'set_up': 0.5, 'tear_down': 0.5, 
+                    'speed': (0.25, 'pc', 'min'),
+                    'expenses': ['Labor']},
             ],
             'operations': [
                 {'name': 'Finishing Gathering Operation', 'material_type': Item.PAPER,
@@ -138,6 +143,10 @@ def create_processes(apps, schema_editor):
                 {'name': 'Finishing Padding Operation', 'material_type': Item.PAPER,
                     'steps': [
                         {'activity_name': 'Padding', 'notes': ''}
+                    ]},
+                {'name': 'Finishing Calling Card Assembly Operation', 'material_type': Item.OTHER,
+                    'steps': [
+                        {'activity_name': 'Calling Card Assembly', 'notes': ''}
                     ]},
             ]
         },

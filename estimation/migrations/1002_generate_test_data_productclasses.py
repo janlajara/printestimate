@@ -13,13 +13,14 @@ def create_product_class(apps, schema_editor):
     def _create_components(product, components_data):
         for component_data in components_data:
             materials = component_data.pop('materials')
-            machine_name = component_data.pop('machine') if 'machine' in component_data else None
+            machine_names = component_data.pop('machines') if 'machines' in component_data else None
             component = product.add_meta_component(**component_data)
 
-            if machine_name is not None:
-                machine = Machine.objects.filter(name=machine_name).first()
-                if machine is not None:
-                    component.add_meta_machine_option(machine)
+            if machine_names is not None:
+                for machine_name in machine_names:
+                    machine = Machine.objects.filter(name=machine_name).first()
+                    if machine is not None:
+                        component.add_meta_machine_option(machine)
 
             for material_name in materials:
                 material = Item.objects.filter(name=material_name).first()
@@ -50,7 +51,7 @@ def create_product_class(apps, schema_editor):
         {'name': 'Carbonless Form', 'description': 'Class for all carbonless forms.',
             'components': [
                 {'name': 'Form', 'type': Item.PAPER, 'allow_multiple_materials': True,
-                    'machine': 'Heidelberg GTO',
+                    'machines': ['Heidelberg GTO', 'Heidelberg KORSE'],
                     'materials': ['Carbonless White', 'Carbonless Yellow', 'Carbonless Blue']},
                 {'name': 'Backing', 'type': Item.PAPER, 'allow_multiple_materials': False,
                     'materials': ['Kraft #80']}
@@ -104,6 +105,53 @@ def create_product_class(apps, schema_editor):
                         {'name': 'Pad Sheets', 'options_type': MetaOperation.SINGLE_OPTION,
                             'options': ['Finishing Padding Operation']}
                     ]},
+            ]
+        },
+        {'name': 'Calling Card', 'description': 'Class for all calling cards.',
+            'components': [
+                {'name': 'Card', 'type': Item.PAPER, 'allow_multiple_materials': False,
+                    'machines': ['FujiXerox Versant'],
+                    'materials': ['Coated 2-sides']},
+                {'name': 'Case', 'type': Item.OTHER, 'allow_multiple_materials': False,
+                    'materials': ['Calling Card Case']}
+            ],
+            'services': [
+                {'name': 'Layout', 'type': Item.OTHER, 'uom': 'layout',
+                    'costing_measure': CostingMeasure.QUANTITY, 
+                    'operations': [
+                        {'name': 'Create Layout', 'options_type': MetaOperation.SINGLE_OPTION,
+                            'options': ['Creatives Layout Operation']}
+                    ]},
+                {'name': 'Card Raw-to-Running Cut', 'type': Item.PAPER,  'uom': 'count',
+                    'costing_measure': CostingMeasure.QUANTITY, 
+                    'component': 'Card', 'estimate_variable_type': MetaEstimateVariable.RAW_TO_RUNNING_CUT,
+                    'operations': [
+                        {'name': 'Cut Sheet', 'options_type': MetaOperation.SINGLE_OPTION,
+                            'options': ['Polar Cutting Operation']}
+                    ]},
+                {'name': 'Printing', 'type': Item.PAPER,  'uom': 'sheet',
+                    'costing_measure': CostingMeasure.QUANTITY, 
+                    'component': 'Card', 'estimate_variable_type': MetaEstimateVariable.MACHINE_RUN,
+                    'operations': [
+                        {'name': 'Front Print', 'options_type': MetaOperation.SINGLE_OPTION,
+                            'options': ['Versant Colored Printing', 'Versant B&W Printing']},
+                        {'name': 'Back Print', 'options_type': MetaOperation.SINGLE_OPTION,
+                            'options': ['Versant B&W Printing', 'Versant B&W Printing']}
+                    ]},
+                {'name': 'Card Running-to-Final Cut', 'type': Item.PAPER,  'uom': 'count',
+                    'costing_measure': CostingMeasure.QUANTITY, 
+                    'component': 'Card', 'estimate_variable_type': MetaEstimateVariable.RUNNING_TO_FINAL_CUT,
+                    'operations': [
+                        {'name': 'Cut Sheet', 'options_type': MetaOperation.SINGLE_OPTION,
+                            'options': ['Polar Cutting Operation']}
+                    ]},
+                {'name': 'Assembly', 'type': Item.OTHER,  'uom': 'pc',
+                    'costing_measure': CostingMeasure.QUANTITY, 
+                    'component': 'Case', 'estimate_variable_type': MetaEstimateVariable.SET_MATERIAL,
+                    'operations': [
+                        {'name': 'Assemble Cards and Case', 'options_type': MetaOperation.SINGLE_OPTION,
+                            'options': ['Finishing Calling Card Assembly Operation']}
+                    ]}
             ]
         }
     ]

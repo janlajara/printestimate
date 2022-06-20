@@ -7,15 +7,17 @@
         </label>
         <div class="rounded-md shadow-sm" v-click-outside="()=>toggleDropdown(false)">
             <div class="relative"> 
-              <input type="text" class="rounded input-field cursor-pointer"
-                :class="($props.disabled || state.options.length == 0)? 'text-gray-400' : ''"
-                :value="selectedValue" :disabled="$props.disabled || state.options.length == 0" 
-                :readonly="!$props.customizable"
-                @change="inputCustomValue"
-                @click="toggleDropdown(!state.isDroppedDown)"/>
-              <span class="absolute material-icons right-0 m-1 transform"
-                :class="state.isDroppedDown? 'rotate-180' : ''">
-                arrow_drop_down</span>
+              <div @click="toggleDropdown(!state.isDroppedDown)"
+                class="cursor-pointer">
+                <input type="text" class="rounded input-field"
+                  :class="($props.disabled || state.options.length == 0)? 'text-gray-400' : ''"
+                  :value="selectedValue" :disabled="$props.disabled || state.options.length == 0" 
+                  :readonly="!$props.customizable"
+                  @change="inputCustomValue"/>
+                <span class="absolute material-icons right-0 m-1 transform"
+                  :class="state.isDroppedDown? 'rotate-180' : ''">
+                  arrow_drop_down</span>
+              </div>
               <div v-show="state.isDroppedDown" 
                 class="shadow-md rounded bg-white absolute w-full 
                 mt-1 z-10 max-h-60 overflow-auto">
@@ -23,7 +25,8 @@
                   class="p-2 hover:bg-secondary-light hover:bg-opacity-20 
                   text-sm cursor-pointer"
                   @click="select(option)">
-                  <div class="flex w-full">
+                  <div class="flex w-full relative">
+                    <div class="absolute w-full h-full"></div><!-- Prevent cursor from interacting with input checkbox -->
                     <input v-if="$props.multiple" type="checkbox" 
                       class="input-checkbox mr-4 my-auto" disabled 
                       :name="name" :checked="option.isSelected"/>
@@ -113,7 +116,7 @@ export default {
         emit('input', input);
       }
 
-      const select = (option) => { 
+      const select = (option) => {
         if (props.multiple) {
           option.isSelected = !option.isSelected
         } else {

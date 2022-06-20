@@ -10,7 +10,7 @@
                     value: c.value, label: c.label,
                     isSelected: state.machineForm.machineType == c.value
                 }))"/>
-            <InputSelect name="Machines" multiple class="col-span-2"
+            <InputSelect name="Machines" multiple class="md:col-span-2"
                 :disabled="state.machineForm.machineType == null"
                 @input="value => {
                     state.machineForm.machines = value;

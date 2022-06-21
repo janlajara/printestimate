@@ -45,14 +45,15 @@ export default {
         const height = ref()
         const collapsed = computed(()=> props.selected == props.metaGroup)
         const emitSelected = ()=> {
-            if (route.meta.group == props.metaGroup)
+            if (route.meta.group == props.metaGroup) {
                 emit('selected', props.metaGroup)
+            }
         }
 
         watch(()=>route.name, emitSelected)
         onBeforeMount(emitSelected)
         onMounted(()=> {
-            height.value = navLinks.value.clientHeight
+            height.value = navLinks.value.clientHeight;
         })
 
         let group = []

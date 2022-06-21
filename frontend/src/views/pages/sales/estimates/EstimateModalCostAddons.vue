@@ -31,7 +31,7 @@
 <script>
 import InputSelect from '@/components/InputSelect.vue';
 import {CostAddonApi} from '@/utils/apis.js';
-import {reactive, watch, computed, onBeforeMount} from 'vue';
+import {reactive, computed, onBeforeMount} from 'vue';
 
 export default {
     components: {
@@ -54,11 +54,15 @@ export default {
             meta: {
                 costAddonConfigs: [],
                 costAddonTemplates: [],
-                selectedTemplateAddonItems: [] 
+                selectedTemplateAddonItems: computed(()=> {
+                    const initialized = initializeCostAddons();
+                    state.data.costAddons = initialized.costAddons;
+                    return initialized.selectedTemplateAddonItems;
+                })
             }
         });
 
-        const listCostAddonConfigs = async () => {
+        const listCostAddonConfigs = async () => { 
             const response = await CostAddonApi.listConfigCostAddons();
             state.meta.costAddonConfigs = response.map(x => ({
                 id: x.id, name: x.name, symbol: x.symbol,
@@ -90,56 +94,64 @@ export default {
         };
 
         const initializeCostAddons = ()=> {
-            if (!state.data.isValueProvided) {
-                const template = state.meta.costAddonTemplates.find(x =>
-                    x.id == state.data.template);
-                let templateAddonItems = template.templateCostAddonItems;
-                templateAddonItems.forEach(x => {
-                    x.options = x.options.map(x => ({
-                        value: x.value,
-                        description: x.label,
-                        isSelected: false 
-                    }));
-                });
-                state.meta.selectedTemplateAddonItems = templateAddonItems;
+            let selectedTemplateAddonItems = [];
+            let costAddons = [];
+            
+            if (state.meta.costAddonTemplates.length > 0 && 
+                    state.meta.costAddonConfigs.length > 0) {
 
-                const defaultCostAddons = state.meta
-                    .selectedTemplateAddonItems.map(x => ({
-                        sequence: x.sequence,
-                        name: x.name,
-                        type: x.type,
-                        allow_custom_value: x.allow_custom_value,
-                        config_cost_addon: x.config_cost_addon,
-                        value: null
-                    }));
-                state.data.costAddons =  defaultCostAddons;
-
-            } else {
-                state.data.costAddons = props.value.estimateAddonItems;
-                state.meta.selectedTemplateAddonItems = state.data.costAddons.map(x => {
-                    let match = state.meta.costAddonConfigs.find(y => 
-                        y.id == x.config_cost_addon);
-                    const optionsHasMatch = match.options
-                        .findIndex(z => z.value == x.value) >= 0;
-                    if (!optionsHasMatch) {
-                        match.options.push({
+                if (!state.data.isValueProvided) {
+                    const template = state.meta.costAddonTemplates.find(x =>
+                        x.id == state.data.template);
+                    let templateAddonItems = template.templateCostAddonItems;
+                    templateAddonItems.forEach(x => {
+                        x.options = x.options.map(x => ({
                             value: x.value,
-                            label: 'Custom',
-                            isSelected: true
-                        });
-                    }
-                    return {
-                        ...x,
-                        symbol: match.symbol,
-                        is_required: match.is_required,
-                        options: match.options.map(z => ({
-                            value: z.value,
-                            description: z.label,
-                            isSelected: x.value == z.value
-                        }))
-                    }
-                });
+                            description: x.label,
+                            isSelected: false 
+                        }));
+                    });
+                    selectedTemplateAddonItems = templateAddonItems;
+
+                    const defaultCostAddons = selectedTemplateAddonItems.map(x => ({
+                            sequence: x.sequence,
+                            name: x.name,
+                            type: x.type,
+                            allow_custom_value: x.allow_custom_value,
+                            config_cost_addon: x.config_cost_addon,
+                            value: null
+                        }));
+                    costAddons =  defaultCostAddons;
+
+                } else {
+                    costAddons = props.value.estimateAddonItems;
+                    selectedTemplateAddonItems = costAddons.map(x => {
+                        let match = state.meta.costAddonConfigs.find(y => 
+                            y.id == x.config_cost_addon);
+                        const optionsHasMatch = match.options
+                            .findIndex(z => z.value == x.value) >= 0;
+                        if (!optionsHasMatch) {
+                            match.options.push({
+                                value: x.value,
+                                label: 'Custom',
+                                isSelected: true
+                            });
+                        }
+                        return {
+                            ...x,
+                            symbol: match.symbol,
+                            is_required: match.is_required,
+                            options: match.options.map(z => ({
+                                value: z.value,
+                                description: z.label,
+                                isSelected: x.value == z.value
+                            }))
+                        }
+                    });
+                }
             }
+
+            return {selectedTemplateAddonItems, costAddons}
         };
 
         onBeforeMount(async ()=> {
@@ -148,12 +160,9 @@ export default {
             const defaultTemplate = state.meta.costAddonTemplates.find(x => x.isDefault);
             if (defaultTemplate) {
                 state.data.template = defaultTemplate.id;
-                initializeCostAddons();
+                const initialized = initializeCostAddons();
+                state.data.costAddons = initialized.costAddons;
             }
-        });
-
-        watch(()=> state.data.isValueProvided, ()=> {
-            if (state.data.isValueProvided) initializeCostAddons();
         });
         
         const emitInput = () => {

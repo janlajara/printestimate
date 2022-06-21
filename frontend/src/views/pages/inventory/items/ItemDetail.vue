@@ -41,7 +41,8 @@
                         formatMoney(detail.data.overridePrice) : null"/>
             </DescriptionList>
         </Section>
-        <Section heading="Properties">
+        <Section heading="Properties" 
+            v-if="detail.data.properties && detail.data.properties.resourcetype != 'other'">
             <DescriptionList class="grid-cols-2 md:grid-cols-4">
                 <DescriptionItem :loader="detail.isProcessing"
                     v-for="(entry, key) in Object.entries(detail.data.properties)

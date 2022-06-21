@@ -1,5 +1,5 @@
 <template>
-    <div class="grid grid-cols-3 gap-4">
+    <div class="grid lg:grid-cols-3 lg:gap-4">
         <div class="col-span-1" v-if="!state.data.isValueProvided">
             <InputSelect 
                 name="Template"

@@ -6,8 +6,8 @@
         <div v-if="state.error" 
             class="pt-4 text-sm text-red-600">*{{state.error}}</div>
         <Section heading="General Information" heading-position="side"> 
-            <div class="md:grid md:gap-4 md:grid-cols-3">
-                <InputText class="col-span-2"
+            <div class="md:grid md:gap-4 md:grid-cols-2">
+                <InputText
                     name="Quantities"  placeholder="e.g. 100,200,300" 
                     type="text" :value="state.form.quantitiesField.text" required
                     @keyup="state.form.quantitiesField.onkeyup"

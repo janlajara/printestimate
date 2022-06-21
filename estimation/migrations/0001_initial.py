@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
             name='Component',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=20, null=True)),
+                ('name', models.CharField(max_length=40, null=True)),
                 ('quantity', models.IntegerField(default=1)),
             ],
             options={
@@ -160,7 +160,7 @@ class Migration(migrations.Migration):
             name='Product',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=20, null=True)),
+                ('name', models.CharField(max_length=40, null=True)),
                 ('description', models.CharField(max_length=100, null=True)),
             ],
         ),

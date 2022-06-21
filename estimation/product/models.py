@@ -253,7 +253,7 @@ class ProductManager(models.Manager):
 
 class Product(models.Model):
     objects = ProductManager()
-    name = models.CharField(max_length=20, null=True)
+    name = models.CharField(max_length=40, null=True)
     description = models.CharField(max_length=100, null=True)
     product_estimate = models.OneToOneField(ProductEstimate, on_delete=models.CASCADE,
         null=True, blank=True, related_name='product')
@@ -302,7 +302,7 @@ class ComponentManager(PolymorphicManager):
 
 class Component(PolymorphicModel, Shape):
     objects = ComponentManager()
-    name = models.CharField(max_length=20, null=True)
+    name = models.CharField(max_length=40, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE,
         related_name='components')
     machine = models.ForeignKey(Machine, on_delete=models.SET_NULL,

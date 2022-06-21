@@ -6,7 +6,7 @@
         </div>
         <div v-for="(service, w) in state.data.services" :key="w"
             :class="!service.isExpanded? 'border-b' : ''">
-            <div class="grid grid-cols-2">
+            <div class="grid" :class="!service.isExpanded? 'grid-cols-2': ''">
                 <div class="cursor-pointer" 
                     @click="()=>{
                         service.isExpanded = !service.isExpanded;
@@ -51,17 +51,18 @@
                             class="border-t-2 border-dotted">
                             <span class="ml-12">{{activity.name}}</span>
                             <div v-for="(expense, z) in activity.expenses" :key="z"
-                                class="border-t-2 border-dotted  grid grid-cols-2">
+                                class="border-t-2 border-dotted  grid lg:grid-cols-2">
                                 <div class="flex">
                                     <div class="ml-16">{{expense.name}}</div>
-                                    <div class="ml-4 flex-auto text-right">
+                                    <div class="ml-4 flex-auto lg:text-right">
                                         <span class="text-xs inline-block align-middle">
                                             {{expense.rateLabel}}</span>    
                                     </div>
                                 </div>
                                 <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x`">
-                                    <div v-for="(estimate, a) in state.paginate(expense.estimates)" :key="a" class="grid">
-                                        <div class="flex text-xs my-auto">
+                                    <div v-for="(estimate, a) in state.paginate(expense.estimates)" :key="a" 
+                                            class="grid grid-cols-2 lg:grid-cols-1 py-1 lg:py-0">
+                                        <div class="col-start-2 lg:col-start-1 flex text-xs my-auto">
                                             <div class="text-right w-2/5"
                                                 :class="estimate.estimate == null? 'invisible' : ''">
                                                 <span>x</span>

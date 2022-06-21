@@ -209,6 +209,7 @@ export default {
             state.meta.isBreakpointBelowLg = [undefined, 'sm', 'md'].includes(breakpoint);
         } 
         onMounted(()=> {
+            onWindowResize();
             window.addEventListener("resize", onWindowResize);
         });
         onUnmounted(()=> {

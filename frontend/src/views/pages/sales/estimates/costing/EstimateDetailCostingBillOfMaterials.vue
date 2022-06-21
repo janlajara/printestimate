@@ -6,7 +6,7 @@
         </div>
         <div v-for="(material, x) in state.data.billOfMaterials" :key="x"
             :class="!material.isExpanded? 'border-b' : ''">
-            <div class="grid md:grid-cols-2">
+            <div class="grid" :class="!material.isExpanded? 'grid-cols-2' : ''">
                 <div class="cursor-pointer" 
                     @click="()=>{
                         material.isExpanded = !material.isExpanded;
@@ -19,7 +19,7 @@
                             <span class="text-sm">
                                 {{material.name}}</span>
                         </div> 
-                        <div class="ml-4 flex-auto text-right" 
+                        <div class="ml-4 flex-auto text-right hidden lg:block" 
                             v-show="!material.isExpanded">
                             <span class="text-xs">
                                 {{formatMoney(material.rate)}} / {{material.uom}}</span>    

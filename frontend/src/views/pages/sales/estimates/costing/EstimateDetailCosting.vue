@@ -10,11 +10,11 @@
             </div>
             <!-- Table Header -->
             <div class="border-b grid grid-cols-2">
-                <div>
+                <div class="hidden sm:grid">
                 </div>
-                <div class="flex relative">
+                <div class="flex relative col-span-2 sm:col-span-1">
                     <div class="absolute">
-                        <span class="material-icons text-sm cursor-pointer"
+                        <span class="material-icons text-xl sm:text-sm cursor-pointer"
                             :class="state.components.paginator.offset == 0? 
                                 'hidden': ''"
                             @click="state.components.paginator.left">chevron_left</span>
@@ -23,11 +23,11 @@
                         <div v-for="(quantity, key) in 
                                 state.components.paginator.paginate(state.data.quantities)" :key="key"
                             class="flex justify-center">
-                            <span class="font-bold text-secondary">{{quantity}}</span>
+                            <span class="font-bold text-secondary text-lg sm:text-base">{{quantity}}</span>
                         </div>
                     </div>
                     <div class="absolute right-0">
-                        <span class="material-icons text-sm cursor-pointer"
+                        <span class="material-icons text-xl sm:text-sm cursor-pointer"
                             :class="state.components.paginator.offset == state.components.paginator.limit? 
                                 'hidden': ''"
                             @click="state.components.paginator.right">chevron_right</span>
@@ -99,8 +99,9 @@ import EstimateDetailCostingBillOfMaterials from './EstimateDetailCostingBillOfM
 import EstimateDetailCostingServices from './EstimateDetailCostingServices.vue';
 import EstimateDetailCostingCostAddons from './EstimateDetailCostingCostAddons.vue';
 
-import {reactive, inject, computed} from 'vue';
+import {reactive, inject, computed, onMounted, onUnmounted} from 'vue';
 import {formatMoney as formatCurrency} from '@/utils/format.js'
+import {getCurrentBreakpoint} from '@/utils/tailwind.js';
 
 export default {
     components: {
@@ -122,7 +123,11 @@ export default {
         const currency = inject('currency').abbreviation;
         const state = reactive({
             meta: {
-                maxQuantitiesColumnLength: props.maxQuantitiesDisplay,
+                isBreakpointBelowLg: false,
+                maxQuantitiesColumnLength: computed(()=> 
+                    state.meta.isBreakpointBelowLg? 
+                        1 : props.maxQuantitiesDisplay
+                ),
                 quantitiesColumnLength: computed(()=> 
                     Math.min(state.data.quantities.length, 
                         state.meta.maxQuantitiesColumnLength)),
@@ -198,6 +203,18 @@ export default {
                 return formatCurrency(amount, currency)
             else return ''
         }
+
+        const onWindowResize = ()=> {
+            const breakpoint = getCurrentBreakpoint();
+            state.meta.isBreakpointBelowLg = [undefined, 'sm', 'md'].includes(breakpoint);
+        } 
+        onMounted(()=> {
+            window.addEventListener("resize", onWindowResize);
+        });
+        onUnmounted(()=> {
+            window.removeEventListener("resize", onWindowResize);
+        });
+
         return {
             state, formatMoney
         }

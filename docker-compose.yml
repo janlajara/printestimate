@@ -11,7 +11,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: Dockerfile.web
+      dockerfile: Dockerfile.web.dev
     ports:
       - "8000:8000"
     command: bash -c "
@@ -28,7 +28,7 @@ services:
   client:
     build:
       context: .
-      dockerfile: Dockerfile.client
+      dockerfile: Dockerfile.client.dev
       args:
         - VUE_APP_DJANGO_API_BASE=http://localhost:8000
     ports:

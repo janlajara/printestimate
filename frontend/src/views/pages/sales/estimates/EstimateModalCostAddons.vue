@@ -24,7 +24,11 @@
                     state.data.costAddons[key].value = value;
                     emitInput();}"
                 :regex="/^\d+\.?\d{0,2}/"
-                :options="item.options"/>
+                :options="item.options.map(x => ({
+                    value: x.value,
+                    description: x.label,
+                    isSelected: $props.value.estimateAddonItems.find(z => z.value == x.value) != null
+                }))"/>
         </div>
     </div>    
 </template>
@@ -96,21 +100,14 @@ export default {
         const initializeCostAddons = ()=> {
             let selectedTemplateAddonItems = [];
             let costAddons = [];
-            
             if (state.meta.costAddonTemplates.length > 0 && 
                     state.meta.costAddonConfigs.length > 0) {
 
                 if (!state.data.isValueProvided) {
-                    const template = state.meta.costAddonTemplates.find(x =>
+                    let template = state.meta.costAddonTemplates.find(x =>
                         x.id == state.data.template);
+                    if (template == null) template = state.meta.costAddonTemplates[0];
                     let templateAddonItems = template.templateCostAddonItems;
-                    templateAddonItems.forEach(x => {
-                        x.options = x.options.map(x => ({
-                            value: x.value,
-                            description: x.label,
-                            isSelected: false 
-                        }));
-                    });
                     selectedTemplateAddonItems = templateAddonItems;
 
                     const defaultCostAddons = selectedTemplateAddonItems.map(x => ({
@@ -141,11 +138,7 @@ export default {
                             ...x,
                             symbol: match.symbol,
                             is_required: match.is_required,
-                            options: match.options.map(z => ({
-                                value: z.value,
-                                description: z.label,
-                                isSelected: x.value == z.value
-                            }))
+                            options: match.options
                         }
                     });
                 }

@@ -26,13 +26,14 @@
                     Drag option to this area</span>
                 <draggable item-key="id" @change="emitInput"
                     group="choices" style="min-height: 24px"
-                    :list="state.selected">
+                    v-model="state.selected" handle=".drag">
                     <template #item="option">
-                        <div class="flex gap-1 rounded-md bg-gray-100 p-2 m-1 cursor-move">
+                        <div class="flex gap-1 rounded-md bg-gray-100 p-2 m-1">
                             <!--@mouseover="option.element.showDelete = true" 
                             @mouseleave="option.element.showDelete = false"-->
-                            <span class="material-icons text-xs my-auto">drag_indicator</span>
-                            <span>{{option.element.label}}</span>
+                            <span class="material-icons text-xs my-auto drag cursor-move">drag_indicator</span>
+                            <span class="drag cursor-move">{{option.element.label}}</span>
+                            <span class="flex-grow"></span>
                             <span v-if="$props.clone"
                                 @click="()=>remove(option.element.id)"
                                 class="material-icons text-xs my-auto cursor-pointer px-1">

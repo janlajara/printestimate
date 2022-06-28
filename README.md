@@ -7,6 +7,8 @@ It is currently a work-in-progress.
 - Frontend : Vue 3, Tailwind css
 - Backend : Django, Django Rest Framework, Postgresql
 
+Bin packing algorithm used for paper imposition provided by [rectpack](https://github.com/secnot/rectpack).
+
 A demo site can be viewed here: https://printestimate.herokuapp.com
 
 **The backend "snoozes" when inactive. It might take a few seconds to wake up and retrieve records from the database.*

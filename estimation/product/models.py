@@ -1021,13 +1021,15 @@ class OperationEstimateManager(models.Manager):
 
         for operation_option in operation_options:
             machine = operation_option.meta_operation_option.machine_name
+            operation_option_label = operation_option.label
 
             for step in operation_option.meta_operation_option.operation_steps:
                 activity = step.activity
                 ActivityEstimate.objects.create_activity_estimate(
                     activity, step.sequence, 
                     activity.set_up, activity.tear_down,
-                    step.notes, operation_estimate, machine)
+                    step.notes, operation_estimate, machine=machine,
+                    operation_option_label=operation_option_label)
 
 
 class OperationEstimate(models.Model):
@@ -1103,8 +1105,8 @@ class OperationEstimate(models.Model):
 
 class ActivityEstimateManager(models.Manager):
     def create_activity_estimate(self, activity, sequence, set_up, tear_down, 
-            notes, operation_estimate, machine=None):
-        name = activity.name
+            notes, operation_estimate, machine=None, operation_option_label=None):
+        name = operation_option_label
         measure_unit = activity.measure_unit
         activity_speed = activity.speed
 

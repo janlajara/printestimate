@@ -2,6 +2,7 @@ import pandas as pd
 from cached_property import cached_property
 from inventory.models import Item
 from fileio import constants
+from fileio.models import ExcelWorkbook
 
 
 class ItemSheet:
@@ -143,15 +144,11 @@ class LiquidSheet(ItemSheet):
         return row + [volume, uom]
 
 
-class ItemWorkbook:
+class ItemWorkbook(ExcelWorkbook):
     def __init__(self, name='items-workbook'):
         self.name = name
-    
-    @property
-    def filename(self):
-        return '%s.%s' % (self.name, constants.FILE_EXTENSION_EXCEL)
 
-    @cached_property
+    @property
     def sheets(self):
         sheets = []
 
@@ -165,7 +162,3 @@ class ItemWorkbook:
 
     def _get_items_by_type(self, type):
         return Item.objects.filter(type=type).order_by('name').all()
-
-    def write(self, writer):
-        for sheet in self.sheets:
-            sheet.write(writer)

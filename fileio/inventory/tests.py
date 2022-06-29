@@ -1,6 +1,5 @@
 import pandas as pd
 import pytest
-import io
 from inventory.models import Item, BaseStockUnit, AlternateStockUnit
 from fileio.inventory.models import PaperSheet, ItemWorkbook
 from fileio.models import BytesExcelWriter

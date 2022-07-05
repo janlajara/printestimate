@@ -324,12 +324,12 @@ def test_service__estimate(db, product_template):
         assert len(operation_estimate.activity_estimates) == 2
 
         for activity_estimate in operation_estimate.activity_estimates:
-            assert activity_estimate.name == 'Spot Color Printing'
+            assert activity_estimate.name == 'GTO 2-color Printing'
             assert activity_estimate.notes in ['1st color', '2nd color'] 
             assert activity_estimate.activity_expense_estimates is not None
             assert len(activity_estimate.activity_expense_estimates) == 3
 
-            electricity_expense = activity_estimate.activity_expense_estimates[2]
+            electricity_expense = activity_estimate.activity_expense_estimates[0]
             assert electricity_expense.name == 'Electricity'
             assert electricity_expense.rate_label == '₱100.00 / hr'
             assert electricity_expense.estimates is not None
@@ -344,7 +344,7 @@ def test_service__estimate(db, product_template):
             assert electricity_expense_estimate.duration.hr == 2.25
             assert electricity_expense_estimate.cost.amount == 225
 
-            ink_expense = activity_estimate.activity_expense_estimates[1]
+            ink_expense = activity_estimate.activity_expense_estimates[2]
             assert ink_expense.name == 'Ink'
             assert ink_expense.rate_label == '₱0.75 / sheet'
             assert ink_expense.estimates is not None
@@ -359,7 +359,7 @@ def test_service__estimate(db, product_template):
             assert ink_expense_estimate.duration.hr == 2.25
             assert ink_expense_estimate.cost.amount == 1875
 
-            depreciation_expense = activity_estimate.activity_expense_estimates[0]
+            depreciation_expense = activity_estimate.activity_expense_estimates[1]
             assert depreciation_expense.name == 'Depreciation'
             assert depreciation_expense.rate_label == '₱200.00 / hr'
             assert depreciation_expense.estimates is not None
@@ -385,12 +385,12 @@ def test_service__estimate(db, product_template):
     assert len(gathering_operation_estimate.activity_estimates) == 1
 
     gathering_activity_estimate = gathering_operation_estimate.activity_estimates[0]
-    assert gathering_activity_estimate.name == 'Gathering'
+    assert gathering_activity_estimate.name == 'Gathering Operation'
     assert gathering_activity_estimate.notes is None
     assert gathering_activity_estimate.activity_expense_estimates is not None
     assert len(gathering_activity_estimate.activity_expense_estimates) == 2
 
-    labor_expense = gathering_activity_estimate.activity_expense_estimates[0]
+    labor_expense = gathering_activity_estimate.activity_expense_estimates[1]
     assert labor_expense.name == 'Labor'
     assert labor_expense.rate_label == '₱75.00 / hr'
     assert labor_expense.estimates is not None

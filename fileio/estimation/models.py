@@ -197,7 +197,119 @@ class ProductSummarySheet:
 
 
 class ProductEstimateSheet:
-    pass
+    def __init__(self, product_estimate, sheet_name):
+        self.product_estimate = product_estimate
+        self.sheet_name = sheet_name
+
+    class HeaderSection:
+        def __init__(self, order_quantities, start_col, start_row):
+            self.order_quantities = order_quantities
+            self.start_col = start_col
+            self.start_row = start_row
+
+        @property
+        def header(self):
+            return pd.DataFrame([['Cost Breakdown']])
+
+        def write(self, writer, sheet_name):
+            self.header.to_excel(writer, sheet_name=sheet_name, header=False,
+                index=False, startcol=self.start_col, startrow=self.start_row)
+            self.format(writer, sheet_name)
+        
+        def format(self, writer, sheet_name):
+            workbook = writer.book
+            worksheet = writer.sheets[sheet_name]
+            if workbook is not None and worksheet is not None:
+                col_2 = self.start_col
+                worksheet.set_column(col_2, col_2, 35)
+
+                quantity_count = len(self.order_quantities)
+                quantity_start = self.start_col+3
+                quantity_format = workbook.add_format({
+                    'bold': True, 'font_size': 12,
+                    'align': 'center', 'bottom': 1
+                }) 
+                columnleft_format = workbook.add_format({'left': 1})
+                columnright_format = workbook.add_format({'right': 1})
+                
+                for x in range(0, (quantity_count*2)):
+                    col_idx = quantity_start + x
+
+                    if x % 2 == 1:
+                        idx = int((x-1)/2)
+                        quantity = self.order_quantities[idx]
+                        worksheet.merge_range(0, col_idx-1, 0, col_idx, 
+                            quantity, quantity_format)
+                        worksheet.set_column(col_idx, col_idx, 
+                            13, columnright_format)
+                    else:
+                        worksheet.set_column(col_idx, col_idx, 
+                            8, columnleft_format)
+
+
+    class BillOfMaterialsSection:
+        def __init__(self, material_estimates, start_col, start_row):
+            self.material_estimates = material_estimates
+            self.start_col = start_col
+            self.start_row = start_row
+
+        @property
+        def rows(self):
+            label = ['Bill of Materials']
+            header = ['Material', 'Rate']
+            materials = []
+
+            for m in self.material_estimates:
+                total = [m.name, m.rate.amount, '/ %s' % m.uom]
+                stock_needed = ['Stock Needed', '', '']
+                spoilage_count = ['Spoilage (10%)', '', '']
+                for estimate in m.estimates:
+                    total += [estimate.estimated_total_quantity, '']
+                    stock_needed += [estimate.estimated_stock_quantity, '']
+                    spoilage_count += [estimate.estimated_spoilage_quantity, '']
+                materials.extend([total,  stock_needed, spoilage_count])
+
+            return [label, header] + materials
+
+        def write(self, writer, sheet_name):
+            dataframe = pd.DataFrame(self.rows)
+            dataframe.to_excel(writer, sheet_name=sheet_name, header=False,
+                index=False, startcol=self.start_col, startrow=self.start_row)
+            self.format(writer, sheet_name)
+        
+        def format(self, writer, sheet_name):
+            workbook = writer.book
+            worksheet = writer.sheets[sheet_name]
+            if workbook is not None and worksheet is not None:
+                pass
+
+
+    class ServiceEstimatesSection:
+        def __init__(self, service_estimates):
+            self.service_estimates = service_estimates
+
+    @property
+    def header_section(self):
+        if self.product_estimate is not None:
+            order_quantities = []
+            for estimate_quantity in self.product_estimate.estimate_quantities.all():
+                order_quantities.append(estimate_quantity.quantity)
+            header_section = ProductEstimateSheet.HeaderSection(
+                order_quantities, 0, 0)
+            return header_section
+
+    @property
+    def bill_of_materials_section(self):
+        if self.product_estimate is not None:
+            material_estimates = self.product_estimate.estimates.material_estimates
+            bom_section = ProductEstimateSheet.BillOfMaterialsSection(
+                material_estimates, 0, 2)
+            return bom_section
+
+    def write(self, writer):
+        sheet_name = self.sheet_name
+        self.header_section.write(writer, sheet_name)
+        self.bill_of_materials_section.write(writer, sheet_name)
 
 
 class CostEstimateWorkbook(ExcelWorkbook):
@@ -210,8 +322,12 @@ class CostEstimateWorkbook(ExcelWorkbook):
         sheets = []
 
         if self.product_estimate is not None:
-            product_estimate_sheet = ProductSummarySheet(
+            product_summary_sheet = ProductSummarySheet(
                 self.product_estimate, 'Specifications')
+            sheets.append(product_summary_sheet)
+
+            product_estimate_sheet = ProductEstimateSheet(
+                self.product_estimate, 'Costing')
             sheets.append(product_estimate_sheet)
 
         return sheets

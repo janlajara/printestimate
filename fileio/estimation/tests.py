@@ -1,11 +1,23 @@
 import pandas as pd
 import pytest
-from inventory.tests import item_factory, base_unit__sheet, alt_unit__ream
+from inventory.models import Item, BaseStockUnit, AlternateStockUnit
 from estimation.template.tests import meta_product, gto_workstation, \
     gto_machine, finishing_workstation
 from estimation.product.models import ProductEstimate
 from estimation.product.tests import product_template
 from fileio.estimation.models import CostEstimateWorkbook
+
+
+@pytest.fixture
+def item_factory(db):
+    def create_item(**kwargs):
+        buom = BaseStockUnit.objects.create(name='sheet', abbrev='sht')
+        auom = AlternateStockUnit.objects.create(name='ream', abbrev='rm')
+        auom.base_stock_units.add(buom)
+        item = Item.objects.create_item(base_uom=buom, alternate_uom=auom, 
+                                        override_price=3, **kwargs)
+        return item
+    return create_item
 
 
 @pytest.fixture
@@ -41,6 +53,6 @@ def test_product_summary_sheet(db, product):
     assert service_section.start_row == 7
     assert service_section.start_col == 0
 
-    #path_to_file = 'test_write_excel.xlsx'
-    #with pd.ExcelWriter(path_to_file, engine='xlsxwriter') as writer:
-    #    workbook.write(writer)
+    path_to_file = 'test_write_excel.xlsx'
+    with pd.ExcelWriter(path_to_file, engine='xlsxwriter') as writer:
+        workbook.write(writer)

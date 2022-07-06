@@ -223,29 +223,6 @@ class ProductEstimateSheet:
                 col_2 = self.start_col
                 worksheet.set_column(col_2, col_2, 35)
 
-                quantity_count = len(self.order_quantities)
-                quantity_start = self.start_col+3
-                quantity_format = workbook.add_format({
-                    'bold': True, 'font_size': 12,
-                    'align': 'center', 'bottom': 1
-                }) 
-                columnleft_format = workbook.add_format({'left': 1})
-                columnright_format = workbook.add_format({'right': 1})
-                
-                for x in range(0, (quantity_count*2)):
-                    col_idx = quantity_start + x
-
-                    if x % 2 == 1:
-                        idx = int((x-1)/2)
-                        quantity = self.order_quantities[idx]
-                        worksheet.merge_range(0, col_idx-1, 0, col_idx, 
-                            quantity, quantity_format)
-                        worksheet.set_column(col_idx, col_idx, 
-                            13, columnright_format)
-                    else:
-                        worksheet.set_column(col_idx, col_idx, 
-                            8, columnleft_format)
-
 
     class BillOfMaterialsSection:
         def __init__(self, material_estimates, start_col, start_row):
@@ -255,47 +232,170 @@ class ProductEstimateSheet:
 
         @property
         def rows(self):
-            label = ['Bill of Materials']
-            header = ['Material', 'Rate']
+            header = ['Material', 'Rate', '']
+            header_complete = False
             materials = []
 
             for m in self.material_estimates:
                 total = [m.name, m.rate.amount, '/ %s' % m.uom]
                 stock_needed = ['Stock Needed', '', '']
                 spoilage_count = ['Spoilage (10%)', '', '']
+                
                 for estimate in m.estimates:
+                    if not header_complete:
+                        header += ['Qty', 'Cost']
                     total += [estimate.estimated_total_quantity, '']
                     stock_needed += [estimate.estimated_stock_quantity, '']
                     spoilage_count += [estimate.estimated_spoilage_quantity, '']
+
+                if not header_complete:
+                    header_complete = True
+
                 materials.extend([total,  stock_needed, spoilage_count])
 
-            return [label, header] + materials
+            return [header] + materials
 
         def write(self, writer, sheet_name):
             dataframe = pd.DataFrame(self.rows)
             dataframe.to_excel(writer, sheet_name=sheet_name, header=False,
                 index=False, startcol=self.start_col, startrow=self.start_row)
             self.format(writer, sheet_name)
+            self.set_formulas(writer, sheet_name)
         
         def format(self, writer, sheet_name):
             workbook = writer.book
             worksheet = writer.sheets[sheet_name]
-            if workbook is not None and worksheet is not None:
-                pass
+            bold_format = workbook.add_format({'bold': True, 'align': 'center'})
 
+            worksheet.merge_range(2, 1, 2, 2, 'Rate')
+            worksheet.set_row(2, None, bold_format)
+
+            indent = workbook.add_format({'indent': 1})
+
+            for (i, m) in enumerate(self.material_estimates):
+                row = 3 + (3*i)
+                row_val = self.rows
+                si = ((i*3)+1)
+                worksheet.write(row, 0, row_val[si][0])
+                worksheet.write(row+1, 0, row_val[si+1][0], indent)
+                worksheet.write(row+2, 0, row_val[si+2][0], indent)
+
+        def set_formulas(self, writer, sheet_name):
+            workbook = writer.book
+            worksheet = writer.sheets[sheet_name]
+
+            currency_format = workbook.add_format({'num_format': '₱#,##0.00'})
+            worksheet.set_column(1, 1, None, currency_format)
+
+            currency_format2 = workbook.add_format(
+                {'num_format': '₱#,##0.00', 'right': 1})
+
+            for (i, m) in enumerate(self.material_estimates):
+                row = 3 + (3*i)
+                for (j, estimate) in enumerate(m.estimates):
+                    col = 4 + (2*j)
+                    qty_col = str(chr(97+(col-1))).upper()
+                    worksheet.write_formula(row, col, 
+                        '=B%s*%s%s' % (row+1, qty_col, row+1),
+                        currency_format2)
 
     class ServiceEstimatesSection:
-        def __init__(self, service_estimates):
+        def __init__(self, service_estimates, start_col, start_row):
             self.service_estimates = service_estimates
+            self.start_col = start_col
+            self.start_row = start_row
+
+        @property
+        def meta(self):
+            services = []
+            indented = []
+            formula = []
+            index = 0
+
+            def _add_row(row, indent=None):
+                nonlocal index
+                services.append(row)
+                if indent is not None:
+                    indented.append([index, indent, row[0]])
+                index += 1
+                return index
+            
+            def _add_formula(row, col, formula_expression):
+                formula.append([row, col, formula_expression])
+                
+            for se in self.service_estimates:
+                _add_row([se.name])
+
+                for oe in se.operation_estimates:
+                    oeval = [oe.name + 
+                        (' ' + oe.item_name if oe.item_name else '')]
+                    _add_row(oeval, 1)
+
+                    for ae in oe.activity_estimates:
+                        aeval = [ae.name + 
+                            (' ' + ae.notes if ae.notes and len(ae.notes) > 0 else '')]
+                        _add_row(aeval, 2)
+
+                        for aee in ae.activity_expense_estimates:
+                            arr = [aee.name, aee.rate.amount, 
+                                aee.type if aee.type == 'flat' else '/ %s' % aee.estimates[0].uom]
+                            for (key, estimate) in enumerate(aee.estimates):
+                                arr += [1 if aee.type == 'flat' else estimate.quantity, '']
+                                row = self.start_row + index + 2
+                                col = 4+(2*key)
+                                qty_col = str(chr(97+(col-1))).upper()
+                                _add_formula(index, col, 
+                                    '=B%s*%s%s' % (row, qty_col, row))
+                            _add_row(arr, 3)
+            return {
+                "rows": services,
+                "indented": indented,
+                "formula": formula}
+
+        @property
+        def rows(self):
+            header = ['Service']
+            services = self.meta.get('rows')
+            return [header] + services
+
+        def write(self, writer, sheet_name):
+            dataframe = pd.DataFrame(self.rows)
+            dataframe.to_excel(writer, sheet_name=sheet_name, header=False,
+                index=False, startcol=self.start_col, startrow=self.start_row)
+            self.format(writer, sheet_name)
+
+        def format(self, writer, sheet_name):
+            workbook = writer.book
+            worksheet = writer.sheets[sheet_name]
+            bold_format = workbook.add_format({'bold': True, 'align': 'center'})
+            worksheet.set_row(self.start_row, None, bold_format)
+            currency_format = workbook.add_format({'num_format': '₱#,##0.00', 'right': 1})
+
+            for indented_row in self.meta.get('indented'):
+                row_index = self.start_row + 1 + indented_row[0]
+                indent_size = indented_row[1]
+                value = indented_row[2]
+                indent_format = workbook.add_format({'indent': indent_size})
+                worksheet.write(row_index, 0, value, indent_format)
+
+            for formula_row in self.meta.get('formula'):
+                row = self.start_row + 1 + formula_row[0]
+                col = formula_row[1]
+                formula = formula_row[2]
+                worksheet.write_formula(row, col, formula, currency_format)
+
+    @property
+    def order_quantities(self):
+        order_quantities = []
+        for estimate_quantity in self.product_estimate.estimate_quantities.all():
+            order_quantities.append(estimate_quantity.quantity)
+        return order_quantities
 
     @property
     def header_section(self):
         if self.product_estimate is not None:
-            order_quantities = []
-            for estimate_quantity in self.product_estimate.estimate_quantities.all():
-                order_quantities.append(estimate_quantity.quantity)
             header_section = ProductEstimateSheet.HeaderSection(
-                order_quantities, 0, 0)
+                self.order_quantities, 0, 0)
             return header_section
 
     @property
@@ -306,10 +406,47 @@ class ProductEstimateSheet:
                 material_estimates, 0, 2)
             return bom_section
 
+    @property
+    def service_estimates_section(self):
+        if self.product_estimate is not None:
+            starting_row = len(self.bill_of_materials_section.rows) + 3
+            service_estimates = self.product_estimate.estimates.service_estimates
+            services_section = ProductEstimateSheet.ServiceEstimatesSection(
+                service_estimates, 0, starting_row)
+            return services_section
+
     def write(self, writer):
         sheet_name = self.sheet_name
         self.header_section.write(writer, sheet_name)
         self.bill_of_materials_section.write(writer, sheet_name)
+        self.service_estimates_section.write(writer, sheet_name)
+        self.format(writer)
+
+    def format(self, writer):
+        workbook = writer.book
+        worksheet = writer.sheets[self.sheet_name]
+        quantity_count = len(self.order_quantities)
+        quantity_start = 3
+        quantity_format = workbook.add_format({
+            'bold': True, 'font_size': 12,
+            'align': 'center', 'bottom': 1
+        }) 
+        columnleft_format = workbook.add_format({'left': 1})
+        columnright_format = workbook.add_format({'right': 1})
+
+        for x in range(0, (quantity_count*2)):
+            col_idx = quantity_start + x
+
+            if x % 2 == 1:
+                idx = int((x-1)/2)
+                quantity = self.order_quantities[idx]
+                worksheet.merge_range(0, col_idx-1, 0, col_idx, 
+                    quantity, quantity_format)
+                worksheet.set_column(col_idx, col_idx, 
+                    13, columnright_format)
+            else:
+                worksheet.set_column(col_idx, col_idx, 
+                    8, columnleft_format)
 
 
 class CostEstimateWorkbook(ExcelWorkbook):

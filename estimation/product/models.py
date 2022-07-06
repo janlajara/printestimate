@@ -165,8 +165,6 @@ class ProductEstimate(models.Model):
 
         def _get_service_estimates(services):
             service_estimates = []
-            def __append_to_service_estimates(estimate):
-                service_estimates.append(estimate)
             for service in services:
                 se = service.estimates
                 service_estimates.append(se)

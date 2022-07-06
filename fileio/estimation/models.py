@@ -384,6 +384,59 @@ class ProductEstimateSheet:
                 formula = formula_row[2]
                 worksheet.write_formula(row, col, formula, currency_format)
 
+    class FooterSection:
+        def __init__(self, order_quantities, start_col, start_row):
+            self.order_quantities = order_quantities
+            self.start_col = start_col
+            self.start_row = start_row
+        
+        @property
+        def footer(self):
+            return [['Total Price'], ['Unit Price']]
+        
+        @property
+        def meta(self):
+            total_prices = []
+            unit_prices = []
+            sum_start_row = 4
+            sum_end_row = self.start_row-1
+
+            for (key, order_quantity) in enumerate(self.order_quantities):
+                col = 4+(2*key)
+                cost_col = str(chr(97+(col))).upper()
+                
+                total_price_formula = ('=SUM(%s%s:%s%s)' % 
+                    (cost_col, sum_start_row, cost_col, sum_end_row))
+                total_prices.append(['%s%s' % (cost_col, self.start_row+1), 
+                    total_price_formula])
+
+                unit_price_formula = total_price_formula + ('/%s' % order_quantity)
+                unit_prices.append(['%s%s' % (cost_col, self.start_row+2), 
+                    unit_price_formula])
+            
+            return {
+                "formula": [total_prices, unit_prices]
+            }
+        
+        def write(self, writer, sheet_name):
+            dataframe = pd.DataFrame(self.footer)
+            dataframe.to_excel(writer, sheet_name=sheet_name, header=False,
+                index=False, startcol=self.start_col, startrow=self.start_row)
+            self.format(writer, sheet_name)
+
+        def format(self, writer, sheet_name):
+            workbook = writer.book
+            worksheet = writer.sheets[sheet_name]
+            currency_format = workbook.add_format({'num_format': '₱#,##0.00', 
+                'right': 1, 'bold': True, 'underline': True})
+
+            for x in self.meta.get('formula'):
+                for formula_row in x:
+                    position = formula_row[0]
+                    formula_expression = formula_row[1]
+                    worksheet.write_formula(position, formula_expression, 
+                        cell_format=currency_format)
+        
     @property
     def order_quantities(self):
         order_quantities = []
@@ -415,11 +468,21 @@ class ProductEstimateSheet:
                 service_estimates, 0, starting_row)
             return services_section
 
+    @property
+    def footer_section(self):
+        if self.product_estimate is not None:
+            starting_row = (len(self.service_estimates_section.rows) +
+                len(self.bill_of_materials_section.rows) + 5)
+            footer_section = ProductEstimateSheet.FooterSection(
+                self.order_quantities, 1, starting_row)
+            return footer_section
+
     def write(self, writer):
         sheet_name = self.sheet_name
         self.header_section.write(writer, sheet_name)
         self.bill_of_materials_section.write(writer, sheet_name)
         self.service_estimates_section.write(writer, sheet_name)
+        self.footer_section.write(writer, sheet_name)
         self.format(writer)
 
     def format(self, writer):

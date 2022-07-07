@@ -29,12 +29,19 @@ class ProductSummarySheet:
             self.format(writer, sheet_name)
 
         def format(self, writer, sheet_name):
+            workbook = writer.book
             worksheet = writer.sheets[sheet_name]
+            alignleft_format = workbook.add_format({'align':'left'})
+            alignleftwrap_format = workbook.add_format({
+                'align':'left', 'valign': 'top', 'text_wrap':True})
             if worksheet is not None:
                 col_1 = self.start_col + 0
                 col_2 = self.start_col + 1
-                worksheet.set_column(col_1, col_1, 25)
-                worksheet.set_column(col_2, col_2, 30)
+                col_3 = self.start_col + 2
+                worksheet.set_column(col_1, col_1, 30)
+                worksheet.set_column(col_2, col_2, 45)
+                worksheet.set_column(col_3, col_3, 30, alignleft_format)
+                worksheet.set_row(self.start_row+2, 65, alignleftwrap_format)
     
     class ComponentSection:
         def __init__(self, components, start_row=0, start_col=0):
@@ -68,15 +75,12 @@ class ProductSummarySheet:
             workbook = writer.book
             worksheet = writer.sheets[sheet_name]
             if workbook is not None and worksheet is not None:
-                textwrap_format = workbook.add_format({'text_wrap': True})
-                col_2 = self.start_col + 1
-                worksheet.set_column(col_2, col_2, 30, textwrap_format)
-
                 # Increase height of each row with cell containing multi-line breaks
                 for (index, component) in enumerate(self.components):
                     material_count = len(component.materials.all()) 
                     if material_count > 1:
-                        aligntop_format = workbook.add_format()
+                        aligntop_format = workbook.add_format(
+                            {'align': 'top', 'text_wrap': True})
                         aligntop_format.set_align('top')
                         row = self.start_row + 1 + index
                         worksheet.set_row(row, material_count * 15, aligntop_format)

@@ -224,8 +224,10 @@ class ProductEstimateSheet:
             workbook = writer.book
             worksheet = writer.sheets[sheet_name]
             if workbook is not None and worksheet is not None:
-                col_2 = self.start_col
-                worksheet.set_column(col_2, col_2, 35)
+                col_1 = self.start_col
+                col_3 = self.start_col + 2
+                worksheet.set_column(col_1, col_1, 35)
+                worksheet.set_column(col_3, col_3, 10)
 
 
     class BillOfMaterialsSection:
@@ -396,12 +398,16 @@ class ProductEstimateSheet:
         
         @property
         def footer(self):
-            return [['Total Price'], ['Unit Price']]
+            return [['Total Price'], ['Unit Price'], [], 
+                ['Unit Price (Roundup)'], ['Total Price (Roundup)']]
         
         @property
         def meta(self):
             total_prices = []
             unit_prices = []
+            round_up_num = 25
+            total_prices_ru = []
+            unit_prices_ru = []
             sum_start_row = 4
             sum_end_row = self.start_row-1
 
@@ -417,9 +423,20 @@ class ProductEstimateSheet:
                 unit_price_formula = total_price_formula + ('/%s' % order_quantity)
                 unit_prices.append(['%s%s' % (cost_col, self.start_row+2), 
                     unit_price_formula])
+
+                unit_price_ru_formula = ('=CEILING(%s%s, %s)' %
+                    (cost_col, self.start_row+2, round_up_num))
+                unit_prices_ru.append(['%s%s' % (cost_col, self.start_row+4),
+                    unit_price_ru_formula])
+
+                total_price_ru_formula = ('%s%s*%s' % 
+                    (cost_col, self.start_row+4, order_quantity))
+                total_prices_ru.append(['%s%s' % (cost_col, self.start_row+5),
+                    total_price_ru_formula])
             
             return {
-                "formula": [total_prices, unit_prices]
+                "formula": [total_prices, unit_prices, 
+                    unit_prices_ru, total_prices_ru]
             }
         
         def write(self, writer, sheet_name):

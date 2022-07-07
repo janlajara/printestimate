@@ -1,6 +1,5 @@
 from datetime import datetime
 from rest_framework.views import APIView
-from rest_framework.response import Response
 from fileio.inventory.models import ItemWorkbook
 from fileio.models import BytesExcelWriter
 from fileio import constants
@@ -9,7 +8,7 @@ from django.http import FileResponse
 
 class ItemsWorkbookView(APIView):
 
-    def get(self, request, format=None):
+    def get(self, request):
         file_name = 'items-workbook_%s' % datetime.now().strftime(
             constants.FILE_TIMESTAMP_PATTERN)
         items_workbook = ItemWorkbook(name=file_name)

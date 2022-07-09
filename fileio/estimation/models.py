@@ -206,14 +206,15 @@ class ProductEstimateSheet:
         self.sheet_name = sheet_name
 
     class HeaderSection:
-        def __init__(self, order_quantities, start_col, start_row):
+        def __init__(self, name, order_quantities, start_col, start_row):
+            self.name = name
             self.order_quantities = order_quantities
             self.start_col = start_col
             self.start_row = start_row
 
         @property
         def header(self):
-            return pd.DataFrame([['Cost Breakdown']])
+            return pd.DataFrame([[self.name]])
 
         def write(self, writer, sheet_name):
             self.header.to_excel(writer, sheet_name=sheet_name, header=False,
@@ -390,6 +391,103 @@ class ProductEstimateSheet:
                 formula = formula_row[2]
                 worksheet.write_formula(row, col, formula, currency_format)
 
+    class CostAddonSection:
+        class CostAddonRow:
+            def __init__(self, name, value, type, 
+                    order_quantities, start_col, start_row):
+                self.name = name
+                self.value = value
+                self.type = type
+                self.order_quantities = order_quantities
+                self.start_col = start_col
+                self.start_row = start_row
+
+            @property
+            def formula_quantities(self):
+                formulas = []
+                flat_type_formula = '=B%s'
+                percent_type_formula = '=SUM(%s%s:%s%s) * B%s'
+
+                for x in range(len(self.order_quantities)):
+                    current_row = self.start_row+1
+                    num_col = 4+(2*x)
+                    ltr_col = str(chr(97+(num_col))).upper()
+                    formula = (flat_type_formula % current_row
+                        if self.type == 'flat' 
+                        else percent_type_formula % 
+                            (ltr_col, 5, ltr_col, current_row-1, current_row))
+                    formulas.append(['%s%s' % (ltr_col, current_row), formula])
+
+                return formulas
+
+            @property
+            def row(self):
+                row = [self.name, self.value, '']
+                return row
+
+            def write(self, writer, sheet_name):
+                workbook = writer.book
+                worksheet = writer.sheets[sheet_name]
+                currency = workbook.add_format({'num_format': '₱#,##0.00'})
+                percent = workbook.add_format({'num_format': '0%'})
+
+                worksheet.write(self.start_row, 0, self.name)
+                worksheet.write(self.start_row, 1, self.value, 
+                    currency if self.type == 'flat' else percent)
+
+                self.format(writer, sheet_name)
+
+            def format(self, writer, sheet_name):
+                workbook = writer.book
+                worksheet = writer.sheets[sheet_name]
+                currency_format = workbook.add_format({
+                    'num_format': '₱#,##0.00',
+                    'right': 1, 'align': 'right'})
+
+                for formula in self.formula_quantities:
+                    position = formula[0]
+                    formula_expression = formula[1]
+                    worksheet.write_formula(position, formula_expression, 
+                        cell_format=currency_format)
+
+        def __init__(self, cost_addons, order_quantities, start_col, start_row):
+            self.cost_addons = cost_addons
+            self.order_quantities = order_quantities
+            self.start_col = start_col
+            self.start_row = start_row
+        
+        @property
+        def header(self):
+            return ['Cost Addons']
+
+        @property
+        def rows(self):
+            cost_addons = []
+
+            if len(self.cost_addons) > 0:
+                addons = self.cost_addons[0]
+
+                for (index, cost) in enumerate(addons.addon_costs):
+                    addon = ProductEstimateSheet.CostAddonSection.CostAddonRow(
+                        cost.name, 
+                        cost.addon_value if cost.type == 'flat' else cost.addon_value/100, 
+                        cost.type,
+                        self.order_quantities, 
+                        self.start_col, 
+                        self.start_row+1+index)
+                    cost_addons.append(addon)
+
+            return cost_addons
+
+        def write(self, writer, sheet_name):
+            workbook = writer.book
+            worksheet = writer.sheets[sheet_name]
+            boldcenter = workbook.add_format({'bold': True, 'align': 'center'})
+            worksheet.write(self.start_row, self.start_col, self.header[0], boldcenter)
+
+            for row in self.rows:
+                row.write(writer, sheet_name)
+
     class FooterSection:
         def __init__(self, order_quantities, start_col, start_row):
             self.order_quantities = order_quantities
@@ -469,6 +567,7 @@ class ProductEstimateSheet:
     def header_section(self):
         if self.product_estimate is not None:
             header_section = ProductEstimateSheet.HeaderSection(
+                self.product_estimate.name,
                 self.order_quantities, 0, 0)
             return header_section
 
@@ -490,10 +589,21 @@ class ProductEstimateSheet:
             return services_section
 
     @property
+    def cost_addon_section(self):
+        if self.product_estimate is not None:
+            starting_row = (len(self.service_estimates_section.rows) +
+                len(self.bill_of_materials_section.rows) + 4)
+            cost_addons = self.product_estimate.cost_addons
+            addon_section = ProductEstimateSheet.CostAddonSection(
+                cost_addons, self.order_quantities, 0, starting_row)
+            return addon_section
+
+    @property
     def footer_section(self):
         if self.product_estimate is not None:
             starting_row = (len(self.service_estimates_section.rows) +
-                len(self.bill_of_materials_section.rows) + 5)
+                len(self.bill_of_materials_section.rows) + 
+                len(self.cost_addon_section.rows) + 7)
             footer_section = ProductEstimateSheet.FooterSection(
                 self.order_quantities, 1, starting_row)
             return footer_section
@@ -503,6 +613,7 @@ class ProductEstimateSheet:
         self.header_section.write(writer, sheet_name)
         self.bill_of_materials_section.write(writer, sheet_name)
         self.service_estimates_section.write(writer, sheet_name)
+        self.cost_addon_section.write(writer, sheet_name)
         self.footer_section.write(writer, sheet_name)
         self.format(writer)
 
@@ -531,6 +642,8 @@ class ProductEstimateSheet:
             else:
                 worksheet.set_column(col_idx, col_idx, 
                     8, columnleft_format)
+        
+        worksheet.freeze_panes(1, 3)
 
 
 class CostEstimateWorkbook(ExcelWorkbook):

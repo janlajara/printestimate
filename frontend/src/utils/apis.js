@@ -18,4 +18,4 @@ export {EstimateApi} from '@/utils/apis/estimation.quotes.js'
 
 export {CostAddonApi} from '@/utils/apis/estimation.costaddons.js' 
 
-export {ItemsWorkbookApi} from '@/utils/apis/fileio.inventory.js'
+export {ItemsWorkbookApi, CostEstimateWorkbookApi} from '@/utils/apis/fileio.inventory.js'

@@ -25,6 +25,10 @@
                         {{state.data.estimateCode}}</span>?
                 </div>
             </DeleteRecordDialog>
+            <div class="flex-grow grid justify-items-end">
+                <Button color="tertiary" icon="file_download" class="float-right"
+                    :action="downloadWorkbook">Download</Button>
+            </div>
         </div>
         <Section>
             <DescriptionList class="md:grid-cols-2">
@@ -61,7 +65,7 @@ import EstimateDetailCosting from './costing/EstimateDetailCosting.vue';
 
 import {reactive, inject, onBeforeMount} from 'vue';
 import {useRoute} from 'vue-router';
-import {EstimateApi} from '@/utils/apis.js';
+import {EstimateApi, CostEstimateWorkbookApi} from '@/utils/apis.js';
 import {formatMoney as formatCurrency} from '@/utils/format.js'
 
 export default {
@@ -207,6 +211,14 @@ export default {
             }
         }
 
+        const downloadWorkbook = async ()=> {
+            const id = state.data.id;
+            const filename = `estimate-workbook_${state.data.estimateCode}_${new Date().getTime()}.xlsx`;
+            if (id) {
+                await CostEstimateWorkbookApi.downloadCostEstimateWorkbook(id, filename);
+            }
+        }
+
         const formatMoney = (amount)=> {
             if (amount != null)
                 return formatCurrency(amount, currency)
@@ -214,7 +226,7 @@ export default {
         }
 
         return {
-            state, retrieveEstimateCostsById, formatMoney
+            state, retrieveEstimateCostsById, formatMoney, downloadWorkbook
         }
     }
     

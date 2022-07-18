@@ -31,7 +31,7 @@ SECRET_KEY = 'ee$^e#xc4fj9!1y0yen5ia^&whdss%#25g43v==ve)8^w%vdb4'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['printestimate.herokuapp.com', 'localhost']
+ALLOWED_HOSTS = ['printestimate-api.herokuapp.com', 'localhost']
 
 
 # Application definition
@@ -69,6 +69,8 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ORIGIN_WHITELIST = (
     'http://localhost:8000',
     'http://localhost:8080',
+    'https://localhost:8000',
+    'https://localhost:8080',
 )
 
 ROOT_URLCONF = 'printestimate.urls'

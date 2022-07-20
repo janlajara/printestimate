@@ -30,6 +30,10 @@ class MetaProductData(PolymorphicModel):
     type = models.CharField(max_length=15, choices=Item.TYPES)
     meta_product = models.ForeignKey(MetaProduct, on_delete=models.CASCADE,
         related_name='meta_product_datas')
+    non_polymorphic = models.Manager()
+
+    class Meta:
+        base_manager_name = 'non_polymorphic'
     
     def add_meta_operation(self, name, options_type, **kwargs):
         return MetaOperation.objects.create(name=name, options_type=options_type,

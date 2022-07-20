@@ -72,7 +72,7 @@ class ItemSheet:
         base_unit = obj.base_uom.name
         alternate_unit = (obj.alternate_uom.name if 
             obj.alternate_uom is not None else None)
-        price = obj.override_price
+        price = obj.override_price.amount
         return [id, name, base_unit, alternate_unit, price]
 
 

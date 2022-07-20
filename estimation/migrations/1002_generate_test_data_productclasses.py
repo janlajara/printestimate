@@ -34,6 +34,7 @@ def create_product_class(apps, schema_editor):
             operations_data = service_data.pop('operations')
             if component_name is not None:
                 component = product.meta_product_datas.get(name=component_name)
+                component = MetaComponent.objects.get(pk=component.pk)
                 service = product.add_meta_service(meta_component=component, **service_data)
             else:
                 service = product.add_meta_service(**service_data)

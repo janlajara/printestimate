@@ -1,5 +1,5 @@
 from django.db import migrations
-from estimation.metaproduct.models import MetaProduct
+from estimation.metaproduct.models import MetaProduct, MetaComponent, MetaService
 from estimation.template.models import ProductTemplate
 
 def create_product_template(apps, schema_editor):
@@ -64,6 +64,7 @@ def create_product_template(apps, schema_editor):
             machine_option_name = component_data.pop('machine_option') if 'machine_option' in component_data else None
             material_options = component_data.pop('meta_material_options')
             component_class = product_class.meta_product_datas.get(name=meta_component_name)
+            component_class = MetaComponent.objects.get(pk=component_class.pk)
             if machine_option_name is not None:
                 machine_option_class = component_class.meta_machine_options.get(machine__name=machine_option_name)
                 component_data['machine_option'] = machine_option_class
@@ -78,7 +79,7 @@ def create_product_template(apps, schema_editor):
             meta_service_name = service_data.pop('meta_service')
             operations_data = service_data.pop('operations')
             meta_service = product_class.meta_product_datas.get(name=meta_service_name)
-
+            meta_service = MetaService.objects.get(pk=meta_service.pk)
             service_template = product_template.add_service_template(
                 meta_service=meta_service, **service_data)
             

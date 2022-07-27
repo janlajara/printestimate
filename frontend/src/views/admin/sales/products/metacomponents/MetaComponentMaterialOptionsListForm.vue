@@ -21,7 +21,7 @@ import InputTextLookup from '@/components/InputTextLookup.vue';
 
 import {reactive, computed, watch} from 'vue';
 import {ItemApi} from '@/utils/apis.js';
-import {differenceWith, isEqual} from 'lodash';
+import {find, orderBy} from 'lodash';
 
 export default {
     components: {
@@ -36,26 +36,36 @@ export default {
         const state = reactive({
             materialType: computed(()=> props.materialType),
             materialForm: {
-                id: null,
                 items: [],
                 lookupText: '',
             },
             meta: {
-                selectedMaterialChoices: [],
-                materialChoices: [],
+                materialChoicesContainer: [],
+                materialChoices: computed(()=> {
+                    const sorted = orderBy(
+                        state.meta.materialChoicesContainer,
+                        ['label'], ['asc']);
+                    return sorted;
+                })
             },
             select: (value) => {
                 state.materialForm.items = value;
-                const choices = state.materialForm.items.map(x => 
-                    state.meta.materialChoices.find(y => y.value == x));
-                state.meta.selectedMaterialChoices = choices;
                 state.emitInput();
+            },
+            addMaterialChoices: (choices) => {
+                choices.forEach(choice => {
+                    const found = find(
+                        state.meta.materialChoicesContainer, 
+                        {value: choice.value});
+                    if (!found) {
+                        state.meta.materialChoicesContainer.push(choice);
+                    }
+                })
             },
             clearMaterialForm: ()=> {
                 state.materialForm = {
-                    id: null,
                     items: [],
-                    lookupText: null,
+                    lookupText: '',
                 }
             },
             lookupMaterials: (lookupText)=> {
@@ -63,23 +73,22 @@ export default {
                 listMaterials(lookupText);
             },
             emitInput: ()=> {
-                let materialList = [];
-                if (state.materialForm.items.length > 0) {
-                    materialList = state.materialForm.items.map(x => {
-                        const choice = state.meta.materialChoices.find( y => y.value == x);
-                        const existing = props.value.find(z => z.item == x);
-                        if (choice) {
-                            const materialOption = {
-                                id: existing? existing.id : null, 
-                                item: x, label: choice.label
-                            };
-                            return materialOption;
-                        }
+                let materialList = state.meta.materialChoices
+                    .filter(x => state.materialForm.items.includes(x.value))
+                    .map(y => {
+                        const existing = props.value.find(z => z.item == y.value);
+                        const materialOption = {
+                            id: existing? existing.id : null, 
+                            item: y.value, 
+                            label: y.label,
+                            type: y.type
+                        };
+                        return materialOption;
                     });
-                }
                 emit('input', materialList);
-            }
-        }); 
+            },
+
+        });
 
         const listMaterials = async (search=null) => { 
             const filter = {
@@ -89,33 +98,31 @@ export default {
             if (response) {
                 let choices = [];
                 choices = response.results.map( x => ({
-                    label: x.full_name, value: x.id,
+                    id: null,
+                    label: x.full_name, 
+                    value: x.id,
                     type: x.type, 
                 }));
-                const toAdd = state.meta.selectedMaterialChoices;
-                const diff = differenceWith(toAdd, choices, isEqual);
-                state.meta.materialChoices = diff.concat(choices);
+                state.addMaterialChoices(choices);
             }
-        } 
-        watch(()=> props.value, async ()=> {
-            if (props.value.length > 0) {
-                state.materialForm.items = props.value.map(x => 
-                    x? x.item : null);
-                await listMaterials();
-                const toAdd = props.value.map(x => ({
-                    label: x.label, value: x.item,
-                    type: x.type
-                }));
-                const ids = new Set(state.meta.materialChoices.map(x => x.value));
-                state.meta.materialChoices = [...state.meta.materialChoices, 
-                    ...toAdd.filter(x => !ids.has(x.value))]; 
-            }
+        }
+
+        watch(()=> state.materialType, ()=> {
+            listMaterials();
         });
-        watch(()=> state.materialType, (type)=> {
-            state.materialForm.lookupText = null;
-            const choices = state.meta.materialChoices;
-            if (choices && choices.length > 0 && choices[0].type != type) {
-                listMaterials();
+
+        watch(()=> props.value, async ()=> {
+            if (props.value && props.value.length > 0) {
+                state.materialForm.items = props.value.map(x => x.item);
+                const choices = props.value.map(x => ({
+                    id: x.id,
+                    label: x.label, 
+                    value: x.item,
+                    type: x.type}));
+                state.addMaterialChoices(choices);
+            }
+            if (state.meta.materialChoicesContainer.length == props.value.length) {
+                await listMaterials();
             }
         });
 

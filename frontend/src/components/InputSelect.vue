@@ -103,7 +103,7 @@ export default {
       });
 
       const toggleDropdown = (value) => {
-        state.isDroppedDown = value;
+        if (!props.disabled) state.isDroppedDown = value;
       };
 
       const inputCustomValue = (event) => {

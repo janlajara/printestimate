@@ -12,7 +12,7 @@
 
                     <dt>Runsheet count:</dt>
                     <dd>
-                        {{formatQuantity(state.data.stats.runsheetPerParent, 'out', 'outs')}}
+                        {{formatQuantity(state.data.stats.runsheetCount, 'out', 'outs')}}
                         / whole sheet
                     </dd>
 

@@ -197,7 +197,8 @@ export default {
             const parentToRunsheet = state.parentToRunsheet;
             const runsheetToChildsheet = state.runsheetToCutsheet;
 
-            const runsheet = parentToRunsheet.bin;
+            const parentSheet = parentToRunsheet.bin;
+            const runsheet = parentToRunsheet.rect;
             const runsheetSize = _getSizeLabel(runsheet.width, 
                 runsheet.length, runsheet.uom);
             const runsheetCount = parentToRunsheet.count;
@@ -209,10 +210,10 @@ export default {
             const childsheetPerRunsheet = runsheetToChildsheet.count;
             const childsheetCount = runsheetCount * childsheetPerRunsheet;
 
-            const parentUom = runsheet.uom;
+            const parentUom = parentSheet.uom;
             const childUom = childsheet.uom;
-            const parentArea = convert(runsheet.width, parentUom).to(childUom) * 
-                convert(runsheet.length, parentUom).to(childUom);
+            const parentArea = convert(parentSheet.width, parentUom).to(childUom) * 
+                convert(parentSheet.length, parentUom).to(childUom);
             const totalUsedArea = childsheet.width * 
                 childsheet.length * childsheetCount;
 
@@ -222,7 +223,7 @@ export default {
 
             return {
                 layoutType: state.layout.type,
-                runsheetSize, runsheetCount, 
+                hasRunsheet: state.hasRunsheet, runsheetSize, runsheetCount, 
                 runsheetCountLabel: `${runsheetCount} sheets / material`,
                 childsheetSize, childsheetCount,
                 childsheetCountLabel: `${childsheetCount} sheets / material`,
@@ -258,7 +259,7 @@ export default {
 
             return {
                 layoutType: state.layout.type,
-                runsheetSize, runsheetCount, 
+                hasRunsheet: state.hasRunsheet, runsheetSize, runsheetCount, 
                 runsheetCountLabel: `${runsheetCount} sheet or more`,
                 childsheetSize, childsheetCount,
                 childsheetCountLabel: `${childsheetCount} sheets / runsheet`,
@@ -286,7 +287,7 @@ export default {
             
             return {
                 layoutType: state.layout.type,
-                childsheetSize, childsheetCount,
+                hasRunsheet: state.hasRunsheet, childsheetSize, childsheetCount,
                 childsheetCountLabel: `${childsheetCount} sheets / material`,
                 totalUsage, totalWasteage, totalCutCount
             }

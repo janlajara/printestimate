@@ -42,8 +42,12 @@ export default {
             meta: {
                 materialChoicesContainer: [],
                 materialChoices: computed(()=> {
+                    const filtered = state.meta.materialChoicesContainer
+                        .filter(x => 
+                            x.label.includes(state.materialForm.lookupText) ||
+                            state.materialForm.items.includes(x.value));
                     const sorted = orderBy(
-                        state.meta.materialChoicesContainer,
+                        filtered,
                         ['label'], ['asc']);
                     return sorted;
                 })
@@ -70,7 +74,9 @@ export default {
             },
             lookupMaterials: (lookupText)=> {
                 state.materialForm.lookupText = lookupText;
-                listMaterials(lookupText);
+                const choices = state.meta.materialChoices.map(x => x.label);
+                const isFound = choices.some(x => x.includes(lookupText));
+                if (!isFound) listMaterials(lookupText);
             },
             emitInput: ()=> {
                 let materialList = state.meta.materialChoices
@@ -90,7 +96,7 @@ export default {
 
         });
 
-        const listMaterials = async (search=null) => { 
+        const listMaterials = async (search=null) => {
             const filter = {
                 type: state.materialType || '',
             }

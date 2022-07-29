@@ -89,6 +89,34 @@
                 </div>
             </div>
 
+            <div class="border-t pt-2 grid grid-cols-2">
+                <div class="text-right">
+                    <div class="text-xs py-1">Unit Price (Round-up):</div>
+                    <div class="py-1">Total Price (Round-up):</div>
+                </div>
+                <div :class="`w-full grid grid-cols-${state.meta.quantitiesColumnLength}`">
+                    <div v-for="(quantity, key) in 
+                            state.components.paginator.paginate(state.data.quantities)" :key="key"
+                        class="grid">
+                        <div class="text-xs flex justify-end my-auto">
+                            <div class="ml-1">
+                                <span class="text-sm">
+                                    {{formatMoney(ceiling(state.meta.totalsMap[quantity] / quantity, 25))}}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-xs flex justify-end my-auto">
+                            <div class="ml-1">
+                                <span class="font-bold text-lg">
+                                    {{formatMoney(
+                                        ceiling(state.meta.totalsMap[quantity] / quantity, 25) * quantity)}}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </Section>
 </template>
@@ -100,7 +128,7 @@ import EstimateDetailCostingServices from './EstimateDetailCostingServices.vue';
 import EstimateDetailCostingCostAddons from './EstimateDetailCostingCostAddons.vue';
 
 import {reactive, inject, computed, onMounted, onUnmounted} from 'vue';
-import {formatMoney as formatCurrency} from '@/utils/format.js'
+import {formatMoney as formatCurrency, ceiling} from '@/utils/format.js'
 import {getCurrentBreakpoint} from '@/utils/tailwind.js';
 
 export default {
@@ -198,9 +226,9 @@ export default {
             }
         });
 
-        const formatMoney = (amount)=> {
+        const formatMoney = (amount, roundUpByNum=null)=> {
             if (amount != null)
-                return formatCurrency(amount, currency)
+                return formatCurrency(amount, currency, roundUpByNum)
             else return ''
         }
 
@@ -217,7 +245,7 @@ export default {
         });
 
         return {
-            state, formatMoney
+            state, formatMoney, ceiling
         }
     },
     

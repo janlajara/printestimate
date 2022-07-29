@@ -17,7 +17,7 @@ export const formatQuantity = (quantity, unit_singular, unit_plural) => {
 }
 
 export const formatMoney = (amount, currency) => {
-    const number = Number(amount)
+    const number = Number(amount);
     const formatted = number.toLocaleString("en-PH", {
         style: 'currency',
         currency: currency,
@@ -25,6 +25,14 @@ export const formatMoney = (amount, currency) => {
         maximumFractionDigits: 2
     });
     return formatted;
+}
+
+export const ceiling = (amount, significance=1) => {
+    let rounded = amount;
+    if (significance > 0) {
+        rounded = Math.ceil(amount / significance) * significance;
+    }
+    return rounded;
 }
 
 export const defaultIfNull = (object, defaultValue, property=null) => {

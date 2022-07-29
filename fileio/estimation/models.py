@@ -415,7 +415,7 @@ class ProductEstimateSheet:
                     formula = (flat_type_formula % current_row
                         if self.type == 'flat' 
                         else percent_type_formula % 
-                            (ltr_col, 5, ltr_col, current_row-1, current_row))
+                            (ltr_col, 4, ltr_col, current_row-1, current_row))
                     formulas.append(['%s%s' % (ltr_col, current_row), formula])
 
                 return formulas

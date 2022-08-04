@@ -1,14 +1,17 @@
 <template>
     <div>
-        <div class="pb-8">
-            <Button color="tertiary" icon="insert_page_break" class="float-right"
+        <div class="pb-8 grid justify-items-end">
+            <Button color="tertiary" icon="insert_page_break"
                 :always-show-text="true" :disabled="state.impositionLayout.isLoading"
                 :action="state.impositionLayout.download">Imposition Layout</Button>
         </div>
         <!-- Imposition Layout (hidden) -->
         <div id="impositionLayout" ref="impositionLayout" class="p-2" style="display:none">
             <div class="pb-4">
-                <p class="font-bold text-xl">{{$props.templateName}}</p>
+                <p class="flex justify-between">
+                    <span class="font-bold text-xl">{{$props.templateName}}</span>
+                    <span>{{$props.estimateCode}}</span>
+                </p>
                 <p class="text-gray-500 italic text-sm">{{$props.templateDescription}}</p>
             </div>
             <div v-for="(material, x) in $props.billOfMaterials" :key="x" class="p-4 border">
@@ -43,6 +46,7 @@ import {ref, reactive} from 'vue';
 
 export default {
     props:{
+        estimateCode:String,
         templateName: String,
         templateDescription: String,
         billOfMaterials: Array

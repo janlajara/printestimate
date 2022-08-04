@@ -1,9 +1,10 @@
 <template>
     <div>
         <!-- Table Rows for Bill of Materials -->
-        <div class="flex text-primary-dark font-bold">
-            <span>Bill of Materials</span>
+        <div>
+            <span class="text-primary-dark font-bold">Bill of Materials</span>
         </div>
+        <!-- Costing Breakdown w/ Imposition layout (displayed) -->
         <div v-for="(material, x) in state.data.billOfMaterials" :key="x"
             :class="!material.isExpanded? 'border-b' : ''">
             <div class="grid" :class="!material.isExpanded? 'grid-cols-2' : ''">
@@ -124,10 +125,7 @@
         </div>
         <!-- Total for all materials -->
         <div class="grid grid-cols-2 mt-2">
-            <div class="text-right text-xs">
-                <div class="py-1"></div>
-            </div>
-            <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2`">
+            <div :class="`grid grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 col-start-2`">
                 <div v-for="(quantity, x) in state.paginate(state.data.quantities)" :key="x">
                     <div class="text-xs flex py-1">
                         <div class="w-2/5 text-right italic"></div>

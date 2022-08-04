@@ -40,6 +40,7 @@
             :components="state.data.specifications.components"
             :services="state.data.specifications.services">
             <EstimateDetailSpecificationImage
+                :estimate-code="state.data.estimateCode"
                 :template-name="state.data.templateName"
                 :template-description="state.data.templateDescription"
                 :bill-of-materials="state.data.costing.billOfMaterials"/>
@@ -51,7 +52,7 @@
             :services="state.data.costing.services"
             :cost-addons="state.data.costing.costAddons"/>
         <div class="py-4 grid justify-items-end">
-            <Button color="tertiary" icon="point_of_sale" always-show-text="true"
+            <Button color="tertiary" icon="point_of_sale" :always-show-text="true"
                 :action="downloadWorkbook">Costing Sheet</Button>
         </div>
     </Page>

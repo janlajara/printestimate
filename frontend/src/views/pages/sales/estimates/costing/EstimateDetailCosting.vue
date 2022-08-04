@@ -116,7 +116,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </Section>
 </template>
@@ -128,7 +127,7 @@ import EstimateDetailCostingServices from './EstimateDetailCostingServices.vue';
 import EstimateDetailCostingCostAddons from './EstimateDetailCostingCostAddons.vue';
 
 import {reactive, inject, computed, onMounted, onUnmounted} from 'vue';
-import {formatMoney as formatCurrency, ceiling} from '@/utils/format.js'
+import {formatMoney as formatCurrency, ceiling} from '@/utils/format.js';
 import {getCurrentBreakpoint} from '@/utils/tailwind.js';
 
 export default {
@@ -235,7 +234,8 @@ export default {
         const onWindowResize = ()=> {
             const breakpoint = getCurrentBreakpoint();
             state.meta.isBreakpointBelowLg = [undefined, 'sm', 'md'].includes(breakpoint);
-        } 
+        }
+
         onMounted(()=> {
             onWindowResize();
             window.addEventListener("resize", onWindowResize);
@@ -245,7 +245,7 @@ export default {
         });
 
         return {
-            state, formatMoney, ceiling
+            state, formatMoney, ceiling,
         }
     },
     

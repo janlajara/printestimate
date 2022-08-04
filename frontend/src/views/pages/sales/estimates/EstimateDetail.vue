@@ -11,7 +11,7 @@
             <EstimateModal 
                 :product-estimate-id="state.data.id"
                 :is-open="state.components.editModal.isOpen"
-                @toggle="state.components.editModal.toggle" 
+                @toggle="state.components.editModal.toggle"
                 @saved="estimateId => retrieveEstimateCostsById(estimateId)"/>
             <DeleteRecordDialog 
                 heading="Delete Quote"
@@ -25,10 +25,6 @@
                         {{state.data.estimateCode}}</span>?
                 </div>
             </DeleteRecordDialog>
-            <div class="flex-grow grid justify-items-end">
-                <Button color="tertiary" icon="file_download" class="float-right"
-                    :action="downloadWorkbook">Download</Button>
-            </div>
         </div>
         <Section>
             <DescriptionList class="md:grid-cols-2">
@@ -43,7 +39,9 @@
             :is-processing="state.isProcessing"
             :components="state.data.specifications.components"
             :services="state.data.specifications.services">
-            <EstimateDetailSpecificationImage 
+            <EstimateDetailSpecificationImage
+                :template-name="state.data.templateName"
+                :template-description="state.data.templateDescription"
                 :bill-of-materials="state.data.costing.billOfMaterials"/>
         </EstimateDetailSpecification>
         <EstimateDetailCosting
@@ -52,6 +50,10 @@
             :bill-of-materials="state.data.costing.billOfMaterials"
             :services="state.data.costing.services"
             :cost-addons="state.data.costing.costAddons"/>
+        <div class="py-4 grid justify-items-end">
+            <Button color="tertiary" icon="point_of_sale" always-show-text="true"
+                :action="downloadWorkbook">Costing Sheet</Button>
+        </div>
     </Page>
     
 </template>
@@ -216,18 +218,18 @@ export default {
             }
         }
 
+        const formatMoney = (amount)=> {
+            if (amount != null)
+                return formatCurrency(amount, currency)
+            else return ''
+        }
+
         const downloadWorkbook = async ()=> {
             const id = state.data.id;
             const filename = `estimate-workbook_${state.data.estimateCode}_${new Date().getTime()}.xlsx`;
             if (id) {
                 await CostEstimateWorkbookApi.downloadCostEstimateWorkbook(id, filename);
             }
-        }
-
-        const formatMoney = (amount)=> {
-            if (amount != null)
-                return formatCurrency(amount, currency)
-            else return ''
         }
 
         return {

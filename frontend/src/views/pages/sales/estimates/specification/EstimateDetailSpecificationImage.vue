@@ -6,9 +6,13 @@
                 :action="state.impositionLayout.download">Imposition Layout</Button>
         </div>
         <!-- Imposition Layout (hidden) -->
-        <div id="impositionLayout" ref="impositionLayout" style="display:none">
+        <div id="impositionLayout" ref="impositionLayout" class="p-2" style="display:none">
+            <div class="pb-4">
+                <p class="font-bold text-xl">{{$props.templateName}}</p>
+                <p class="text-gray-500 italic text-sm">{{$props.templateDescription}}</p>
+            </div>
             <div v-for="(material, x) in $props.billOfMaterials" :key="x" class="p-4 border">
-                <div class="font-bold text-lg pb-2">{{material.name}}</div>
+                <div class="font-bold pb-2">{{material.name}}</div>
                 <EstimateDetailCostingBillOfMaterialsLayout
                     :machine-type="material.machineType"
                     :layouts="material.layouts"/>
@@ -39,6 +43,8 @@ import {ref, reactive} from 'vue';
 
 export default {
     props:{
+        templateName: String,
+        templateDescription: String,
         billOfMaterials: Array
     },
     components: {

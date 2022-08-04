@@ -42,7 +42,10 @@
         <EstimateDetailSpecification
             :is-processing="state.isProcessing"
             :components="state.data.specifications.components"
-            :services="state.data.specifications.services"/>
+            :services="state.data.specifications.services">
+            <EstimateDetailSpecificationImage 
+                :bill-of-materials="state.data.costing.billOfMaterials"/>
+        </EstimateDetailSpecification>
         <EstimateDetailCosting
             :is-processing="state.isProcessing"
             :quantities="state.data.quantities"
@@ -61,6 +64,7 @@ import DescriptionList from '@/components/DescriptionList.vue';
 import DescriptionItem from '@/components/DescriptionItem.vue';
 import EstimateModal from './EstimateModal.vue';
 import EstimateDetailSpecification from './specification/EstimateDetailSpecification.vue';
+import EstimateDetailSpecificationImage from './specification/EstimateDetailSpecificationImage.vue';
 import EstimateDetailCosting from './costing/EstimateDetailCosting.vue';
 
 import {reactive, inject, onBeforeMount} from 'vue';
@@ -72,7 +76,8 @@ export default {
     components: {
         Page, Button, Section, DeleteRecordDialog, 
         DescriptionList, DescriptionItem, EstimateModal,
-        EstimateDetailSpecification, EstimateDetailCosting
+        EstimateDetailSpecification, EstimateDetailSpecificationImage,
+        EstimateDetailCosting
     },
     setup() {
         const currency = inject('currency').abbreviation;

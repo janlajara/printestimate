@@ -1,28 +1,31 @@
 <template>
-    <Section heading="Components">
-        <Table :loader="state.isProcessing"
-            :headers="['Name', 'Material/s',  'Quantity', ]" >
-            <Row v-for="(s, key) in state.data.components" :key="key">
-                <Cell label="Name">{{s.name}}</Cell>
-                <Cell label="Material/s">
-                    <ul class="pl-2 text-xs">
-                        <li v-for="(x, i) in s.materials" :key="i"
-                            class="list-disc">
-                            {{x}}
-                        </li>
-                    </ul>
-                </Cell>
-                <Cell label="Quantity">
-                    <span v-if="s.materials.length > 1">
-                        {{s.quantity}} x {{s.materials.length}}
-                    </span>
-                    <span v-else>
-                        {{s.quantity}}
-                    </span>    
-                </Cell>
-            </Row>
-        </Table>
-    </Section>
+    <div>
+        <Section heading="Components">
+            <Table :loader="state.isProcessing"
+                :headers="['Name', 'Material/s',  'Quantity', ]" >
+                <Row v-for="(s, key) in state.data.components" :key="key">
+                    <Cell label="Name">{{s.name}}</Cell>
+                    <Cell label="Material/s">
+                        <ul class="pl-2 text-xs">
+                            <li v-for="(x, i) in s.materials" :key="i"
+                                class="list-disc">
+                                {{x}}
+                            </li>
+                        </ul>
+                    </Cell>
+                    <Cell label="Quantity">
+                        <span v-if="s.materials.length > 1">
+                            {{s.quantity}} x {{s.materials.length}}
+                        </span>
+                        <span v-else>
+                            {{s.quantity}}
+                        </span>    
+                    </Cell>
+                </Row>
+            </Table>
+        </Section>
+        <slot/>
+    </div>
 </template>
 <script>
 import Section from '@/components/Section.vue';

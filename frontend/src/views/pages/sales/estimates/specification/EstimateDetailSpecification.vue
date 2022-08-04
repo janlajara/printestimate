@@ -3,7 +3,9 @@
         <ServicesList
             :services="$props.services"/>
         <EstimateDetailSpecificationComponents
-            :components="$props.components"/>
+            :components="$props.components">
+            <slot/>
+        </EstimateDetailSpecificationComponents>
     </div>
 </template>
 <script>

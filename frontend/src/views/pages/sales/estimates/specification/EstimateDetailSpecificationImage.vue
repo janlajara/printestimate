@@ -7,7 +7,7 @@
         </div>
         <!-- Imposition Layout (hidden) -->
         <div id="impositionLayout" ref="impositionLayout" class="p-2 bg-white absolute" 
-            style="font-family:Arial, sans-serif; width: 900px; display:none">
+            style="width: 900px; display:none;">
             <div class="pb-4">
                 <p class="flex justify-between">
                     <span class="font-bold text-xl">{{$props.templateName}}</span>
@@ -18,10 +18,10 @@
             <div v-for="(material, x) in $props.billOfMaterials" :key="x" class="p-4 border">
                 <div class="font-bold pb-2">{{material.name}}</div>
                 <EstimateDetailCostingBillOfMaterialsLayout
-                    class="sm:-ml-8"
+                    class="xs:-ml-8"
                     :machine-type="material.machineType"
                     :layouts="material.layouts"/>
-                <div class="w-1/2 ml-8 sm:ml-0">
+                <div class="w-1/2 ml-8 xs:ml-0">
                     <div class="text-xs w-3/4">
                         <div class="grid grid-cols-3 gap-1 font-bold">
                             <p>Order Quantity</p>

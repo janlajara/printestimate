@@ -17,10 +17,11 @@
             <div v-for="(material, x) in $props.billOfMaterials" :key="x" class="p-4 border">
                 <div class="font-bold pb-2">{{material.name}}</div>
                 <EstimateDetailCostingBillOfMaterialsLayout
+                    class="-ml-8"
                     :machine-type="material.machineType"
                     :layouts="material.layouts"/>
                 <div class="w-1/2">
-                    <div class="text-xs w-3/4 ml-12">
+                    <div class="text-xs w-3/4">
                         <div class="grid grid-cols-3 gap-1 font-bold">
                             <p>Order Quantity</p>
                             <p>Stock + Spoilage</p>

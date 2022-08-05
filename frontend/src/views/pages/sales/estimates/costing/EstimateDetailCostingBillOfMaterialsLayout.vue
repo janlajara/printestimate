@@ -1,12 +1,11 @@
 <template>
     <div v-if="$props.layouts && $props.layouts.length > 0"
-        class="border-t-2 border-dotted text-gray-500 grid lg:grid-cols-2 py-1">
+        class="border-t-2 border-dotted text-gray-500 grid lg:grid-cols-2 py-4">
         <div class="text-sm">
-            <div class="ml-8 my-auto">Layout</div>
             <div v-if="state.data.stats" 
-                class="ml-12 grid">
+                class="ml-8 grid">
                 <dl v-if="state.data.stats.hasRunsheet"
-                    class="grid grid-cols-2 my-4">
+                    class="grid grid-cols-2">
                     <dt>Runsheet size:</dt>
                     <dd>{{state.data.stats.runsheetSize}}</dd>
 
@@ -31,7 +30,7 @@
                     <dt>Total # of cuts:</dt>
                     <dd>{{state.data.stats.totalCutCount}}</dd>
                 </dl>
-                <dl v-else class="grid grid-cols-2 my-4">
+                <dl v-else class="grid grid-cols-2">
                     <dt>Finalsheet count:</dt>
                     <dd>
                         {{formatQuantity(state.data.stats.childsheetCount, 'out', 'outs')}}

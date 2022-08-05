@@ -109,7 +109,7 @@ class ProductSummarySheet:
 
         @property
         def headers(self):
-            return ['Service Name', 'Application', 'Operation']
+            return ['Service Name', 'Activity', 'Operation']
         
         @property
         def dataframe(self):

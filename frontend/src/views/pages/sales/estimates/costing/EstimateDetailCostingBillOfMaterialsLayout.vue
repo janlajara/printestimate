@@ -53,7 +53,7 @@
                 @load="value => state.data.stats = value"
                 :layout-type="$props.machineType"
                 :layouts="$props.layouts"
-                :svg-height="200"/>
+                :svg-height="225"/>
         </div>
     </div>
 </template>

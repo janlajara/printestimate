@@ -9,9 +9,11 @@
         <div v-else-if="state.layouts.length > 0">
             <template v-if="state.layout.count <= 100">
                 <Svg :svg-height="$props.svgHeight"
-                    :view-box-width="state.svgRect.width + 5" 
-                    :view-box-height="state.svgRect.length + 5">
+                    :view-box-width="state.svgRect.width + layoutPadding" 
+                    :view-box-height="state.svgRect.length + layoutPadding">
                     <Rectangle 
+                        :x="layoutPadding/2"
+                        :y="layoutPadding/2"
                         :width="state.svgRect.width"
                         :height="state.svgRect.length"
                         stroke="#838383" :stroke-width="2" 
@@ -22,9 +24,10 @@
                         <ParentSheetShape 
                             :key="pkey"
                             v-for="(runsheet, pkey) in state.parentToRunsheet.layouts"
-                            :view-box-width="state.svgRect.width + 5"
-                            :view-box-length="state.svgRect.length + 5"
-                            :x="runsheet.x" :y="runsheet.y"
+                            :view-box-width="state.svgRect.width + layoutPadding"
+                            :view-box-length="state.svgRect.length + layoutPadding"
+                            :x="runsheet.x + (layoutPadding/2)" 
+                            :y="runsheet.y + (layoutPadding/2)"
                             :width="runsheet.width"
                             :length="runsheet.length"
                             stroke="#838383" 
@@ -40,12 +43,14 @@
                                     :key="ckey" v-for="(cutsheet, ckey) in state.runsheetToCutsheet.layouts"
                                     :text="(state.runsheetToCutsheet.layouts.length * pkey) + cutsheet.i"
                                     stroke="#838383" stroke-width="1" fill="white"
-                                    :x="!runsheet.is_rotated?
+                                    :x="(!runsheet.is_rotated?
                                         (cutsheet.x + runsheet.x + runsheet.padding_left) :
-                                        (cutsheet.y + runsheet.x + runsheet.padding_left)" 
-                                    :y="!runsheet.is_rotated?
+                                        (cutsheet.y + runsheet.x + runsheet.padding_left)) +
+                                         + (layoutPadding/2)" 
+                                    :y="(!runsheet.is_rotated?
                                         (cutsheet.y + runsheet.y + runsheet.padding_top) :
-                                        (cutsheet.x + runsheet.y + runsheet.padding_top)"
+                                        (cutsheet.x + runsheet.y + runsheet.padding_top)) +
+                                         + (layoutPadding/2)"
                                     :width="!runsheet.is_rotated? 
                                         cutsheet.width : cutsheet.length"
                                     :length="!runsheet.is_rotated? 
@@ -58,43 +63,65 @@
                                         cutsheet.margin_bottom : cutsheet.margin_left"
                                     :margin-left="!runsheet.is_rotated? 
                                         cutsheet.margin_left : cutsheet.margin_top"
-                                    :view-box-width="state.svgRect.width + 5"
-                                    :view-box-length="state.svgRect.length + 5">
+                                    :view-box-width="state.svgRect.width + layoutPadding"
+                                    :view-box-length="state.svgRect.length + layoutPadding">
                                 </ChildSheetShape>
                             </template>
                         </ParentSheetShape>
-                            <LineMeasure 
-                                :text="state.svgRect.width"
-                                stroke="gray"
-                                :x1="0" :x2="state.svgRect.width" 
-                                :y1="state.svgRect.length + 2.5" 
-                                :y2="state.svgRect.length + 2.5"
-                                :text-offset-y="0.5"
-                                :view-box-width="state.svgRect.width + 5"
-                                :view-box-length="state.svgRect.length + 5"/>
-                            <LineMeasure 
-                                :text="state.svgRect.length"
-                                stroke="gray"
-                                :x1="state.svgRect.width + 2.5" 
-                                :x2="state.svgRect.width + 2.5" 
-                                :y1="0" :y2="state.svgRect.length"
-                                :text-offset-x="-1"
-                                :view-box-width="state.svgRect.width + 5"
-                                :view-box-length="state.svgRect.length + 5"/>
+                        <LineMeasure
+                            :text="state.parentToRunsheet.layouts[0].width"
+                            stroke="gray"
+                            :x1="(layoutPadding/2)" 
+                            :x2="state.parentToRunsheet.layouts[0].width + (layoutPadding/2)" 
+                            :y1="(layoutPadding/4)" :y2="(layoutPadding/4)"
+                            :text-offset-y="0.5"
+                            :view-box-width="state.svgRect.width + layoutPadding"
+                            :view-box-length="state.svgRect.length + layoutPadding"/>
+                        <LineMeasure
+                            :text="state.parentToRunsheet.layouts[0].length"
+                            stroke="gray"
+                            :x1="(layoutPadding/4)" 
+                            :x2="(layoutPadding/4)" 
+                            :y1="(layoutPadding/2)" 
+                            :y2="state.parentToRunsheet.layouts[0].length + (layoutPadding/2)"
+                            :text-offset-x="-1"
+                            :view-box-width="state.svgRect.width + layoutPadding"
+                            :view-box-length="state.svgRect.length + layoutPadding"/>
+                        <LineMeasure 
+                            :text="state.svgRect.width"
+                            stroke="gray"
+                            :x1="(layoutPadding/2)" 
+                            :x2="state.svgRect.width + (layoutPadding/2)" 
+                            :y1="state.svgRect.length + (layoutPadding/1.3)" 
+                            :y2="state.svgRect.length + (layoutPadding/1.3)"
+                            :text-offset-y="0.5"
+                            :view-box-width="state.svgRect.width + layoutPadding"
+                            :view-box-length="state.svgRect.length + layoutPadding"/>
+                        <LineMeasure 
+                            :text="state.svgRect.length"
+                            stroke="gray"
+                            :x1="state.svgRect.width + (layoutPadding/1.3)" 
+                            :x2="state.svgRect.width + (layoutPadding/1.3)" 
+                            :y1="(layoutPadding/2)" 
+                            :y2="state.svgRect.length + (layoutPadding/2)"
+                            :text-offset-x="-1"
+                            :view-box-width="state.svgRect.width + layoutPadding"
+                            :view-box-length="state.svgRect.length + layoutPadding"/>
                     </template>
                     <template v-else-if="state.layout.type == layout_types.ROLL_FED_PRESS_MACHINE"> 
                         <ChildSheetShape 
                             :key="ckey" v-for="(cutsheet, ckey) in state.runsheetToCutsheet.layouts"
                             :text="cutsheet.i"
                             stroke="#838383" stroke-width="1" fill="white"
-                            :x="cutsheet.x" :y="cutsheet.y"
+                            :x="cutsheet.x + (layoutPadding/2)" 
+                            :y="cutsheet.y + (layoutPadding/2)"
                             :width="cutsheet.width" :length="cutsheet.length"
                             :margin-top="cutsheet.margin_top"
                             :margin-right="cutsheet.margin_right"
                             :margin-bottom="cutsheet.margin_bottom"
                             :margin-left="cutsheet.margin_left"
-                            :view-box-width="state.svgRect.width + 5"
-                            :view-box-length="state.svgRect.length + 5">
+                            :view-box-width="state.svgRect.width + layoutPadding"
+                            :view-box-length="state.svgRect.length + layoutPadding">
                         </ChildSheetShape>
                     </template> 
                     <template v-else-if="state.layout.type == layout_types.DEFAULT">
@@ -102,33 +129,36 @@
                             :key="ckey" v-for="(cutsheet, ckey) in state.parentToCutsheet.layouts"
                             :text="cutsheet.i"
                             stroke="#838383" stroke-width="1" fill="white"
-                            :x="cutsheet.x" :y="cutsheet.y"
+                            :x="cutsheet.x + (layoutPadding/2)" 
+                            :y="cutsheet.y + (layoutPadding/2)"
                             :width="cutsheet.width" :length="cutsheet.length"
                             :margin-top="cutsheet.margin_top"
                             :margin-right="cutsheet.margin_right"
                             :margin-bottom="cutsheet.margin_bottom"
                             :margin-left="cutsheet.margin_left"
-                            :view-box-width="state.svgRect.width + 5"
-                            :view-box-length="state.svgRect.length + 5">
+                            :view-box-width="state.svgRect.width + layoutPadding"
+                            :view-box-length="state.svgRect.length + layoutPadding">
                         </ChildSheetShape>
                         <LineMeasure 
                             :text="state.svgRect.width"
                             stroke="gray"
-                            :x1="0" :x2="state.svgRect.width" 
-                            :y1="state.svgRect.length + 2.5" 
-                            :y2="state.svgRect.length + 2.5"
+                            :x1="(layoutPadding/2)" 
+                            :x2="state.svgRect.width + (layoutPadding/2)" 
+                            :y1="state.svgRect.length + (layoutPadding/1.3)" 
+                            :y2="state.svgRect.length + (layoutPadding/1.3)"
                             :text-offset-y="0.5"
-                            :view-box-width="state.svgRect.width + 5"
-                            :view-box-length="state.svgRect.length + 5"/>
+                            :view-box-width="state.svgRect.width + layoutPadding"
+                            :view-box-length="state.svgRect.length + layoutPadding"/>
                         <LineMeasure 
                             :text="state.svgRect.length"
                             stroke="gray"
-                            :x1="state.svgRect.width + 2.5" 
-                            :x2="state.svgRect.width + 2.5" 
-                            :y1="0" :y2="state.svgRect.length"
+                            :x1="state.svgRect.width + (layoutPadding/1.3)" 
+                            :x2="state.svgRect.width + (layoutPadding/1.3)" 
+                            :y1="(layoutPadding/2)" 
+                            :y2="state.svgRect.length + (layoutPadding/2)"
                             :text-offset-x="-1"
-                            :view-box-width="state.svgRect.width + 5"
-                            :view-box-length="state.svgRect.length + 5"/>
+                            :view-box-width="state.svgRect.width + layoutPadding"
+                            :view-box-length="state.svgRect.length + layoutPadding"/>
                     </template>
                 </Svg>
             </template>
@@ -349,7 +379,7 @@ export default {
         onUpdated(initializeStats);
 
         return {
-            layout_types, state
+            layout_types, state, layoutPadding: 10
         };
     }
 }

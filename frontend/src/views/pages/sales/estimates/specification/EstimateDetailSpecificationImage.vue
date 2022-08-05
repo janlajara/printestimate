@@ -20,7 +20,7 @@
                     class="sm:-ml-8"
                     :machine-type="material.machineType"
                     :layouts="material.layouts"/>
-                <div class="w-1/2">
+                <div class="w-1/2 ml-8 sm:ml-0">
                     <div class="text-xs w-3/4">
                         <div class="grid grid-cols-3 gap-1 font-bold">
                             <p>Order Quantity</p>

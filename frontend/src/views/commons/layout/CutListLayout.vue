@@ -9,8 +9,8 @@
         <div v-else-if="state.layouts.length > 0">
             <template v-if="state.layout.count <= 100">
                 <Svg :svg-height="$props.svgHeight"
-                    :view-box-width="state.svgRect.width" 
-                    :view-box-height="state.svgRect.length">
+                    :view-box-width="state.svgRect.width + 5" 
+                    :view-box-height="state.svgRect.length + 5">
                     <Rectangle 
                         :width="state.svgRect.width"
                         :height="state.svgRect.length"
@@ -22,8 +22,8 @@
                         <ParentSheetShape 
                             :key="pkey"
                             v-for="(runsheet, pkey) in state.parentToRunsheet.layouts"
-                            :view-box-width="state.svgRect.width"
-                            :view-box-length="state.svgRect.length"
+                            :view-box-width="state.svgRect.width + 5"
+                            :view-box-length="state.svgRect.length + 5"
                             :x="runsheet.x" :y="runsheet.y"
                             :width="runsheet.width"
                             :length="runsheet.length"
@@ -58,11 +58,29 @@
                                         cutsheet.margin_bottom : cutsheet.margin_left"
                                     :margin-left="!runsheet.is_rotated? 
                                         cutsheet.margin_left : cutsheet.margin_top"
-                                    :view-box-width="state.svgRect.width"
-                                    :view-box-length="state.svgRect.length">
+                                    :view-box-width="state.svgRect.width + 5"
+                                    :view-box-length="state.svgRect.length + 5">
                                 </ChildSheetShape>
                             </template>
                         </ParentSheetShape>
+                            <LineMeasure 
+                                :text="state.svgRect.width"
+                                stroke="gray"
+                                :x1="0" :x2="state.svgRect.width" 
+                                :y1="state.svgRect.length + 2.5" 
+                                :y2="state.svgRect.length + 2.5"
+                                :text-offset-y="0.5"
+                                :view-box-width="state.svgRect.width + 5"
+                                :view-box-length="state.svgRect.length + 5"/>
+                            <LineMeasure 
+                                :text="state.svgRect.length"
+                                stroke="gray"
+                                :x1="state.svgRect.width + 2.5" 
+                                :x2="state.svgRect.width + 2.5" 
+                                :y1="0" :y2="state.svgRect.length"
+                                :text-offset-x="-1"
+                                :view-box-width="state.svgRect.width + 5"
+                                :view-box-length="state.svgRect.length + 5"/>
                     </template>
                     <template v-else-if="state.layout.type == layout_types.ROLL_FED_PRESS_MACHINE"> 
                         <ChildSheetShape 
@@ -75,8 +93,8 @@
                             :margin-right="cutsheet.margin_right"
                             :margin-bottom="cutsheet.margin_bottom"
                             :margin-left="cutsheet.margin_left"
-                            :view-box-width="state.svgRect.width"
-                            :view-box-length="state.svgRect.length">
+                            :view-box-width="state.svgRect.width + 5"
+                            :view-box-length="state.svgRect.length + 5">
                         </ChildSheetShape>
                     </template> 
                     <template v-else-if="state.layout.type == layout_types.DEFAULT">
@@ -90,9 +108,27 @@
                             :margin-right="cutsheet.margin_right"
                             :margin-bottom="cutsheet.margin_bottom"
                             :margin-left="cutsheet.margin_left"
-                            :view-box-width="state.svgRect.width"
-                            :view-box-length="state.svgRect.length">
+                            :view-box-width="state.svgRect.width + 5"
+                            :view-box-length="state.svgRect.length + 5">
                         </ChildSheetShape>
+                        <LineMeasure 
+                            :text="state.svgRect.width"
+                            stroke="gray"
+                            :x1="0" :x2="state.svgRect.width" 
+                            :y1="state.svgRect.length + 2.5" 
+                            :y2="state.svgRect.length + 2.5"
+                            :text-offset-y="0.5"
+                            :view-box-width="state.svgRect.width + 5"
+                            :view-box-length="state.svgRect.length + 5"/>
+                        <LineMeasure 
+                            :text="state.svgRect.length"
+                            stroke="gray"
+                            :x1="state.svgRect.width + 2.5" 
+                            :x2="state.svgRect.width + 2.5" 
+                            :y1="0" :y2="state.svgRect.length"
+                            :text-offset-x="-1"
+                            :view-box-width="state.svgRect.width + 5"
+                            :view-box-length="state.svgRect.length + 5"/>
                     </template>
                 </Svg>
             </template>
@@ -105,6 +141,7 @@
 </template>
 <script>
 import Svg from '@/utils/svg/Svg.vue';
+import LineMeasure from '@/utils/svg/LineMeasure.vue';
 import Rectangle from '@/utils/svg/Rectangle.vue';
 import ParentSheetShape from './ParentSheetShape.vue';
 import ChildSheetShape from './ChildSheetShape.vue';
@@ -133,7 +170,7 @@ export default {
         loader: Boolean
     },
     components: {
-        Svg, Rectangle, ParentSheetShape, ChildSheetShape
+        Svg, Rectangle, ParentSheetShape, ChildSheetShape, LineMeasure
     },
     emits: ['load'],
     setup(props, {emit}) {

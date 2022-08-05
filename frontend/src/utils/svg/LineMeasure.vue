@@ -8,9 +8,9 @@
             :cx="$props.x1" :cy="$props.y1"/>
         <circle :fill="$props.stroke" :r="$props.endpointRadius"
             :cx="$props.x2" :cy="$props.y2"/-->
-        <text :x="($props.x1 + $props.x2) / 2" 
-            :y="($props.y1 + $props.y2) / 2"
-            :font-size="$props.textSize" font-size-adjust="0.75">
+        <text :x="(($props.x1 + $props.x2) / 2) + $props.textOffsetX" 
+            :y="(($props.y1 + $props.y2) / 2) + $props.textOffsetY"
+            :font-size="$props.textSize" font-size-adjust="1">
             {{$props.text}}
         </text>
     </svg>
@@ -30,7 +30,9 @@ export default {
         viewBoxLength: {type: Number, default: 0},
         dashed: Boolean,
         textSize: {type: Number, default: 1},
-        text: {type: [Number, String]}
+        text: {type: [Number, String]},
+        textOffsetX: {type: Number, default: 0}, 
+        textOffsetY: {type: Number, default: 0}, 
     },
     setup(props){
         const state = reactive({

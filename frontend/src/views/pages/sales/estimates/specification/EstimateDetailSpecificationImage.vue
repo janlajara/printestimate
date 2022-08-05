@@ -6,7 +6,8 @@
                 :action="state.impositionLayout.download">Materials Layout</Button>
         </div>
         <!-- Imposition Layout (hidden) -->
-        <div id="impositionLayout" ref="impositionLayout" class="p-2 bg-white absolute" style="width: 900px; display:none">
+        <div id="impositionLayout" ref="impositionLayout" class="p-2 bg-white absolute" 
+            style="font-family:Arial, sans-serif; width: 900px; display:none">
             <div class="pb-4">
                 <p class="flex justify-between">
                     <span class="font-bold text-xl">{{$props.templateName}}</span>

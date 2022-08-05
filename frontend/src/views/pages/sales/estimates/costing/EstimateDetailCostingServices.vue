@@ -22,7 +22,7 @@
                     </div>
                 </div>
                 <div :class="[`grid md:grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x transition`,
-                    service.isExpanded? 'transform opacity-0 ': '']">
+                    service.isExpanded? 'transform opacity-0 hidden': '']">
                     <div v-for="(quantity, a) in state.paginate(state.data.quantities)" :key="a" class="grid">
                         <div class="flex text-xs my-auto">
                             <div class="text-right w-2/5">

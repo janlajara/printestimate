@@ -28,7 +28,7 @@
                     </div>
                 </div>
                 <div :class="[`grid md:grid-cols-${state.meta.quantitiesColumnLength} gap-x-2 divide-x transition`,
-                    material.isExpanded? 'transform opacity-0 ': '']">
+                    material.isExpanded? 'transform opacity-0 hidden': '']">
                     <div v-for="(estimate, y) in state.paginate(material.estimates)" :key="y" class="grid">
                         <div class="text-xs flex my-auto">
                             <div class="text-right w-2/5">

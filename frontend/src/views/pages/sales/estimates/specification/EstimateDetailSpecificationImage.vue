@@ -3,7 +3,7 @@
         <div class="pb-8 grid justify-items-end">
             <Button color="tertiary" icon="insert_page_break"
                 :always-show-text="true" :disabled="state.impositionLayout.isLoading"
-                :action="state.impositionLayout.download">Imposition Layout</Button>
+                :action="state.impositionLayout.download">Materials Layout</Button>
         </div>
         <!-- Imposition Layout (hidden) -->
         <div id="impositionLayout" ref="impositionLayout" class="p-2" style="display:none">

@@ -6,7 +6,7 @@
                 :action="state.impositionLayout.download">Materials Layout</Button>
         </div>
         <!-- Imposition Layout (hidden) -->
-        <div id="impositionLayout" ref="impositionLayout" class="p-2" style="display:none">
+        <div id="impositionLayout" ref="impositionLayout" class="p-2 bg-white absolute" style="width: 900px; display:none">
             <div class="pb-4">
                 <p class="flex justify-between">
                     <span class="font-bold text-xl">{{$props.templateName}}</span>
@@ -17,7 +17,7 @@
             <div v-for="(material, x) in $props.billOfMaterials" :key="x" class="p-4 border">
                 <div class="font-bold pb-2">{{material.name}}</div>
                 <EstimateDetailCostingBillOfMaterialsLayout
-                    class="-ml-8"
+                    class="sm:-ml-8"
                     :machine-type="material.machineType"
                     :layouts="material.layouts"/>
                 <div class="w-1/2">

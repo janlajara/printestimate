@@ -48,7 +48,7 @@
                 </dl>
             </div>
         </div>
-        <div>
+        <div class="pt-4 sm:pt-0">
             <CutListLayout 
                 @load="value => state.data.stats = value"
                 :layout-type="$props.machineType"

@@ -5,6 +5,21 @@ from fileio import constants
 from fileio.models import ExcelWorkbook
 
 
+class ItemSheetManager:
+    
+    @classmethod
+    def create(cls, type, objects):
+        mapping = {
+            Item.TAPE: TapeSheet,
+            Item.LINE: LineSheet,
+            Item.PAPER: PaperSheet,
+            Item.PANEL: PanelSheet,
+            Item.LIQUID: LiquidSheet,
+        }
+        clazz = mapping.get(type, ItemSheet)
+        return clazz(name=type, objects=objects)
+
+
 class ItemSheet:
 
     def __init__(self, name, objects=[]):
@@ -51,14 +66,15 @@ class ItemSheet:
 
     def format(self, writer):
         workbook = writer.book
-        money_format = workbook.add_format({'num_format': constants.CURRENCY_FORMAT})
+        money_format = workbook.add_format(
+            {'num_format': constants.CURRENCY_FORMAT})
 
         # Format column width and types
         worksheet = writer.sheets[self.name]
         if worksheet is not None:
             worksheet.set_column(1, 1, 30)
-            worksheet.set_column(2, 4, 15)
-            worksheet.set_column(4, 4, None, money_format)
+            worksheet.set_column(2, 3, 15)
+            worksheet.set_column(4, 4, 15, money_format)
 
         # Turn into a formatted table
         (max_row, max_col) = self.dataframe.shape
@@ -72,7 +88,7 @@ class ItemSheet:
         base_unit = obj.base_uom.name
         alternate_unit = (obj.alternate_uom.name if 
             obj.alternate_uom is not None else None)
-        price = obj.override_price.amount
+        price = float(obj.override_price.amount)
         return [id, name, base_unit, alternate_unit, price]
 
 
@@ -148,14 +164,14 @@ class ItemWorkbook(ExcelWorkbook):
     def __init__(self, name='items-workbook'):
         self.name = name
 
-    @property
+    @cached_property
     def sheets(self):
         sheets = []
 
         for item_type in Item.TYPES:
             type = item_type[0]
             items = self._get_items_by_type(type)
-            worksheet = ItemSheet(name=type, objects=items)
+            worksheet = ItemSheetManager.create(type=type, objects=items)
             sheets.append(worksheet)
         
         return sheets

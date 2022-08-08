@@ -85,7 +85,7 @@ export default {
 
       const selectedOptions = computed(() => {
         let selected = state.options.filter(option=> option.isSelected);
-        if (!props.multiple && selected.length > 1) selected.splice(0,1);
+        if (!props.multiple && selected.length > 1) selected.splice(0,selected.length-1);
         return selected;
       });
 

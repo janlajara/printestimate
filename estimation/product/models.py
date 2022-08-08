@@ -11,7 +11,7 @@ from inventory.models import Item
 from inventory.properties.models import Shape, Tape, Line, Paper, Panel, Liquid
 from estimation.metaproduct.models import MetaEstimateVariable, MetaService
 from estimation.process.models import ActivityExpense, Speed
-from estimation.template.models import ProductTemplate, ComponentTemplate
+from estimation.template.models import ProductTemplate, ComponentTemplate, OperationOptionTemplate
 from estimation.machine.models import Machine, ChildSheet, RollFedPressMachine
 from estimation.exceptions import MaterialTypeMismatch, MeasurementMismatch
 from polymorphic.models import PolymorphicModel
@@ -246,7 +246,10 @@ class ProductManager(models.Manager):
             if service_template.component_template is not None:
                 component = components_map.get(service_template.component_template.pk, None)
 
-            service = Service.objects.create_service(service_template, product, component)
+            has_operation_option_template = len(OperationOptionTemplate.objects.filter(
+                operation_template__service_template=service_template).all()) > 0
+            if has_operation_option_template:
+                service = Service.objects.create_service(service_template, product, component)
 
 
 class Product(models.Model):

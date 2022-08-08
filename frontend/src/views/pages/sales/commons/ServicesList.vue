@@ -5,7 +5,7 @@
                 <ul role="list">
                     <li v-for="(service, key) in state.data.services" :key="key" class="relative">
                         <div class="pb-4">
-                            <span v-if="key !== services.length - 1" class="absolute top-3 left-3 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
+                            <span v-if="key !== state.data.services.length - 1" class="absolute top-3 left-3 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
                             <div class="relative flex space-x-3">
                                 <div>
                                     <span class="h-6 w-6 rounded-full flex items-center justify-center bg-secondary-light">
@@ -32,7 +32,7 @@
                                             leave-from-class="transform origin-top opacity-100 scale-100" 
                                             leave-to-class="transform origin-top opacity-0 scale-y-75">
                                             <div v-show="service.isExpanded">
-                                                <ul v-for="(operation, i) in service.operations" 
+                                                <ul v-for="(operation, i) in service.operations.filter(o => o.activities.length > 0)" 
                                                         :key="i" class="list-disc pl-3 pb-2">
                                                     <li class="font-bold">{{[operation.name, operation.material].join(' ')}}</li>
                                                     <ul class="pl-4">
@@ -98,14 +98,16 @@ export default {
         const initialize = ()=> {
             let services = [...props.services];
             if (services && services.length > 0) {
-                state.data.services = services.map(x=> ({
-                    ...x,
-                    isExpanded: false,
-                    toggle: (index)=> {
-                        if (index != null && index <= state.data.services.length) {
-                            const service = state.data.services[index];
-                            service.isExpanded = !service.isExpanded;}
-                        }
+                state.data.services = services
+                    .filter(s => s.operations.find(o => o.activities.length > 0))
+                    .map(x=> ({
+                        ...x,
+                        isExpanded: false,
+                        toggle: (index)=> {
+                            if (index != null && index <= state.data.services.length) {
+                                const service = state.data.services[index];
+                                service.isExpanded = !service.isExpanded;}
+                            }
                 }));
             }
         }

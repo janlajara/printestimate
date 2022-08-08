@@ -244,7 +244,7 @@ class ProductEstimateSheet:
             materials = []
 
             for m in self.material_estimates:
-                total = [m.name, m.rate.amount, '/ %s' % m.uom]
+                total = [m.name, float(m.rate.amount), '/ %s' % m.uom]
                 stock_needed = ['Stock Needed', '', '']
                 spoilage_count = ['Spoilage (10%)', '', '']
                 
@@ -344,7 +344,7 @@ class ProductEstimateSheet:
                         _add_row(aeval, 2)
 
                         for aee in ae.activity_expense_estimates:
-                            arr = [aee.name, aee.rate.amount, 
+                            arr = [aee.name, float(aee.rate.amount), 
                                 aee.type if aee.type == 'flat' else '/ %s' % aee.estimates[0].uom]
                             for (key, estimate) in enumerate(aee.estimates):
                                 arr += [1 if aee.type == 'flat' else estimate.quantity, '']

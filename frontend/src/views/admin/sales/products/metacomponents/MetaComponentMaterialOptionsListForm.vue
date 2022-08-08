@@ -74,9 +74,7 @@ export default {
             },
             lookupMaterials: (lookupText)=> {
                 state.materialForm.lookupText = lookupText;
-                const choices = state.meta.materialChoices.map(x => x.label);
-                const isFound = choices.some(x => x.includes(lookupText));
-                if (!isFound) listMaterials(lookupText);
+                listMaterials(lookupText);
             },
             emitInput: ()=> {
                 let materialList = state.meta.materialChoices

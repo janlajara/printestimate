@@ -21,7 +21,7 @@
                     class="xs:-ml-8"
                     :machine-type="material.machineType"
                     :layouts="material.layouts"/>
-                <div class="w-1/2 ml-8 xs:ml-0">
+                <!--div class="w-1/2 ml-8 xs:ml-0">
                     <div class="text-xs w-3/4">
                         <div class="grid grid-cols-3 gap-1 font-bold">
                             <p>Order Quantity</p>
@@ -34,7 +34,7 @@
                             <div>= {{estimate.estimatedMaterialQuantity+estimate.spoilageMaterialQuantity}}</div>
                         </div>
                     </div>
-                </div>
+                </div-->
             </div>
         </div>
     </div>

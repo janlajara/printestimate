@@ -10,13 +10,17 @@
                     <dd>{{state.data.stats.runsheetSize}}</dd>
 
                     <dt>Runsheet count:</dt>
-                    <dd>
+                    <dd class="pb-4">
                         {{formatQuantity(state.data.stats.runsheetCount, 'out', 'outs')}}
                         / whole sheet
                     </dd>
 
+
+                    <dt>Finalsheet size:</dt>
+                    <dd>{{state.data.stats.childsheetSize}}</dd>
+
                     <dt>Finalsheet count:</dt>
-                    <dd>
+                    <dd class="pb-4">
                         {{formatQuantity(state.data.stats.childsheetCount, 'out', 'outs')}}
                         / whole sheet
                     </dd>
@@ -31,8 +35,11 @@
                     <dd>{{state.data.stats.totalCutCount}}</dd>
                 </dl>
                 <dl v-else class="grid grid-cols-2">
+                    <dt>Finalsheet size:</dt>
+                    <dd>{{state.data.stats.childsheetSize}}</dd>
+
                     <dt>Finalsheet count:</dt>
-                    <dd>
+                    <dd class="pb-4">
                         {{formatQuantity(state.data.stats.childsheetCount, 'out', 'outs')}}
                         / whole sheet
                     </dd>

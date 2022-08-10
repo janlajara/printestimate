@@ -12,7 +12,7 @@ from inventory import serializers
 
 # Create your views here.
 class ItemViewSet(viewsets.ModelViewSet):
-    queryset = Item.objects.all().order_by('name')
+    queryset = Item.objects.all()
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['name', 'type', 'stocks__brand_name']
     filterset_fields = ['type']
@@ -24,6 +24,10 @@ class ItemViewSet(viewsets.ModelViewSet):
             return serializers.ItemRetrieveSerializer
         else:
             return serializers.ItemSerializer
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        return queryset.order_by('name')
     
     def destroy(self, request, pk=None, **kwargs):
         if pk is not None:

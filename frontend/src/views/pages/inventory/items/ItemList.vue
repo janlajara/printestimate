@@ -53,7 +53,8 @@ import ItemInputModal from '@/views/pages/inventory/items/ItemInputModal.vue';
 import {reactive, onBeforeMount, inject} from 'vue';
 import {useRouter} from 'vue-router';
 import {ItemApi} from '@/utils/apis.js';
-import {formatMoney} from '@/utils/format.js'
+import {formatMoney} from '@/utils/format.js';
+import {orderBy} from 'lodash';
 
 export default {
     name: 'Stocks',
@@ -79,7 +80,7 @@ export default {
             const response = await ItemApi.listItems(limit, offset, search);
             if (response && response.results) {
                 item.listCount = response.count;
-                item.list = response.results.map(i=> ({
+                const items = response.results.map(i=> ({
                     id: i.id, name: i.full_name, type: i.type,
                     baseUom: i.base_uom, 
                     available: i.available_quantity,
@@ -87,7 +88,9 @@ export default {
                     onhand: i.onhand_quantity,
                     onhandFormatted: i.onhand_quantity_formatted,
                     price: i.price
-                }))
+                }));
+                const sorted = orderBy(items, ['name'], ['asc']);
+                item.list = sorted;
             }
             item.isProcessing = false;
         }

@@ -101,7 +101,7 @@
                         <div class="text-xs flex justify-end my-auto">
                             <div class="ml-1">
                                 <span class="text-sm">
-                                    {{formatMoney(ceiling(state.meta.totalsMap[quantity] / quantity, 25))}}
+                                    {{formatMoney(ceiling(state.meta.totalsMap[quantity] / quantity, 5))}}
                                 </span>
                             </div>
                         </div>
@@ -109,7 +109,7 @@
                             <div class="ml-1">
                                 <span class="font-bold text-lg">
                                     {{formatMoney(
-                                        ceiling(state.meta.totalsMap[quantity] / quantity, 25) * quantity)}}
+                                        ceiling(state.meta.totalsMap[quantity] / quantity, 5) * quantity)}}
                                 </span>
                             </div>
                         </div>

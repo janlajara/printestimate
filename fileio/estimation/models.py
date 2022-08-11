@@ -503,7 +503,7 @@ class ProductEstimateSheet:
         def meta(self):
             total_prices = []
             unit_prices = []
-            round_up_num = 25
+            round_up_num = 5
             total_prices_ru = []
             unit_prices_ru = []
             sum_start_row = 4

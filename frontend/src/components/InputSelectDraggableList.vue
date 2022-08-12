@@ -26,7 +26,7 @@
                     Drag option to this area</span>
                 <draggable item-key="id" @change="emitInput"
                     group="choices" style="min-height: 24px"
-                    :list="state.selected" handle=".drag">
+                    :list="state.selected" handle=".drag" class="h-full">
                     <template #item="option">
                         <div class="flex gap-1 rounded-md bg-gray-100 p-2 m-1">
                             <!--@mouseover="option.element.showDelete = true" 

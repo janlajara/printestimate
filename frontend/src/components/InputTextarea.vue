@@ -8,7 +8,14 @@
         <div class="rounded-md shadow-sm">
             <textarea class="rounded input-field w-full"
               :value="$props.value" :placeholder="$props.placeholder" 
-              @input="event => $emit('input', event.target.value)">
+              @blur="event => {
+                let input = event.target.value;
+                if ($props.max != null && input.length > $props.max) {
+                    input = input.substr(0, $props.max)
+                }
+                $emit('input', input);
+                event.target.value = input;
+              }">
             </textarea>
         </div>
     </div>
@@ -21,7 +28,11 @@ export default {
         name: String,
         value: String,
         placeholder: String,
-        required: Boolean
+        required: Boolean,
+        max: {
+            type: Number,
+            required: false
+        },
     },
     emits: ['input']
 }

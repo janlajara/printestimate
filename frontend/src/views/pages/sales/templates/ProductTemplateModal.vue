@@ -12,7 +12,7 @@
                     type="text" :value="state.data.name" required
                     @input="value => state.data.name = value"/>
                 <InputTextarea class="col-span-2"
-                    name="Description"  placeholder="Description"  
+                    name="Description"  placeholder="Description" :max=300
                     :value="state.data.description" required
                     @input="value => state.data.description = value"/>
                 <InputTextLookup name="Product Class" required

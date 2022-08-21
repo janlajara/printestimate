@@ -11,7 +11,7 @@ from polymorphic.managers import PolymorphicManager
 class ProductTemplate(models.Model):
     meta_product = models.ForeignKey(MetaProduct, on_delete=models.RESTRICT)
     name = models.CharField(max_length=40)
-    description = models.CharField(max_length=100, null=True)
+    description = models.CharField(max_length=300, null=True)
 
     @property
     def code(self):
